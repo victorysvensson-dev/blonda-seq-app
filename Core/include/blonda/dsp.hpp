@@ -80,6 +80,43 @@ struct PulseTables {
     }
 };
 
+// Band-limited wavetables that behave like Web Audio's built-in OscillatorNode types (Chrome): Fourier series,
+// peak-normalised, partials culled per 1/3-octave range so nothing folds over Nyquist.
+struct WebWaves {
+    enum Type { Square = 0, Saw = 1, Tri = 2 };
+    static constexpr int kSize = 4096, kLevels = 34;
+    float t[3][kLevels][kSize + 1];
+    int partials[kLevels];
+    void build() {
+        static float sn[kSize]; for (int i = 0; i < kSize; ++i) sn[i] = std::sin(kTwoPi * i / kSize);
+        for (int l = 0; l < kLevels; ++l) partials[l] = std::max(1, (int)(2048.0 / std::pow(2.0, l / 3.0)));
+        for (int ty = 0; ty < 3; ++ty) {
+            float norm = 0;
+            for (int l = 0; l < kLevels; ++l) {
+                float* tb = t[ty][l]; for (int i = 0; i < kSize; ++i) tb[i] = 0;
+                for (int n = 1; n <= partials[l]; ++n) {
+                    float b;
+                    if (ty == Square) b = (n & 1) ? 4.f / (n * kPi) : 0.f;
+                    else if (ty == Saw) b = ((n & 1) ? 2.f : -2.f) / (n * kPi);
+                    else b = (n & 1) ? 8.f / (kPi * kPi * n * n) * (((n - 1) / 2) & 1 ? -1.f : 1.f) : 0.f;
+                    if (b == 0.f) continue;
+                    for (int i = 0; i < kSize; ++i) tb[i] += b * sn[(int)(((long long)n * i) & (kSize - 1))];
+                }
+                if (l == 0) { for (int i = 0; i < kSize; ++i) norm = std::max(norm, std::fabs(tb[i])); norm = 1.f / norm; }
+            }
+            if (ty == Saw) norm *= 0.842f / 0.918f;   // measured: Chrome's built-in sawtooth sits at +/-0.842
+            for (int l = 0; l < kLevels; ++l) { for (int i = 0; i < kSize; ++i) t[ty][l][i] *= norm; t[ty][l][kSize] = t[ty][l][0]; }
+        }
+    }
+    static const WebWaves& get() { static WebWaves* w = [] { auto* x = new WebWaves(); x->build(); return x; }(); return *w; }
+    inline float read(int type, float phase, float inc) const {
+        const float maxP = 0.5f / std::max(inc, 1e-7f); int l = 0;
+        while (l < kLevels - 1 && (float)partials[l] * 1.26f > maxP) ++l;   // whole 1/3-octave range must stay below Nyquist
+        const float x = phase * kSize; const int i = (int)x; const float f = x - (float)i; const float* tb = t[type][l];
+        return tb[i] + (tb[i + 1] - tb[i]) * f;
+    }
+};
+
 // Zero-delay-feedback state-variable filter (Simper / Zavalishin TPT). Low-pass output.
 // Linear response equals the RBJ/Web-Audio biquad, but it stays smooth and stable under fast modulation.
 struct SvfLP {

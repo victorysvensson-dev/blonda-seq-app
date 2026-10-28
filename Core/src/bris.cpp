@@ -163,7 +163,7 @@ float Bris::renderVoice(Voice& v) {
     const int mode = (int)E.vmode; const int nu = mode == 2 ? 3 : 1;
     const bool pulse = E.wave > 0.5f; const float width = 0.08f + E.pw * 0.84f;
     static const PulseTables& PT = PulseTables::get();
-    constexpr float kSawNorm = 0.918f, kSqNorm = 0.848f;                    // same normalisation for the built-in saw/square
+    constexpr float kSawNorm = 0.842f, kSqNorm = 0.848f;                    // measured levels of Chrome's built-in saw/square
     float mix = 0.f;
     const float g1 = (0.5f / nu) * (nu > 1 ? 1.4f : 1.f), g2 = std::min(1.f, E.det * 2.6f) * 0.34f / nu;
     for (int ui = 0; ui < nu; ++ui) {

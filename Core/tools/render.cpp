@@ -1,6 +1,7 @@
 // Offline renderer: plays scripted demos through the engines and writes 24-bit WAV files.
 // Usage: render <out_dir>
 #include "blonda/bris.hpp"
+#include "blonda/drums.hpp"
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -38,6 +39,35 @@ static void chords(std::vector<Note>& out, double t0, double beat, const std::ve
 static void line(std::vector<Note>& out, double t0, double step, const char* pat, const std::vector<int>& notes, double gate = 0.8, int reps = 1) {
     int k = 0; for (int r = 0; r < reps; ++r) for (int i = 0; pat[i]; ++i) { if (pat[i] != '.') {
         out.push_back({t0 + (r * (int)std::strlen(pat) + i) * step, step * (pat[i] == '-' ? 2.0 : gate), notes[k % notes.size()], pat[i] == 'X' ? 1.f : 0.72f, 1}); ++k; } }
+}
+
+
+// ---------------------------------------------------------------- drum demo: 5 kit sets, 2 bars each
+static void drumDemo(const std::string& dir, int sr) {
+    struct Set { const char* name; const char* kits[6]; };
+    const Set sets[] = {{"blonda", {"", "", "", "", "", ""}}, {"808", {"808", "808", "808", "", "", "conga"}}, {"909", {"909", "909", "stack", "909", "909", "clave"}},
+                        {"lofi", {"thump", "lofi", "snap", "shaker", "shaker", "tom"}}, {"dist", {"dist", "rim", "808", "tick", "tick", "cowbell"}}};
+    const char* pat[6] = {"X...x...X...x.x.", "....X.......X...", "....x.......x..x", "x.xXx.x.x.xXx.x.", "..x...x...x...x.", "...x.....x....x."};
+    const DrumParams P[6] = {{0, .45f, .35f}, {0, .4f, .55f}, {0, .45f, .5f}, {0, .3f, .6f}, {0, .45f, .55f}, {0, .35f, .4f}};
+    const float lvl[6] = {.8f, .48f, .4f, .28f, .22f, .34f}, pan[6] = {0, 0, .05f, .18f, -.18f, -.3f};
+    const float bpm = 118, step = 60.f / bpm / 4.f; const int bars = 2;
+    std::vector<float> L, R;
+    for (auto& set : sets) {
+        DrumTrack tr[6]; for (int k = 0; k < 6; ++k) { tr[k].prepare((float)sr, (DrumKind)k); tr[k].setKit(set.kits[k]); tr[k].params = P[k]; }
+        tr[3].chokeTarget = &tr[4];
+        const int N = (int)(step * 16 * bars * sr) + sr / 2; std::vector<float> mono[6]; for (auto& m : mono) m.assign(N, 0.f);
+        for (int i = 0; i < N; i += 64) {
+            const int fr = std::min(64, N - i);
+            for (int s = 0; s < 16 * bars; ++s) { long f = (long)(s * step * sr + (s % 2 ? 0.12f * step * 0.66f * sr : 0)); if (f < i || f >= i + fr) continue;
+                for (int k = 0; k < 6; ++k) { char c = pat[k][s % 16]; if (c != '.') tr[k].trigger(c == 'X' ? 1.f : 0.72f, (int)(f - i)); } }
+            for (int k = 0; k < 6; ++k) tr[k].process(&mono[k][i], fr);
+        }
+        for (int i = 0; i < N; ++i) { float l = 0, r = 0; for (int k = 0; k < 6; ++k) { float gl, gr; panGains(pan[k], gl, gr); l += mono[k][i] * lvl[k] * gl; r += mono[k][i] * lvl[k] * gr; } L.push_back(l); R.push_back(r); }
+        std::printf("drums %-7s rendered\n", set.name);
+    }
+    double pk = 0; for (size_t i = 0; i < L.size(); ++i) pk = std::max(pk, (double)std::max(std::fabs(L[i]), std::fabs(R[i])));
+    for (size_t i = 0; i < L.size(); ++i) { L[i] *= (float)(0.89 / pk); R[i] *= (float)(0.89 / pk); }
+    writeWav(dir + "/drums_demo.wav", L, R, sr);
 }
 
 int main(int argc, char** argv) {
@@ -97,4 +127,5 @@ int main(int argc, char** argv) {
     float g = (float)(0.89 / pk); for (size_t i = 0; i < AL.size(); ++i) { AL[i] *= g; AR[i] *= g; }
     writeWav(dir + "/bris_demo_reel.wav", AL, AR, sr);
     std::printf("reel %.1f s, gain %.1f dB\n", AL.size() / (double)sr, 20 * std::log10(g));
+    drumDemo(dir, sr);
 }
