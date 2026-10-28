@@ -1,0 +1,6 @@
+build/
+*.f32
+*.wav
+.DS_Store
+xcuserdata/
+DerivedData/
