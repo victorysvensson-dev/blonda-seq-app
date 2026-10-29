@@ -73,6 +73,11 @@ void drawScreen(Canvas& c, const UiState& s, const Theme& t) {
     if (s.inKey) std::snprintf(buf, sizeof buf, "%s %s %+d", s.root, s.scale, s.octave);
     else std::snprintf(buf, sizeof buf, "%s CHROM %+d", s.root, s.octave);
     rightText(c, t, bx + bw - 6, by + 5, buf, 1, t.label);
+    // NOTE REPEAT and FX state in the middle of the box header
+    if (s.repeat[0] || s.fxOff) {
+        std::snprintf(buf, sizeof buf, "%s%s%s", s.repeat, s.repeat[0] && s.fxOff ? "  " : "", s.fxOff ? "FX OFF" : "");
+        centreText(c, t, bx, bw, by + 5, buf, 1, t.accent);
+    }
     const int sy = by + 16, sh = bh - 20, mid = sy + sh / 2, sx = bx + (bw - 2 * UiState::kScopeCols) / 2;
     for (int i = sx; i < sx + 2 * UiState::kScopeCols; i += 4) c.rect(i, mid, 2, 1, t.dim);
     int peakv = 24;   // auto-scale so quiet sounds still fill the box (but silence stays flat)

@@ -9,6 +9,11 @@
 #include "akai/engine_instrument.hpp"
 #include "akai/screen.hpp"
 #include "akai/surface.hpp"
+#include "akai/repeat.hpp"
+#include "akai/fx.hpp"
+#include "blonda/convolver.hpp"
+#include "blonda/seq3.hpp"
+#include <thread>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -229,6 +234,159 @@ static void testBlockSizes() {
     }
 }
 
+
+// ---------------------------------------------------------------- NOTE REPEAT
+static void testRepeater() {
+    std::puts("note repeat: grid, chords, arpeggios, pressure, no stuck notes");
+    struct E { bool on; int note; long long at; float vel; };
+    std::vector<E> evs;
+    Repeater r; r.prepare(kSR); r.setTempo(120.f); r.setRate(3);   // 1/16 at 120 = 5512.5 samples
+    long long t = 0;
+    auto run = [&](double sec) { for (int i = 0; i < (int)(sec * kSR / kBlock); ++i) {
+        r.process(kBlock, [&](int n, float v, int o) { evs.push_back({true, n, t + o, v}); }, [&](int n, int o) { evs.push_back({false, n, t + o, 0.f}); }); t += kBlock; } };
+    auto ons = [&]() { int c = 0; for (auto& e : evs) c += e.on; return c; };
+    auto offs = [&]() { int c = 0; for (auto& e : evs) c += !e.on; return c; };
+    r.add(60, .7f); run(1.0);
+    CHECK(ons() == 8, "1/16 at 120 BPM: 8 hits in a second (%d)", ons());
+    bool grid = true; int k = 0;
+    for (auto& e : evs) if (e.on) { grid &= e.at == (long long)(k * 5512.5); ++k; }
+    CHECK(grid, "hits land on the grid, first one at once");
+    CHECK(evs[0].vel == .7f, "repeat keeps the pad velocity (%g)", evs[0].vel);
+    r.setPressure(60, 1.f); evs.clear(); run(0.3);
+    CHECK(!evs.empty() && evs[0].on && std::fabs(evs[0].vel - 1.f) < 1e-6f, "pad pressure sets the repeat velocity");
+    r.remove(60); run(0.5);
+    CHECK(ons() == offs(), "every repeat gets its note-off after release (%d on, %d off)", ons(), offs());
+    // chord: all notes on each step
+    evs.clear(); r.add(60, .8f); r.add(64, .8f); r.add(67, .8f); run(0.2);
+    int first = 0; for (auto& e : evs) if (e.on && e.at == evs[0].at) ++first;
+    CHECK(first == 3, "REPEAT plays the whole chord on a step (%d)", first);
+    r.clear(); r.silence([&](int n, int o) { evs.push_back({false, n, t + o, 0.f}); }); run(0.2);
+    CHECK(ons() == offs(), "silence() sends the outstanding note-offs");
+    // arpeggios
+    auto arp = [&](int mode, std::initializer_list<int> notes, int steps) {
+        Repeater a; a.prepare(kSR); a.setTempo(120.f); a.setRate(3); a.setMode(mode);
+        for (int n : notes) a.add(n, .8f);
+        std::vector<int> seq;
+        for (int i = 0; i < 4000 && (int)seq.size() < steps; ++i) a.process(kBlock, [&](int n, float, int) { seq.push_back(n); }, [](int, int) {});
+        return seq;
+    };
+    CHECK((arp(Repeater::Up, {64, 60, 67}, 6) == std::vector<int>{60, 64, 67, 60, 64, 67}), "ARP UP goes up by pitch");
+    CHECK((arp(Repeater::Down, {64, 60, 67}, 4) == std::vector<int>{67, 64, 60, 67}), "ARP DOWN goes down");
+    CHECK((arp(Repeater::UpDown, {64, 60, 67}, 6) == std::vector<int>{60, 64, 67, 64, 60, 64}), "ARP UP/DN turns without repeating the ends");
+    CHECK((arp(Repeater::Order, {64, 60, 67}, 4) == std::vector<int>{64, 60, 67, 64}), "ARP ORDER follows the playing order");
+    const auto rnd = arp(Repeater::Random, {60, 64, 67}, 40); bool norep = true; for (size_t i = 1; i < rnd.size(); ++i) norep &= rnd[i] != rnd[i - 1];
+    CHECK(rnd.size() == 40 && norep, "ARP RANDOM never plays the same note twice in a row");
+
+    // in the app: tap toggles, hold is momentary, encoder sets the rate while held, SHIFT changes the mode
+    auto app = std::make_unique<App>(); App& A = *app; A.prepare(kSR);
+    std::vector<float> L(kBlock), R(kBlock);
+    auto runA = [&](double sec) { for (int i = 0; i < (int)(sec * kSR / kBlock); ++i) A.render(L.data(), R.data(), kBlock); };
+    A.selectInstrument(8);   // PLUCK: short notes, easy to count
+    CHECK(std::string(A.instrument().name()) == "PLUCK", "instrument 8 is PLUCK (%s)", A.instrument().name());
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); runA(0.05); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
+    CHECK(A.repeatOn(), "tapping NOTE REPEAT switches it on");
+    A.handle(ev(mpcs::Event::PadDown, 0, 100)); runA(1.0);
+    UiState s; A.snapshot(s);
+    CHECK(std::string(s.repeat) == "REPEAT 1/16", "screen shows the repeat (%s)", s.repeat);
+    A.handle(ev(mpcs::Event::PadUp, 0)); runA(3.0);
+    CHECK(A.instrument().activeVoices() == 0, "no notes left after the pad is released (%d)", A.instrument().activeVoices());
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); runA(0.05); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
+    CHECK(!A.repeatOn(), "tapping again switches it off");
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT));
+    A.handle(ev(mpcs::Event::Encoder, mpcs::CC_ENCODER, 0, -2));
+    runA(0.6); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
+    CHECK(!A.repeatOn() && A.repeater().rate() == 1, "hold + encoder sets the rate (1/8) and releasing ends the repeat (%d)", A.repeater().rate());
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_SHIFT)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT));
+    A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
+    CHECK(A.repeatOn() && A.repeater().mode() == Repeater::Up, "SHIFT + NOTE REPEAT: next mode (ARP UP) and on");
+    // a held pad keeps sounding when repeat is switched off under it, and stops normally afterwards
+    A.selectInstrument(5);   // ANALOG: sustains while held
+    CHECK(std::string(A.instrument().name()) == "ANALOG", "instrument 5 is ANALOG (%s)", A.instrument().name());
+    A.handle(ev(mpcs::Event::PadDown, 5, 100)); runA(0.5);
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); runA(0.05); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
+    runA(0.5);
+    CHECK(!A.repeatOn() && A.instrument().activeVoices() >= 1, "switching repeat off hands the held note back (%d)", A.instrument().activeVoices());
+    A.handle(ev(mpcs::Event::PadUp, 5)); runA(4.0);
+    CHECK(A.instrument().activeVoices() == 0, "and it stops on release (%d)", A.instrument().activeVoices());
+    // latch + arp, then STOP
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PLAY)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_PLAY));
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
+    for (int p : {0, 4, 7}) A.handle(ev(mpcs::Event::PadDown, p, 100));
+    for (int p : {0, 4, 7}) A.handle(ev(mpcs::Event::PadUp, p));
+    runA(1.0);
+    CHECK(A.repeater().numSources() == 3, "latched chord keeps arpeggiating (%d notes)", A.repeater().numSources());
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_STOP)); runA(4.0);
+    CHECK(A.repeater().numSources() == 0 && A.instrument().activeVoices() == 0, "STOP ends the arpeggio (%d voices)", A.instrument().activeVoices());
+}
+
+// ---------------------------------------------------------------- KNOB FX
+static void testFx() {
+    std::puts("knob fx: transparent at rest, echo timing, space = SEQ.3's convolver, threaded = offline, filter, off switch");
+    const int n = (int)(3.0 * kSR) / kBlock * kBlock;
+    std::vector<float> xL(n, 0.f), xR(n, 0.f);
+    blonda::Noise nz; nz.seed(7);
+    for (int i = 0; i < 4410; ++i) { xL[i] = nz.next() * .5f; xR[i] = nz.next() * .5f; }   // 0.1 s burst
+    auto render = [&](FxBus& F, std::vector<float>& L, std::vector<float>& R, bool realtime) {
+        L = xL; R = xR;
+        for (int i = 0; i < n; i += kBlock) { F.process(&L[i], &R[i], kBlock); if (realtime) std::this_thread::sleep_for(std::chrono::microseconds(2900)); }
+    };
+    std::vector<float> L, R;
+    { FxBus F; F.prepare(kSR); F.setThreaded(false); render(F, L, R, false);
+      CHECK(L == xL && R == xR, "with ECHO and SPACE at 0 and the filter centred the sound is untouched (bit for bit)"); }
+    { FxBus F; F.prepare(kSR); F.setThreaded(false); F.setTempo(120.f); F.set(FxBus::P_ECHO, 1.f); F.set(FxBus::P_TIME, 3); F.set(FxBus::P_FEEDBACK, 0.f);
+      render(F, L, R, false);
+      auto e = [&](int a, int b) { double q = 0; for (int i = a; i < b; ++i) q += (double)(L[i] - xL[i]) * (L[i] - xL[i]); return q; };
+      const double before = e(0, 22000), at = e(22050, 22050 + 4410);
+      CHECK(at > 100 * (before + 1e-12), "ECHO 1/4 at 120 BPM repeats after 0.5 s (%.3g vs %.3g)", at, before); }
+    // SPACE against SEQ.3's own convolver with the same IR
+    { FxBus F; F.set(FxBus::P_SPACE, 1.f); F.prepare(kSR); F.setThreaded(false);
+      std::vector<float> L1, R1; render(F, L1, R1, false);
+      blonda::Convolver C; blonda::buildReverb(C, 2.6f, kSR);
+      // reference: the same send chain (250 Hz high-pass, send 1, return 0.7) around SEQ.3's convolver
+      float c[5]; { const float f = 250.f, q = 1.f, w = 2.f * 3.14159265358979f * f / kSR, cs = std::cos(w), sn = std::sin(w);
+        const float al = sn / (2 * std::pow(10.f, q / 20.f)), a0 = 1 + al; c[0] = (1 + cs) * .5f / a0; c[1] = -(1 + cs) / a0; c[2] = c[0]; c[3] = -2 * cs / a0; c[4] = (1 - al) / a0; }
+      std::vector<float> hl(n), hr(n), wl(n, 0.f), wr(n, 0.f); float z[2][2] = {};
+      auto bq = [&](float* zz, float x) { const float y = c[0] * x + zz[0]; zz[0] = c[1] * x - c[3] * y + zz[1]; zz[1] = c[2] * x - c[4] * y; return y; };
+      for (int i = 0; i < n; ++i) { hl[i] = bq(z[0], xL[i]); hr[i] = bq(z[1], xR[i]); }
+      for (int i = 0; i < n; i += kBlock) C.process(&hl[i], &hr[i], &wl[i], &wr[i], kBlock);
+      float md = 0, pk = 0; for (int i = 0; i < n; ++i) { const float ref = xL[i] + wl[i] * .7f; md = std::max(md, std::fabs(L1[i] - ref)); pk = std::max(pk, std::fabs(ref)); }
+      CHECK(md < 1e-4f * pk + 1e-6f, "SPACE matches SEQ.3's convolution reverb (largest difference %.2g of peak %.2g)", md, pk);
+      double tail = 0; for (int i = (int)(0.5 * kSR); i < (int)(2.0 * kSR); ++i) tail += (double)L1[i] * L1[i];
+      CHECK(tail > 1e-3, "SPACE has its long tail (%.3g)", tail);
+      // the worker thread gives the same result when it keeps up (real-time pacing)
+      FxBus G; G.set(FxBus::P_SPACE, 1.f); G.prepare(kSR); std::vector<float> L2, R2; render(G, L2, R2, true);
+      CHECK(L2 == L1 && R2 == R1 && G.lateBlocks() == 0, "threaded tail = offline tail, bit for bit (%d late blocks)", G.lateBlocks()); }
+    { FxBus F; F.prepare(kSR); F.setThreaded(false); F.set(FxBus::P_FILTER, -0.8f);
+      std::vector<float> s(n), sr(n); for (int i = 0; i < n; ++i) s[i] = sr[i] = std::sin(2 * 3.14159265f * 8000.f * i / kSR) * .5f;
+      for (int i = 0; i < n; i += kBlock) F.process(&s[i], &sr[i], kBlock);
+      float pk = 0; for (int i = n / 2; i < n; ++i) pk = std::max(pk, std::fabs(s[i]));
+      CHECK(pk < .05f, "FILTER to the left is a low-pass (8 kHz at %.3f)", pk);
+      char buf[16]; F.format(FxBus::P_FILTER, buf, sizeof buf); CHECK(std::string(buf) == "LP 79", "filter label (%s)", buf);
+      F.set(FxBus::P_FILTER, 0.02f); F.format(FxBus::P_FILTER, buf, sizeof buf); CHECK(std::string(buf) == "OFF", "centre of the knob is off (%s)", buf); }
+    // app: KNOB FX shows the effects on the knobs, SHIFT + KNOB FX switches them off; no allocation
+    { auto app = std::make_unique<App>(); App& A = *app; A.prepare(kSR);
+      std::vector<float> l(kBlock), r(kBlock);
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_KNOB_FX)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_KNOB_FX));
+      UiState s; A.snapshot(s);
+      CHECK(A.fxView() && std::string(s.page) == "KNOB FX" && std::string(s.paramName[0]) == "ECHO" && std::string(s.paramName[1]) == "SPACE" && std::string(s.paramName[2]) == "FILTER",
+            "KNOB FX puts ECHO / SPACE / FILTER on K1-K3 (%s: %s %s %s)", s.page, s.paramName[0], s.paramName[1], s.paramName[2]);
+      for (int v = 0; v <= 127; v += 8) A.handle(ev(mpcs::Event::Knob, mpcs::CC_K2, v));
+      CHECK(A.fx().get(FxBus::P_SPACE) > .9f, "K2 turns SPACE up (%.2f)", A.fx().get(FxBus::P_SPACE));
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_B2)); A.snapshot(s);
+      CHECK(std::string(s.page) == "ECHO" && std::string(s.paramName[0]) == "TIME", "B2: echo time / feedback page (%s)", s.page);
+      A.handle(ev(mpcs::Event::PadDown, 0, 100));
+      gCount = true; gAllocs = 0;
+      for (int i = 0; i < 400; ++i) A.render(l.data(), r.data(), kBlock);
+      gCount = false;
+      CHECK(gAllocs == 0, "no allocation while the effects run (%ld)", (long)gAllocs);
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_SHIFT)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_KNOB_FX));
+      A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_KNOB_FX)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
+      A.snapshot(s);
+      CHECK(!A.fx().enabled() && s.fxOff, "SHIFT + KNOB FX switches the effects off");
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_KNOB_FX)); A.snapshot(s);
+      CHECK(!A.fxView() && std::string(s.page) != "KNOB FX", "KNOB FX again: back to the instrument's pages (%s)", s.page); }
+}
+
 // BRIS (blonda-motor) voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
 static void testBrisMotorVoices() {
     std::puts("BRIS (blonda-motor) voice modes");
@@ -335,6 +493,18 @@ static void testApp(const char* outDir) {
         A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_SHIFT)); A.setStats(0.07f, 0);
         shot("screen_shift");
         A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
+        // NOTE REPEAT (arp) + KNOB FX page
+        A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_SHIFT)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT));
+        A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
+        A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_KNOB_FX));
+        A.handle(ev(mpcs::Event::Knob, mpcs::CC_K1, 40)); A.handle(ev(mpcs::Event::Knob, mpcs::CC_K2, 70)); A.handle(ev(mpcs::Event::Knob, mpcs::CC_K3, 30));
+        for (int p : {0, 4, 7}) A.handle(ev(mpcs::Event::PadDown, p, 100));
+        run(1.6);
+        shot("screen_fx_repeat");
+        for (int p : {0, 4, 7}) A.handle(ev(mpcs::Event::PadUp, p));
+        A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_KNOB_FX));
+        A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
+        run(4.0);
     }
 
     // SHIFT + TAP TEMPO switches the screen colours; the waveform follows the output
@@ -483,6 +653,8 @@ int main(int argc, char** argv) {
     testInstruments(outDir);
     testBrisMotorVoices();
     testBlockSizes();
+    testRepeater();
+    testFx();
     testApp(outDir);
     renderPresets(outDir);
     bench();

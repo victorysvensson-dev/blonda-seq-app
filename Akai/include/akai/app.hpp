@@ -17,8 +17,14 @@
 //   TAP TEMPO ....... tap the tempo for synced LFO / delay     SHIFT: switch screen colours (SHARP / BLONDA)
 //   ERASE ........... undo edits (reload the preset)
 //   STOP ............ all notes off             SHIFT + STOP: quit back to the MPC Sample software
+//   NOTE REPEAT ..... tap: repeat on / off; hold: repeat while held; hold + encoder: rate
+//                     SHIFT + NOTE REPEAT: next mode (REPEAT, ARP UP, DOWN, UP/DN, ORDER, RANDOM)
+//   KNOB FX ......... K1-K3 control the effects (ECHO, SPACE, FILTER; B1/B2: ECHO time / feedback page)
+//                     SHIFT + KNOB FX: all effects off / on
 #pragma once
 #include "akai/controls.hpp"
+#include "akai/fx.hpp"
+#include "akai/repeat.hpp"
 #include "akai/instrument.hpp"
 #include "akai/midi.hpp"
 #include "akai/surface.hpp"
@@ -45,6 +51,8 @@ struct UiState {
     char toast[32]{};                    // short message ("OCTAVE +1"), empty when none
     char prevPage[16]{}, nextPage[16]{}; // neighbour page names for the B1 / B2 tabs
     int theme = 0;                       // 0 SHARP (default), 1 BLONDA (SHIFT + TAP TEMPO)
+    char repeat[24]{};                   // "REPEAT 1/16", "ARP UP 1/8T"; empty when NOTE REPEAT is off
+    bool fxView = false, fxOff = false;  // knobs on KNOB FX / all effects switched off
     static constexpr int kScopeCols = 152;
     int8_t scopeMin[kScopeCols]{}, scopeMax[kScopeCols]{};   // output waveform, oldest -> newest, -127..127
 };
@@ -76,6 +84,10 @@ public:
     int current() const { return cur_; }
     void selectInstrument(int i);
     const PadLayout& layout() const { return layout_; }
+    FxBus& fx() { return fx_; }
+    const Repeater& repeater() const { return rep_; }
+    bool repeatOn() const { return repeatOn_; }
+    bool fxView() const { return fxView_; }
 
 private:
     static constexpr int kMaxInst = 12;
@@ -115,6 +127,21 @@ private:
     uint32_t padSent_[16];
     bool padSentValid_[16]{};
     int ledBtnCursor_ = 0, padCursor_ = 0;
+
+    // NOTE REPEAT
+    Repeater rep_;
+    bool repeatOn_ = false, nrDown_ = false, nrUsed_ = false, nrWasOn_ = false, nrShift_ = false;
+    long long nrAt_ = 0;
+    float noteVel_[128];
+    void setRepeat(bool on);
+    void repeatToast();
+    // KNOB FX
+    FxBus fx_;
+    bool fxView_ = false;
+    int fxPage_ = 0;
+    Params& view() { return fxView_ ? static_cast<Params&>(fx_) : static_cast<Params&>(instrument()); }
+    const Params& view() const { return fxView_ ? static_cast<const Params&>(fx_) : static_cast<const Params&>(*inst_[cur_]); }
+    int viewPage() const { return fxView_ ? fxPage_ : page_; }
 
     void dirty() { ++uiVersion_; }
     void toast(const char* fmt, ...);

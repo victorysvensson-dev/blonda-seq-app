@@ -41,6 +41,7 @@ App::App() {
     for (blonda::Eng e : order) inst_[nInst_++].reset(new EngineInstrument(e));
     for (int& n : padNote_) n = -1;
     for (int& l : ledSent_) l = -1;
+    for (float& v : noteVel_) v = 0.8f;
 }
 
 App::~App() = default;
@@ -48,6 +49,8 @@ App::~App() = default;
 void App::prepare(float sampleRate) {
     sr_ = sampleRate;
     for (int i = 0; i < nInst_; ++i) { inst_[i]->prepare(sampleRate); inst_[i]->setTempo(bpm_); }
+    rep_.prepare(sampleRate); rep_.setTempo(bpm_);
+    fx_.prepare(sampleRate); fx_.setTempo(bpm_);
     cur_ = 0; prev_ = -1; page_ = 0; preset_ = 0;
     forceRefreshLights();
     dirty();
@@ -70,10 +73,36 @@ void App::setStats(float cpuLoad, int xruns) {
 // ---------------------------------------------------------------- notes
 void App::notePlay(int note, float vel) {
     latched_[note] = false;
-    instrument().noteOn(note, vel, 0);
+    noteVel_[note] = vel;
+    if (repeatOn_) rep_.add(note, vel); else instrument().noteOn(note, vel, 0);
     dirty();
 }
-void App::noteStop(int note) { instrument().noteOff(note, 0); }
+void App::noteStop(int note) { if (repeatOn_) rep_.remove(note); else instrument().noteOff(note, 0); }
+
+// NOTE REPEAT on/off: the notes held right now (pads, latch, keyboard) move between the instrument and the repeater
+void App::setRepeat(bool on) {
+    if (on == repeatOn_) return;
+    bool src[128] = {};
+    for (int n : padNote_) if (n >= 0) src[n] = true;
+    for (int n = 0; n < 128; ++n) if (latched_[n]) src[n] = true;
+    if (!on) for (int n = 0; n < 128; ++n) if (rep_.holds(n)) src[n] = true;   // keyboard notes held through the repeater
+    Instrument& I = instrument();
+    if (on) {
+        for (int n = 0; n < 128; ++n) if (src[n]) I.noteOff(n, 0);
+        repeatOn_ = true; rep_.clear();
+        for (int n = 0; n < 128; ++n) if (src[n]) rep_.add(n, noteVel_[n]);
+    } else {
+        rep_.silence([&](int n, int o) { I.noteOff(n, o); });
+        rep_.clear(); repeatOn_ = false;
+        for (int n = 0; n < 128; ++n) if (src[n]) I.noteOn(n, noteVel_[n], 0);
+    }
+    updatePressure();
+    dirty();
+}
+void App::repeatToast() {
+    if (!repeatOn_) { toast("%s", "REPEAT OFF"); return; }
+    toast("%s %s", Repeater::modeName(rep_.mode()), Repeater::rateName(rep_.rate()));
+}
 
 void App::padDown(int pad, int velocity) {
     if (latch_) {   // a new chord after all pads were let go replaces the latched one
@@ -112,13 +141,13 @@ void App::releaseLatched(bool keepHeld) {
 void App::updatePressure() {
     int mx = 0;
     for (uint8_t p : padPressure_) mx = p > mx ? p : mx;
-    instrument().pressure(mx / 127.f);
+    instrument().pressure(repeatOn_ ? 0.f : mx / 127.f);   // with NOTE REPEAT, pressure sets the repeat velocity instead
 }
 
 // ---------------------------------------------------------------- pages, presets, instruments
 void App::setPage(int p) {
-    const int n = instrument().numPages();
-    page_ = ((p % n) + n) % n;
+    const int n = view().numPages();
+    (fxView_ ? fxPage_ : page_) = ((p % n) + n) % n;
     dirty();
 }
 
@@ -135,6 +164,7 @@ void App::selectInstrument(int i) {
     i = ((i % nInst_) + nInst_) % nInst_;
     if (i == cur_) return;
     // let the old instrument's held notes fade, keep rendering its tail for a few seconds
+    rep_.silence([&](int n, int o) { instrument().noteOff(n, o); }); rep_.clear();
     instrument().allNotesOff();
     for (int& n : padNote_) n = -1;
     for (bool& l : latched_) l = false;
@@ -150,8 +180,8 @@ void App::selectInstrument(int i) {
 
 // ---------------------------------------------------------------- knobs and buttons
 void App::knob(int slot, int value) {
-    Instrument& I = instrument();
-    const int prm = I.page(page_).param[slot];
+    Params& I = view();
+    const int prm = I.page(viewPage()).param[slot];
     if (prm < 0) { knob_[slot].last = value / 127.f; return; }
     const float pos = value / 127.f;
     const ParamInfo& info = I.param(prm);
@@ -163,11 +193,31 @@ void App::knob(int slot, int value) {
 
 void App::button(int b, bool down) {
     if (b == BTN_SHIFT) { shift_ = down; dirty(); return; }
+    if (b == BTN_NOTE_REPEAT) {
+        // tap: on / off; hold: on while held (and the encoder picks the rate); SHIFT: next mode
+        if (down) {
+            if (shift_) { nrShift_ = true; rep_.setMode(rep_.mode() + 1); setRepeat(true); repeatToast(); return; }
+            nrDown_ = true; nrUsed_ = false; nrAt_ = now_; nrWasOn_ = repeatOn_;
+            setRepeat(true); repeatToast();
+        } else {
+            if (nrShift_) { nrShift_ = false; return; }
+            if (!nrDown_) return;
+            nrDown_ = false;
+            const bool held = nrUsed_ || (float)(now_ - nrAt_) / sr_ >= 0.35f;
+            if (nrWasOn_ ? !held : held) { setRepeat(false); repeatToast(); }
+        }
+        return;
+    }
     if (!down) return;
     Instrument& I = instrument();
     switch (b) {
-    case BTN_B1: setPage(page_ - 1); break;
-    case BTN_B2: setPage(page_ + 1); break;
+    case BTN_B1: setPage(viewPage() - 1); break;
+    case BTN_B2: setPage(viewPage() + 1); break;
+    case BTN_KNOB_FX:
+        if (shift_) { fx_.setEnabled(!fx_.enabled()); toast("%s", fx_.enabled() ? "FX ON" : "FX OFF"); break; }
+        fxView_ = !fxView_;
+        toast("%s", fxView_ ? "KNOB FX" : I.name());
+        break;
     case BTN_B3: selectInstrument(cur_ + (shift_ ? -1 : 1)); toast("%s", instrument().name()); break;
     case BTN_ENCODER_PUSH: setPage(0); break;
     case BTN_MINUS:
@@ -194,6 +244,7 @@ void App::button(int b, bool down) {
                 tapAvg_ = taps_ == 0 ? sec : tapAvg_ * 0.6f + sec * 0.4f; ++taps_;
                 bpm_ = std::round(60.f / tapAvg_);
                 for (int i = 0; i < nInst_; ++i) inst_[i]->setTempo(bpm_);
+                rep_.setTempo(bpm_); fx_.setTempo(bpm_);
                 toast("TEMPO %d", (int)bpm_);
             } else taps_ = 0;
         }
@@ -202,6 +253,7 @@ void App::button(int b, bool down) {
     case BTN_ERASE: setPreset(preset_); toast("%s", "RELOADED"); break;
     case BTN_STOP:
         if (shift_) { quit_ = true; toast("%s", "BYE"); break; }
+        rep_.silence([&](int n, int o) { I.noteOff(n, o); }); rep_.clear();
         I.allNotesOff();
         for (int& n : padNote_) n = -1;
         for (bool& l : latched_) l = false;
@@ -216,7 +268,10 @@ void App::handle(const Event& e) {
     case Event::PadDown: padDown(e.id, e.value); break;
     case Event::PadUp: padUp(e.id); break;
     case Event::PadPressure:
-        if (padNote_[e.id] >= 0) { padPressure_[e.id] = e.value; updatePressure(); }
+        if (padNote_[e.id] >= 0) {
+            padPressure_[e.id] = e.value; updatePressure();
+            if (repeatOn_) rep_.setPressure(padNote_[e.id], e.value / 127.f);
+        }
         break;
     case Event::ButtonDown: button(e.id, true); break;
     case Event::ButtonUp: button(e.id, false); break;
@@ -229,7 +284,9 @@ void App::handle(const Event& e) {
         }
         break;
     case Event::Encoder:
-        if (shift_) setPage(page_ + e.delta); else setPreset(preset_ + e.delta);
+        if (nrDown_) { rep_.setRate(rep_.rate() + e.delta); nrUsed_ = true; repeatToast(); }
+        else if (shift_) setPage(viewPage() + e.delta);
+        else setPreset(preset_ + e.delta);
         break;
     default: break;
     }
@@ -238,7 +295,7 @@ void App::handle(const Event& e) {
 void App::handleMidi(const MidiMsg& m) {
     switch (m.type()) {
     case 0x90: if (m.d2 > 0) { notePlay(m.d1, m.d2 / 127.f); break; } [[fallthrough]];
-    case 0x80: instrument().noteOff(m.d1, 0); break;
+    case 0x80: noteStop(m.d1); break;
     case 0xD0: instrument().pressure(m.d1 / 127.f); break;
     case 0xE0: instrument().pitchBend((float)(((m.d2 << 7) | m.d1) - 8192) / 8192.f); break;
     case 0xB0:
@@ -265,8 +322,13 @@ void App::renderInto(Instrument& I, float* L, float* R, int frames) {
 void App::render(float* L, float* R, int frames) {
     std::memset(L, 0, sizeof(float) * (size_t)frames);
     std::memset(R, 0, sizeof(float) * (size_t)frames);
+    if (repeatOn_) {   // NOTE REPEAT plays its grid into this block (sample-accurate offsets)
+        Instrument& I = instrument();
+        rep_.process(frames, [&](int n, float v, int o) { I.noteOn(n, v, o); }, [&](int n, int o) { I.noteOff(n, o); });
+    }
     renderInto(instrument(), L, R, frames);
     if (prev_ >= 0) { if (now_ < prevUntil_) renderInto(*inst_[prev_], L, R, frames); else prev_ = -1; }
+    fx_.process(L, R, frames);
     const float coef = 1.f - std::exp(-1.f / (0.02f * sr_));   // 20 ms volume smoothing
     float pk = 0.f;
     for (int i = 0; i < frames; ++i) {
@@ -309,6 +371,8 @@ int App::desiredLed(int b) const {
     case BTN_STOP: return 1;
     case BTN_TAP_TEMPO: return beat ? 2 : 1;
     case BTN_ERASE: return 1;
+    case BTN_NOTE_REPEAT: return repeatOn_ ? (rep_.flash() ? 1 : 2) : 1;   // on: bright, dips on every step
+    case BTN_KNOB_FX: return fxView_ ? 2 : (fx_.enabled() ? 1 : 0);
     default: break;
     }
     for (int i = 0; i < 8; ++i) if (b == kBankLedCC[i]) return i == layout_.octave + 3 ? 2 : 0;   // octave A..H
@@ -361,16 +425,17 @@ void App::snapshot(UiState& s) const {
     std::snprintf(s.preset, sizeof s.preset, "%s", I.presetName(preset_));
     s.presetIndex = preset_; s.presetCount = I.numPresets();
     s.instrumentIndex = cur_; s.instrumentCount = nInst_;
-    const Page& pg = I.page(page_);
+    const Params& V = view(); const int vp = viewPage();
+    const Page& pg = V.page(vp);
     std::snprintf(s.page, sizeof s.page, "%s", pg.name);
-    s.pageIndex = page_; s.pageCount = I.numPages();
+    s.pageIndex = vp; s.pageCount = V.numPages();
     for (int k = 0; k < 3; ++k) {
         const int prm = pg.param[k];
         s.used[k] = prm >= 0;
         if (prm < 0) { s.paramName[k][0] = s.paramValue[k][0] = 0; s.paramNorm[k] = 0; continue; }
-        std::snprintf(s.paramName[k], sizeof s.paramName[k], "%s", I.param(prm).name);
-        I.format(prm, s.paramValue[k], sizeof s.paramValue[k]);
-        s.paramNorm[k] = I.getNorm(prm);
+        std::snprintf(s.paramName[k], sizeof s.paramName[k], "%s", V.param(prm).name);
+        V.format(prm, s.paramValue[k], sizeof s.paramValue[k]);
+        s.paramNorm[k] = V.getNorm(prm);
     }
     s.activeKnob = activeKnob_;
     std::snprintf(s.root, sizeof s.root, "%s", kNoteNames[layout_.root]);
@@ -380,9 +445,12 @@ void App::snapshot(UiState& s) const {
     s.voices = I.activeVoices(); s.xruns = xruns_;
     std::snprintf(s.toast, sizeof s.toast, "%s", toast_);
     s.theme = theme_;
-    const int np = I.numPages();
-    std::snprintf(s.prevPage, sizeof s.prevPage, "%s", I.page((page_ + np - 1) % np).name);
-    std::snprintf(s.nextPage, sizeof s.nextPage, "%s", I.page((page_ + 1) % np).name);
+    const int np = V.numPages();
+    std::snprintf(s.prevPage, sizeof s.prevPage, "%s", V.page((vp + np - 1) % np).name);
+    std::snprintf(s.nextPage, sizeof s.nextPage, "%s", V.page((vp + 1) % np).name);
+    if (repeatOn_) std::snprintf(s.repeat, sizeof s.repeat, "%s %s", Repeater::modeName(rep_.mode()), Repeater::rateName(rep_.rate()));
+    else s.repeat[0] = 0;
+    s.fxView = fxView_; s.fxOff = !fx_.enabled();
     for (int c = 0; c < kScopeCols; ++c) { const int k = (scopeW_ + c) % kScopeCols; s.scopeMin[c] = scopeMin_[k]; s.scopeMax[c] = scopeMax_[k]; }
 }
 

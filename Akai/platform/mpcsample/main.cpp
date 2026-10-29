@@ -342,6 +342,15 @@ int selftest() {
                     s.instrument, a0, w0, a1, w1, a2, w2, peak, finite ? "" : "NaN!");
         ok &= finite && peak > 0.001f;
     }
+    {   // KNOB FX at full on top of BRIS (the reverb tail runs on its worker; only the audio-thread cost counts here)
+        A.selectInstrument(0);
+        A.fx().set(akai::FxBus::P_ECHO, 1.f); A.fx().set(akai::FxBus::P_SPACE, 1.f); A.fx().set(akai::FxBus::P_FILTER, -.5f);
+        float peak = 0; bool finite = true; double a, w;
+        pads(0, true); run(4, a, w, peak, finite); pads(0, false);
+        std::printf("  BRIS + KNOB FX (echo, space, filter): avg %5.1f%% worst %5.1f%% | peak %.2f %s\n", a, w, peak, finite ? "" : "NaN!");
+        A.fx().set(akai::FxBus::P_ECHO, 0.f); A.fx().set(akai::FxBus::P_SPACE, 0.f); A.fx().set(akai::FxBus::P_FILTER, 0.f);
+        ok &= finite;
+    }
     std::puts(ok ? "SELFTEST OK" : "SELFTEST FAIL");
     return ok ? 0 : 1;
 }
@@ -355,6 +364,7 @@ int main(int argc, char** argv) {
     std::signal(SIGINT, onSignal); std::signal(SIGTERM, onSignal);
     std::puts("BLONDA AKAI for MPC Sample");
 
+    akai::gWorkerThreadInit = [] { pinTo(false); };   // the reverb tail worker stays off the audio core
     auto app = std::make_unique<akai::App>(); akai::App& A = *app;
     A.prepare((float)kRate);
 

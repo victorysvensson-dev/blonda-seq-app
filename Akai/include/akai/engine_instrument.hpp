@@ -22,6 +22,7 @@ public:
     void pressure(float amount) override;
     void setTempo(float bpm) override { track_.bpm = bpm; }
     const blonda::MelodicTrack& track() const { return track_; }
+    int activeVoices() const override { return track_.activeGraphs(); }
     void process(float* L, float* R, int frames) override;
 
     int numParams() const override;

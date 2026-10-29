@@ -45,6 +45,7 @@ public:
     void releaseLive(int note);
     void process(float* L, float* R, int frames);   // adds
     double now() const { return now_; }
+    int activeGraphs() const { int c = 0; for (auto& g : g_) c += g.active() ? 1 : 0; return c; }   // sounding notes incl. release tails
     bool histOverflow() const { for (auto& g : g_) if (g.histOverflow()) return true; return false; }   // tests
 
 private:
