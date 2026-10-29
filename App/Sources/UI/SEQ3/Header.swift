@@ -124,7 +124,7 @@ struct BPMPill: View {
         HStack(spacing: 4) {
             roundBtn { model.nudgeBPM(-1) } icon: { SVGIcon(d: "M4 8h8", size: 14, stroke: 1.6, cap: .round) }
             HStack(alignment: .bottom, spacing: 5) {
-                DotMatrixText(text: "\(Int(model.bpm.rounded()))", height: 20)
+                DotMatrixText(text: "\(Int(model.bpm.rounded()))", height: 20, color: T.hfg)
                     .contentShape(Rectangle())
                     .gesture(DragGesture(minimumDistance: 2).onChanged { g in
                         if bpm0 == nil { bpm0 = model.bpm }
