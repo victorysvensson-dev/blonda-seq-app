@@ -24,7 +24,15 @@ jobs:
       - name: Build for iOS Simulator (no signing)
         run: |
           cd App
+          set +e
           xcodebuild -project BLONDA.xcodeproj -scheme BLONDA -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build | tail -60
-          exit ${PIPESTATUS[0]}
+            CODE_SIGNING_ALLOWED=NO build > build.log 2>&1
+          rc=$?
+          tail -40 build.log
+          # surface compiler errors as annotations (readable through the API)
+          grep -E "error:" build.log | sort -u | head -40 | sed 's/^.*App\///' > errs.txt
+          if [ -s errs.txt ]; then echo "::error title=xcodebuild::$(sed ':a;N;$!ba;s/\n/%0A/g' errs.txt)"; fi
+          grep -E "warning:" build.log | grep -v "ld: warning" | sort -u | head -30 | sed 's/^.*App\///' > warns.txt
+          if [ -s warns.txt ]; then echo "::warning title=xcodebuild warnings::$(sed ':a;N;$!ba;s/\n/%0A/g' warns.txt)"; fi
+          exit $rc
