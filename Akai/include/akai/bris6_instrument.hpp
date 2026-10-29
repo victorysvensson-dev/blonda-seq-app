@@ -48,6 +48,8 @@ private:
     std::unique_ptr<gen::Bris6Gen> g_;
     float values_[64]{};
     int voicesActive_ = 0;
+    float pressure_ = 0.f;
+    void applyCutoff();
 
     // ---- bris_voices.js
     static constexpr int NV = 6;

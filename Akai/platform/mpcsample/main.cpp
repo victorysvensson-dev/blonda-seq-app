@@ -187,6 +187,35 @@ struct Screen {
     }
 };
 
+// ---------------------------------------------------------------- event trace (audio thread -> journal)
+// Every MIDI message from the surface and external ports is recorded in a single-producer ring buffer by the audio
+// thread (no locks, no I/O there); a low-priority logger thread prints them. For debugging on the device.
+struct TraceEntry { uint32_t block; uint8_t src, status, d1, d2; };   // src: 0 surface, 1 external
+struct Trace {
+    static constexpr uint32_t kSize = 4096;
+    TraceEntry e[kSize];
+    std::atomic<uint32_t> w{0};
+    uint32_t r = 0;
+    void push(uint32_t block, int src, const akai::MidiMsg& m) {
+        const uint32_t i = w.load(std::memory_order_relaxed);
+        e[i % kSize] = {block, (uint8_t)src, m.status, m.d1, m.d2};
+        w.store(i + 1, std::memory_order_release);
+    }
+};
+Trace gTrace;
+void loggerThread() {
+    while (!gStop) {
+        const uint32_t w = gTrace.w.load(std::memory_order_acquire);
+        if (w - gTrace.r > Trace::kSize) gTrace.r = w - Trace::kSize;
+        for (; gTrace.r != w; ++gTrace.r) {
+            const TraceEntry& t = gTrace.e[gTrace.r % Trace::kSize];
+            if ((t.status & 0xF0) == 0xA0 && t.d2 != 0) continue;   // skip non-zero pad pressure (very frequent)
+            std::printf("midi %s t=%.3f %02X %d %d\n", t.src ? "ext" : "srf", t.block * 128.0 / 44100.0, t.status, t.d1, t.d2);
+        }
+        usleep(100000);
+    }
+}
+
 // ---------------------------------------------------------------- UI snapshot hand-off (seqlock, audio -> display)
 struct UiMailbox {
     std::atomic<uint32_t> seq{0};
@@ -295,6 +324,7 @@ int main(int argc, char** argv) {
     std::thread ui;
     if (scr.open_()) ui = std::thread(displayThread, &scr, &box);
     else std::fputs("screen not available, running without it\n", stderr);
+    std::thread logger(loggerThread);   // before realtime(): new threads inherit the scheduling policy
     realtime(40);   // after the display thread exists, so only the audio thread is SCHED_FIFO (below IRQ threads at 50)
 
     static int32_t out[kPeriod * 2];
@@ -310,6 +340,7 @@ int main(int argc, char** argv) {
     const double period = (double)kPeriod / kRate;
     int fadeBlocks = -1;   // after quit: fade out over a few blocks
 
+    const char* exitReason = "signal (stopped from the computer, or the 1 hour limit)";
     while (fadeBlocks != 0) {
         if (gStop && fadeBlocks < 0) fadeBlocks = 16;
         const double t0 = nowSec();
@@ -318,15 +349,15 @@ int main(int argc, char** argv) {
             const ssize_t n = read(surf.fd, in, sizeof in);
             if (n <= 0) break;
             akai::MidiMsg m; akai::mpcs::Event e;
-            for (ssize_t i = 0; i < n; ++i) if (surf.parser.feed(in[i], m) && akai::mpcs::decode(m, e)) A.handle(e);
+            for (ssize_t i = 0; i < n; ++i) if (surf.parser.feed(in[i], m)) { gTrace.push((uint32_t)blocks, 0, m); if (akai::mpcs::decode(m, e)) A.handle(e); }
         }
         for (MidiPort& p : ext) for (;;) {
             const ssize_t n = read(p.fd, in, sizeof in);
             if (n <= 0) break;
             akai::MidiMsg m;
-            for (ssize_t i = 0; i < n; ++i) if (p.parser.feed(in[i], m)) A.handleMidi(m);
+            for (ssize_t i = 0; i < n; ++i) if (p.parser.feed(in[i], m)) { if (m.type() != 0xA0 || m.d2 == 0) gTrace.push((uint32_t)blocks, 1, m); A.handleMidi(m); }
         }
-        if (A.quitRequested()) gStop = true;
+        if (A.quitRequested() && !gStop) { gStop = true; exitReason = "SHIFT + STOP on the MPC"; }
         // 2. audio
         A.render(L, R, kPeriod);
         float fade = 1.f;
@@ -341,7 +372,7 @@ int main(int argc, char** argv) {
         busy += dt; if (dt > worst) worst = dt; ++blocks;
         if (t0 - windowStart > 0.5) { load = (float)(busy / (t0 - windowStart)); A.setStats(load, xruns); windowStart = t0; busy = 0; }
         // 5. hand the block to the codec (blocks until there is room: this paces the loop)
-        if (!pcmWrite(pcm, out, kPeriod, xruns)) break;
+        if (!pcmWrite(pcm, out, kPeriod, xruns)) { exitReason = "audio output error"; break; }
     }
 
     // lights off so the stock app starts from a clean surface
@@ -350,6 +381,8 @@ int main(int argc, char** argv) {
     for (uint8_t cc : akai::mpcs::kBankLedCC) { const int n = akai::mpcs::buttonLed(ledBuf, cc, 0); (void)!write(surf.fd, ledBuf, (size_t)n); }
     gStop = true;
     if (ui.joinable()) ui.join();
+    if (logger.joinable()) logger.join();
+    std::printf("exit reason: %s\n", exitReason);
     std::printf("blocks %lld, xruns %d, slowest block %.0f us of %.0f us, last load %.1f%%\n", blocks, xruns, worst * 1e6, period * 1e6, load * 100);
     close(pcm); close(surf.fd);
     for (MidiPort& p : ext) close(p.fd);

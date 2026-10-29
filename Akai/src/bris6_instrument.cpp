@@ -67,6 +67,7 @@ void Bris6Instrument::set(int i, float value) {
     if (!std::strcmp(p.id, "lage")) { const int m = (int)value; if (m != mode_) { allNotesOff(); mode_ = m; } }
     if (!std::strcmp(p.id, "uniint")) { uni_ = (int)value; if (mode_ == 3 && monoOn_) playStack(false); }
     g_->setParam(p.id, value);
+    if (!std::strcmp(p.id, "cut")) applyCutoff();
 }
 
 // applyPreset() in blonda_bris_ui.js: every parameter not marked "keep" gets the preset value or its default
@@ -142,7 +143,20 @@ void Bris6Instrument::allNotesOff() {
     for (int i = 0; i < NV; ++i) { vo_[i].on = false; vo_[i].sus = false; setGate(i, 0); }
 }
 
-void Bris6Instrument::pressure(float amount) { g_->at = amount < 0 ? 0 : (amount > 1 ? 1 : amount); }
+// MPC pads send pressure the whole time a pad is held. In the device, aftertouch also drives vibrato (Wheel > LFO,
+// 0.6 by default), which on pads sounds like a constant pitch wobble. So pad pressure opens the filter instead
+// (+30 % of the cutoff range at full pressure), like the other instruments; the "at" input stays at 0.
+void Bris6Instrument::pressure(float amount) {
+    amount = amount < 0 ? 0 : (amount > 1 ? 1 : amount);
+    if (amount == pressure_) return;
+    pressure_ = amount;
+    applyCutoff();
+}
+void Bris6Instrument::applyCutoff() {
+    static const int c = idx("cut");
+    double v = values_[c] + pressure_ * 0.3;
+    g_->cut = v > 1.0 ? 1.0 : v;
+}
 void Bris6Instrument::pitchBend(float bend) { g_->bend = bend < -1 ? -1 : (bend > 1 ? 1 : bend); }
 bool Bris6Instrument::controlChange(int cc, int value) {
     if (cc == 1) { g_->mw = value / 127.0; return true; }
