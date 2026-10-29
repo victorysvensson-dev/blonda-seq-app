@@ -81,7 +81,11 @@ struct SEQ3View: View {
         .onKeyPress(phases: [.down, .up]) { press in handleKey(press) }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: showKeys)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: model.toast)
-        .onAppear { if ProcessInfo.processInfo.arguments.contains("-autoplay") || ProcessInfo.processInfo.arguments.contains("-nointro") { started = true; entered = true } }
+        .onAppear {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("-autoplay") || args.contains("-nointro") { started = true; entered = true }
+            if args.contains("-inspect") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openInspector(1, 4) } }   // CI screenshot
+        }
     }
 
     private static let keyMap: [Character] = Array("awsedftgyhujkolp;'")
