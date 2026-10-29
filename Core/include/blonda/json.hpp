@@ -13,8 +13,8 @@ struct Value {
     enum Type { Null, Bool, Number, String, Array, Object } type = Null;
     bool b = false; double num = 0; std::string str;
     std::vector<Value> arr; std::map<std::string, Value> obj;
-    const Value& operator[](const std::string& k) const { static Value nil; auto it = obj.find(k); return it == obj.end() ? nil : it->second; }
-    const Value& operator[](size_t i) const { static Value nil; return i < arr.size() ? arr[i] : nil; }
+    const Value& operator[](const std::string& k) const { static Value none_; auto it = obj.find(k); return it == obj.end() ? none_ : it->second; }
+    const Value& operator[](size_t i) const { static Value none_; return i < arr.size() ? arr[i] : none_; }
     bool has(const std::string& k) const { return obj.count(k) > 0; }
     double numOr(double d) const { return type == Number ? num : (type == Bool ? (b ? 1 : 0) : d); }
     std::string strOr(const std::string& d) const { return type == String ? str : d; }
