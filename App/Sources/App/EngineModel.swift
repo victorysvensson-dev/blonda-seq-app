@@ -49,6 +49,7 @@ final class EngineModel: NSObject, ObservableObject {
         }
         engine.startMIDI()
         engine.midiTrack = selectedTrack
+        if ProcessInfo.processInfo.arguments.contains("-autoplay") { engine.togglePlay() }
         let l = CADisplayLink(target: self, selector: #selector(tick))
         l.add(to: .main, forMode: .common)
         link = l

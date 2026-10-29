@@ -48,7 +48,7 @@ private:
         while (i_ < s_.size() && s_[i_] != '"') {
             char c = s_[i_++];
             if (c == '\\') { char e = s_[i_++];
-                if (e == 'n') out += '\n'; else if (e == 't') out += '\t'; else if (e == 'u') { unsigned cp = std::strtoul(s_.substr(i_, 4).c_str(), nullptr, 16); i_ += 4;
+                if (e == 'n') out += '\n'; else if (e == 't') out += '\t'; else if (e == 'u') { unsigned cp = (unsigned)std::strtoul(s_.substr(i_, 4).c_str(), nullptr, 16); i_ += 4;
                     if (cp < 0x80) out += (char)cp; else if (cp < 0x800) { out += (char)(0xC0 | (cp >> 6)); out += (char)(0x80 | (cp & 63)); }
                     else { out += (char)(0xE0 | (cp >> 12)); out += (char)(0x80 | ((cp >> 6) & 63)); out += (char)(0x80 | (cp & 63)); } }
                 else out += e; }
