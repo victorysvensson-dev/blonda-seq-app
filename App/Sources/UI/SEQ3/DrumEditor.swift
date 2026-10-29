@@ -43,7 +43,7 @@ private struct DedPanel: View {
                 ForEach(order, id: \.self) { i in DedKnob(def: kTrackParams[i], track: track, tint: tc) }
             }
             HStack(spacing: 8) {
-                DedButton(title: "▶ provlyssna", on: false, tint: tc) { model.hitPad(track) }
+                DedButton(title: "\u{25B6}\u{FE0E} provlyssna", on: false, tint: tc) { model.hitPad(track) }
                 DedButton(title: "mute", on: model.isMuted(track), tint: tc) { model.toggleMute(track) }
                 DedButton(title: "återställ", on: false, tint: tc) { model.resetDrum(track) }
             }
