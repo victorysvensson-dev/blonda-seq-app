@@ -17,7 +17,7 @@ struct Pad: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 60)) { _ in
+        TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
             let lit = model.flash(track, 0.12) > 0, col = model.trackColor(track)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 10, style: .continuous).fill(lit ? col : Color.white.opacity(0.05))

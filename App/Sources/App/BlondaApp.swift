@@ -20,7 +20,7 @@ struct BlondaApp: App {
     private func configureWindow() {
         guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
         #if targetEnvironment(macCatalyst)
-        scene.sizeRestrictions?.minimumSize = CGSize(width: 1100, height: 780)
+        scene.sizeRestrictions?.minimumSize = CGSize(width: 960, height: 700)
         scene.titlebar?.titleVisibility = .hidden
         scene.titlebar?.toolbar = nil
         #endif

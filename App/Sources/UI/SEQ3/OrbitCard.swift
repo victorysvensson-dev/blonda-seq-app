@@ -23,7 +23,7 @@ struct OrbitDial: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         ZStack {
-            TimelineView(.animation) { tl in
+            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { _ in
                 Canvas { c, size in drawOrbit(&c, size) }
             }
             VStack(spacing: 6) {

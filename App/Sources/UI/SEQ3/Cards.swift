@@ -37,7 +37,7 @@ struct Backdrop: View {
     var body: some View {
         GeometryReader { geo in
             let f = geo.frame(in: .global)
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
+            TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { tl in
                 Canvas { ctx, size in
                     var c = ctx
                     Field.draw(&c, size: size, origin: f.origin, screen: ScreenSize.current, t: tl.date.timeIntervalSince(Field.start), energy: model.energy)
@@ -168,7 +168,7 @@ struct DMChip<Label: View>: View {
     var body: some View {
         Button(action: action) {
             label()
-                .font(BFont.mono(10, 500)).tracking(0.3)
+                .font(BFont.mono(10, 500)).tracking(0.3).lineLimit(1).fixedSize()
                 .foregroundColor(fill == nil ? T.dmInk : Color(hex: 0x17181A))
                 .padding(.horizontal, 12).frame(height: 30)
                 .background(fill ?? Color.clear)

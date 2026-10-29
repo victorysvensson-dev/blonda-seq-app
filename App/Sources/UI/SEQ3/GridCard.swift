@@ -110,21 +110,16 @@ struct DotCell: View {
 struct GridActions: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
-        HStack(spacing: 5) {
+        FlowLayout(spacing: 5) {
             DMChip { HStack(spacing: 7) { SVGIcon(d: "M3.5 3h9A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7A1.5 1.5 0 0 1 3.5 3zM6 3v6M10 3v6", size: 14); Text("piano roll") } }
-            DMChip(fill: T.dmY) {
-                HStack(spacing: 10) { DieFace(); Text("tärning") }.padding(.leading, -7)
-            }
+            DMChip(fill: T.dmY) { HStack(spacing: 10) { DieFace(); Text("tärning") }.padding(.leading, -7) }
             DMChip { HStack(spacing: 7) { SVGIcon(d: "M2 12c3 0 4-8 7-8s3 5 5 5", size: 14, stroke: 1.6); Text("variation") } }
             DMChip { HStack(spacing: 7) { SVGIcon(d: "M2 8h11M10 5l3 3-3 3", size: 14, stroke: 1.6); Text("flytta") } }
             DMChip { HStack(spacing: 7) { SVGIcon(d: "M3 3l10 10M13 3L3 13", size: 14, stroke: 1.6); Text("rensa spår") } }
-            Rectangle().fill(T.dmLine).frame(width: 1, height: 18).padding(.horizontal, 2)
             DMChip(action: { model.toggleMute(model.selectedTrack) }) { Text("mute") }
             DMChip { Text("solo") }
-            Spacer(minLength: 0)
-            Rectangle().fill(T.dmLine).frame(width: 1, height: 18).padding(.horizontal, 2)
-            DMChip { SVGIcon(d: "M5 3L2 6l3 3M2 6h7a4 4 0 010 8H6", size: 14, stroke: 1.6) }.frame(width: 30)
-            DMChip { SVGIcon(d: "M11 3l3 3-3 3M14 6H7a4 4 0 000 8h3", size: 14, stroke: 1.6) }.frame(width: 30)
+            DMChip { SVGIcon(d: "M5 3L2 6l3 3M2 6h7a4 4 0 010 8H6", size: 14, stroke: 1.6) }
+            DMChip { SVGIcon(d: "M11 3l3 3-3 3M14 6H7a4 4 0 000 8h3", size: 14, stroke: 1.6) }
         }
     }
 }

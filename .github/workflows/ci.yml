@@ -44,38 +44,41 @@ jobs:
           while IFS= read -r l; do echo "::warning::$l"; done < warns.txt
           exit $rc
       - name: Run in the simulator and take screenshots
+        timeout-minutes: 15
         run: |
           cd App
+          T() { perl -e 'alarm shift; exec @ARGV' "$@"; }   # macOS has no `timeout`
           UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPad Pro 13')))")
           xcrun simctl boot $UDID
-          xcrun simctl bootstatus $UDID -b
-          xcodebuild -project BLONDA.xcodeproj -scheme BLONDA -configuration Debug -sdk iphonesimulator \
+          T 300 xcrun simctl bootstatus $UDID -b
+          T 900 xcodebuild -project BLONDA.xcodeproj -scheme BLONDA -configuration Debug -sdk iphonesimulator \
             -destination "id=$UDID" -derivedDataPath dd CODE_SIGNING_ALLOWED=NO build > sim.log 2>&1 || (tail -30 sim.log; exit 1)
           APP=$(find dd -name "*.app" -path "*iphonesimulator*" | head -1)
-          xcrun simctl install $UDID "$APP"
-          xcrun simctl ui $UDID appearance dark || true
-          xcrun simctl launch $UDID se.blonda.seq -landscape
-          sleep 5
+          T 120 xcrun simctl install $UDID "$APP"
+          T 30 xcrun simctl ui $UDID appearance dark || true
           mkdir -p ../ci-shots
-          xcrun simctl io $UDID screenshot ../ci-shots/ipad_intro.png
-          xcrun simctl terminate $UDID se.blonda.seq
-          xcrun simctl launch $UDID se.blonda.seq -landscape -autoplay
-          sleep 6
-          xcrun simctl io $UDID screenshot ../ci-shots/ipad.png
-          sleep 0.7
-          xcrun simctl io $UDID screenshot ../ci-shots/ipad2.png
-          sleep 0.9
-          xcrun simctl io $UDID screenshot ../ci-shots/ipad3.png
+          date; T 60 xcrun simctl launch $UDID se.blonda.seq -landscape || true
+          sleep 8; date
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/ipad_intro.png || echo "intro screenshot failed"
+          T 30 xcrun simctl terminate $UDID se.blonda.seq || true
+          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -autoplay || true
+          sleep 8; date
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/ipad.png || echo "screenshot failed"
+          sleep 1
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/ipad2.png || true
+          date
+          T 60 xcrun simctl spawn $UDID log show --last 2m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -v UIFocus | tail -60 > ../ci-shots/log.txt || true
+          T 30 xcrun simctl shutdown $UDID || true
           # iPhone too
           PH=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone 16 Pro') or x['name'].startswith('iPhone 17 Pro')))")
-          echo "iPhone: $PH"
-          xcrun simctl boot $PH; xcrun simctl bootstatus $PH -b
-          xcrun simctl install $PH "$APP"; xcrun simctl ui $PH appearance dark || true
-          xcrun simctl launch $PH se.blonda.seq -autoplay; sleep 6
-          xcrun simctl io $PH screenshot ../ci-shots/iphone.png
-          xcrun simctl spawn $UDID log show --last 1m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -v UIFocus | tail -60 > ../ci-shots/log.txt || true
+          xcrun simctl boot $PH; T 300 xcrun simctl bootstatus $PH -b
+          T 120 xcrun simctl install $PH "$APP"; T 30 xcrun simctl ui $PH appearance dark || true
+          T 60 xcrun simctl launch $PH se.blonda.seq -autoplay || true; sleep 6
+          T 60 xcrun simctl io $PH screenshot ../ci-shots/iphone.png || true
       - name: Publish screenshots to the ci-shots branch
+        if: always()
         run: |
+          mkdir -p ci-shots
           cd ci-shots
           git init -q && git checkout -q -b ci-shots
           git config user.name ci && git config user.email ci@users.noreply.github.com
