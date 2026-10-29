@@ -26,6 +26,7 @@ final class XYState {
 
 struct LiveCard: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var fold = FoldStore.shared
     @State private var xy = XYState()
     @State private var on = false
     @State private var f: Float = 0
@@ -42,12 +43,14 @@ struct LiveCard: View {
                 (Text("live · ").foregroundColor(kLm) + Text(read).foregroundColor(kLk).font(BFont.mono(9.5, 500)))
                     .font(BFont.mono(9.5)).tracking(0.855).lineLimit(1)
                 Spacer()
-                HStack(spacing: 5) { LiteCap(.min, dark: false); LiteCap(.full, dark: false) }
+                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "live"); LiteCap(.full, dark: false) }
                 LiteCap(.grab, dark: false).padding(.leading, 8)
             }
             .frame(height: 26)
-            pad
-            LiveDevice(on: on, f: f, fx: fx)
+            if !fold.isFolded("live") {
+                pad
+                LiveDevice(on: on, f: f, fx: fx)
+            }
         }
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xF8F7F3), Color(hex: 0xEAE9E3)], startPoint: UnitPoint(x: 0.37, y: 0), endPoint: UnitPoint(x: 0.63, y: 1))))

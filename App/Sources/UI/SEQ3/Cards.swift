@@ -62,6 +62,8 @@ struct Card<Content: View>: View {
     @ViewBuilder var content: () -> Content
 
     private var dark: Bool { if case .dark = style { return true } else { return false } }
+    @ObservedObject private var store = FoldStore.shared
+    private var key: String { (title.first?.0 ?? "card").lowercased().components(separatedBy: CharacterSet.letters.inverted).first ?? "card" }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -73,13 +75,13 @@ struct Card<Content: View>: View {
                 Spacer(minLength: 4)
                 if let e = extra { e }
                 HStack(spacing: 5) {
-                    CapButton(kind: .min, dark: dark)
+                    CapButton(kind: .min, dark: dark, fold: key)
                     CapButton(kind: .full, dark: dark)
                 }
                 CapButton(kind: .grab, dark: dark).padding(.leading, 8)
             }
             .frame(height: 26)
-            content()
+            if !store.isFolded(key) { content().transition(.opacity.combined(with: .move(edge: .top))) }
         }
         .padding(16)
         .background(background)
@@ -128,13 +130,33 @@ struct Card<Content: View>: View {
     }
 }
 
+/// Which cards are minimised (web: S.cmin), remembered between launches.
+final class FoldStore: ObservableObject {
+    static let shared = FoldStore()
+    @Published private(set) var folded: Set<String>
+    private init() { folded = Set(UserDefaults.standard.stringArray(forKey: "cmin") ?? []) }
+    func isFolded(_ k: String) -> Bool { folded.contains(k) }
+    func toggle(_ k: String) {
+        withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) { if folded.contains(k) { folded.remove(k) } else { folded.insert(k) } }
+        UserDefaults.standard.set(Array(folded), forKey: "cmin")
+    }
+}
+
 struct CapButton: View {
     enum Kind { case min, full, grab }
     let kind: Kind
     let dark: Bool
     var tint: Color? = nil
     var fill: Color? = nil
+    var fold: String? = nil            // .min: the card this chevron folds
+    @ObservedObject private var store = FoldStore.shared
     var body: some View {
+        if kind == .min, let k = fold {
+            Button { store.toggle(k) } label: { face.rotationEffect(.degrees(store.isFolded(k) ? 180 : 0)) }
+                .buttonStyle(PressScale())
+        } else { face }
+    }
+    private var face: some View {
         ZStack {
             if dark { Rectangle().strokeBorder(T.dmLine, lineWidth: 1) } else { Circle().fill(fill ?? Color.white.opacity(0.07)) }
             Canvas { ctx, size in

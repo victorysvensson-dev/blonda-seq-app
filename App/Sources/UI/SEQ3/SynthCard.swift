@@ -178,6 +178,7 @@ struct SynthCard: View {
     @EnvironmentObject var model: EngineModel
     @State private var synT: Int
     @State private var swap = false
+    @ObservedObject private var fold = FoldStore.shared
     private let pinned: Bool
     init(initialTrack: Int? = nil) { _synT = State(initialValue: initialTrack ?? 6); pinned = initialTrack != nil }
 
@@ -187,12 +188,14 @@ struct SynthCard: View {
         let e = engIndex(inst)
         VStack(alignment: .leading, spacing: 0) {
             caption(th, inst)
-            EngineChips(track: synT, current: inst, theme: th)
-                .padding(.bottom, 10)
-            Group {
-                if e == 0 { AnalogSynth(track: synT, theme: th) } else { GenericSynth(track: synT, e: e, theme: th) }
+            if !fold.isFolded("synth") {
+                EngineChips(track: synT, current: inst, theme: th)
+                    .padding(.bottom, 10)
+                Group {
+                    if e == 0 { AnalogSynth(track: synT, theme: th) } else { GenericSynth(track: synT, e: e, theme: th) }
+                }
+                .opacity(swap ? 0.15 : 1).blur(radius: swap ? 12 : 0).scaleEffect(swap ? 0.97 : 1)
             }
-            .opacity(swap ? 0.15 : 1).blur(radius: swap ? 12 : 0).scaleEffect(swap ? 0.97 : 1)
         }
         .padding(16)
         .foregroundColor(th.fg)
@@ -219,7 +222,7 @@ struct SynthCard: View {
             captionRow(th, inst, title: false)
         }
         .frame(height: 26)
-        .padding(.bottom, 10)
+        .padding(.bottom, fold.isFolded("synth") ? 0 : 10)
     }
 
     private func captionRow(_ th: EngTheme, _ inst: String, title: Bool) -> some View {
@@ -248,7 +251,7 @@ struct SynthCard: View {
                 .frame(width: 14, height: 14).frame(width: 30, height: 22)
                 .background(RoundedRectangle(cornerRadius: 6).fill(th.chip))
             HStack(spacing: 5) {
-                CapButton(kind: .min, dark: false, tint: th.fg, fill: th.chip)
+                CapButton(kind: .min, dark: false, tint: th.fg, fill: th.chip, fold: "synth")
                 CapButton(kind: .full, dark: false, tint: th.fg, fill: th.chip)
             }
             CapButton(kind: .grab, dark: false, tint: th.fg, fill: th.chip).padding(.leading, 4)

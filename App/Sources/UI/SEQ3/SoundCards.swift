@@ -39,6 +39,7 @@ private struct ParamDrag: ViewModifier {
 
 struct SoundCard: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var fold = FoldStore.shared
     var body: some View {
         let t = model.selectedTrack
         let head = Color(rgb: 39, 36, 38)
@@ -49,20 +50,22 @@ struct SoundCard: View {
                     (Text("ljud · ").foregroundColor(.white.opacity(0.7)) + Text("\(kTracks[t].name.lowercased()) · \(model.trackSub(t).lowercased())").foregroundColor(.white).font(BFont.mono(9.5, 500)))
                         .font(BFont.mono(9.5)).tracking(0.855)
                     Spacer()
-                    HStack(spacing: 5) { LiteCap(.min, dark: true); LiteCap(.full, dark: true) }
+                    HStack(spacing: 5) { LiteCap(.min, dark: true, fold: "ljud"); LiteCap(.full, dark: true) }
                     LiteCap(.grab, dark: true).padding(.leading, 8)
                 }
-                .frame(height: 26).padding(.top, 10)
-                DecayHero(track: t)
+                .frame(height: 26).padding(.top, 10).padding(.bottom, fold.isFolded("ljud") ? 10 : 0)
+                if !fold.isFolded("ljud") { DecayHero(track: t) }
             }
             .padding(.horizontal, 16)
             .background(head)
-            VStack(spacing: 8) {
-                LevelTile(track: t)
-                HStack(spacing: 8) { FxTile(track: t); TuneTile(track: t) }
-                PanTile(track: t)
+            if !fold.isFolded("ljud") {
+                VStack(spacing: 8) {
+                    LevelTile(track: t)
+                    HStack(spacing: 8) { FxTile(track: t); TuneTile(track: t) }
+                    PanTile(track: t)
+                }
+                .padding(10)
             }
-            .padding(10)
         }
         .background(Color(rgb: 229, 228, 224))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
@@ -75,9 +78,10 @@ struct SoundCard: View {
 struct LiteCap: View {
     let kind: CapButton.Kind
     let dark: Bool
-    init(_ k: CapButton.Kind, dark: Bool) { kind = k; self.dark = dark }
+    var fold: String? = nil
+    init(_ k: CapButton.Kind, dark: Bool, fold: String? = nil) { kind = k; self.dark = dark; self.fold = fold }
     var body: some View {
-        CapButton(kind: kind, dark: false, tint: dark ? .white : kInk, fill: dark ? Color.white.opacity(0.16) : kInk.opacity(0.06))
+        CapButton(kind: kind, dark: false, tint: dark ? .white : kInk, fill: dark ? Color.white.opacity(0.16) : kInk.opacity(0.06), fold: fold)
     }
 }
 
@@ -384,6 +388,7 @@ struct BigKnob: View {
 
 struct MasterCard: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var fold = FoldStore.shared
     private let order: [(Int, String, UInt32?)] = [(0, "filter", 0x3D6CF5), (1, "echo", 0x27B26B), (2, "space", nil), (3, "tape", 0xFF6A1A), (5, "swing", 0x3D6CF5), (4, "pump", 0x27B26B), (6, "volym", nil)]
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -391,21 +396,23 @@ struct MasterCard: View {
                 (Text("master · ").foregroundColor(kInk.opacity(0.5)) + Text("glue · tape").foregroundColor(kInk).font(BFont.mono(9.5, 500)))
                     .font(BFont.mono(9.5)).tracking(0.855)
                 Spacer()
-                HStack(spacing: 5) { LiteCap(.min, dark: false); LiteCap(.full, dark: false) }
+                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "master"); LiteCap(.full, dark: false) }
                 LiteCap(.grab, dark: false).padding(.leading, 8)
             }
             .frame(height: 26)
-            HStack(spacing: 8) {
-                ForEach(order, id: \.0) { f, label, dot in
-                    let def = kMasterParams.first { $0.field == f }!
-                    MasterKnob(def: def, label: label, dot: dot)
+            if !fold.isFolded("master") {
+                HStack(spacing: 8) {
+                    ForEach(order, id: \.0) { f, label, dot in
+                        let def = kMasterParams.first { $0.field == f }!
+                        MasterKnob(def: def, label: label, dot: dot)
+                    }
                 }
+                Canvas { c, size in
+                    let n = Int(size.width / 8)
+                    for i in 0..<n { c.fill(Path(ellipseIn: CGRect(x: CGFloat(i) * 8, y: 0, width: 6, height: 6)), with: .color(kInk.opacity(0.1))) }
+                }
+                .frame(height: 6)
             }
-            Canvas { c, size in
-                let n = Int(size.width / 8)
-                for i in 0..<n { c.fill(Path(ellipseIn: CGRect(x: CGFloat(i) * 8, y: 0, width: 6, height: 6)), with: .color(kInk.opacity(0.1))) }
-            }
-            .frame(height: 6)
         }
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))))
