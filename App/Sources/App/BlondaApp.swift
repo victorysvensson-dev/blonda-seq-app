@@ -4,6 +4,7 @@ import UIKit
 @main
 struct BlondaApp: App {
     @StateObject private var model = EngineModel()
+    @Environment(\.scenePhase) private var phase
     init() { BFont.registerAll() }
     var body: some Scene {
         WindowGroup {
@@ -14,6 +15,7 @@ struct BlondaApp: App {
                     model.start()
                     configureWindow()
                 }
+                .onChange(of: phase) { _, p in if p != .active { model.flushSave() } }   // nothing is lost when the app goes away
         }
     }
 

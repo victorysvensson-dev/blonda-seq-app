@@ -36,7 +36,7 @@ final class KeyboardInput {
         guard let m = model else { return }
         if pressed { down.insert(code) } else { down.remove(code) }
         if !pressed, let h = held.removeValue(forKey: code) { if h.track >= 6 { m.engine.noteOff(h.note, track: h.track); m.recOff(h.track, h.note) }; return }
-        guard pressed, !commandHeld else { return }
+        guard pressed, !commandHeld, !m.textEditing else { return }
         if code == .spacebar { m.togglePlay(); return }
         // 1 … 0 on the number row hit the ten pads (web: "Pads · 1–0")
         if let pad = Self.padKeys.firstIndex(of: code) { m.hitPad(pad); return }

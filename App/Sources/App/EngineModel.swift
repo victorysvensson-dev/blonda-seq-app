@@ -74,17 +74,26 @@ final class EngineModel: NSObject, ObservableObject {
         link = l
     }
 
-    // ---- projects: autosaved to Documents/project.json in the web version's format
-    private var saveURL: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("project.json") }
+    // ---- projects: each one a web-format JSON in Documents/Projects (see ProjectStore), autosaved
+    static let sharedProjects = ProjectStore()
+    var projects: ProjectStore { Self.sharedProjects }
     private var saveWork: DispatchWorkItem?
+    @Published var projOpen = false
+    var textEditing = false   // a text field has the keyboard: KeyboardInput stays quiet
+    func flushSave() { saveWork?.cancel(); saveNow(sync: true) }
 
     private func loadSaved() -> Bool {
-        guard let json = try? String(contentsOf: saveURL, encoding: .utf8) else { return false }
+        guard let json = projects.json(projects.current) else { return false }
         return (try? engine.loadProjectJSON(json)) != nil
     }
+    private var demoJSON: String? {
+        guard let url = Bundle.main.url(forResource: "default_project", withExtension: "json") else { return nil }
+        return try? String(contentsOf: url, encoding: .utf8)
+    }
+    /// The demo song, into the open project (or as "Projekt 1" on a first start).
     func loadDemo() {
-        guard let url = Bundle.main.url(forResource: "default_project", withExtension: "json"),
-              let json = try? String(contentsOf: url, encoding: .utf8) else { return }
+        guard let json = demoJSON else { return }
+        if projects.currentMeta == nil { projects.setCurrent(projects.add(name: "Projekt 1", json: json).id) }
         do { try engine.loadProjectJSON(json) } catch { errorText = "Projekt: \(error.localizedDescription)" }
         rebindSamples()
         revision += 1; paramRevision += 1; scheduleSave()
@@ -92,13 +101,40 @@ final class EngineModel: NSObject, ObservableObject {
     /// Debounced: writes one second after the last edit, off the main thread.
     func scheduleSave() {
         saveWork?.cancel()
-        let w = DispatchWorkItem { [weak self] in
-            guard let self = self else { return }
-            let json = self.engine.projectJSON(), url = self.saveURL
-            DispatchQueue.global(qos: .utility).async { try? json.write(to: url, atomically: true, encoding: .utf8) }
-        }
+        let w = DispatchWorkItem { [weak self] in self?.saveNow() }
         saveWork = w
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: w)
+    }
+    private func saveNow(sync: Bool = false) {
+        let id = projects.current; guard !id.isEmpty else { return }
+        let json = engine.projectJSON(), store = projects
+        if sync { store.save(id, json: json) } else { DispatchQueue.global(qos: .utility).async { store.save(id, json: json) } }
+    }
+    func openProjects() { saveWork?.cancel(); saveNow(sync: true); withAnimation(.easeOut(duration: 0.3)) { projOpen = true } }
+    func closeProjects() { withAnimation(.easeIn(duration: 0.25)) { projOpen = false } }
+    func openProject(_ id: String) {
+        guard id != projects.current, let json = projects.json(id) else { return }
+        saveWork?.cancel(); saveNow(sync: true)
+        if playing { togglePlay() }
+        do { try engine.loadProjectJSON(json) } catch { showToast("Kunde inte öppna projektet"); return }
+        projects.setCurrent(id)
+        rebindSamples(); revision += 1; paramRevision += 1
+        showToast("Öppnade \(projects.currentMeta?.name ?? "projekt")")
+    }
+    func newProject() {
+        saveWork?.cancel(); saveNow(sync: true)
+        let m = projects.add(name: projects.nextName(), json: ProjectStore.fresh(from: engine.projectJSON()))
+        projects.setCurrent("")   // so openProject loads it
+        if playing { togglePlay() }
+        if let json = projects.json(m.id), (try? engine.loadProjectJSON(json)) != nil { projects.setCurrent(m.id) }
+        rebindSamples(); revision += 1; paramRevision += 1
+        showToast("Nytt tomt projekt")
+    }
+    func importProject(_ url: URL) {
+        let scoped = url.startAccessingSecurityScopedResource(); defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+        guard let json = try? String(contentsOf: url, encoding: .utf8), let o = ProjectStore.object(json), o["pats"] != nil else { showToast("Filen är inte ett SEQ.3-projekt"); return }
+        let m = projects.add(name: url.deletingPathExtension().lastPathComponent, json: json)
+        openProject(m.id)
     }
 
     @objc private func tick() {

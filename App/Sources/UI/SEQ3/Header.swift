@@ -19,18 +19,20 @@ struct SEQ3Header: View {
 
 struct Brand: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var store = EngineModel.sharedProjects
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
             Text("BLONDA").font(BFont.pixel(16)).tracking(1.28).foregroundColor(T.fg)
             HStack(spacing: 0) {
                 Text("seq.3 · ").foregroundColor(T.mute)
-                Text("projekt 1").foregroundColor(T.fg)
+                Text((store.currentMeta?.name ?? "projekt").lowercased()).foregroundColor(T.fg)
                 Text(" ▾").foregroundColor(T.mute)
             }
             .font(BFont.mono(9)).tracking(0.36)
         }
         .padding(4)
         .contentShape(Rectangle())
+        .onTapGesture { model.openProjects() }
         .contextMenu {
             Button(role: .destructive) { model.loadDemo() } label: { Label("Ladda demolåten (ersätter projektet)", systemImage: "arrow.counterclockwise") }
         }
@@ -53,7 +55,7 @@ struct Dock: View {
                     }
                 }
                 GButton(width: 64) { HStack(spacing: 6) { Circle().fill(.white.opacity(0.35)).frame(width: 7, height: 7); Text("midi") } }
-                GButton(width: 90) { HStack(spacing: 6) { SVGIcon(d: "M2 4.5a1 1 0 0 1 1-1h3.2l1.5 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z", size: 14); Text("projekt") } }
+                GButton(width: 90, action: { model.openProjects() }) { HStack(spacing: 6) { SVGIcon(d: "M2 4.5a1 1 0 0 1 1-1h3.2l1.5 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z", size: 14); Text("projekt") } }
                 GButton(width: 65, action: { model.openLibrary() }) { HStack(spacing: 6) { SVGIcon(d: "M3 2.5v11M6.5 2.5v11M10 3l3 10.2", size: 14); Text("lib") } }
             }
             .padding(.top, 12)

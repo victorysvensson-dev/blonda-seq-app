@@ -31,7 +31,7 @@ public:
     float sampleRate = 48000;
     bool load(const std::string& json, std::string* err) {
         Project p; if (!p.loadJSON(json, err)) return false;
-        base_ = json;
+        base_ = json; hist_.clear(); redo_.clear();   // undo does not reach into another project
         ui = p; auto* e = new Seq3(); e->prepare(sampleRate); e->load(p);   // allocations happen here, not in audio
         Cmd c; c.type = Swap; c.engine = e; send(c); return true;
     }

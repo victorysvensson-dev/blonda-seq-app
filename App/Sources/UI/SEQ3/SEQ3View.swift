@@ -63,6 +63,9 @@ struct SEQ3View: View {
             if let t = model.rollTrack {
                 PianoRoll(track: t).transition(.move(edge: .bottom)).zIndex(4)
             }
+            if model.projOpen {
+                ProjectsView().transition(.opacity.combined(with: .scale(scale: 0.985))).zIndex(6)
+            }
             if model.libOpen {
                 LibraryView().transition(.opacity.combined(with: .scale(scale: 0.985)))
                     .zIndex(5)
@@ -87,6 +90,9 @@ struct SEQ3View: View {
         .onAppear {
             let args = ProcessInfo.processInfo.arguments
             if args.contains("-autoplay") || args.contains("-nointro") { started = true; entered = true }
+            if args.contains("-projects") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {   // CI screenshot with a few projects
+                let st = model.projects; while st.items.count < 4 { _ = st.duplicate(st.current) }
+                model.openProjects() } }
             if args.contains("-roll") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openRoll(8) } }
             if args.contains("-inspect") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openInspector(1, 4) } }   // CI screenshot
         }
@@ -95,7 +101,7 @@ struct SEQ3View: View {
     private static let keyMap: [Character] = Array("awsedftgyhujkolp;'")
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
-        if model.rollTrack != nil || model.libOpen { return .ignored }
+        if model.rollTrack != nil || model.libOpen || model.projOpen || model.textEditing { return .ignored }
         guard let ch = press.characters.lowercased().first else { return .ignored }
         if press.modifiers.contains(.command) {
             if press.phase == .down && ch == "z" { if press.modifiers.contains(.shift) { model.redo() } else { model.undo() }; return .handled }
