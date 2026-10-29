@@ -84,6 +84,12 @@ inline float* engFloat(Project& p, int k, int e, int f) {
     }
     return nullptr;
 }
+// slider range per field (web: analog envelope a .001–1 s, d .02–2 s, r .02–3 s; fm ratio is an index 0..6)
+inline void engRange(int e, int f, float& lo, float& hi) {
+    lo = 0.f; hi = 1.f;
+    if (e == 3 && f == 0) hi = 6.f;
+    if (e == 0) { if (f == 3) lo = .001f; if (f == 4) { lo = .02f; hi = 2.f; } if (f == 6) { lo = .02f; hi = 3.f; } }
+}
 // switch-like options (wave, slide, range ...): read/write as int
 inline bool engOpt(Project& p, int k, int e, int f, int* get, const int* set) {
     if (k < 0 || k >= 4) return false;

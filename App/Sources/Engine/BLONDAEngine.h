@@ -58,6 +58,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// The musical dice (1–6). Returns what it did, e.g. "nytt groove · ny bas och melodi · Am – F".
 - (NSString *)rollDice:(NSInteger)n NS_SWIFT_NAME(rollDice(_:));
 - (void)setInstrument:(NSString *)name track:(NSInteger)track NS_SWIFT_NAME(setInstrument(_:track:));
+/// Synth module: engine parameter f (0..1, fm ratio 0..6) of engine e (index in analog, acid, sub, fm, pluck, super, chip, sh101, mini, bris) on melodic track 6..9.
+- (float)engineParam:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track NS_SWIFT_NAME(engineParam(_:engine:track:));
+- (void)setEngineParam:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track value:(float)v NS_SWIFT_NAME(setEngineParam(_:engine:track:value:));
+- (NSInteger)engineOption:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track NS_SWIFT_NAME(engineOption(_:engine:track:));
+- (void)setEngineOption:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track value:(NSInteger)v NS_SWIFT_NAME(setEngineOption(_:engine:track:value:));
 - (BOOL)undo;
 - (BOOL)redo;
 

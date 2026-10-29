@@ -133,6 +133,10 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)copyPatternToNext { _host->copyPatternToNext(); }
 - (NSString *)rollDice:(NSInteger)n { return [NSString stringWithUTF8String:_host->dice((int)n, arc4random()).c_str()]; }
 - (void)setInstrument:(NSString *)name track:(NSInteger)track { if (track >= 6 && track <= 9) _host->setInstrument((int)track - 6, name.UTF8String); }
+- (float)engineParam:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->engParam((int)t - 6, (int)e, (int)f) : 0.f; }
+- (void)setEngineParam:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t value:(float)v { if (t >= 6 && t <= 9) _host->setEngParam((int)t - 6, (int)e, (int)f, v); }
+- (NSInteger)engineOption:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->engOption((int)t - 6, (int)e, (int)f) : 0; }
+- (void)setEngineOption:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t value:(NSInteger)v { if (t >= 6 && t <= 9) _host->setEngOption((int)t - 6, (int)e, (int)f, (int)v); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

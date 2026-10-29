@@ -119,6 +119,30 @@ std::string Project::toJSON(const std::string& base) const {
     m.at("filter") = V::number(master.filter); m.at("echo") = V::number(master.echo); m.at("space") = V::number(master.space); m.at("drive") = V::number(master.drive);
     m.at("pump") = V::number(master.pump); m.at("swing") = V::number(master.swing); m.at("vol") = V::number(master.vol);
     for (int k = 0; k < 4; ++k) S.at("inst").at(kMelIds[k]) = V::string_(inst[k]);
+    static const char* kWaves[4] = {"sine", "square", "sawtooth", "triangle"};
+    for (int k = 0; k < 4; ++k) {
+        V& y = S.at("synth").at(kMelIds[k]); const AnalogP& a = synth[k];
+        y.at("wave") = V::string_(kWaves[std::max(0, std::min(3, a.wave))]);
+        y.at("a") = V::number(a.a); y.at("d") = V::number(a.d); y.at("s") = V::number(a.s); y.at("r") = V::number(a.r);
+        y.at("cut") = V::number(a.cut); y.at("res") = V::number(a.res); y.at("env") = V::number(a.env);
+    }
+    V& E = S.at("eng");
+#define WF(o, js, f) js.at(#f) = V::number(o.f);
+    { auto& o = eng.acid; V& j = E.at("acid"); WF(o, j, cut) WF(o, j, res) WF(o, j, env) WF(o, j, dec) WF(o, j, acc) WF(o, j, drive) WF(o, j, dtone) WF(o, j, st) WF(o, j, slide) j.at("wave") = V::string_(o.wave == 1 ? "square" : "sawtooth"); }
+    { auto& o = eng.sub; V& j = E.at("sub"); WF(o, j, decay) WF(o, j, punch) WF(o, j, drive) WF(o, j, tone) WF(o, j, glide) WF(o, j, click) }
+    { auto& o = eng.fm; V& j = E.at("fm"); WF(o, j, ratio) WF(o, j, index) WF(o, j, decay) WF(o, j, bell) WF(o, j, rel) WF(o, j, bright) }
+    { auto& o = eng.pluck; V& j = E.at("pluck"); WF(o, j, damp) WF(o, j, bright) WF(o, j, body) WF(o, j, len) WF(o, j, width) WF(o, j, drive) }
+    { auto& o = eng.super_; V& j = E.at("super"); WF(o, j, detune) WF(o, j, attack) WF(o, j, release) WF(o, j, bright) WF(o, j, width) WF(o, j, air) }
+    { auto& o = eng.chip; V& j = E.at("chip"); WF(o, j, duty) WF(o, j, dec) WF(o, j, vib) WF(o, j, arp) WF(o, j, crush) WF(o, j, oct) WF(o, j, arpm) }
+    { auto& o = eng.sh101; V& j = E.at("sh101"); WF(o, j, lfoR) WF(o, j, lfoW) WF(o, j, vcoMod) WF(o, j, range) WF(o, j, pw) WF(o, j, pwmSrc) WF(o, j, pulse) WF(o, j, saw) WF(o, j, sub) WF(o, j, subMode)
+      WF(o, j, noise) WF(o, j, cut) WF(o, j, res) WF(o, j, env) WF(o, j, vcfMod) WF(o, j, kybd) WF(o, j, vcaMode) WF(o, j, A) WF(o, j, D) WF(o, j, S) WF(o, j, R) WF(o, j, porta) WF(o, j, portaMode) WF(o, j, vol) }
+    { auto& o = eng.mini; V& j = E.at("mini"); WF(o, j, o1r) WF(o, j, o1w) WF(o, j, o2r) WF(o, j, o2w) WF(o, j, o2f) WF(o, j, o3r) WF(o, j, o3w) WF(o, j, o3f) WF(o, j, o3lfo)
+      WF(o, j, m1) WF(o, j, m1on) WF(o, j, m2) WF(o, j, m2on) WF(o, j, m3) WF(o, j, m3on) WF(o, j, mn) WF(o, j, mnon) WF(o, j, ncol) WF(o, j, cut) WF(o, j, emph) WF(o, j, contour)
+      WF(o, j, fA) WF(o, j, fD) WF(o, j, fS) WF(o, j, aA) WF(o, j, aD) WF(o, j, aS) WF(o, j, decSw) WF(o, j, kt1) WF(o, j, kt2) WF(o, j, glide) WF(o, j, glideOn) WF(o, j, modmix) WF(o, j, oscMod) WF(o, j, filtMod) WF(o, j, modAmt) WF(o, j, vol) }
+    { auto& o = bris; V& j = E.at("bris"); WF(o, j, wave) WF(o, j, pw) WF(o, j, det) WF(o, j, sub) WF(o, j, noise) WF(o, j, glide) WF(o, j, drift) WF(o, j, cut) WF(o, j, res) WF(o, j, fenv) WF(o, j, kt) WF(o, j, fvel)
+      WF(o, j, fA) WF(o, j, fD) WF(o, j, fS) WF(o, j, fR) WF(o, j, aA) WF(o, j, aD) WF(o, j, aS) WF(o, j, aR) WF(o, j, lfoW) WF(o, j, lfoR) WF(o, j, lfoSync) WF(o, j, lfoDest) WF(o, j, lfoAmt)
+      WF(o, j, cho) WF(o, j, choMix) WF(o, j, dly) WF(o, j, dlyT) WF(o, j, dlyFb) WF(o, j, vmode) WF(o, j, vol) }
+#undef WF
     for (int pi = 0; pi < kPatterns; ++pi) {
         for (int ti = 0; ti < kTracks; ++ti) for (int st = 0; st < kSteps; ++st) {
             V& c = S.at("pats").at((size_t)pi).at((size_t)ti).at((size_t)st); const Cell& x = cells[pi][ti][st];

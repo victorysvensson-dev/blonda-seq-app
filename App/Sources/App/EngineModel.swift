@@ -193,6 +193,22 @@ final class EngineModel: NSObject, ObservableObject {
         }
     }
     func setInstrument(_ name: String, _ t: Int) { edit { engine.setInstrument(name, track: t) }; selColHex = trackHex(selectedTrack) }
+    // synth module (engine parameters of the melodic tracks)
+    func engParam(_ f: Int, _ e: Int, _ t: Int) -> Float { _ = paramRevision; return engine.engineParam(f, engine: e, track: t) }
+    func setEngParam(_ f: Int, _ e: Int, _ t: Int, _ v: Float) { engine.setEngineParam(f, engine: e, track: t, value: v); paramRevision += 1; scheduleSave() }
+    func engOption(_ f: Int, _ e: Int, _ t: Int) -> Int { _ = paramRevision; return engine.engineOption(f, engine: e, track: t) }
+    func setEngOption(_ f: Int, _ e: Int, _ t: Int, _ v: Int) { engine.setEngineOption(f, engine: e, track: t, value: v); paramRevision += 1; scheduleSave() }
+    var stepDur: Double { 60.0 / Double(max(40, engine.bpm)) / 4 }
+    func previewNote(_ t: Int) -> Int { [45, 57, 69, 57][max(0, min(3, t - 6))] }
+    /// Short audition of a melodic track (web: synPreview) — after editing a sound or switching engine.
+    func preview(_ t: Int) {
+        guard t >= 6 && t <= 9 else { hitPad(t); return }
+        let n = previewNote(t)
+        engine.noteOn(n, velocity: 0.85, track: t)
+        hitTime[t] = CACurrentMediaTime(); hitVel[t] = 0.85
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(0.18, stepDur * 2)) { [weak self] in self?.engine.noteOff(n, track: t) }
+    }
+    func instrument(_ t: Int) -> String { _ = revision; return engine.instrument(forTrack: t) }
     func undo() { edit { _ = engine.undo() } }
     func redo() { edit { _ = engine.redo() } }
     func setBPM(_ v: Float) { engine.bpm = max(40, min(240, v.rounded())); revision += 1; scheduleSave() }

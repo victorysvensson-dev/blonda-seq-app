@@ -22,11 +22,11 @@ struct SEQ3View: View {
                         let unit = (geo.size.width - 26) / (wide ? 2.0 : 2.1)
                         HStack(alignment: .top, spacing: 0) {
                             column(width: unit * (wide ? 0.8 : 1.0), cards: [
-                                AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard()), AnyView(MixerCard()),
+                                AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard()), AnyView(SynthCard()),
                             ], base: 0)
                             Hinge().frame(width: 26)
                             column(width: unit * (wide ? 1.2 : 1.1), cards: [
-                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(SongCard()), AnyView(MasterCard()),
+                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(MixerCard()),
                             ], base: 1)
                         }
                     }

@@ -154,7 +154,7 @@ public:
     float engParam(int k, int e, int f) { const float* x = engFloat(ui, k, e, f); return x ? *x : 0.f; }
     void setEngParam(int k, int e, int f, float v) {
         float* x = engFloat(ui, k, e, f); if (!x) return;
-        const float hi = (e == 3 && f == 0) ? 6.f : 1.f; *x = std::max(0.f, std::min(hi, v));
+        float lo, hi; engRange(e, f, lo, hi); if (e == 3 && f == 0) v = std::round(v); *x = std::max(lo, std::min(hi, v));
         Cmd c; c.type = EngParam; c.a = k; c.b = e; c.c = f; c.f = *x; send(c);
     }
     int engOption(int k, int e, int f) { int v = 0; engOpt(ui, k, e, f, &v, nullptr); return v; }
