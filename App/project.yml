@@ -1,0 +1,43 @@
+# XcodeGen spec: `brew install xcodegen && cd App && xcodegen` creates BLONDA.xcodeproj
+name: BLONDA
+options:
+  bundleIdPrefix: se.blonda
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    CLANG_CXX_LANGUAGE_STANDARD: c++17
+    SWIFT_VERSION: "5.9"
+    GCC_OPTIMIZATION_LEVEL: "3"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  BLONDA:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Resources
+        buildPhase: resources
+      - path: ../Core/src
+        group: Core
+      - path: ../Core/include
+        group: Core
+        buildPhase: none
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: se.blonda.seq
+        PRODUCT_NAME: BLONDA SEQ
+        MARKETING_VERSION: "0.1"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_OBJC_BRIDGING_HEADER: Sources/BLONDA-Bridging-Header.h
+        HEADER_SEARCH_PATHS: $(SRCROOT)/../Core/include
+        OTHER_CPLUSPLUSFLAGS: $(inherited) -Wno-unused-parameter
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIBackgroundModes: audio
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIRequiresFullScreen: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown
+        INFOPLIST_KEY_CFBundleDisplayName: BLONDA

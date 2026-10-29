@@ -165,8 +165,8 @@ void Seq3::applyParams() {
     }
 }
 
-void Seq3::play() { if (playing_) { stop(); return; } playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); }
-void Seq3::stop() { playing_ = false; curStep_ = -1; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
+void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); }
+void Seq3::stop() { playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
 
 // ---------------------------------------------------------------- pump (duckAt)
 void Seq3::duckAt(WebParam& g, double t, float a, float base) {
@@ -231,7 +231,7 @@ void Seq3::scheduleStep(long long) {
             for (int r = 0; r < rr; ++r) trigger(i, (long long)std::llround((t + r * sd / rr) * sr_), vel * (r ? .8f : 1.f), st.n, 1, -1);
         }
     }
-    curStep_ = ps; nextT_ += sd; step_ = (step_ + 1) % 16; ++gstep_; if (step_ == 0) ++bar_;
+    curStep_ = ps; marks_[markW_++ & 31] = {(long long)std::llround(nextT_ * sr_), ps}; nextT_ += sd; step_ = (step_ + 1) % 16; ++gstep_; if (step_ == 0) ++bar_;
 }
 
 void Seq3::schedule(long long blockStart) {
@@ -360,6 +360,7 @@ void Seq3::render(float* L, float* R, int frames) {
           static FILE* dc = getenv("DUMP_COMPIN") ? fopen(getenv("DUMP_COMPIN"), "wb") : nullptr; if (dc) for (int x = 0; x < n; ++x) { fwrite(&busL_[x], 4, 1, dc); fwrite(&busR_[x], 4, 1, dc); }
           if (!(skip & 4)) comp_.process(busL_.data(), busR_.data(), n); if (!(skip & 8)) lim_.process(busL_.data(), busR_.data(), n); }
         for (int x = 0; x < n; ++x) { const float o = out_.next(); L[x] = busL_[x] * o; R[x] = busR_[x] * o; }
+        { long long best = -1; int st = -1; for (const auto& m : marks_) if (m.f <= frame_ + n && m.f > best) { best = m.f; st = m.step; } audible_ = playing_ ? st : -1; }
         L += n; R += n; frames -= n; frame_ += n;
     }
 }

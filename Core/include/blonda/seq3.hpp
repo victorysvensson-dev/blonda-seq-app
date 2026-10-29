@@ -46,10 +46,17 @@ public:
     void applyParams();              // after editing project() parameters
     void play(); void stop(); bool playing() const { return playing_; }
     void queuePattern(int p) { queued_ = p; }
+    // real-time safe edits (call from the audio thread, e.g. when draining a command queue)
+    void setCell(int pat, int track, int step, const Cell& c) { if (pat >= 0 && pat < kPatterns && track >= 0 && track < kTracks && step >= 0 && step < kSteps) P_.cells[pat][track][step] = c; }
+    void swapRoll(int pat, int melTrack, std::vector<RollNote>& notes) { if (pat >= 0 && pat < kPatterns && melTrack >= 0 && melTrack < 4) P_.roll[pat][melTrack].swap(notes); }
+    void setBPM(float bpm) { P_.bpm = std::max(40.f, std::min(240.f, bpm)); applyParams(); }
+    void setPattern(int p) { if (playing_) queued_ = p; else P_.pat = p; }
+    void setMute(int track, bool m) { if (track >= 0 && track < kTracks) { P_.mute[track] = m; applyParams(); } }
+    int pattern() const { return P_.pat; }
     // live notes from the keyboard / MIDI (lengthSec <= 0: held until noteOff)
     void liveNote(int track, int note, float vel, bool on);
     void render(float* L, float* R, int frames);
-    int currentStep() const { return curStep_; }
+    int currentStep() const { return audible_; }   // the step you hear right now (-1 when stopped)
     double timeSec() const { return (double)frame_ / sr_; }
     std::vector<float>* dbgBus = nullptr; const std::vector<float>* dbgInBus = nullptr; size_t dbgInPos = 0;   // tests: capture the bus before the master chain (interleaved)
     void bypassMasterDynamics() { comp_.threshold = 0; comp_.ratio = 1; comp_.knee = 0; }   // tests
@@ -75,6 +82,7 @@ private:
     int trkLen(int i) const { int v = P_.len[i]; return v >= 1 && v <= 16 ? v : 16; }
     double stepDur() const { return 60.0 / P_.bpm / 4.0; }
 
+    struct StepMark { long long f; int step; }; std::array<StepMark, 32> marks_{}; int markW_ = 0; int audible_ = -1;
     Project P_; Noise prob_; float sr_ = 48000; long long frame_ = 0; bool playing_ = false;
     // sequencer
     long long nextF_ = 0; double nextT_ = 0; int step_ = 0, gstep_ = 0, bar_ = 0, curStep_ = -1, queued_ = -1, chainIdx_ = -1; bool songStart_ = true;

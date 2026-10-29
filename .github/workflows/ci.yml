@@ -1,0 +1,30 @@
+name: CI
+on:
+  push:
+  pull_request:
+jobs:
+  core-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build core
+        run: cmake -S Core -B Core/build -DCMAKE_BUILD_TYPE=Release && cmake --build Core/build -j4
+      - name: Host / threading stress test
+        run: cd Core/build && ./hosttest ../../App/Resources/default_project.json
+      - name: Render 8 s of the default song
+        run: cd Core/build && ./songrender ../../App/Resources/default_project.json 8 song.f32
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: cd App && xcodegen
+      - name: Build for iOS Simulator (no signing)
+        run: |
+          cd App
+          xcodebuild -project BLONDA.xcodeproj -scheme BLONDA -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build | tail -60
+          exit ${PIPESTATUS[0]}
