@@ -113,6 +113,34 @@ static void testParser() {
     CHECK(mpcs::buttonHasLed(mpcs::BTN_SHIFT) && !mpcs::buttonHasLed(mpcs::BTN_B1), "LED table");
 }
 
+// The MPC's surface port delivered timestamp frames on the first hardware run; the bytes below are rebuilt from that
+// log (tv_nsec D4 32 67 07 etc.). Read as plain MIDI they produced fake buttons, knobs and encoder moves.
+static void testRawMidiFrames() {
+    std::puts("raw MIDI timestamp frames");
+    auto frame = [](uint8_t* f, std::initializer_list<uint8_t> nsec, std::initializer_list<uint8_t> data) {
+        std::memset(f, 0, 32); f[1] = (uint8_t)data.size(); int i = 4; for (uint8_t b : nsec) f[i++] = b; i = 16; for (uint8_t b : data) f[i++] = b; };
+    uint8_t in[128], out[128];
+    frame(in, {0xD4, 0x32, 0x67, 0x07}, {0x99, 0x24, 0x7F});        // pad 2 down
+    frame(in + 32, {0x8E, 0x6D, 0x33, 0x67}, {0x89, 0x24, 0x00});   // pad 2 up
+    frame(in + 64, {0xB2, 0x27, 0x68, 0x07}, {0xB0, 0x64, 0x01});   // encoder +1
+    frame(in + 96, {0xE2, 0x28, 0x68, 0x07}, {0x90, 0x31, 0x7F});   // SHIFT down
+    CHECK(looksFramed(in, 128), "frames detected");
+    const int n = unpackRawMidi(in, 128, out);
+    const uint8_t want[12] = {0x99, 0x24, 0x7F, 0x89, 0x24, 0x00, 0xB0, 0x64, 0x01, 0x90, 0x31, 0x7F};
+    CHECK(n == 12 && std::memcmp(out, want, 12) == 0, "frames unpack to exactly the MIDI bytes (%d bytes)", n);
+    MidiParser p; MidiMsg m; mpcs::Event e; int events = 0, fake = 0;
+    for (int i = 0; i < n; ++i) if (p.feed(out[i], m)) { if (mpcs::decode(m, e)) ++events; else ++fake; }
+    CHECK(events == 4 && fake == 0, "4 real events, no fake ones (%d, %d)", events, fake);
+    // the same bytes parsed raw (the bug): fake messages appear
+    MidiParser q; int rawMsgs = 0; for (int i = 0; i < 128; ++i) if (q.feed(in[i], m)) ++rawMsgs;
+    CHECK(rawMsgs > 4, "raw parsing of frames gives extra messages (%d), which is what the hardware showed", rawMsgs);
+    // plain streams pass through untouched
+    const uint8_t plainIn[6] = {0x99, 0x25, 0x40, 0x89, 0x25, 0x00};
+    CHECK(!looksFramed(plainIn, 6) && unpackRawMidi(plainIn, 6, out) == 6 && std::memcmp(out, plainIn, 6) == 0, "plain MIDI untouched");
+    uint8_t plain32[32]; for (int i = 0; i < 32; i += 3) { plain32[i] = 0x99; if (i + 1 < 32) plain32[i + 1] = 0x25; if (i + 2 < 32) plain32[i + 2] = 0x40; }
+    CHECK(!looksFramed(plain32, 32), "a 32-byte plain chunk is not mistaken for a frame");
+}
+
 static void testControls() {
     std::puts("knob takeover + pad layout");
     ScaledKnob k; float v = 0.8f;
@@ -377,6 +405,7 @@ int main(int argc, char** argv) {
     if (mode == "bench") { bench(); return 0; }
     const char* outDir = mode == "render" && argc > 2 ? argv[2] : nullptr;
     testParser();
+    testRawMidiFrames();
     testControls();
     testInstruments(outDir);
     testBris6Voices();

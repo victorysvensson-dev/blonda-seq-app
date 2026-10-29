@@ -35,4 +35,25 @@ private:
     bool sysex_ = false;
 };
 
+// ALSA raw MIDI can deliver input as 32-byte frames with a timestamp (SNDRV_RAWMIDI_MODE_FRAMING_TSTAMP):
+//   u8 type (0) | u8 length (1..16) | u8 reserved[2] | u32 tv_nsec | u64 tv_sec | u8 data[16]
+// The MPC Sample's control surface port can be left in that mode by the stock app. The host asks for plain bytes
+// when it opens a port; this also unpacks frames if they arrive anyway. A read() in framing mode returns whole
+// frames (the host reads in multiples of 32 bytes), so each chunk is checked on its own.
+constexpr int kRawMidiFrame = 32;
+inline bool looksFramed(const uint8_t* in, int n) {
+    if (n < kRawMidiFrame || n % kRawMidiFrame) return false;
+    for (int f = 0; f < n; f += kRawMidiFrame)
+        if (in[f] != 0 || in[f + 1] < 1 || in[f + 1] > 16 || in[f + 2] != 0 || in[f + 3] != 0) return false;
+    return true;
+}
+// Converts one read() chunk into plain MIDI bytes (out must hold n bytes). Returns the number of bytes.
+inline int unpackRawMidi(const uint8_t* in, int n, uint8_t* out) {
+    if (!looksFramed(in, n)) { for (int i = 0; i < n; ++i) out[i] = in[i]; return n; }
+    int w = 0;
+    for (int f = 0; f < n; f += kRawMidiFrame)
+        for (int i = 0; i < in[f + 1]; ++i) out[w++] = in[f + 16 + i];
+    return w;
+}
+
 } // namespace akai

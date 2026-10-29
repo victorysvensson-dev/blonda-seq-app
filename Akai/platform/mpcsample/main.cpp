@@ -104,6 +104,16 @@ bool pcmWrite(int fd, const int32_t* frames, int n, int& xruns) {
 }
 
 // ---------------------------------------------------------------- MIDI ports
+// Ask for plain MIDI bytes (no timestamp frames) on an input port. Returns false if the driver refused.
+bool rawmidiPlain(int fd, const char* name) {
+    snd_rawmidi_params p; std::memset(&p, 0, sizeof p);
+    p.stream = SNDRV_RAWMIDI_STREAM_INPUT; p.buffer_size = 4096; p.avail_min = 1; p.no_active_sensing = 1;
+    p.mode = SNDRV_RAWMIDI_MODE_FRAMING_NONE;
+    if (ioctl(fd, SNDRV_RAWMIDI_IOCTL_PARAMS, &p) < 0) { std::fprintf(stderr, "%s: plain MIDI mode: %s (frames are unpacked instead)\n", name, std::strerror(errno)); return false; }
+    std::printf("%s: plain MIDI mode\n", name);
+    return true;
+}
+
 struct MidiPort { int fd = -1; int card = -1; akai::MidiParser parser; };
 
 int openSurface(int& surfaceCard) {
@@ -112,6 +122,7 @@ int openSurface(int& surfaceCard) {
     char path[64]; std::snprintf(path, sizeof path, "/dev/snd/midiC%dD0", surfaceCard);
     const int fd = open(path, O_RDWR | O_NONBLOCK | O_CLOEXEC);
     if (fd < 0) std::fprintf(stderr, "%s: %s\n", path, std::strerror(errno));
+    else rawmidiPlain(fd, "control surface");
     return fd;
 }
 
@@ -124,6 +135,7 @@ void openExternalMidi(int surfaceCard, std::vector<MidiPort>& ports) {
         char path[300]; std::snprintf(path, sizeof path, "/dev/snd/%s", e->d_name);
         const int fd = open(path, O_RDONLY | O_NONBLOCK | O_CLOEXEC);
         if (fd < 0) { std::fprintf(stderr, "%s: %s (skipped)\n", path, std::strerror(errno)); continue; }
+        rawmidiPlain(fd, path);
         MidiPort p; p.fd = fd; p.card = card; ports.push_back(p);
         std::printf("external MIDI in: %s\n", path);
     }
@@ -334,7 +346,8 @@ int main(int argc, char** argv) {
     for (int i = 0; i < kPeriods - 1; ++i) pcmWrite(pcm, out, kPeriod, xruns);   // headroom before the first real block
 
     MidiPort surf; surf.fd = surface;
-    uint8_t in[512], ledBuf[512]; int ledLen = 0, ledPos = 0;
+    uint8_t in[512], plain[512], ledBuf[512];   // in: a multiple of 32 so framed reads hold whole frames
+    int ledLen = 0, ledPos = 0;
     uint32_t published = 0;
     double busy = 0, worst = 0, windowStart = nowSec(); long long blocks = 0; float load = 0;
     const double period = (double)kPeriod / kRate;
@@ -346,16 +359,18 @@ int main(int argc, char** argv) {
         const double t0 = nowSec();
         // 1. control surface + external MIDI
         for (;;) {
-            const ssize_t n = read(surf.fd, in, sizeof in);
-            if (n <= 0) break;
+            const ssize_t r = read(surf.fd, in, sizeof in);
+            if (r <= 0) break;
+            const int n = akai::unpackRawMidi(in, (int)r, plain);
             akai::MidiMsg m; akai::mpcs::Event e;
-            for (ssize_t i = 0; i < n; ++i) if (surf.parser.feed(in[i], m)) { gTrace.push((uint32_t)blocks, 0, m); if (akai::mpcs::decode(m, e)) A.handle(e); }
+            for (int i = 0; i < n; ++i) if (surf.parser.feed(plain[i], m)) { gTrace.push((uint32_t)blocks, 0, m); if (akai::mpcs::decode(m, e)) A.handle(e); }
         }
         for (MidiPort& p : ext) for (;;) {
-            const ssize_t n = read(p.fd, in, sizeof in);
-            if (n <= 0) break;
+            const ssize_t r = read(p.fd, in, sizeof in);
+            if (r <= 0) break;
+            const int n = akai::unpackRawMidi(in, (int)r, plain);
             akai::MidiMsg m;
-            for (ssize_t i = 0; i < n; ++i) if (p.parser.feed(in[i], m)) { if (m.type() != 0xA0 || m.d2 == 0) gTrace.push((uint32_t)blocks, 1, m); A.handleMidi(m); }
+            for (int i = 0; i < n; ++i) if (p.parser.feed(plain[i], m)) { if (m.type() != 0xA0 || m.d2 == 0) gTrace.push((uint32_t)blocks, 1, m); A.handleMidi(m); }
         }
         if (A.quitRequested() && !gStop) { gStop = true; exitReason = "SHIFT + STOP on the MPC"; }
         // 2. audio

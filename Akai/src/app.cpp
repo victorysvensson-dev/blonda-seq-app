@@ -289,11 +289,11 @@ int App::desiredLed(int b) const {
     case BTN_SHIFT: return shift_ ? 2 : 1;
     case BTN_PLUS: return layout_.octave > 0 ? 2 : 1;
     case BTN_MINUS: return layout_.octave < 0 ? 2 : 1;
-    case BTN_16_LEVELS: return layout_.inKey ? 8 : 4;
+    case BTN_16_LEVELS: return layout_.inKey ? 2 : 1;      // bicolour: 3*A + B, one die only (both = pink)
     case BTN_PLAY: return latch_ ? 2 : 1;
     case BTN_STOP: return 1;
-    case BTN_TAP_TEMPO: return beat ? 8 : 4;
-    case BTN_ERASE: return 4;
+    case BTN_TAP_TEMPO: return beat ? 2 : 1;
+    case BTN_ERASE: return 1;
     default: break;
     }
     for (int i = 0; i < 8; ++i) if (b == kBankLedCC[i]) return i == layout_.octave + 3 ? 2 : 0;   // octave A..H
