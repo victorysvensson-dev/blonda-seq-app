@@ -70,7 +70,7 @@ let kEngDefs: [EngDef] = [
         EngParamDef(label: "filter decay", fmt: { msF(shT($0, 10)) }), EngParamDef(label: "decay", fmt: { msF(shT($0, 10)) }), EngParamDef(label: "sustain", fmt: pcF),
         EngParamDef(label: "osc 1", fmt: pcF), EngParamDef(label: "osc 2", fmt: pcF), EngParamDef(label: "osc 3", fmt: pcF), EngParamDef(label: "glide", fmt: { msF(0.004 + $0 * $0 * 2) }),
     ], opts: [[(0, "glide av"), (1, "glide på")], [(0, "decay av"), (1, "decay på")]], cols: 3, valueSize: 21),
-    EngDef(key: "bris", name: "Bris", tag: "6 röster · ladder · chorus", params: [
+    EngDef(key: "bris", name: "Bris web", tag: "gamla webbversionen · 6 röster · ladder", params: [
         EngParamDef(label: "cutoff", fmt: { hzF(24 * pow(2, $0 * 9.6)) }), EngParamDef(label: "reso", fmt: pcF), EngParamDef(label: "env", fmt: pcF),
         EngParamDef(label: "attack", fmt: { msF(brT($0, 6)) }), EngParamDef(label: "release", fmt: { msF(brT($0, 10)) }), EngParamDef(label: "detune", fmt: pcF),
         EngParamDef(label: "sub", fmt: pcF), EngParamDef(label: "chorus", fmt: pcF), EngParamDef(label: "delay", fmt: pcF),
@@ -78,7 +78,7 @@ let kEngDefs: [EngDef] = [
     EngDef(key: "bris6", name: "BLONDA BRIS", tag: "bree6 · 6 röster · blonda-motor"),   // its own panel: MotorSynth
 ]
 /// Chip order in the engine row (web: ENG_ORDER).
-let kEngOrder = ["analog", "bris", "bris6", "acid", "sh101", "mini", "sub", "fm", "pluck", "chip", "super"]
+let kEngOrder = ["analog", "bris6", "acid", "sh101", "mini", "sub", "fm", "pluck", "chip", "super", "bris"]
 func engIndex(_ key: String) -> Int { kEngDefs.firstIndex { $0.key == key } ?? 0 }
 
 // MARK: - per-engine colours
@@ -824,7 +824,7 @@ struct EngViz {
             }
             ctx.stroke(p, with: .color(k > 0 ? ac.opacity(0.35) : fg.opacity(0.9)), lineWidth: k > 0 ? 1.2 : 1.8)
         }
-        label(&ctx, ["poly 6", "mono", "unison"][max(0, min(2, O(1)))] + " · Bris", ac, CGPoint(x: 8, y: h - 8))
+        label(&ctx, ["poly 6", "mono", "unison"][max(0, min(2, O(1)))] + " · Bris web", ac, CGPoint(x: 8, y: h - 8))
     }
 
     private func superPad(_ ctx: inout GraphicsContext, _ size: CGSize, _ el: Double, _ T: Double) {
