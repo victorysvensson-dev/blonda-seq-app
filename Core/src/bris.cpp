@@ -25,17 +25,17 @@ void Bris::reset() {
     choPh[0] = choPh[1] = 0; fxInit = false; nEvents = 0; now = 0;
 }
 
-void Bris::noteOn(int note, float velocity, int offset, int chordSize, float lengthSec) {
-    if (nEvents < (int)events.size()) events[nEvents++] = {offset, note, velocity, chordSize, true, lengthSec};
+void Bris::noteOn(int note, float velocity, int offset, int chordSize, float lengthSec, const Glide* glide) {
+    if (nEvents < (int)events.size()) { Event& e = events[nEvents++]; e = {offset, note, velocity, chordSize, true, lengthSec, {}}; if (glide) e.gl = *glide; }
 }
 void Bris::noteOff(int note, int offset) {
-    if (nEvents < (int)events.size()) events[nEvents++] = {offset, note, 0.f, 1, false, 0.f};
+    if (nEvents < (int)events.size()) events[nEvents++] = {offset, note, 0.f, 1, false, 0.f, {}};
 }
 void Bris::allNotesOff() { for (auto& v : voices) if (v.used && v.held) { v.held = false; if (v.live) v.liveOff = true; } }
 
 int Bris::activeVoices() const { int n = 0; for (auto& v : voices) if (v.used && !v.stealing) ++n; return n; }
 
-void Bris::startVoice(int note, float vel, int chord, float lenSec) {
+void Bris::startVoice(int note, float vel, int chord, float lenSec, const Glide* G) {
     const BrisParams& E = params;
     const int mode = (int)E.vmode;
     const int limit = mode == 1 ? 1 : 6;
@@ -63,6 +63,10 @@ void Bris::startVoice(int note, float vel, int chord, float lenSec) {
         v.glideLen = v.glideLeft = (int)((0.005f + E.glide * E.glide * 1.2f) * osr);
     }
     lastFreq = fr; lastTime = now;
+    // glideOsc: slide through the tied notes (setValueAtTime(last, max(t+.002, tt-gt)) + exponentialRamp(f, tt))
+    if (G && G->n > 0) { float last = 1.f;
+        for (int i = 0; i < G->n; ++i) { const double tt = G->at[i] * G->sd; const float r = std::exp2((G->note[i] - G->n0) / 12.f);
+            v.gr.setValueAtTime(last, std::max(.002, tt - G->gt)); v.gr.exponentialRampToValueAtTime(r, tt); last = r; } }
     // per-oscillator analog drift (static per note) and free-running phases
     for (int u = 0; u < 3; ++u) for (int k = 0; k < 2; ++k) {
         v.driftC[u][k] = (rng.uni() - 0.5f) * E.drift * 14.f;
@@ -88,7 +92,7 @@ void Bris::releaseNote(int note) {
 void Bris::runEvents(int frame) {
     for (int i = 0; i < nEvents; ++i) {
         if (events[i].frame != frame) continue;
-        if (events[i].on) startVoice(events[i].note, events[i].vel, events[i].chord, events[i].len);
+        if (events[i].on) startVoice(events[i].note, events[i].vel, events[i].chord, events[i].len, events[i].gl.n ? &events[i].gl : nullptr);
         else releaseNote(events[i].note);
     }
 }
@@ -157,6 +161,7 @@ float Bris::renderVoice(Voice& v) {
     // ---- pitch (glide is an exponential ramp, like exponentialRampToValueAtTime)
     float f = v.freq;
     if (v.glideLeft > 0) { float t = 1.f - (float)v.glideLeft / (float)v.glideLen; f = v.glideFrom * std::pow(v.freq / v.glideFrom, t); --v.glideLeft; }
+    if (!v.gr.empty()) f *= v.gr.valueAt(v.t);
     const float pitchC = (E.lfoAmt > 0.01f && dest == 0) ? lfo * a2 * 120.f : 0.f;
 
     // ---- oscillators

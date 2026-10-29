@@ -259,7 +259,7 @@ void Seq3::dispatch(long long blockStart, int frames) {
                    else { iv[0] = 0; iv[1] = sc[idx + 2] - ev.note; iv[2] = sc[idx + 4] - ev.note; iv[3] = sc[idx + 6] - ev.note; } n = 4; }
             if (P_.inst[k] == "bris") {
                 Bris& B = bris_[k]; const int nn = B.params.vmode > .5f && B.params.vmode < 1.5f ? 1 : n;
-                for (int x = 0; x < nn; ++x) B.noteOn(ev.note + iv[x], ev.vel, off, nn, len);
+                for (int x = 0; x < nn; ++x) B.noteOn(ev.note + iv[x], ev.vel, off, nn, len, ev.glide >= 0 ? &glides_[ev.glide] : nullptr);
             } else mel_[k].trigger(ev.vel, ev.note, len, iv, n, off, ev.glide >= 0 ? &glides_[ev.glide] : nullptr);
         }
         evq_.erase(evq_.begin() + e);

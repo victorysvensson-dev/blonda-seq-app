@@ -8,6 +8,9 @@
 
 namespace blonda {
 
+// a chain of tied notes for the sequencer's glide (GL in the web version): the voice slides through note[i] at at[i] steps
+struct Glide { int n = 0; float at[16]{}; int note[16]{}; float sd = .125f, gt = .07f; int n0 = 0; };
+
 constexpr float kPi = 3.14159265358979323846f;
 constexpr float kTwoPi = 6.28318530717958647692f;
 

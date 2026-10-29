@@ -26,7 +26,6 @@ struct MiniP { int o1r = 3, o1w = 2, o2r = 3, o2w = 2; float o2f = .08f; int o3r
                float glide = .15f; int glideOn = 0; float modmix = 0; int oscMod = 0, filtMod = 0; float modAmt = .3f, vol = .8f; };
 
 // Sequencer glide chain (the web's GL): note slides to later notes; `at` in steps from the note start.
-struct Glide { int n = 0; float at[16]{}; int note[16]{}; float sd = .125f, gt = .07f; int n0 = 0; };
 
 struct EngineParams { AnalogP analog; AcidP acid; SubP sub; FMP fm; PluckP pluck; SuperP super_; ChipP chip; SH101P sh101; MiniP mini; };
 

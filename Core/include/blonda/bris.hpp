@@ -3,6 +3,7 @@
 // Voices run at 2x the host rate and are decimated with a half-band FIR before the effects.
 #pragma once
 #include "dsp.hpp"
+#include "webparam.hpp"
 #include <array>
 #include <cstdint>
 
@@ -47,7 +48,7 @@ public:
     // offset = sample position inside the next process() block; chordSize = notes triggered together (level scaling).
     // lengthSec > 0: sequenced note with known length (envelopes follow the web version's scheduled timeline exactly).
     // lengthSec <= 0: live note (keyboard / MIDI) - scheduled like the web keyboard (24 steps) and faded out on noteOff.
-    void noteOn(int note, float velocity, int offset = 0, int chordSize = 1, float lengthSec = 0.f);
+    void noteOn(int note, float velocity, int offset = 0, int chordSize = 1, float lengthSec = 0.f, const Glide* glide = nullptr);
     void noteOff(int note, int offset = 0);
     void allNotesOff();
 
@@ -62,6 +63,7 @@ private:
         int note = 0; float vel = 0; uint32_t age = 0; int chord = 1;
         // pitch
         float freq = 440.f, glideFrom = 440.f; int glideLeft = 0, glideLen = 0;
+        WebParamN<34> gr{1.f};   // sequencer glide: pitch ratio timeline (glideOsc), in voice time
         BlepOsc osc[3][2]; float driftC[3][2]{}; BlepOsc subOsc; Noise nz;
         // envelopes: emulate the Web Audio AudioParam timeline the web version schedules at note start
         double t = 0; float gate = 1.f, relAt = 1.f, endAt = 2.f;
@@ -73,9 +75,9 @@ private:
         // filter
         SvfLP f1, f2; int coefCount = 0;
     };
-    struct Event { int frame; int note; float vel; int chord; bool on; float len; };
+    struct Event { int frame; int note; float vel; int chord; bool on; float len; Glide gl; };
 
-    void startVoice(int note, float vel, int chord, float lenSec);
+    void startVoice(int note, float vel, int chord, float lenSec, const Glide* gl);
     void releaseNote(int note);
     float renderVoice(Voice& v);   // one oversampled sample
     void runEvents(int frame);
