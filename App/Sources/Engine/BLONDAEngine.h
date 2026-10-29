@@ -42,6 +42,22 @@ NS_ASSUME_NONNULL_BEGIN
 - (float)paramGroup:(NSInteger)group track:(NSInteger)track field:(NSInteger)field NS_SWIFT_NAME(param(group:track:field:));
 - (void)setParam:(float)value group:(NSInteger)group track:(NSInteger)track field:(NSInteger)field NS_SWIFT_NAME(setParam(_:group:track:field:));
 
+/// Track editing (orbit + grid actions). All undoable.
+- (NSInteger)hitsForTrack:(NSInteger)track NS_SWIFT_NAME(hits(track:));
+- (NSInteger)lengthForTrack:(NSInteger)track NS_SWIFT_NAME(length(track:));
+- (NSInteger)rotationForTrack:(NSInteger)track NS_SWIFT_NAME(rotation(track:));
+- (void)setLength:(NSInteger)length track:(NSInteger)track NS_SWIFT_NAME(setLength(_:track:));
+- (void)euclid:(NSInteger)hits track:(NSInteger)track NS_SWIFT_NAME(euclid(_:track:));
+- (void)rotate:(NSInteger)delta track:(NSInteger)track NS_SWIFT_NAME(rotate(_:track:));
+- (void)shiftTrack:(NSInteger)track NS_SWIFT_NAME(shift(track:));
+- (void)clearTrack:(NSInteger)track NS_SWIFT_NAME(clear(track:));
+- (void)variationTrack:(NSInteger)track NS_SWIFT_NAME(variation(track:));
+- (void)toggleSoloTrack:(NSInteger)track NS_SWIFT_NAME(toggleSolo(track:));
+@property (nonatomic, readonly) NSInteger soloTrack;
+- (void)copyPatternToNext;
+- (BOOL)undo;
+- (BOOL)redo;
+
 /// The current project in the web version's JSON format (for saving / sharing with the web app).
 - (NSString *)projectJSON;
 

@@ -44,7 +44,7 @@ struct Dock: View {
         VStack(spacing: 0) {
             HStack(spacing: 6) {
                 PatternSegment()
-                GButton(width: 38) { SVGIcon(d: "M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5", size: 14).overlay(SVGIcon(d: "M7 5h4.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", size: 14)) }
+                GButton(width: 38, action: { model.copyPattern() }) { SVGIcon(d: "M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5", size: 14).overlay(SVGIcon(d: "M7 5h4.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", size: 14)) }
                 GButton(width: 112) {
                     HStack(spacing: 8) {
                         Circle().fill(AngularGradient(colors: [Color(hex: 0xF255A8), Color(hex: 0xF2C318), Color(hex: 0x6BE28C), Color(hex: 0x3D6CF5), Color(hex: 0xB9A6FF), Color(hex: 0xF255A8)], center: .center, angle: .degrees(30 - 90)))
@@ -79,7 +79,7 @@ struct GButton<L: View>: View {
     @ViewBuilder var label: () -> L
     var body: some View {
         Button(action: action) {
-            label().font(BFont.mono(10, 500)).tracking(0.3).foregroundColor(T.fg)
+            label().font(BFont.mono(10, 500)).tracking(0.3).foregroundColor(T.fg).lineLimit(1)
                 .frame(width: width, height: 38)
                 .background(Capsule().fill(.white.opacity(0.1)))
                 .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
@@ -117,11 +117,17 @@ struct PatternSegment: View {
 
 struct BPMPill: View {
     @EnvironmentObject var model: EngineModel
+    @State private var bpm0: Float?
     var body: some View {
         HStack(spacing: 4) {
             roundBtn { model.nudgeBPM(-1) } icon: { SVGIcon(d: "M4 8h8", size: 14, stroke: 1.6, cap: .round) }
             HStack(alignment: .bottom, spacing: 5) {
                 DotMatrixText(text: "\(Int(model.bpm.rounded()))", height: 20)
+                    .contentShape(Rectangle())
+                    .gesture(DragGesture(minimumDistance: 2).onChanged { g in
+                        if bpm0 == nil { bpm0 = model.bpm }
+                        model.setBPM(bpm0! - Float(g.translation.height / 6))
+                    }.onEnded { _ in bpm0 = nil })
                 Text("bpm").font(BFont.mono(8.5)).tracking(0.34).foregroundColor(T.mute).padding(.bottom, -1)
             }
             .frame(width: 84)
@@ -131,8 +137,7 @@ struct BPMPill: View {
         .frame(width: 160, height: 38)
         .background(Capsule().fill(LinearGradient(colors: [.white.opacity(0.12), .white.opacity(0.05)], startPoint: .top, endPoint: .bottom)))
         .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
-        .id(model.revision)
-    }
+            }
     private func roundBtn<I: View>(_ action: @escaping () -> Void, @ViewBuilder icon: () -> I) -> some View {
         Button(action: action) { icon().foregroundColor(T.fg).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.08))) }.buttonStyle(.plain)
     }

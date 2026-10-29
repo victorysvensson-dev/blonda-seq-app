@@ -52,7 +52,7 @@ enum ScreenSize { static var current = CGSize(width: 1366, height: 1024) }
 
 // MARK: - Card styles
 
-enum CardStyle { case glass, dark, tinted(Color) }
+enum CardStyle { case glass, dark, tinted(Color), solid(Color) }
 
 /// A web ".card": caption row (title + minimise / fullscreen / grab buttons) and content, in one of the looks.
 struct Card<Content: View>: View {
@@ -99,6 +99,9 @@ struct Card<Content: View>: View {
                     .init(color: Color.white.opacity(0.1), location: 0), .init(color: Color.white.opacity(0.043), location: 0.4), .init(color: Color.white.opacity(0.03), location: 1),
                 ], startPoint: UnitPoint(x: 0.25, y: 0.07), endPoint: UnitPoint(x: 0.75, y: 0.93))))
                 .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(RadialGradient(colors: [.white.opacity(0.06), .clear], center: UnitPoint(x: 0.2, y: -0.1), startRadius: 0, endRadius: 156)))
+        case .solid(let c):
+            RoundedRectangle(cornerRadius: 22, style: .continuous).fill(c)
+                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(LinearGradient(colors: [.white.opacity(0.14), .white.opacity(0.02)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
         case .tinted(let c):
             RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.clear)
                 .background(Backdrop().clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous)))
@@ -129,12 +132,14 @@ struct CapButton: View {
     enum Kind { case min, full, grab }
     let kind: Kind
     let dark: Bool
+    var tint: Color? = nil
+    var fill: Color? = nil
     var body: some View {
         ZStack {
-            if dark { Rectangle().strokeBorder(T.dmLine, lineWidth: 1) } else { Circle().fill(.white.opacity(0.07)) }
+            if dark { Rectangle().strokeBorder(T.dmLine, lineWidth: 1) } else { Circle().fill(fill ?? Color.white.opacity(0.07)) }
             Canvas { ctx, size in
                 let c = CGPoint(x: size.width / 2, y: size.height / 2)
-                let col = (dark ? T.dmInk : T.fg)
+                let col = tint ?? (dark ? T.dmInk : T.fg)
                 switch kind {
                 case .min:
                     var p = Path(); p.move(to: CGPoint(x: c.x - 3.5, y: c.y - 1.5)); p.addLine(to: CGPoint(x: c.x, y: c.y + 2)); p.addLine(to: CGPoint(x: c.x + 3.5, y: c.y - 1.5))
@@ -169,11 +174,11 @@ struct DMChip<Label: View>: View {
         Button(action: action) {
             label()
                 .font(BFont.mono(10, 500)).tracking(0.3).lineLimit(1).fixedSize()
-                .foregroundColor(fill == nil ? T.dmInk : Color(hex: 0x17181A))
+                .foregroundColor(fill == nil ? T.dmInk : (fill == Color(hex: 0xC9452F) ? Color.white : Color(hex: 0x17181A)))
                 .padding(.horizontal, 12).frame(height: 30)
                 .background(fill ?? Color.clear)
                 .overlay(Rectangle().strokeBorder(fill == nil ? T.dmLine : Color.clear, lineWidth: 1))
         }
-        .buttonStyle(.plain)
+        .buttonStyle(PressScale())
     }
 }

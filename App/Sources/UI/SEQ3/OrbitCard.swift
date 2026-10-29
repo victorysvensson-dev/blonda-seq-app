@@ -32,15 +32,40 @@ struct OrbitDial: View {
         ZStack {
             TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { _ in
                 Canvas { c, size in drawOrbit(&c, size) }
+                    .background(GeometryReader { g in Color.clear.onAppear { dialSize = g.size.width }.onChange(of: g.size.width) { _, v in dialSize = v } })
             }
             VStack(spacing: 6) {
-                let hits = (0..<16).filter { model.value(model.selectedTrack, $0) > 0 }.count
-                DotMatrixText(text: "\(hits)/16", height: 26, color: T.dmInk)
+                DotMatrixText(text: "\(model.hits(model.selectedTrack))/\(model.length(model.selectedTrack))", height: 26, color: T.dmInk)
                 Text(kTracks[model.selectedTrack].name.lowercased()).font(BFont.mono(9)).tracking(0.54).foregroundColor(T.dmInk.opacity(0.45))
             }
         }
         .id(model.revision)
+        .contentShape(Circle())
+        .gesture(SpatialTapGesture().onEnded { e in tap(e.location) })
     }
+
+    /// tap a ring to select its track, a dot to switch that step on/off (like the web orbit)
+    private func tap(_ p: CGPoint) {
+        let w: CGFloat = 320, cx = w / 2, R0 = cx * 0.34, R1 = cx * 0.95, gap = (R1 - R0) / 9
+        // the dial may be drawn bigger than 320 in the narrow layout: scale the point into a 320 frame
+        let scale = cx / max(1, dialSize / 2)
+        let x = (p.x * scale) - cx, y = (p.y * scale) - cx
+        let d = sqrt(x * x + y * y)
+        let i = Int(((R1 - d) / gap).rounded())
+        guard i >= 0 && i < 10, abs(R1 - CGFloat(i) * gap - d) < gap * 0.6 else { return }
+        var a = atan2(y, x) + .pi / 2; if a < 0 { a += 2 * .pi }
+        let L = model.length(i), s = Int((a / (2 * .pi) * CGFloat(L)).rounded()) % L
+        // close to a dot → toggle it; otherwise just select the ring
+        let ang = Double(s) / Double(L) * 2 * Double.pi - Double.pi / 2
+        let R = R1 - CGFloat(i) * gap
+        let dx = cx + cos(ang) * R - (x + cx), dy = cx + sin(ang) * R - (y + cx)
+        if sqrt(dx * dx + dy * dy) < gap * 0.7 && i == model.selectedTrack {
+            let v = model.value(i, s)
+            model.cycle(i, s); if v == 1 { model.cycle(i, s) }
+        }
+        model.selectedTrack = i
+    }
+    @State private var dialSize: CGFloat = 320
 
     private func drawOrbit(_ c: inout GraphicsContext, _ size: CGSize) {
         let w: CGFloat = size.width
@@ -69,9 +94,10 @@ struct OrbitDial: View {
             let flare: Double = model.flash(i, 0.25)
             let ring = Path(ellipseIn: CGRect(x: cx - R, y: cx - R, width: 2 * R, height: 2 * R))
             c.stroke(ring, with: .color(isSel ? T.dmY.opacity(0.35) : T.dmInk.opacity(0.06)), lineWidth: 1)
-            let pos: Int = playing ? step : -1
-            for s in 0..<16 {
-                let a: CGFloat = CGFloat(Double(s) / 16 * 2 * Double.pi - Double.pi / 2)
+            let L: Int = model.length(i)
+            let pos: Int = playing && step >= 0 ? (L < 16 ? model.globalStep % L : step) : -1
+            for s in 0..<L {
+                let a: CGFloat = CGFloat(Double(s) / Double(L) * 2 * Double.pi - Double.pi / 2)
                 let x: CGFloat = cx + cos(a) * R
                 let y: CGFloat = cx + sin(a) * R
                 let on: Bool = model.value(i, s) > 0
@@ -95,26 +121,23 @@ struct OrbitDial: View {
 struct OrbitSide: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
-        let hits = (0..<16).filter { model.value(model.selectedTrack, $0) > 0 }.count
+        let t = model.selectedTrack
         VStack(alignment: .leading, spacing: 8) {
-            ctl("slag", "\(hits)")
-            ctl("rotera", "0")
-            ctl("längd", "16")
+            ctl("slag", "\(model.hits(t))") { model.setHits(t, model.hits(t) + $0) }
+            ctl("rotera", "\(model.rotation(t))") { model.rotate(t, $0) }
+            ctl("längd", "\(model.length(t))") { model.setLength(t, model.length(t) + $0) }
             Text("tryck på en ring för att välja spår · på en prick för att tända")
                 .font(BFont.mono(9)).foregroundColor(T.dmInk.opacity(0.32)).lineSpacing(3).padding(.top, 4)
         }
         .frame(width: 150)
     }
-    private func ctl(_ l: String, _ v: String) -> some View {
+    private func ctl(_ l: String, _ v: String, _ step: @escaping (Int) -> Void) -> some View {
         HStack(spacing: 4) {
             Text(l).font(BFont.mono(10)).tracking(0.4).foregroundColor(T.dmInk.opacity(0.5)).frame(width: 48, alignment: .leading)
-            sq("−")
+            SqButton(label: "−") { step(-1) }
             Text(v).font(BFont.linje(15)).foregroundColor(T.dmInk).frame(width: 34)
-            sq("+")
+            SqButton(label: "+") { step(1) }
         }
-    }
-    private func sq(_ s: String) -> some View {
-        Text(s).font(BFont.mono(14)).foregroundColor(T.dmInk).frame(width: 28, height: 28).overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
     }
 }
 
@@ -122,24 +145,24 @@ struct OrbitSide: View {
 struct OrbitSideRow: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
-        let hits = (0..<16).filter { model.value(model.selectedTrack, $0) > 0 }.count
+        let t = model.selectedTrack
         VStack(spacing: 8) {
             HStack(spacing: 6) {
-                stepper("slag", "\(hits)")
-                stepper("rotera", "0")
-                stepper("längd", "16")
+                stepper("slag", "\(model.hits(t))") { model.setHits(t, model.hits(t) + $0) }
+                stepper("rotera", "\(model.rotation(t))") { model.rotate(t, $0) }
+                stepper("längd", "\(model.length(t))") { model.setLength(t, model.length(t) + $0) }
             }
             Text("tryck på en ring för att välja spår · på en prick för att tända")
                 .font(BFont.mono(9)).foregroundColor(T.dmInk.opacity(0.32)).multilineTextAlignment(.center)
         }
     }
-    private func stepper(_ l: String, _ v: String) -> some View {
+    private func stepper(_ l: String, _ v: String, _ step: @escaping (Int) -> Void) -> some View {
         VStack(spacing: 6) {
             Text(l).font(BFont.mono(10)).tracking(0.4).foregroundColor(T.dmInk.opacity(0.5))
             HStack(spacing: 0) {
-                Text("−").font(BFont.mono(14)).frame(width: 28, height: 28).overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+                SqButton(label: "−") { step(-1) }
                 Text(v).font(BFont.linje(15)).frame(maxWidth: .infinity)
-                Text("+").font(BFont.mono(14)).frame(width: 28, height: 28).overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+                SqButton(label: "+") { step(1) }
             }
             .foregroundColor(T.dmInk)
         }
@@ -209,5 +232,26 @@ struct FlowLayout: Layout {
         var x = bounds.minX, y = bounds.minY, rowH: CGFloat = 0
         for s in subviews { let sz = s.sizeThatFits(.unspecified); if x + sz.width > bounds.maxX && x > bounds.minX { x = bounds.minX; y += rowH + spacing; rowH = 0 }
             s.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz)); x += sz.width + spacing; rowH = max(rowH, sz.height) }
+    }
+}
+
+/// Square ± button of the dark cards.
+struct SqButton: View {
+    let label: String
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Text(label).font(BFont.mono(14)).foregroundColor(T.dmInk).frame(width: 28, height: 28)
+                .overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1)).contentShape(Rectangle())
+        }
+        .buttonStyle(PressScale())
+    }
+}
+
+/// Subtle press feedback for custom buttons.
+struct PressScale: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.scaleEffect(configuration.isPressed ? 0.94 : 1).opacity(configuration.isPressed ? 0.8 : 1)
+            .animation(.spring(response: 0.2, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }

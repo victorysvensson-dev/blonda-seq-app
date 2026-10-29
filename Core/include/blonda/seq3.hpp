@@ -77,6 +77,8 @@ public:
     void setPattern(int p) { if (playing_) queued_ = p; else P_.pat = p; }
     void setMute(int track, bool m) { if (track >= 0 && track < kTracks) { P_.mute[track] = m; applyParams(); } }
     int pattern() const { return P_.pat; }
+    void setSolo(int t) { P_.solo = (t >= 0 && t < kTracks) ? t : -1; applyParams(); }
+    void setLen(int t, int L) { if (t >= 0 && t < kTracks) P_.len[t] = std::max(1, std::min(16, L)); }
     void setParam(int group, int track, int field, float v) {
         if (float* f = paramPtr(P_, group, track, field)) { float lo, hi; paramRange(group, field, lo, hi); *f = std::max(lo, std::min(hi, v)); applyParams(); }
     }

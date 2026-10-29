@@ -7,6 +7,9 @@ struct SEQ3View: View {
     @State private var started = false
     @State private var entered = true
     @State private var showKeys = false
+    @FocusState private var keysFocused: Bool
+    @State private var octave = 4
+    @State private var held: [Character: Int] = [:]
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -19,11 +22,11 @@ struct SEQ3View: View {
                         let unit = (geo.size.width - 26) / (wide ? 2.0 : 2.1)
                         HStack(alignment: .top, spacing: 0) {
                             column(width: unit * (wide ? 0.8 : 1.0), cards: [
-                                AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(MixerCard()),
+                                AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard()), AnyView(MixerCard()),
                             ], base: 0)
                             Hinge().frame(width: 26)
                             column(width: unit * (wide ? 1.2 : 1.1), cards: [
-                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(SongCard()),
+                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(SongCard()), AnyView(MasterCard()),
                             ], base: 1)
                         }
                     }
@@ -55,8 +58,37 @@ struct SEQ3View: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .background(T.bg)
+        // computer keyboard, like the web version: A W S E D F T G Y H U J K O L P ; ' play notes, Z/X octave, space play/stop
+        .focusable()
+        .focusEffectDisabled()
+        .focused($keysFocused)
+        .onAppear { keysFocused = true }
+        .onKeyPress(phases: [.down, .up]) { press in handleKey(press) }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: showKeys)
         .onAppear { if ProcessInfo.processInfo.arguments.contains("-autoplay") || ProcessInfo.processInfo.arguments.contains("-nointro") { started = true; entered = true } }
+    }
+
+    private static let keyMap: [Character] = Array("awsedftgyhujkolp;'")
+
+    private func handleKey(_ press: KeyPress) -> KeyPress.Result {
+        guard let ch = press.characters.lowercased().first else { return .ignored }
+        if press.modifiers.contains(.command) {
+            if press.phase == .down && ch == "z" { if press.modifiers.contains(.shift) { model.redo() } else { model.undo() }; return .handled }
+            return .ignored
+        }
+        if press.key == .space { if press.phase == .down { model.togglePlay() }; return .handled }
+        if ch == "z" || ch == "x" { if press.phase == .down { octave = max(1, min(7, octave + (ch == "z" ? -1 : 1))) }; return .handled }
+        guard let ix = Self.keyMap.firstIndex(of: ch) else { return .ignored }
+        if press.phase == .down {
+            if held[ch] != nil { return .handled }   // key repeat
+            let base = 12 * (octave + 1) - (model.selectedTrack == 6 ? 24 : 12)
+            let note = base + ix
+            held[ch] = note
+            if model.selectedTrack < 6 { model.hitPad(model.selectedTrack) } else { model.noteOn(note) }
+        } else if let n = held.removeValue(forKey: ch) {
+            if model.selectedTrack >= 6 { model.noteOff(n) }
+        }
+        return .handled
     }
 
     private func column(width: CGFloat, cards: [AnyView], base: Int) -> some View {

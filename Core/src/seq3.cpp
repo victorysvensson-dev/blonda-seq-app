@@ -104,9 +104,10 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
 std::string Project::toJSON(const std::string& base) const {
     json::Value S; if (!json::parse(base, S) || S.type != json::Value::Object) S = json::Value::object();
     using V = json::Value;
-    S.at("bpm") = V::number(std::round(bpm * 100) / 100); S.at("pat") = V::number(pat);
+    S.at("bpm") = V::number(std::round(bpm * 100) / 100); S.at("pat") = V::number(pat); S.at("solo") = V::number(solo);
     for (int i = 0; i < kTracks; ++i) {
         S.at("mute").at((size_t)i) = V::number(mute[i]);
+        if (len[i] >= 1 && len[i] < 16) S.at("len").at(kTrackIds[i]) = V::number(len[i]); else if (S.has("len")) S.at("len").erase(kTrackIds[i]);
         V& p = S.at("params").at(kTrackIds[i]); const TrackParams& t = params[i];
         p.at("level") = V::number(t.level); p.at("tune") = V::number(t.tune); p.at("decay") = V::number(t.decay); p.at("tone") = V::number(t.tone);
         p.at("pan") = V::number(t.pan); p.at("echo") = V::number(t.echo); p.at("space") = V::number(t.space);

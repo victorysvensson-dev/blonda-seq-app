@@ -62,8 +62,10 @@ struct GridRow: View {
             }
             .buttonStyle(.plain)
             HStack(spacing: 5.4) {
+                let L = model.length(track)
+                let ph = model.playing && model.step >= 0 ? (L < 16 ? model.globalStep % L : model.step) : -1
                 ForEach(0..<16, id: \.self) { s in
-                    DotCell(value: model.value(track, s), colorHex: col, playhead: model.playing && model.step == s, dimGroup: (s >= 4 && s < 8) || s >= 12)
+                    DotCell(value: model.value(track, s), colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L)
                         .onTapGesture { model.cycle(track, s) }
                 }
             }
@@ -78,6 +80,7 @@ struct DotCell: View {
     let colorHex: UInt32
     let playhead: Bool
     let dimGroup: Bool
+    var out = false          // beyond the track's length
     var body: some View {
         let on = value > 0, acc = value == 2
         let bg: Color = on ? (playhead ? Color(hex: 0x201E16) : Color(hex: 0x18191C)) : (playhead ? Color(hex: 0x29282A) : (dimGroup ? T.dmCell2 : T.dmCell))
@@ -96,7 +99,7 @@ struct DotCell: View {
                 if playhead { g.addFilter(.shadow(color: Color(hex: colorHex), radius: 3)) }
                 g.opacity = playhead ? 1 : 0.72 + 0.28 * (acc ? 1 : 0.72)
                 g.fill(path, with: .color(dc))
-            } else {
+            } else if !out {
                 ctx.fill(path, with: .color(T.dmInk.opacity(playhead ? 0.24 : 0.09)))
             }
         }
@@ -113,13 +116,13 @@ struct GridActions: View {
         FlowLayout(spacing: 5) {
             DMChip { HStack(spacing: 7) { SVGIcon(d: "M3.5 3h9A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7A1.5 1.5 0 0 1 3.5 3zM6 3v6M10 3v6", size: 14); Text("piano roll") } }
             DMChip(fill: T.dmY) { HStack(spacing: 10) { DieFace(); Text("tärning") }.padding(.leading, -7) }
-            DMChip { HStack(spacing: 7) { SVGIcon(d: "M2 12c3 0 4-8 7-8s3 5 5 5", size: 14, stroke: 1.6); Text("variation") } }
-            DMChip { HStack(spacing: 7) { SVGIcon(d: "M2 8h11M10 5l3 3-3 3", size: 14, stroke: 1.6); Text("flytta") } }
-            DMChip { HStack(spacing: 7) { SVGIcon(d: "M3 3l10 10M13 3L3 13", size: 14, stroke: 1.6); Text("rensa spår") } }
-            DMChip(action: { model.toggleMute(model.selectedTrack) }) { Text("mute") }
-            DMChip { Text("solo") }
-            DMChip { SVGIcon(d: "M5 3L2 6l3 3M2 6h7a4 4 0 010 8H6", size: 14, stroke: 1.6) }
-            DMChip { SVGIcon(d: "M11 3l3 3-3 3M14 6H7a4 4 0 000 8h3", size: 14, stroke: 1.6) }
+            DMChip(action: { model.variation(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 12c3 0 4-8 7-8s3 5 5 5", size: 14, stroke: 1.6); Text("variation") } }
+            DMChip(action: { model.shift(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 8h11M10 5l3 3-3 3", size: 14, stroke: 1.6); Text("flytta") } }
+            DMChip(action: { model.clear(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M3 3l10 10M13 3L3 13", size: 14, stroke: 1.6); Text("rensa spår") } }
+            DMChip(fill: model.isMuted(model.selectedTrack) ? Color(hex: 0xC9452F) : nil, action: { model.toggleMute(model.selectedTrack) }) { Text("mute") }
+            DMChip(fill: model.soloTrack == model.selectedTrack ? T.dmY : nil, action: { model.toggleSolo(model.selectedTrack) }) { Text("solo") }
+            DMChip(action: { model.undo() }) { SVGIcon(d: "M5 3L2 6l3 3M2 6h7a4 4 0 010 8H6", size: 14, stroke: 1.6) }
+            DMChip(action: { model.redo() }) { SVGIcon(d: "M11 3l3 3-3 3M14 6H7a4 4 0 000 8h3", size: 14, stroke: 1.6) }
         }
     }
 }

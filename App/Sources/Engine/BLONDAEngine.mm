@@ -119,6 +119,21 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (float)paramGroup:(NSInteger)group track:(NSInteger)track field:(NSInteger)field { return _host->param((int)group, (int)track, (int)field); }
 - (void)setParam:(float)value group:(NSInteger)group track:(NSInteger)track field:(NSInteger)field { _host->setParam((int)group, (int)track, (int)field, value); }
 
+- (NSInteger)hitsForTrack:(NSInteger)track { return track >= 0 && track < blonda::kTracks ? _host->hits((int)track) : 0; }
+- (NSInteger)lengthForTrack:(NSInteger)track { return track >= 0 && track < blonda::kTracks ? _host->trackLen((int)track) : 16; }
+- (NSInteger)rotationForTrack:(NSInteger)track { return _host->rotation((int)track); }
+- (void)setLength:(NSInteger)length track:(NSInteger)track { _host->setLen((int)track, (int)length); }
+- (void)euclid:(NSInteger)hits track:(NSInteger)track { _host->euclid((int)track, (int)hits); }
+- (void)rotate:(NSInteger)delta track:(NSInteger)track { _host->rotate((int)track, (int)delta); }
+- (void)shiftTrack:(NSInteger)track { _host->shift((int)track); }
+- (void)clearTrack:(NSInteger)track { _host->clearTrack((int)track); }
+- (void)variationTrack:(NSInteger)track { _host->variation((int)track, arc4random()); }
+- (void)toggleSoloTrack:(NSInteger)track { _host->setSolo((int)track); }
+- (NSInteger)soloTrack { return _host->solo(); }
+- (void)copyPatternToNext { _host->copyPatternToNext(); }
+- (BOOL)undo { return _host->undo(); }
+- (BOOL)redo { return _host->redo(); }
+
 - (NSString *)projectJSON { return [NSString stringWithUTF8String:_host->toJSON().c_str()]; }
 
 - (NSString *)instrumentForTrack:(NSInteger)track {

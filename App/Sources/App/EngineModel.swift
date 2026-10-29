@@ -46,6 +46,7 @@ final class EngineModel: NSObject, ObservableObject {
     @Published var bar = 0
     var playStart: CFTimeInterval = 0
     var stepTime: CFTimeInterval = 0
+    var globalStep = 0   // steps since play (polymeter positions)
     private var lastTick: CFTimeInterval = 0
     @Published var errorText: String?
     private var link: CADisplayLink?
@@ -100,10 +101,11 @@ final class EngineModel: NSObject, ObservableObject {
     @objc private func tick() {
         let now = CACurrentMediaTime(), dt = lastTick == 0 ? 0 : min(0.033, now - lastTick); lastTick = now
         let s = engine.currentStep, p = engine.isPlaying
-        if p != playing { playing = p; if p { playStart = now; bar = 0 } }
+        if p != playing { playing = p; if p { playStart = now; bar = 0; globalStep = 0 } }
         if s != step {
             if s >= 0 {
                 if step >= 0 && s < step { bar += 1 }
+                globalStep = step < 0 ? 0 : globalStep + 1
                 for i in 0..<10 where !engine.isMutedTrack(i) {
                     let v = engine.stepValue(forTrack: i, step: s)
                     if v > 0 {
@@ -144,6 +146,24 @@ final class EngineModel: NSObject, ObservableObject {
         if d.group == 0 && d.field == 1 { x = x.rounded() }       // tune in semitones
         engine.setParam(x, group: d.group, track: track, field: d.field); paramRevision += 1; scheduleSave()
     }
+    // ---- track editing (all undoable in the engine host)
+    private func edit(_ f: () -> Void) { f(); revision += 1; scheduleSave() }
+    func hits(_ t: Int) -> Int { _ = revision; return engine.hits(track: t) }
+    func length(_ t: Int) -> Int { _ = revision; return engine.length(track: t) }
+    func rotation(_ t: Int) -> Int { _ = revision; return engine.rotation(track: t) }
+    func setHits(_ t: Int, _ k: Int) { edit { engine.euclid(max(0, min(length(t), k)), track: t) } }
+    func setLength(_ t: Int, _ l: Int) { edit { engine.setLength(max(1, min(16, l)), track: t) } }
+    func rotate(_ t: Int, _ d: Int) { edit { engine.rotate(d, track: t) } }
+    func shift(_ t: Int) { edit { engine.shift(track: t) } }
+    func clear(_ t: Int) { edit { engine.clear(track: t) } }
+    func variation(_ t: Int) { edit { engine.variation(track: t) } }
+    func toggleSolo(_ t: Int) { edit { engine.toggleSolo(track: t) } }
+    var soloTrack: Int { _ = revision; return engine.soloTrack }
+    func copyPattern() { edit { engine.copyPatternToNext() } }
+    func undo() { edit { _ = engine.undo() } }
+    func redo() { edit { _ = engine.redo() } }
+    func setBPM(_ v: Float) { engine.bpm = max(40, min(240, v.rounded())); revision += 1; scheduleSave() }
+
     func noteOn(_ n: Int) { engine.noteOn(n, velocity: 0.85, track: selectedTrack) }
     func noteOff(_ n: Int) { engine.noteOff(n, track: selectedTrack) }
 }
