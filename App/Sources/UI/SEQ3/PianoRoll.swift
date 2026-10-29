@@ -106,6 +106,7 @@ struct PianoRoll: View {
         .onKeyPress(phases: .down) { k in key(k) }
         .onChange(of: track) { _, _ in st.sel.removeAll(); load(center: true) }
         .onChange(of: model.pattern) { _, _ in st.sel.removeAll(); load(center: false) }
+        .onChange(of: model.recRevision) { _, _ in if st.drag == nil { load(center: false) } }
     }
 
     // MARK: header / tools
@@ -131,6 +132,10 @@ struct PianoRoll: View {
             VStack(alignment: .trailing, spacing: 5) {
                 Text(kTracks[track].name).font(BFont.sans(30, 200)).tracking(-0.6).foregroundColor(T.fg)
                 Text(infoText).font(BFont.mono(9)).tracking(0.36).foregroundColor(T.mute).lineLimit(1)
+            }
+            rbtn { model.toggleRecord() } label: {
+                Circle().fill(Color(hex: 0xFF4A33)).frame(width: 12, height: 12).padding(1.5)
+                    .background(Circle().fill(model.recording ? Color.white : Color.clear))
             }
             rbtn { model.togglePlay() } label: { SVGIcon(d: model.playing ? "M6 4.5h4v15H6zM14 4.5h4v15h-4z" : "M7 4.5v15l13-7.5z", box: 24, size: 15, stroke: nil, fill: true) }
             rbtn { model.closeRoll() } label: { SVGIcon(d: "M3 3l8 8M11 3l-8 8", box: 14, size: 15, stroke: 1.5) }
@@ -451,8 +456,8 @@ struct PianoRoll: View {
         }
     }
 
-    private func keyDown(_ n: Int) { st.pressed.insert(n); model.engine.noteOn(n, velocity: st.lastVel, track: track); model.hitTime[track] = CACurrentMediaTime() }
-    private func keyUp(_ n: Int) { st.pressed.remove(n); model.engine.noteOff(n, track: track) }
+    private func keyDown(_ n: Int) { st.pressed.insert(n); model.engine.noteOn(n, velocity: st.lastVel, track: track); model.hitTime[track] = CACurrentMediaTime(); model.recOn(track, n, st.lastVel) }
+    private func keyUp(_ n: Int) { st.pressed.remove(n); model.engine.noteOff(n, track: track); model.recOff(track, n) }
 
     private func key(_ k: KeyPress) -> KeyPress.Result {
         let cmd = k.modifiers.contains(.command)

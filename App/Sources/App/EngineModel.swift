@@ -133,6 +133,7 @@ final class EngineModel: NSObject, ObservableObject {
         if i >= 6 { let n = i == 6 ? 45 : 57; DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.engine.noteOff(n, track: i) } }
         hitTime[i] = CACurrentMediaTime(); hitVel[i] = 0.85
         energy = min(1, energy + (i == 0 ? 0.9 : i < 3 ? 0.35 : 0.12) * 0.85)
+        if recording { recOn(i, i < 6 ? 60 : (i == 6 ? 45 : 57), 0.85); if i >= 6 { recOff(i, i == 6 ? 45 : 57) } }
     }
 
     var bpm: Float { engine.bpm }
@@ -396,6 +397,56 @@ final class EngineModel: NSObject, ObservableObject {
     func redo() { edit { _ = engine.redo() } }
     func setBPM(_ v: Float) { engine.bpm = max(40, min(240, v.rounded())); revision += 1; scheduleSave() }
 
-    func noteOn(_ n: Int) { engine.noteOn(n, velocity: 0.85, track: selectedTrack) }
-    func noteOff(_ n: Int) { engine.noteOff(n, track: selectedTrack) }
+    func noteOn(_ n: Int) { engine.noteOn(n, velocity: 0.85, track: selectedTrack); recOn(selectedTrack, n, 0.85) }
+    func noteOff(_ n: Int) { engine.noteOff(n, track: selectedTrack); recOff(selectedTrack, n) }
+
+    // MARK: recording (web: recBtn · recOn / recOff) — what you play while the loop runs lands on the nearest step
+    @Published var recording = false
+    @Published var recRevision = 0   // the piano roll reloads when recording wrote notes
+    private var recHeld: [Int: (s: Int, t: CFTimeInterval, track: Int)] = [:]
+    private var lastRecUndo: CFTimeInterval = 0
+    func toggleRecord() {
+        recording.toggle()
+        showToast(recording ? "Inspelning: spela på pads eller klaviaturen medan loopen går" : "Inspelning av")
+        if recording && !playing { togglePlay() }
+    }
+    /// The step under the playhead right now, rounded to the nearest step of the track's length.
+    private func recStep(_ t: Int) -> Int? {
+        guard recording, playing, step >= 0 else { return nil }
+        let L = max(1, length(t))
+        let pos = Double(L < 16 ? globalStep % L : step) + (CACurrentMediaTime() - stepTime) / stepDur
+        return ((Int(pos.rounded()) % L) + L) % L
+    }
+    private func recUndo() { let now = CACurrentMediaTime(); if now - lastRecUndo > 0.3 { engine.pushUndo() }; lastRecUndo = now }
+    func recOn(_ t: Int, _ n: Int, _ v: Float) {
+        guard let s = recStep(t) else { return }
+        recUndo()
+        if t < 6 {
+            if engine.stepValue(forTrack: t, step: s) == 0 { engine.cycleStep(forTrack: t, step: s) }
+            if v >= 0.95 && engine.stepValue(forTrack: t, step: s) != 2 { engine.toggleAccent(t, step: s) }
+        } else {
+            var notes = rollNotes(t)
+            notes.removeAll { Int(floor($0.s + 1e-6)) == s && Int($0.n) == n }
+            notes.append(BLRollNote(s: Float(s), l: 1, n: Int32(n), v: v >= 0.95 ? 1 : max(0.3, v), g: -1))
+            setRollNotes(t, notes)
+            recHeld[n * 16 + t] = (s, CACurrentMediaTime(), t)
+        }
+        revision += 1; recRevision += 1; scheduleSave()
+    }
+    func recOff(_ t: Int, _ n: Int) {
+        guard t >= 6, let r = recHeld.removeValue(forKey: n * 16 + t) else { return }
+        let l = max(1, min(16, Int(((CACurrentMediaTime() - r.t) / stepDur).rounded())))
+        guard l > 1 else { return }
+        var notes = rollNotes(t)
+        if let i = notes.firstIndex(where: { Int(floor($0.s + 1e-6)) == r.s && Int($0.n) == n }) { notes[i].l = Float(min(l, 16 - r.s)) }
+        setRollNotes(t, notes); revision += 1; recRevision += 1; scheduleSave()
+    }
+    func rollNotes(_ t: Int) -> [BLRollNote] {
+        let d = engine.rollData(t)
+        return d.withUnsafeBytes { Array($0.bindMemory(to: BLRollNote.self)) }
+    }
+    func setRollNotes(_ t: Int, _ notes: [BLRollNote]) {
+        var n = notes
+        engine.setRollData(Data(bytes: &n, count: n.count * MemoryLayout<BLRollNote>.stride), track: t)
+    }
 }

@@ -5,7 +5,7 @@ import SwiftUI
 struct PadsCard: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
-        Card(style: .glass, title: [("Pads · 1–0", false)]) {
+        Card(style: .glass, title: [("Pads · 1–0 ", false), (model.recording ? "● rec" : "", true)]) {
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 9) {
                 ForEach(0..<10, id: \.self) { i in Pad(track: i) }
             }

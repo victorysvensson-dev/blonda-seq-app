@@ -13,6 +13,8 @@ final class KeyboardInput {
     private static let noteKeys: [GCKeyCode] = [.keyA, .keyW, .keyS, .keyE, .keyD, .keyF, .keyT, .keyG, .keyY, .keyH, .keyU, .keyJ,
                                                  .keyK, .keyO, .keyL, .keyP, .semicolon, .quote]
 
+    private static let padKeys: [GCKeyCode] = [.one, .two, .three, .four, .five, .six, .seven, .eight, .nine, .zero]
+
     init(model: EngineModel) {
         self.model = model
         NotificationCenter.default.addObserver(forName: .GCKeyboardDidConnect, object: nil, queue: .main) { [weak self] n in
@@ -33,9 +35,11 @@ final class KeyboardInput {
     private func key(_ code: GCKeyCode, _ pressed: Bool) {
         guard let m = model else { return }
         if pressed { down.insert(code) } else { down.remove(code) }
-        if !pressed, let h = held.removeValue(forKey: code) { if h.track >= 6 { m.engine.noteOff(h.note, track: h.track) }; return }
+        if !pressed, let h = held.removeValue(forKey: code) { if h.track >= 6 { m.engine.noteOff(h.note, track: h.track); m.recOff(h.track, h.note) }; return }
         guard pressed, !commandHeld else { return }
         if code == .spacebar { m.togglePlay(); return }
+        // 1 … 0 on the number row hit the ten pads (web: "Pads · 1–0")
+        if let pad = Self.padKeys.firstIndex(of: code) { m.hitPad(pad); return }
         if code == .keyZ || code == .keyX { octave = max(1, min(7, octave + (code == .keyZ ? -1 : 1))); m.showToast("Oktav \(octave)"); return }
         guard let ix = Self.noteKeys.firstIndex(of: code), held[code] == nil else { return }
         let t = m.rollTrack ?? m.selectedTrack
@@ -44,5 +48,6 @@ final class KeyboardInput {
         m.engine.noteOn(note, velocity: 0.85, track: t)
         m.hitTime[t] = CACurrentMediaTime(); m.hitVel[t] = 0.85
         held[code] = (note, t)
+        m.recOn(t, note, 0.85)
     }
 }

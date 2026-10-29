@@ -39,11 +39,18 @@ struct TransportBar: View {
                     .frame(width: 54, height: 54)
                 }
                 .buttonStyle(.plain)
-                ZStack {
-                    Circle().strokeBorder(T.ink, lineWidth: 2)
-                    Circle().fill(Color(hex: 0xFF4A33)).frame(width: 16, height: 16)
+                Button { model.toggleRecord() } label: {
+                    ZStack {
+                        Circle().fill(model.recording ? T.ink : Color.clear)
+                        Circle().strokeBorder(T.ink, lineWidth: 2)
+                        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !model.recording)) { tl in
+                            let p = model.recording ? 0.5 + 0.5 * cos(tl.date.timeIntervalSinceReferenceDate * 2 * .pi) : 1
+                            Circle().fill(Color(hex: 0xFF4A33)).frame(width: 16, height: 16).opacity(0.45 + 0.55 * p)
+                        }
+                    }
+                    .frame(width: 54, height: 54)
                 }
-                .frame(width: 54, height: 54)
+                .buttonStyle(PressScale())
                 Button { model.togglePlay() } label: {
                     ZStack {
                         Circle().fill(T.ink)
