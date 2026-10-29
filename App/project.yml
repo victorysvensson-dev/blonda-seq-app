@@ -22,6 +22,10 @@ targets:
       - path: ../Core/src
       - path: ../Core/include
         buildPhase: none
+    dependencies:
+      - sdk: AVFoundation.framework
+      - sdk: CoreMIDI.framework
+      - sdk: QuartzCore.framework
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: se.blonda.seq
