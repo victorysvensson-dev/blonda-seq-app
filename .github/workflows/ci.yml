@@ -70,6 +70,9 @@ jobs:
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -inspect || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/inspect.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
+          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -widegrid || true; sleep 6
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/widegrid.png || true
+          T 30 xcrun simctl terminate $UDID se.blonda.seq || true
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -roll || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/roll.png || true
           for g in 0 1 2; do

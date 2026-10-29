@@ -34,7 +34,10 @@ struct BlondaApp: App {
 struct RootView: View {
     @Environment(\.horizontalSizeClass) private var hsc
     var body: some View {
-        if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-libdemo"), i + 1 < ProcessInfo.processInfo.arguments.count {
+        if ProcessInfo.processInfo.arguments.contains("-widegrid") {
+            // CI: the step grid in a very wide card (a big Mac window)
+            ZStack(alignment: .topLeading) { LivingBackground(); GridCard().frame(width: 1330).padding(22) }.background(T.bg)
+        } else if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-libdemo"), i + 1 < ProcessInfo.processInfo.arguments.count {
             LibDemo(page: Int(ProcessInfo.processInfo.arguments[i + 1]) ?? 0)
         } else if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-gallery"), i + 1 < ProcessInfo.processInfo.arguments.count {
             SynthGallery(page: Int(ProcessInfo.processInfo.arguments[i + 1]) ?? 0)
