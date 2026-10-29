@@ -19,7 +19,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; };
 
     ~Host() { shutdown(); }
@@ -35,6 +35,11 @@ public:
     void setBPM(float bpm) { ui.bpm = std::max(40.f, std::min(240.f, bpm)); Cmd c; c.type = BPM; c.f = ui.bpm; send(c); }
     void selectPattern(int p) { if (p < 0 || p >= kPatterns) return; ui.pat = p; Cmd c; c.type = Pattern; c.a = p; send(c); }
     void setMute(int t, bool m) { if (t < 0 || t >= kTracks) return; ui.mute[t] = m; Cmd c; c.type = Mute; c.a = t; c.b = m; send(c); }
+    float param(int group, int track, int field) { const float* f = paramPtr(ui, group, track, field); return f ? *f : 0.f; }
+    void setParam(int group, int track, int field, float v) {
+        float* f = paramPtr(ui, group, track, field); if (!f) return; float lo, hi; paramRange(group, field, lo, hi); *f = std::max(lo, std::min(hi, v));
+        Cmd c; c.type = Param; c.a = group; c.b = track; c.c = field; c.f = *f; send(c);
+    }
     void noteOn(int track, int note, float vel) { Cmd c; c.type = NoteOn; c.a = track; c.b = note; c.f = vel; send(c); }
     void noteOff(int track, int note) { Cmd c; c.type = NoteOff; c.a = track; c.b = note; send(c); }
     // from the MIDI thread (a second producer, so it gets its own queue; notes never allocate)
@@ -87,6 +92,7 @@ public:
                 case Mute: if (e) e->setMute(c.a, c.b != 0); break;
                 case NoteOn: if (e) e->liveNote(c.a, c.b, c.f, true); break;
                 case NoteOff: if (e) e->liveNote(c.a, c.b, 0, false); break;
+                case Param: if (e) e->setParam(c.a, c.b, c.c, c.f); break;
             }
         }
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }

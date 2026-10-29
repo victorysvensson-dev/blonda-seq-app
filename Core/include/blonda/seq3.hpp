@@ -25,6 +25,9 @@ struct MasterParams { float filter = 0, echo = .38f, space = .4f, drive = .12f, 
 struct FxParams { bool echoOn = true; float echoFb = .38f, echoTime = .75f; bool spaceOn = true; float spaceSize = 2.6f; bool tapeOn = true; float tapeColor = .75f;
                   bool crushOn = false; float crushBits = 6, crushMix = .4f; };
 
+// parameter addressing for the UI / MIDI learn: group 0 = track sound, 1 = track FX, 2 = master
+enum ParamGroup { PG_TRACK, PG_TFX, PG_MASTER };
+
 struct Project {
     float bpm = 118; int pat = 0; int solo = -1; std::array<int, kTracks> mute{};
     std::array<TrackParams, kTracks> params; std::array<TrackFX, kTracks> tfx; std::array<int, kTracks> len{};
@@ -37,6 +40,25 @@ struct Project {
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
 };
+
+// field order — track: level tune decay tone pan echo space · fx: drive filt reso crush comp pump ·
+// master: filter echo space drive pump swing vol
+inline float* paramPtr(Project& p, int group, int track, int field) {
+    if (group == PG_MASTER) { MasterParams& m = p.master; float* f[] = {&m.filter, &m.echo, &m.space, &m.drive, &m.pump, &m.swing, &m.vol}; return field >= 0 && field < 7 ? f[field] : nullptr; }
+    if (track < 0 || track >= kTracks) return nullptr;
+    if (group == PG_TRACK) { TrackParams& t = p.params[track]; float* f[] = {&t.level, &t.tune, &t.decay, &t.tone, &t.pan, &t.echo, &t.space}; return field >= 0 && field < 7 ? f[field] : nullptr; }
+    if (group == PG_TFX) { TrackFX& t = p.tfx[track]; float* f[] = {&t.drive, &t.filt, &t.reso, &t.crush, &t.comp, &t.pump}; return field >= 0 && field < 6 ? f[field] : nullptr; }
+    return nullptr;
+}
+// value ranges, as in the web version (SKEY / FXR / master)
+inline void paramRange(int group, int field, float& lo, float& hi) {
+    lo = 0; hi = 1;
+    if (group == PG_TRACK && field == 1) { lo = -12; hi = 12; }
+    if (group == PG_TRACK && field == 4) { lo = -1; }
+    if (group == PG_TFX && field == 1) { lo = -1; }
+    if (group == PG_TFX && field == 5) { hi = 1.5f; }
+    if (group == PG_MASTER && field == 0) { lo = -1; }
+}
 
 class Seq3 {
 public:
@@ -53,6 +75,9 @@ public:
     void setPattern(int p) { if (playing_) queued_ = p; else P_.pat = p; }
     void setMute(int track, bool m) { if (track >= 0 && track < kTracks) { P_.mute[track] = m; applyParams(); } }
     int pattern() const { return P_.pat; }
+    void setParam(int group, int track, int field, float v) {
+        if (float* f = paramPtr(P_, group, track, field)) { float lo, hi; paramRange(group, field, lo, hi); *f = std::max(lo, std::min(hi, v)); applyParams(); }
+    }
     // live notes from the keyboard / MIDI (lengthSec <= 0: held until noteOff)
     void liveNote(int track, int note, float vel, bool on);
     void render(float* L, float* R, int frames);

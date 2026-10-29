@@ -8,6 +8,7 @@ struct ContentView: View {
             VStack(spacing: 12) {
                 HeaderView()
                 GridView()
+                SoundPanel()
                 KeyboardView()
                     .frame(height: 120)
             }

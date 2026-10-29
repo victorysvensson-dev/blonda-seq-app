@@ -37,6 +37,11 @@ NS_ASSUME_NONNULL_BEGIN
 /// Number of MIDI sources currently connected.
 @property (nonatomic, readonly) NSInteger midiSourceCount;
 
+/// Sound parameters. group 0 = track (level tune decay tone pan echo space), 1 = track FX (drive filt reso crush comp pump),
+/// 2 = master (filter echo space drive pump swing vol; track ignored). Values use the web version's ranges.
+- (float)paramGroup:(NSInteger)group track:(NSInteger)track field:(NSInteger)field NS_SWIFT_NAME(param(group:track:field:));
+- (void)setParam:(float)value group:(NSInteger)group track:(NSInteger)track field:(NSInteger)field NS_SWIFT_NAME(setParam(_:group:track:field:));
+
 /// Engine name loaded on a melodic track ("analog", "bris", "acid" ...).
 - (NSString *)instrumentForTrack:(NSInteger)track;
 

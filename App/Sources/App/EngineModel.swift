@@ -36,6 +36,7 @@ final class EngineModel: NSObject, ObservableObject {
     @Published var step: Int = -1
     @Published var playing = false
     @Published var revision = 0          // bump to redraw the grid after edits
+    @Published var paramRevision = 0     // bump to redraw the sound panel
     @Published var selectedTrack = 7 { didSet { engine.midiTrack = selectedTrack } }
     @Published var errorText: String?
     private var link: CADisplayLink?
@@ -77,6 +78,13 @@ final class EngineModel: NSObject, ObservableObject {
     func cycle(_ t: Int, _ s: Int) { engine.cycleStep(forTrack: t, step: s); revision += 1 }
     func isMuted(_ t: Int) -> Bool { engine.isMutedTrack(t) }
     func toggleMute(_ t: Int) { engine.setMuted(!engine.isMutedTrack(t), track: t); revision += 1 }
+    func param(_ d: ParamDef, _ track: Int) -> Float { _ = paramRevision; return engine.param(group: d.group, track: track, field: d.field) }
+    func setParam(_ d: ParamDef, _ track: Int, _ v: Float) {
+        var x = min(d.hi, max(d.lo, v))
+        if d.lo < 0 && abs(x) < (d.hi - d.lo) * 0.015 { x = 0 }   // snap bipolar values to centre
+        if d.group == 0 && d.field == 1 { x = x.rounded() }       // tune in semitones
+        engine.setParam(x, group: d.group, track: track, field: d.field); paramRevision += 1
+    }
     func noteOn(_ n: Int) { engine.noteOn(n, velocity: 0.85, track: selectedTrack) }
     func noteOff(_ n: Int) { engine.noteOff(n, track: selectedTrack) }
 }

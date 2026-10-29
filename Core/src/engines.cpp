@@ -38,7 +38,7 @@ void MelodicTrack::releaseLive(int note) {
     for (int i = 0; i < kGraphs; ++i)
         if (liveNote_[i] == note && g_[i].active()) { g_[i].release(at, rel / 3.f, at + rel * 4.f + .4f); liveNote_[i] = -1; }
     // a note-on queued in this same block that has not started yet: drop it
-    for (int k = 0; k < nPend_; ++k) if (pend_[k].live && pend_[k].note == note) pend_[k].live = false, pend_[k].len = std::min(pend_[k].len, .03f);
+    for (int k = 0; k < nPend_; ++k) if (pend_[k].live && pend_[k].note == note) { pend_[k].live = false; pend_[k].len = std::min(pend_[k].len, .03f); }
 }
 
 // glideOsc(): slide the parameter through the chain of tied notes

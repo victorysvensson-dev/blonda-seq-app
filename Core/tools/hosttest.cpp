@@ -40,6 +40,7 @@ int main(int argc, char** argv) {
         if (k % 97 == 0) host.setMute(3, (k / 97) % 2);
         if (k % 13 == 0) { host.noteOn(7, 57 + k % 12, .8f); }
         if (k % 300 == 299) host.selectPattern(0);
+        if (k % 7 == 0) host.setParam(k % 3, k % 10, k % 7, (k % 100) / 100.f);
         host.collect();
         std::this_thread::sleep_for(std::chrono::microseconds(700));
     }
