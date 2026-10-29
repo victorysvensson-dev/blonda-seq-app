@@ -82,6 +82,12 @@ int main(int argc, char** argv) {
         expect(corr > .99 && corr2 > .99, "beat repeat loops");
         h->togglePlay(); pump();
     }
+    // plugins: values clamp, reach the engine, survive saving; a new reverb swaps in without a glitch
+    h->setFx(1, .9f); h->setFx(8, 4.4f); h->setFx(7, 1); h->setFx(4, 1.2f); h->rebuildReverb(); h->togglePlay();
+    float pk = 0; bool fin = true; for (int i = 0; i < 400; ++i) { h->render(L, R, 128); h->collect(); for (int j = 0; j < 128; ++j) { fin &= std::isfinite(L[j]); pk = std::max(pk, std::abs(L[j])); } }
+    h->togglePlay(); pump();
+    expect(h->fx(1) == .85f && h->fx(8) == 4.f && fin && pk > .01f && pk < 1.5f, "fx set + reverb swap");
+    { blonda::Project b; expect(b.loadJSON(h->toJSON(), &err) && b.fx.crushOn && b.fx.crushBits == 4.f && std::abs(b.fx.spaceSize - 1.2f) < 1e-5f && std::abs(b.fx.echoFb - .85f) < 1e-5f, "save keeps plugins"); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }

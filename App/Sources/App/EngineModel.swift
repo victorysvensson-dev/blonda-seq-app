@@ -163,6 +163,18 @@ final class EngineModel: NSObject, ObservableObject {
     var soloTrack: Int { _ = revision; return engine.soloTrack }
     func copyPattern() { edit { engine.copyPatternToNext() }; showToast("Mönster \(["A", "B", "C", "D"][pattern]) kopierat till \(["A", "B", "C", "D"][(pattern + 1) % 4])") }
     // ---- dice + toasts
+    // plugins
+    func fx(_ f: Int) -> Float { _ = paramRevision; return engine.fxValue(f) }
+    private var irWork: DispatchWorkItem?
+    func setFx(_ f: Int, _ v: Float) {
+        engine.setFxValue(f, value: v); paramRevision += 1; scheduleSave()
+        if f == 4 {   // web queueIR: rebuild the reverb 250 ms after the last change
+            irWork?.cancel(); let w = DispatchWorkItem { [weak self] in self?.engine.rebuildReverb() }; irWork = w
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25, execute: w)
+        }
+    }
+    func setMaster(_ i: Int, _ v: Float) { setParam(kMasterParams[i], 0, v) }
+    func master(_ i: Int) -> Float { param(kMasterParams[i], 0) }
     @Published var chainIdx = -1
     var songMode: Bool { _ = revision; return engine.songMode }
     func toggleSong() {

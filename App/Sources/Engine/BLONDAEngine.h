@@ -75,6 +75,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)performActive:(BOOL)on filter:(float)f fx:(float)fx NS_SWIFT_NAME(perform(active:filter:fx:));
 /// Beat repeat: mode 1 engage, 2 change length, 0 release; division 0..8 = 1/2 1/4 1/8 1/8T 1/16 1/16T 1/32 1/32T 1/64.
 - (void)beatRepeat:(NSInteger)mode division:(NSInteger)div NS_SWIFT_NAME(beatRepeat(_:division:));
+/// Plugins: 0 echo on, 1 echo feedback, 2 echo time, 3 space on, 4 space size, 5 tape on, 6 tape colour, 7 crush on, 8 crush bits, 9 crush mix.
+- (float)fxValue:(NSInteger)field NS_SWIFT_NAME(fxValue(_:));
+- (void)setFxValue:(NSInteger)field value:(float)v NS_SWIFT_NAME(setFxValue(_:value:));
+/// Builds the reverb for the current space size (allocates; call after the size settles).
+- (void)rebuildReverb;
 - (BOOL)undo;
 - (BOOL)redo;
 

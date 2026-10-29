@@ -160,6 +160,7 @@ struct LiveCard: View {
         let fxd = Double(fx)
         let ft = f == 0 ? "av" : (f < 0 ? "lp " : "hp ") + "\(Int((abs(f) * 100).rounded()))"
         return ZStack(alignment: .topLeading) {
+            Color.clear.frame(width: w, height: h)   // anchors the percentages to the pad's own corner
             XTag(dot: 0x3D6CF5, label: "filter", value: ft).alignmentGuide(.leading) { _ in -w * 0.04 }.alignmentGuide(.top) { _ in -h * 0.10 }
             XTag(dot: 0xF2C318, label: "fx", value: "\(Int((fxd * 100).rounded())) %").frame(width: w * 0.96, alignment: .trailing).alignmentGuide(.top) { _ in -h * 0.06 }
             XTag(dot: 0x27B26B, label: "echo", value: "\(Int((min(1, echo + fxd * 0.45) * 100).rounded())) %").frame(width: w * 0.98, alignment: .trailing).alignmentGuide(.top) { _ in -h * 0.52 }

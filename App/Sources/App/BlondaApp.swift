@@ -52,7 +52,7 @@ struct SynthGallery: View {
             if ready && page >= Self.pages.count {
                 HStack(alignment: .top, spacing: 18) {
                     LiveCard().frame(width: 440)
-                    VStack(spacing: 14) { SongCard(); MixerCard() }.frame(width: 440)
+                    VStack(spacing: 14) { SongCard(); PluginsCard() }.frame(width: 440)
                     SynthCard(initialTrack: 9).frame(width: 420)
                 }
                 .padding(22)

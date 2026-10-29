@@ -105,6 +105,11 @@ std::string Project::toJSON(const std::string& base) const {
     json::Value S; if (!json::parse(base, S) || S.type != json::Value::Object) S = json::Value::object();
     using V = json::Value;
     S.at("bpm") = V::number(std::round(bpm * 100) / 100); S.at("pat") = V::number(pat); S.at("solo") = V::number(solo);
+    { V& X = S.at("fx");
+      X.at("echo").at("on") = V::number(fx.echoOn ? 1 : 0); X.at("echo").at("fb") = V::number(fx.echoFb); X.at("echo").at("time") = V::number(fx.echoTime);
+      X.at("space").at("on") = V::number(fx.spaceOn ? 1 : 0); X.at("space").at("size") = V::number(fx.spaceSize);
+      X.at("tape").at("on") = V::number(fx.tapeOn ? 1 : 0); X.at("tape").at("color") = V::number(fx.tapeColor);
+      X.at("crush").at("on") = V::number(fx.crushOn ? 1 : 0); X.at("crush").at("bits") = V::number(fx.crushBits); X.at("crush").at("mix") = V::number(fx.crushMix); }
     S.at("song") = V::number(song ? 1 : 0); for (int k = 0; k < 8; ++k) S.at("chain").at((size_t)k) = V::number(chain[k]);
     for (int i = 0; i < kTracks; ++i) {
         S.at("mute").at((size_t)i) = V::number(mute[i]);
@@ -185,15 +190,43 @@ void Seq3::prepare(float sampleRate) {
     load(P_);
 }
 
+void buildReverb(Convolver& c, float size, float sr) {
+    const int len = std::max(64, (int)(sr * size)); std::vector<float> a(len), b(len); Noise n; n.seed(0x5EACEu);
+    for (int i = 0; i < len; ++i) { const float e = std::pow(1.f - (float)i / len, 2.8f); a[i] = n.next() * e; b[i] = n.next() * e; }
+    c.setIR(a.data(), b.data(), len, sr, true);
+}
+
+void Seq3::setFx(int f, float v) {
+    FxParams& X = P_.fx;
+    switch (f) {
+        case 0: X.echoOn = v != 0; break;
+        case 1: X.echoFb = std::max(0.f, std::min(.85f, v)); break;
+        case 2: X.echoTime = v; break;
+        case 3: X.spaceOn = v != 0; break;
+        case 4: X.spaceSize = std::max(.6f, std::min(6.f, v)); break;   // the new IR arrives through swapReverb
+        case 5: X.tapeOn = v != 0; break;
+        case 6: X.tapeColor = std::max(0.f, std::min(1.f, v)); break;
+        case 7: X.crushOn = v != 0; break;
+        case 8: X.crushBits = std::max(2.f, std::min(12.f, std::round(v))); break;
+        case 9: X.crushMix = std::max(0.f, std::min(1.f, v)); break;
+        default: return;
+    }
+    applyParams();
+}
+
+Convolver* Seq3::swapReverb(Convolver* c) {
+    Convolver* old = rev_; rev_ = c ? c : &revA_;
+    return old == &revA_ ? nullptr : old;
+}
+
 void Seq3::load(const Project& p) {
     P_ = p; playing_ = false; evq_.clear();
     // web: comp threshold -12 ratio 1.8 attack .025 release .25 knee 12; limiter -1.5 / 20 / .002 / .12 / 0
     comp_.threshold = -12; comp_.ratio = 1.8f; comp_.attack = .025f; comp_.release = .25f; comp_.knee = 12;
     lim_.threshold = -1.5f; lim_.ratio = 20; lim_.attack = .002f; lim_.release = .12f; lim_.knee = 0;
     // reverb IR (makeIR: noise * (1 - i/len)^2.8, independent per channel)
-    { const int len = (int)(sr_ * P_.fx.spaceSize); std::vector<float> a(len), b(len); Noise n; n.seed(0x5EACEu);
-      for (int i = 0; i < len; ++i) { const float e = std::pow(1.f - (float)i / len, 2.8f); a[i] = n.next() * e; b[i] = n.next() * e; }
-      reverb_.setIR(a.data(), b.data(), len, sr_, true); }
+    if (rev_ != &revA_) { delete rev_; rev_ = &revA_; }
+    buildReverb(revA_, P_.fx.spaceSize, sr_);
     designBQ(2, 1800, .6f, sr_, dToneC_); designBQ(1, 250, 1, sr_, rHpC_);
     applyParams();
     for (auto* s : {&dlTime_, &fb_, &dRet_, &rRet_, &pre_, &post_, &tapeF_, &crushWet_, &crushDry_, &lpF_, &hpF_, &out_}) s->snap(s->target);
@@ -432,7 +465,7 @@ void Seq3::render(float* L, float* R, int frames) {
         // space: rIn -> HP 250 -> convolver -> return
         for (int x = 0; x < n; ++x) { rInL_[x] = runBQ(rHpC_, rHpZ_[0], rInL_[x]); rInR_[x] = runBQ(rHpC_, rHpZ_[1], rInR_[x]); }
         std::memset(tmpL_.data(), 0, sizeof(float) * n); std::memset(tmpR_.data(), 0, sizeof(float) * n);
-        reverb_.process(rInL_.data(), rInR_.data(), tmpL_.data(), tmpR_.data(), n);
+        rev_->process(rInL_.data(), rInR_.data(), tmpL_.data(), tmpR_.data(), n);
         for (int x = 0; x < n; ++x) { const float g = rRet_.next(); busL_[x] += tmpL_[x] * g; busR_[x] += tmpR_[x] * g; }
         if (dbgInBus) for (int x = 0; x < n; ++x) { busL_[x] = dbgInPos + 1 < dbgInBus->size() ? (*dbgInBus)[dbgInPos] : 0.f; busR_[x] = dbgInPos + 1 < dbgInBus->size() ? (*dbgInBus)[dbgInPos + 1] : 0.f; dbgInPos += 2; }
         if (dbgBus) for (int x = 0; x < n; ++x) { dbgBus->push_back(busL_[x]); dbgBus->push_back(busR_[x]); }

@@ -145,6 +145,9 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (BOOL)followSong { return _host->followSong(); }
 - (void)performActive:(BOOL)on filter:(float)f fx:(float)fx { _host->perform(on, f, fx); }
 - (void)beatRepeat:(NSInteger)mode division:(NSInteger)div { _host->beatRepeat((int)mode, (int)div); }
+- (float)fxValue:(NSInteger)f { return _host->fx((int)f); }
+- (void)setFxValue:(NSInteger)f value:(float)v { _host->setFx((int)f, v); }
+- (void)rebuildReverb { _host->rebuildReverb(); _host->collect(); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

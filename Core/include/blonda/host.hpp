@@ -21,8 +21,8 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat };
-    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb };
+    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; };
 
     ~Host() { shutdown(); }
 
@@ -186,6 +186,26 @@ public:
 
     // the project in the web format (for saving); `base` keeps fields the app does not model
     std::string toJSON() const { return ui.toJSON(base_); }
+    // plugins: echo / space / tape / crush (fields as Seq3::setFx)
+    float fx(int f) const {
+        const FxParams& X = ui.fx;
+        switch (f) { case 0: return X.echoOn; case 1: return X.echoFb; case 2: return X.echoTime; case 3: return X.spaceOn; case 4: return X.spaceSize;
+                     case 5: return X.tapeOn; case 6: return X.tapeColor; case 7: return X.crushOn; case 8: return X.crushBits; case 9: return X.crushMix; }
+        return 0;
+    }
+    void setFx(int f, float v) {
+        FxParams& X = ui.fx;
+        switch (f) {
+            case 0: X.echoOn = v != 0; break; case 1: X.echoFb = std::max(0.f, std::min(.85f, v)); break; case 2: X.echoTime = v; break;
+            case 3: X.spaceOn = v != 0; break; case 4: X.spaceSize = std::max(.6f, std::min(6.f, v)); break;
+            case 5: X.tapeOn = v != 0; break; case 6: X.tapeColor = std::max(0.f, std::min(1.f, v)); break;
+            case 7: X.crushOn = v != 0; break; case 8: X.crushBits = std::max(2.f, std::min(12.f, std::round(v))); break; case 9: X.crushMix = std::max(0.f, std::min(1.f, v)); break;
+            default: return;
+        }
+        Cmd c; c.type = Fx; c.a = f; c.f = fx(f); send(c);
+    }
+    /// After the space size settles: build the new reverb here (allocates) and hand it to the audio thread.
+    void rebuildReverb() { auto* r = new Convolver(); buildReverb(*r, ui.fx.spaceSize, sampleRate); Cmd c; c.type = Reverb; c.rev = r; send(c); }
     // live: XY performance (f −1..1 lowpass/highpass, fx 0..1 echo + space) and beat repeat (mode 1 engage, 2 change, 0 release)
     void perform(bool on, float f, float fx) { Cmd c; c.type = Perform; c.a = on ? 1 : 0; c.f = f; c.g = fx; send(c); }
     void beatRepeat(int mode, int div) { Cmd c; c.type = Repeat; c.a = mode; c.b = div; send(c); }
@@ -204,7 +224,7 @@ public:
     }
     int currentStep() const { return step_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playing_.load(std::memory_order_relaxed); }
-    void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; } }   // free what audio handed back
+    void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; } }   // free what audio handed back
     // call after the audio callback can no longer run
     void shutdown() { collect(); Cmd c; while (toAudio_.pop(c)) { delete c.roll; delete c.engine; } delete engine_; engine_ = nullptr; }
     Project ui;   // UI-thread mirror
@@ -229,6 +249,8 @@ public:
                 case Len: if (e) e->setLen(c.a, c.b); break;
                 case Inst: if (e) e->setInstrument(c.a, c.b); break;
                 case EngParam: if (e) e->setEngParam(c.a, c.b, c.c, c.f); break;
+                case Fx: if (e) e->setFx(c.a, c.f); break;
+                case Reverb: { Cmd r; r.type = Reverb; r.rev = e ? e->swapReverb(c.rev) : c.rev; if (r.rev) retire_.push(r); break; }
                 case Perform: if (e) e->setPerform(c.a != 0, c.f, c.g); break;
                 case Repeat: if (e) e->repeat(c.a, c.b); break;
                 case Song: if (e) e->setSong(c.a != 0); break;

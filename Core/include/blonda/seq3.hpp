@@ -106,6 +106,8 @@ inline bool engOpt(Project& p, int k, int e, int f, int* get, const int* set) {
     return false;
 }
 
+void buildReverb(Convolver& c, float size, float sr);
+
 class Seq3 {
 public:
     void prepare(float sampleRate);
@@ -130,6 +132,11 @@ public:
     // beat repeat: mode 1 engage, 2 change length, 0 release; div 0..8 = 1/2 1/4 1/8 1/8T 1/16 1/16T 1/32 1/32T 1/64
     void repeat(int mode, int div);
     bool repeating() const { return rpPh_ != 0; }
+    // plugins (web: S.fx) — 0 echo on, 1 echo feedback, 2 echo time, 3 space on, 4 space size, 5 tape on, 6 tape colour, 7 crush on, 8 crush bits, 9 crush mix
+    void setFx(int field, float v);
+    // a new reverb built off the audio thread (space size); returns the old one to free elsewhere (nullptr if built in)
+    Convolver* swapReverb(Convolver* c);
+    ~Seq3() { if (rev_ != &revA_) delete rev_; }
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
     void setChain(int k, int v) { if (k >= 0 && k < 8) P_.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; }
     int chainIndex() const { return P_.song && playing_ ? chainIdx_ : -1; }
@@ -185,7 +192,7 @@ private:
     float dToneC_[5]{}, dToneZ_[2][2]{}, rHpC_[5]{}, rHpZ_[2][2]{}, tapeC_[5]{}, tapeZ_[2][2]{}, mLpC_[5]{}, mLpZ_[2][2]{}, mHpC_[5]{}, mHpZ_[2][2]{};
     float lastTape_ = -1, lastMLp_ = -1, lastMHp_ = -1;
     float shUp_[2]{}; HalfbandDecimator shDec_[2]; std::array<float, 2 * 128> shLat_{}; int shLi_ = 0;
-    Convolver reverb_; WebCompressor comp_, lim_;
+    Convolver revA_; Convolver* rev_ = &revA_; WebCompressor comp_, lim_;
     std::vector<float> busL_, busR_, dInL_, dInR_, rInL_, rInR_, tmpL_, tmpR_;
 };
 
