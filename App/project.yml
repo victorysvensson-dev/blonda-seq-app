@@ -9,7 +9,6 @@ settings:
   base:
     CLANG_CXX_LANGUAGE_STANDARD: c++17
     SWIFT_VERSION: "5.9"
-    GCC_OPTIMIZATION_LEVEL: "3"
     CODE_SIGN_STYLE: Automatic
 targets:
   BLONDA:
@@ -36,6 +35,7 @@ targets:
         SWIFT_OBJC_BRIDGING_HEADER: Sources/BLONDA-Bridging-Header.h
         HEADER_SEARCH_PATHS: $(SRCROOT)/../Core/include
         OTHER_CPLUSPLUSFLAGS: $(inherited) -Wno-unused-parameter
+        GCC_OPTIMIZATION_LEVEL: "3"   # DSP must be optimised even in Debug, or the audio thread overloads
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UIBackgroundModes: audio
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

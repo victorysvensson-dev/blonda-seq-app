@@ -61,9 +61,14 @@ public:
         fft_.forward(scratch_.data());
         std::copy(scratch_.begin(), scratch_.begin() + B_ + 1, X_.begin() + (size_t)xi_ * (B_ + 1));
         std::fill(acc_.begin(), acc_.end(), std::complex<float>(0, 0));
-        for (int p = 0; p < P_; ++p) {
-            const std::complex<float>* X = &X_[(size_t)((xi_ + p) % P_) * (B_ + 1)]; const std::complex<float>* H = &H_[(size_t)p * (B_ + 1)];
-            for (int k = 0; k <= B_; ++k) acc_[k] += X[k] * H[k];
+        for (int p = 0; p < P_; ++p) {   // plain complex MAC (std::complex operator* adds NaN/inf recovery we don't need)
+            const float* X = reinterpret_cast<const float*>(&X_[(size_t)((xi_ + p) % P_) * (B_ + 1)]);
+            const float* H = reinterpret_cast<const float*>(&H_[(size_t)p * (B_ + 1)]);
+            float* A = reinterpret_cast<float*>(acc_.data());
+            for (int k = 0; k <= B_; ++k) {
+                const float xr = X[2 * k], xi = X[2 * k + 1], hr = H[2 * k], hi = H[2 * k + 1];
+                A[2 * k] += xr * hr - xi * hi; A[2 * k + 1] += xr * hi + xi * hr;
+            }
         }
         for (int k = 0; k <= B_; ++k) scratch_[k] = acc_[k];
         for (int k = 1; k < B_; ++k) scratch_[2 * B_ - k] = std::conj(acc_[k]);
