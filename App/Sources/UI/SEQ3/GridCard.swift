@@ -69,10 +69,7 @@ struct GridRow: View {
                     DotCell(value: model.value(track, s), colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L)
                         .onTapGesture { model.cycle(track, s) }
                         .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
-                        .popover(isPresented: Binding(get: { model.inspect == ref }, set: { if !$0 && model.inspect == ref { model.inspect = nil } }),
-                                 attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
-                            StepInspector(ref: ref).environmentObject(model).presentationCompactAdaptation(.popover).presentationBackground(Color(rgb: 250, 249, 245))
-                        }
+                        .modifier(InspectorPopover(ref: ref))
                 }
             }
         }
@@ -120,7 +117,7 @@ struct GridActions: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         FlowLayout(spacing: 5) {
-            DMChip { HStack(spacing: 7) { SVGIcon(d: "M3.5 3h9A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7A1.5 1.5 0 0 1 3.5 3zM6 3v6M10 3v6", size: 14); Text("piano roll") } }
+            DMChip(action: { model.openRoll(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M3.5 3h9A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7A1.5 1.5 0 0 1 3.5 3zM6 3v6M10 3v6", size: 14); Text("piano roll") } }
             DMChip(fill: T.dmY, action: { model.rollDice() }) {
                 HStack(spacing: 10) {
                     DieFace(n: model.dieFace).rotationEffect(.degrees(model.rolling ? Double(model.dieFace) * 60 : 0)).animation(.spring(response: 0.25, dampingFraction: 0.6), value: model.dieFace)
@@ -160,5 +157,19 @@ struct DieFace: View {
         }
         .frame(width: 28, height: 28)
         .background(LinearGradient(colors: [Color(hex: 0x2E2E33), Color(hex: 0x121214)], startPoint: UnitPoint(x: 0.33, y: 0), endPoint: UnitPoint(x: 0.67, y: 1)))
+    }
+}
+
+/// Only the step being inspected carries a popover (one presentation instead of 160 idle ones).
+struct InspectorPopover: ViewModifier {
+    @EnvironmentObject var model: EngineModel
+    let ref: EngineModel.StepRef
+    func body(content: Content) -> some View {
+        if model.inspect == ref {
+            content.popover(isPresented: Binding(get: { model.inspect == ref }, set: { if !$0 && model.inspect == ref { model.inspect = nil } }),
+                            attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
+                StepInspector(ref: ref).environmentObject(model).presentationCompactAdaptation(.popover).presentationBackground(Color(rgb: 250, 249, 245))
+            }
+        } else { content }
     }
 }

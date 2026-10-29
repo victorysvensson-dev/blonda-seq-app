@@ -4,6 +4,9 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+/// One piano-roll note as packed in rollData: start and length in steps, MIDI note, velocity, glide target index (-1 none).
+typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
+
 @interface BLONDAEngine : NSObject
 
 /// Starts the audio session + engine (48 kHz preferred, ~5 ms buffers).
@@ -108,6 +111,12 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)toggleAccent:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(toggleAccent(_:step:));
 - (void)clearStep:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(clearStep(_:step:));
 - (void)pushUndo;
+/// Piano roll (current pattern, tracks 6–9): BLRollNote array.
+- (NSData *)rollData:(NSInteger)track NS_SWIFT_NAME(rollData(_:));
+- (void)setRollData:(NSData *)data track:(NSInteger)track NS_SWIFT_NAME(setRollData(_:track:));
+@property (nonatomic) float glideTime;
+- (BOOL)chordOn:(NSInteger)track NS_SWIFT_NAME(chordOn(_:));
+- (void)setChord:(BOOL)on track:(NSInteger)track NS_SWIFT_NAME(setChord(_:track:));
 - (BOOL)undo;
 - (BOOL)redo;
 

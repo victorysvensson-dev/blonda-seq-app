@@ -314,6 +314,15 @@ final class EngineModel: NSObject, ObservableObject {
             }
         }
     }
+    // MARK: piano roll
+    @Published var rollTrack: Int?
+    func openRoll(_ t: Int) {
+        inspect = nil
+        let tt = (6...9).contains(t) ? t : ((6...9).contains(selectedTrack) ? selectedTrack : 8)
+        if rollTrack == nil { withAnimation(.spring(response: 0.45, dampingFraction: 0.82)) { rollTrack = tt } } else { rollTrack = tt }
+        if selectedTrack != tt { selectedTrack = tt }
+    }
+    func closeRoll() { withAnimation(.easeIn(duration: 0.22)) { rollTrack = nil } }
     @Published var chainIdx = -1
     var songMode: Bool { _ = revision; return engine.songMode }
     func toggleSong() {

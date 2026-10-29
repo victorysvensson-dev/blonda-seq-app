@@ -22,7 +22,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; };
 
     ~Host() { shutdown(); }
@@ -85,6 +85,20 @@ public:
         for (const auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
         if (cell.v != before.v || cell.n != before.n) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); }
     }
+    // ---- piano roll: the whole note list of a melodic track (current pattern); g = index of the glide target or -1
+    const std::vector<RollNote>& rollNotes(int t) const { static const std::vector<RollNote> none; return (t >= 6 && t < kTracks) ? ui.roll[ui.pat][t - 6] : none; }
+    void setRollNotes(int t, const std::vector<RollNote>& notes) {
+        if (t < 6 || t >= kTracks) return;
+        auto& R = ui.roll[ui.pat][t - 6]; R = notes;
+        for (auto& n : R) { n.s = std::max(0.f, std::min(15.9375f, n.s)); n.l = std::max(.0625f, std::min(16.f - n.s, n.l)); n.n = std::max(0, std::min(127, n.n)); n.v = std::max(.05f, std::min(1.f, n.v));
+                            if (n.g < -1 || n.g >= (int)R.size()) n.g = -1; }
+        commitTrack(t);
+        for (int s = 0; s < 16; ++s) sendCell(t, s);
+    }
+    float glideTime() const { return ui.glideT; }
+    void setGlideTime(float v) { ui.glideT = std::max(.01f, std::min(1.f, v)); Cmd c; c.type = GlideT; c.f = ui.glideT; send(c); }
+    bool chordOn(int t) const { return t == 7 ? ui.chordKeys != 0 : t == 9 ? ui.chordPad != 0 : false; }
+    void setChord(int t, bool on) { if (t == 7) ui.chordKeys = on; else if (t == 9) ui.chordPad = on; else return; Cmd c; c.type = Chord; c.a = t; c.b = on; send(c); }
     // ---- step inspector (web: sins) — velocity, ratchet, probability, accent for one step -------------------
     float stepVel(int t, int s) const {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return 0;
@@ -319,6 +333,8 @@ public:
                 case DrumSmp: if (e) e->setDrumSample(c.a, c.smp, c.f); break;
                 case Preview: if (e) e->previewSample(c.smp, c.f, c.g); break;
                 case Drop: { if (e) e->dropSample(c.smp); Cmd r; r.type = Drop; r.smp = c.smp; retire_.push(r); break; }
+                case GlideT: if (e) e->setGlideT(c.f); break;
+                case Chord: if (e) e->setChord(c.a, c.b != 0); break;
                 case Fx: if (e) e->setFx(c.a, c.f); break;
                 case Reverb: { Cmd r; r.type = Reverb; r.rev = e ? e->swapReverb(c.rev) : c.rev; if (r.rev) retire_.push(r); break; }
                 case Perform: if (e) e->setPerform(c.a != 0, c.f, c.g); break;

@@ -148,6 +148,8 @@ public:
     void setDrumSample(int i, const SampleData* smp, float norm);   // nullptr: back to the synth kit
     void previewSample(const SampleData* smp, float rate, float gain);   // nullptr stops the preview
     void dropSample(const SampleData* smp);                          // nothing may play it after this returns
+    void setGlideT(float v) { P_.glideT = v; }
+    void setChord(int t, bool on) { if (t == 7) P_.chordKeys = on; else if (t == 9) P_.chordPad = on; }
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
     void setChain(int k, int v) { if (k >= 0 && k < 8) P_.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; }
     int chainIndex() const { return P_.song && playing_ ? chainIdx_ : -1; }

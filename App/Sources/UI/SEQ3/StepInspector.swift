@@ -50,6 +50,7 @@ struct StepInspector: View {
             seg([("100%", 1), ("75%", 0.75), ("50%", 0.5), ("25%", 0.25)], Double(p)) { model.setStepProb(ref, Float($0)) }
             HStack(spacing: 6) {
                 pill("accent", on: acc) { model.toggleAccent(ref) }
+                if ref.track >= 6 { pill("piano roll", on: false) { model.openRoll(ref.track) } }
                 pill("rensa steg", on: false) { model.clearStep(ref) }
             }
             .padding(.top, 14)

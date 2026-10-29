@@ -177,6 +177,23 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)toggleAccent:(NSInteger)t step:(NSInteger)s { _host->toggleAccent((int)t, (int)s); }
 - (void)clearStep:(NSInteger)t step:(NSInteger)s { _host->clearStep((int)t, (int)s); }
 - (void)pushUndo { _host->pushHist(); }
+- (NSData *)rollData:(NSInteger)t {
+    const auto& R = _host->rollNotes((int)t);
+    NSMutableData *d = [NSMutableData dataWithLength:R.size() * sizeof(BLRollNote)];
+    BLRollNote *o = (BLRollNote *)d.mutableBytes;
+    for (size_t i = 0; i < R.size(); ++i) o[i] = {R[i].s, R[i].l, R[i].n, R[i].v, R[i].g};
+    return d;
+}
+- (void)setRollData:(NSData *)data track:(NSInteger)t {
+    const BLRollNote *in = (const BLRollNote *)data.bytes; const size_t n = data.length / sizeof(BLRollNote);
+    std::vector<blonda::RollNote> R(n);
+    for (size_t i = 0; i < n; ++i) { R[i].s = in[i].s; R[i].l = in[i].l; R[i].n = in[i].n; R[i].v = in[i].v; R[i].g = in[i].g; }
+    _host->setRollNotes((int)t, R);
+}
+- (float)glideTime { return _host->glideTime(); }
+- (void)setGlideTime:(float)v { _host->setGlideTime(v); }
+- (BOOL)chordOn:(NSInteger)t { return _host->chordOn((int)t); }
+- (void)setChord:(BOOL)on track:(NSInteger)t { _host->setChord((int)t, on); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

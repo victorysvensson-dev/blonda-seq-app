@@ -247,9 +247,12 @@ struct SynthCard: View {
             .background(Capsule().fill(th.chip))
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: synT)
             .fixedSize()
-            SVGIcon(d: "M2.5 2h9a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM5 2v6M9 2v6M5 8v4M9 8v4", box: 14, size: 14, stroke: 1.3)
-                .frame(width: 14, height: 14).frame(width: 30, height: 22)
-                .background(RoundedRectangle(cornerRadius: 6).fill(th.chip))
+            Button { model.openRoll(synT) } label: {
+                SVGIcon(d: "M2.5 2h9a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM5 2v6M9 2v6M5 8v4M9 8v4", box: 14, size: 14, stroke: 1.3)
+                    .frame(width: 14, height: 14).frame(width: 30, height: 22)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(th.chip))
+            }
+            .buttonStyle(PressScale())
             HStack(spacing: 5) {
                 CapButton(kind: .min, dark: false, tint: th.fg, fill: th.chip, fold: "synth")
                 CapButton(kind: .full, dark: false, tint: th.fg, fill: th.chip)

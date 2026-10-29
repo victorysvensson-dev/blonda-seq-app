@@ -100,6 +100,13 @@ int main(int argc, char** argv) {
       h->setStepVel(6, m0, .4f); expect(std::abs(h->stepVel(6, m0) - .4f) < 1e-6f, "melodic step velocity");
       h->toggleAccent(6, m0); expect(h->stepValue(6, m0) == 2, "melodic accent");
       h->clearStep(6, m0); expect(h->stepValue(6, m0) == 0, "melodic clear"); }
+    // piano roll: replace the notes (with a glide), the cells follow, and it is saved
+    { std::vector<blonda::RollNote> R(3); R[0] = {0, 2, 60, .8f, -1, 1}; R[1] = {4, 1, 64, 1.f, -1, -1}; R[2] = {8.5f, 3, 67, .5f, -1, -1};
+      h->setRollNotes(8, R); pump();
+      expect(h->rollNotes(8).size() == 3 && h->stepValue(8, 0) == 1 && h->stepValue(8, 4) == 2 && h->stepValue(8, 8) == 1 && h->stepValue(8, 2) == 0, "roll notes -> cells");
+      blonda::Project b; expect(b.loadJSON(h->toJSON(), &err) && b.roll[b.pat][2].size() == 3 && b.roll[b.pat][2][0].g == 1 && std::abs(b.roll[b.pat][2][2].s - 8.5f) < 1e-5f, "roll saved with glide");
+      h->setGlideTime(.2f); h->setChord(7, false); expect(h->glideTime() == .2f && !h->chordOn(7), "glide time + chord");
+      blonda::Project c2; expect(c2.loadJSON(h->toJSON(), &err) && c2.glideT == .2f && c2.chordKeys == 0, "glide/chord saved"); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }
