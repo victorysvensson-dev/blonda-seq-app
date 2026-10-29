@@ -1,4 +1,4 @@
-// Minimal JSON reader for project files (loading only; not used on the audio thread).
+// Minimal JSON reader/writer for project files (never used on the audio thread).
 #pragma once
 #include <map>
 #include <memory>
@@ -6,6 +6,8 @@
 #include <vector>
 #include <cstdlib>
 #include <cctype>
+#include <cmath>
+#include <cstdio>
 
 namespace blonda::json {
 
@@ -19,7 +21,32 @@ struct Value {
     double numOr(double d) const { return type == Number ? num : (type == Bool ? (b ? 1 : 0) : d); }
     std::string strOr(const std::string& d) const { return type == String ? str : d; }
     size_t size() const { return type == Array ? arr.size() : obj.size(); }
+    // writing
+    Value& at(const std::string& k) { if (type != Object) { type = Object; obj.clear(); } return obj[k]; }
+    Value& at(size_t i) { if (type != Array) { type = Array; arr.clear(); } if (arr.size() <= i) arr.resize(i + 1); return arr[i]; }
+    void erase(const std::string& k) { obj.erase(k); }
+    static Value number(double d) { Value v; v.type = Number; v.num = d; return v; }
+    static Value string_(const std::string& s) { Value v; v.type = String; v.str = s; return v; }
+    static Value array() { Value v; v.type = Array; return v; }
+    static Value object() { Value v; v.type = Object; return v; }
 };
+
+inline void dump(const Value& v, std::string& o) {
+    switch (v.type) {
+    case Value::Null: o += "null"; break;
+    case Value::Bool: o += v.b ? "true" : "false"; break;
+    case Value::Number: {
+        if (!std::isfinite(v.num)) { o += "0"; break; }
+        char b[32]; if (v.num == std::floor(v.num) && std::fabs(v.num) < 1e15) std::snprintf(b, sizeof b, "%lld", (long long)v.num); else std::snprintf(b, sizeof b, "%.6g", v.num);
+        o += b; break; }
+    case Value::String:
+        o += '"'; for (unsigned char c : v.str) { if (c == '"' || c == '\\') { o += '\\'; o += (char)c; } else if (c == '\n') o += "\\n"; else if (c == '\t') o += "\\t";
+            else if (c < 0x20) { char b[8]; std::snprintf(b, sizeof b, "\\u%04x", c); o += b; } else o += (char)c; } o += '"'; break;
+    case Value::Array: { o += '['; bool f = true; for (const auto& x : v.arr) { if (!f) o += ','; f = false; dump(x, o); } o += ']'; break; }
+    case Value::Object: { o += '{'; bool f = true; for (const auto& kv : v.obj) { if (!f) o += ','; f = false; dump(Value::string_(kv.first), o); o += ':'; dump(kv.second, o); } o += '}'; break; }
+    }
+}
+inline std::string dump(const Value& v) { std::string o; dump(v, o); return o; }
 
 class Parser {
 public:

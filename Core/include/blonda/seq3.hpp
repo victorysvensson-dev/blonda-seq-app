@@ -39,6 +39,8 @@ struct Project {
     Cell cells[kPatterns][kTracks][kSteps];
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
+    // writes the project back in the web format; fields the app does not model are kept from `base` (the loaded file)
+    std::string toJSON(const std::string& base) const;
 };
 
 // field order — track: level tune decay tone pan echo space · fx: drive filt reso crush comp pump ·

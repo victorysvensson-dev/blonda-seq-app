@@ -44,10 +44,7 @@ final class EngineModel: NSObject, ObservableObject {
     func start() {
         guard link == nil else { return }
         do { try engine.startAudio() } catch { errorText = "Ljud: \(error.localizedDescription)" }
-        if let url = Bundle.main.url(forResource: "default_project", withExtension: "json"),
-           let json = try? String(contentsOf: url, encoding: .utf8) {
-            do { try engine.loadProjectJSON(json) } catch { errorText = "Projekt: \(error.localizedDescription)" }
-        }
+        if !loadSaved() { loadDemo() }
         engine.startMIDI()
         engine.midiTrack = selectedTrack
         if ProcessInfo.processInfo.arguments.contains("-autoplay") {
@@ -63,6 +60,32 @@ final class EngineModel: NSObject, ObservableObject {
         link = l
     }
 
+    // ---- projects: autosaved to Documents/project.json in the web version's format
+    private var saveURL: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("project.json") }
+    private var saveWork: DispatchWorkItem?
+
+    private func loadSaved() -> Bool {
+        guard let json = try? String(contentsOf: saveURL, encoding: .utf8) else { return false }
+        return (try? engine.loadProjectJSON(json)) != nil
+    }
+    func loadDemo() {
+        guard let url = Bundle.main.url(forResource: "default_project", withExtension: "json"),
+              let json = try? String(contentsOf: url, encoding: .utf8) else { return }
+        do { try engine.loadProjectJSON(json) } catch { errorText = "Projekt: \(error.localizedDescription)" }
+        revision += 1; paramRevision += 1; scheduleSave()
+    }
+    /// Debounced: writes one second after the last edit, off the main thread.
+    func scheduleSave() {
+        saveWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in
+            guard let self = self else { return }
+            let json = self.engine.projectJSON(), url = self.saveURL
+            DispatchQueue.global(qos: .utility).async { try? json.write(to: url, atomically: true, encoding: .utf8) }
+        }
+        saveWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0, execute: w)
+    }
+
     @objc private func tick() {
         let s = engine.currentStep, p = engine.isPlaying
         if s != step { step = s }
@@ -70,20 +93,20 @@ final class EngineModel: NSObject, ObservableObject {
     }
 
     var bpm: Float { engine.bpm }
-    func nudgeBPM(_ d: Float) { engine.bpm = engine.bpm + d; revision += 1 }
+    func nudgeBPM(_ d: Float) { engine.bpm = engine.bpm + d; revision += 1; scheduleSave() }
     func togglePlay() { engine.togglePlay() }
     var pattern: Int { engine.pattern }
-    func selectPattern(_ p: Int) { engine.selectPattern(p); revision += 1 }
+    func selectPattern(_ p: Int) { engine.selectPattern(p); revision += 1; scheduleSave() }
     func value(_ t: Int, _ s: Int) -> Int { engine.stepValue(forTrack: t, step: s) }
-    func cycle(_ t: Int, _ s: Int) { engine.cycleStep(forTrack: t, step: s); revision += 1 }
+    func cycle(_ t: Int, _ s: Int) { engine.cycleStep(forTrack: t, step: s); revision += 1; scheduleSave() }
     func isMuted(_ t: Int) -> Bool { engine.isMutedTrack(t) }
-    func toggleMute(_ t: Int) { engine.setMuted(!engine.isMutedTrack(t), track: t); revision += 1 }
+    func toggleMute(_ t: Int) { engine.setMuted(!engine.isMutedTrack(t), track: t); revision += 1; scheduleSave() }
     func param(_ d: ParamDef, _ track: Int) -> Float { _ = paramRevision; return engine.param(group: d.group, track: track, field: d.field) }
     func setParam(_ d: ParamDef, _ track: Int, _ v: Float) {
         var x = min(d.hi, max(d.lo, v))
         if d.lo < 0 && abs(x) < (d.hi - d.lo) * 0.015 { x = 0 }   // snap bipolar values to centre
         if d.group == 0 && d.field == 1 { x = x.rounded() }       // tune in semitones
-        engine.setParam(x, group: d.group, track: track, field: d.field); paramRevision += 1
+        engine.setParam(x, group: d.group, track: track, field: d.field); paramRevision += 1; scheduleSave()
     }
     func noteOn(_ n: Int) { engine.noteOn(n, velocity: 0.85, track: selectedTrack) }
     func noteOff(_ n: Int) { engine.noteOff(n, track: selectedTrack) }

@@ -39,6 +39,9 @@ struct HeaderView: View {
             Text("BLONDA").font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(.white)
             Text("SEQ.3").font(.system(size: 13, weight: .semibold, design: .monospaced)).foregroundStyle(.white.opacity(0.5))
         }
+        .contextMenu {   // long-press the logo
+            Button(role: .destructive) { model.loadDemo() } label: { Label("Ladda demolåten (ersätter projektet)", systemImage: "arrow.counterclockwise") }
+        }
     }
     private var patterns: some View {
         HStack(spacing: 6) {

@@ -101,6 +101,47 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
     return true;
 }
 
+std::string Project::toJSON(const std::string& base) const {
+    json::Value S; if (!json::parse(base, S) || S.type != json::Value::Object) S = json::Value::object();
+    using V = json::Value;
+    S.at("bpm") = V::number(std::round(bpm * 100) / 100); S.at("pat") = V::number(pat);
+    for (int i = 0; i < kTracks; ++i) {
+        S.at("mute").at((size_t)i) = V::number(mute[i]);
+        V& p = S.at("params").at(kTrackIds[i]); const TrackParams& t = params[i];
+        p.at("level") = V::number(t.level); p.at("tune") = V::number(t.tune); p.at("decay") = V::number(t.decay); p.at("tone") = V::number(t.tone);
+        p.at("pan") = V::number(t.pan); p.at("echo") = V::number(t.echo); p.at("space") = V::number(t.space);
+        V& f = S.at("tfx").at(kTrackIds[i]); const TrackFX& x = tfx[i];
+        f.at("drive") = V::number(x.drive); f.at("filt") = V::number(x.filt); f.at("reso") = V::number(x.reso);
+        f.at("crush") = V::number(x.crush); f.at("comp") = V::number(x.comp); f.at("pump") = V::number(x.pump);
+    }
+    V& m = S.at("master");
+    m.at("filter") = V::number(master.filter); m.at("echo") = V::number(master.echo); m.at("space") = V::number(master.space); m.at("drive") = V::number(master.drive);
+    m.at("pump") = V::number(master.pump); m.at("swing") = V::number(master.swing); m.at("vol") = V::number(master.vol);
+    for (int k = 0; k < 4; ++k) S.at("inst").at(kMelIds[k]) = V::string_(inst[k]);
+    for (int pi = 0; pi < kPatterns; ++pi) {
+        for (int ti = 0; ti < kTracks; ++ti) for (int st = 0; st < kSteps; ++st) {
+            V& c = S.at("pats").at((size_t)pi).at((size_t)ti).at((size_t)st); const Cell& x = cells[pi][ti][st];
+            c.at("v") = V::number(x.v); c.at("n") = V::number(x.n);
+            if (x.r > 1) c.at("r") = V::number(x.r); else c.erase("r");
+            if (x.p < 1) c.at("p") = V::number(x.p); else c.erase("p");
+            if (x.vel >= 0) c.at("vel") = V::number(x.vel); else c.erase("vel");
+        }
+        for (int k = 0; k < 4; ++k) {
+            const auto& R = roll[pi][k]; V arr = V::array();
+            std::vector<bool> target(R.size(), false); for (const auto& n : R) if (n.g >= 0 && n.g < (int)R.size()) target[n.g] = true;
+            for (size_t i = 0; i < R.size(); ++i) {
+                const RollNote& n = R[i]; V o = V::object();
+                o.at("s") = V::number(n.s); o.at("l") = V::number(n.l); o.at("n") = V::number(n.n); o.at("v") = V::number(n.v);
+                if (target[i] || (n.g >= 0 && n.g < (int)R.size())) o.at("id") = V::string_("r" + std::to_string(i));
+                if (n.g >= 0 && n.g < (int)R.size()) o.at("g") = V::string_("r" + std::to_string(n.g));
+                arr.arr.push_back(o);
+            }
+            S.at("roll").at((size_t)pi).at(kMelIds[k]) = arr;
+        }
+    }
+    return json::dump(S);
+}
+
 // ---------------------------------------------------------------- engine setup
 void Seq3::prepare(float sampleRate) {
     sr_ = sampleRate; frame_ = 0;

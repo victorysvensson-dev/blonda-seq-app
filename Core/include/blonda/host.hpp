@@ -28,6 +28,7 @@ public:
     float sampleRate = 48000;
     bool load(const std::string& json, std::string* err) {
         Project p; if (!p.loadJSON(json, err)) return false;
+        base_ = json;
         ui = p; auto* e = new Seq3(); e->prepare(sampleRate); e->load(p);   // allocations happen here, not in audio
         Cmd c; c.type = Swap; c.engine = e; send(c); return true;
     }
@@ -67,9 +68,21 @@ public:
             for (const auto& n : roll) { const float d = std::fabs(n.s - s); if (d < best) { best = d; note = n.n; } }
             RollNote n; n.s = (float)s; n.l = 1; n.n = note; n.v = .72f; roll.push_back(n);
         } else if (roll[found].v < .95f) roll[found].v = 1.f;
-        else roll.erase(roll.begin() + found);
+        else {
+            roll.erase(roll.begin() + found);
+            for (auto& n : roll) { if (n.g == found) n.g = -1; else if (n.g > found) --n.g; }   // glide links are indices
+        }
         Cmd c; c.type = SetRoll; c.a = pat; c.b = t - 6; c.roll = new std::vector<RollNote>(roll); send(c);
+        syncCell(pat, t, s);
     }
+    // the web keeps a step cell per melodic step in sync with the piano roll (it reconciles them on load)
+    void syncCell(int pat, int t, int s) {
+        Cell& cell = ui.cells[pat][t][s]; const Cell before = cell; cell.v = 0;
+        for (const auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
+        if (cell.v != before.v || cell.n != before.n) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); }
+    }
+    // the project in the web format (for saving); `base` keeps fields the app does not model
+    std::string toJSON() const { return ui.toJSON(base_); }
     int currentStep() const { return step_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playing_.load(std::memory_order_relaxed); }
     void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; } }   // free what audio handed back
@@ -103,6 +116,7 @@ public:
 private:
     void send(const Cmd& c) { collect(); if (!toAudio_.push(c)) { delete c.roll; delete c.engine; } }
     Seq3* engine_ = nullptr;   // touched only by the audio thread (and shutdown)
+    std::string base_;
     SPSC<Cmd, 1024> toAudio_, retire_; SPSC<Cmd, 256> midi_;
     std::atomic<int> step_{-1}; std::atomic<bool> playing_{false};
 };

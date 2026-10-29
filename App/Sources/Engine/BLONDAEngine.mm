@@ -119,6 +119,8 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (float)paramGroup:(NSInteger)group track:(NSInteger)track field:(NSInteger)field { return _host->param((int)group, (int)track, (int)field); }
 - (void)setParam:(float)value group:(NSInteger)group track:(NSInteger)track field:(NSInteger)field { _host->setParam((int)group, (int)track, (int)field, value); }
 
+- (NSString *)projectJSON { return [NSString stringWithUTF8String:_host->toJSON().c_str()]; }
+
 - (NSString *)instrumentForTrack:(NSInteger)track {
     if (track < 6 || track > 9) return @"drum";
     return [NSString stringWithUTF8String:_host->ui.inst[track - 6].c_str()];

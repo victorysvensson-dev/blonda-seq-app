@@ -42,6 +42,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (float)paramGroup:(NSInteger)group track:(NSInteger)track field:(NSInteger)field NS_SWIFT_NAME(param(group:track:field:));
 - (void)setParam:(float)value group:(NSInteger)group track:(NSInteger)track field:(NSInteger)field NS_SWIFT_NAME(setParam(_:group:track:field:));
 
+/// The current project in the web version's JSON format (for saving / sharing with the web app).
+- (NSString *)projectJSON;
+
 /// Engine name loaded on a melodic track ("analog", "bris", "acid" ...).
 - (NSString *)instrumentForTrack:(NSInteger)track;
 
