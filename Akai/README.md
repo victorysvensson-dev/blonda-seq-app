@@ -13,7 +13,7 @@ instrument every 10 s) and optimising the heavier SEQ.3 engines for ARM (see *CP
 
 | Instrument | From | Notes |
 |---|---|---|
-| **BRIS** | **blonda-motor** (`third_party/blonda-motor`, tag v0.1.0) | BLONDA BRIS, the Bree6-style poly: same GenExpr as the Max for Live device, 90 presets, 36 parameters on 12 pages |
+| **BRIS** | **blonda-motor** (`third_party/blonda-motor`, 0.2.0) | BLONDA BRIS, the Bree6-style poly: same GenExpr as the Max for Live device, 90 presets, 36 parameters on 12 pages |
 | BRIS SEQ | `Core/src/bris.cpp` | SEQ.3's own 6-voice poly, 29 presets |
 | MINI D | `Core/src/engines.cpp` | Model D-style, 38 parameters on 14 pages |
 | SH-101 | 〃 | 25 parameters on 9 pages |
@@ -37,6 +37,9 @@ then get a skin here.
 |---|---|
 | `include/akai/instrument.hpp` | The interface every instrument implements (params, pages, presets, notes). No hardware in it, so the same instrument can move to the Sample Key / Akai's SDK later |
 | `src/motor_instrument.cpp` | blonda-motor engines as instruments (MPC skins: pages, names, labels) |
+| `src/repeat.cpp` | NOTE REPEAT: repeat and arpeggiator on a tempo grid |
+| `src/fx.cpp` | KNOB FX: SEQ.3 echo, space (reverb tail on a worker thread) and filter |
+| `src/padfx.cpp` | PAD FX: blonda-motor effects on the pads |
 | `src/bris_instrument.cpp`, `src/engine_instrument.cpp` | SEQ.3's Bris and nine engines as instruments (parameter tables, pages, level trims) |
 | `include/akai/surface.hpp`, `src/surface.cpp` | MPC Sample control surface: pads, buttons, knobs, encoder, LEDs, pad colours |
 | `include/akai/app.hpp`, `src/app.cpp` | The instrument app: controls, latch, scales, tap tempo, lights |
@@ -64,6 +67,24 @@ then get a skin here.
 | ERASE | Undo edits (reload the preset) |
 | STOP / SHIFT + STOP | All notes off / quit back to the MPC Sample software |
 | SHIFT (held) | Shows CPU load and voices |
+| NOTE REPEAT | Tap: on/off · hold: on while held · hold + encoder: rate (1/4 … 1/32, triplets) · SHIFT: mode (REPEAT, ARP UP, DOWN, UP/DN, ORDER, RANDOM). Pad pressure sets the repeat velocity |
+| KNOB FX | K1–K3 = ECHO, SPACE, FILTER (B1/B2: echo time / feedback page) · SHIFT: all effects off/on. SEQ.3's own echo, convolution space and DJ filter |
+| PAD FX | Pads play BLONDA effects on top of the synth (hold = on, pressure = more, up to three at once) · again: back to notes |
+
+### PAD FX
+
+The effects are BLONDA's Max for Live effects from blonda-motor 0.2 (the same GenExpr as the plugins):
+
+| Row | Pads |
+|---|---|
+| 4 (top) | 13 EKO (throw) · 14 RUM (throw) · 15 SVÄV · 16 BAND |
+| 3 | 9 FRYS · 10 FRYS BAK · 11 OKTAV NER · 12 OKTAV UPP |
+| 2 | 5 SLITEN · 6 CRUSH · 7 WOBBLE · 8 DRIVE |
+| 1 (bottom) | 1 LP SWEEP · 2 HP SWEEP · 3 LP WOBBLE · 4 CHOP |
+
+EKO and RUM are throws: what you play while the pad is held is sent, the tail rings on. FRYS listens all the
+time while PAD FX is on, so it freezes the last moment the instant the pad is hit. A CPU guard lets go of the
+oldest effect (or shows CPU FULL) when the measured load plus the effects' cost would pass 80 %.
 
 External MIDI (TRS in, USB from a computer) plays the current instrument too; CC 1 moves the cutoff.
 

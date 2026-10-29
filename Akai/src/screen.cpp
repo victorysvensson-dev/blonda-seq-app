@@ -74,7 +74,8 @@ void drawScreen(Canvas& c, const UiState& s, const Theme& t) {
     else std::snprintf(buf, sizeof buf, "%s CHROM %+d", s.root, s.octave);
     rightText(c, t, bx + bw - 6, by + 5, buf, 1, t.label);
     // NOTE REPEAT and FX state in the middle of the box header
-    if (s.repeat[0] || s.fxOff) {
+    if (s.padFx) centreText(c, t, bx, bw, by + 5, s.padFxText, 1, t.hot);
+    else if (s.repeat[0] || s.fxOff) {
         std::snprintf(buf, sizeof buf, "%s%s%s", s.repeat, s.repeat[0] && s.fxOff ? "  " : "", s.fxOff ? "FX OFF" : "");
         centreText(c, t, bx, bw, by + 5, buf, 1, t.accent);
     }

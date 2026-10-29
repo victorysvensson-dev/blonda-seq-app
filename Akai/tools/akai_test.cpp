@@ -11,6 +11,7 @@
 #include "akai/surface.hpp"
 #include "akai/repeat.hpp"
 #include "akai/fx.hpp"
+#include "akai/padfx.hpp"
 #include "blonda/convolver.hpp"
 #include "blonda/seq3.hpp"
 #include <thread>
@@ -387,6 +388,79 @@ static void testFx() {
       CHECK(!A.fxView() && std::string(s.page) != "KNOB FX", "KNOB FX again: back to the instrument's pages (%s)", s.page); }
 }
 
+// ---------------------------------------------------------------- PAD FX
+static void testPadFx() {
+    std::puts("pad fx: transparent until a pad is held, every pad works, throws ring on, FRYS freezes, three at a time");
+    const int n = (int)(1.0 * kSR) / kBlock * kBlock;
+    auto tone = [&](std::vector<float>& L, std::vector<float>& R, int len, float amp) {
+        L.assign(len, 0.f); R.assign(len, 0.f);
+        for (int i = 0; i < len; ++i) { L[i] = amp * (std::sin(2 * 3.14159265f * 220.f * i / kSR) + .5f * std::sin(2 * 3.14159265f * 6000.f * i / kSR)); R[i] = L[i]; }
+    };
+    auto run = [&](PadFx& P, std::vector<float>& L, std::vector<float>& R) { for (size_t i = 0; i < L.size(); i += kBlock) P.process(&L[i], &R[i], kBlock); };
+    auto hf = [&](const std::vector<float>& L, int a, int b) {   // high-frequency energy (first difference)
+        double q = 0; for (int i = a + 1; i < b; ++i) { const double d = L[i] - L[i - 1]; q += d * d; } return q; };
+    std::vector<float> L, R, x, xr;
+    { PadFx P; P.prepare(kSR); P.setActive(true); tone(L, R, n, .3f); x = L; run(P, L, R);
+      CHECK(L == x, "PAD FX on with no pad held leaves the sound untouched (bit for bit, FRYS listening)"); }
+    { PadFx P; P.prepare(kSR); P.setActive(true); tone(L, R, n, .3f); x = L;
+      P.press(0); run(P, L, R);
+      CHECK(hf(L, n / 2, n) < 0.3 * hf(x, n / 2, n), "LP SWEEP takes the top off (%.3g of the dry)", hf(L, n / 2, n) / hf(x, n / 2, n));
+      P.release(0); tone(L, R, n, .3f); run(P, L, R);
+      bool same = true; for (int i = n / 2; i < n; ++i) same &= L[i] == x[i];
+      CHECK(same, "after release the sound is dry again, bit for bit"); }
+    for (int p = 0; p < PadFx::kPads; ++p) {
+        PadFx P; P.prepare(kSR); P.setActive(true); P.setTempo(120.f);
+        tone(L, R, n, .3f); run(P, L, R);   // FRYS gets something to freeze
+        P.press(p); P.pressure(p, .7f); tone(L, R, n, .3f); x = L; run(P, L, R);
+        bool fin = true; float pk = 0; double diff = 0;
+        for (int i = 0; i < n; ++i) { fin &= std::isfinite(L[i]) && std::isfinite(R[i]); pk = std::max(pk, std::fabs(L[i])); diff += std::fabs(L[i] - x[i]); }
+        CHECK(fin && pk < 2.f && diff > 1.0, "pad %d %s changes the sound and stays sane (peak %.2f, change %.1f)", p + 1, PadFx::label(p), pk, diff);
+        P.release(p);
+        std::vector<float> z(22 * n, 0.f), zr(22 * n, 0.f); run(P, z, zr);
+        CHECK(!P.running(p) || p == 8 || p == 9, "pad %d %s stops working once it is quiet after release", p + 1, PadFx::label(p));
+    }
+    { PadFx P; P.prepare(kSR); P.setActive(true); tone(L, R, n / 4, .3f); P.press(12); run(P, L, R); P.release(12);
+      std::vector<float> z(n, 0.f), zr(n, 0.f); run(P, z, zr);
+      double tail = 0; for (int i = 0; i < n; ++i) tail += (double)z[i] * z[i];
+      CHECK(tail > 1e-3, "EKO is a throw: the echoes go on after the pad is let go (%.3g)", tail); }
+    { PadFx P; P.prepare(kSR); P.setActive(true); tone(L, R, n, .3f); run(P, L, R);
+      P.press(8); std::vector<float> z(n, 0.f), zr(n, 0.f); run(P, z, zr);
+      double held = 0; for (int i = n / 2; i < n; ++i) held += (double)z[i] * z[i];
+      CHECK(held > 1e-2, "FRYS holds the sound while the pad is held, even after the synth stops (%.3g)", held);
+      P.release(8); std::fill(z.begin(), z.end(), 0.f); std::fill(zr.begin(), zr.end(), 0.f); run(P, z, zr);
+      double after = 0; for (int i = n / 2; i < n; ++i) after += (double)z[i] * z[i];
+      CHECK(after < 1e-8, "and lets go of it on release (%.3g)", after); }
+    { PadFx P; P.prepare(kSR); P.setActive(true); P.press(0); P.press(4); P.press(5); P.press(6);
+      CHECK(!P.held(0) && P.held(4) && P.held(5) && P.held(6), "a fourth pad lets go of the oldest one (CPU guard)");
+      char buf[40]; P.heldText(buf, sizeof buf); CHECK(std::string(buf) == "SLITEN + CRUSH + WOBBLE", "held effects for the screen (%s)", buf); }
+    // in the app: PAD FX mode, pads no longer play notes, latched notes keep playing, no allocation
+    { auto app = std::make_unique<App>(); App& A = *app; A.prepare(kSR);
+      std::vector<float> l(kBlock), r(kBlock);
+      auto runA = [&](double sec) { for (int i = 0; i < (int)(sec * kSR / kBlock); ++i) A.render(l.data(), r.data(), kBlock); };
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PLAY)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_PLAY));
+      A.handle(ev(mpcs::Event::PadDown, 0, 100)); A.handle(ev(mpcs::Event::PadUp, 0)); runA(0.3);
+      const int v0 = A.instrument().activeVoices();
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PAD_FX)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_PAD_FX));
+      CHECK(A.padFxMode(), "PAD FX switches the pads to effects");
+      A.handle(ev(mpcs::Event::PadDown, 12, 100)); A.handle(ev(mpcs::Event::PadDown, 1, 100));
+      UiState s; A.snapshot(s);
+      CHECK(s.padFx && std::string(s.padFxText) == "HP SWEEP + EKO" && std::string(s.toast) == "HP SWEEP", "screen shows the held effects (%s)", s.padFxText);
+      gCount = true; gAllocs = 0; runA(1.0); gCount = false;
+      CHECK(gAllocs == 0, "no allocation while pad effects run (%ld)", (long)gAllocs);
+      CHECK(A.instrument().activeVoices() == v0 && v0 >= 1, "effect pads play no notes, the latched note keeps playing (%d -> %d)", v0, A.instrument().activeVoices());
+      A.handle(ev(mpcs::Event::PadUp, 12)); A.handle(ev(mpcs::Event::PadUp, 1));
+      // CPU guard with a busy synth: the heaviest effect is refused, a light one still plays
+      A.setStats(0.62f, 0);
+      A.handle(ev(mpcs::Event::PadDown, 14, 100)); A.snapshot(s);
+      CHECK(!A.padFx().held(14) && std::string(s.toast) == "CPU FULL", "SVÄV is refused at 62 %% load (%s)", s.toast);
+      A.handle(ev(mpcs::Event::PadDown, 0, 100));
+      CHECK(A.padFx().held(0), "LP SWEEP still fits");
+      A.handle(ev(mpcs::Event::PadUp, 0)); A.handle(ev(mpcs::Event::PadUp, 14)); A.setStats(0.f, 0);
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PAD_FX));
+      CHECK(!A.padFxMode(), "PAD FX again: back to notes");
+      A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PLAY)); runA(4.0); }
+}
+
 // BRIS (blonda-motor) voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
 static void testBrisMotorVoices() {
     std::puts("BRIS (blonda-motor) voice modes");
@@ -501,6 +575,9 @@ static void testApp(const char* outDir) {
         for (int p : {0, 4, 7}) A.handle(ev(mpcs::Event::PadDown, p, 100));
         run(1.6);
         shot("screen_fx_repeat");
+        A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PAD_FX)); A.handle(ev(mpcs::Event::PadDown, 12, 100)); A.handle(ev(mpcs::Event::PadDown, 8, 100));
+        run(0.8); shot("screen_padfx");
+        A.handle(ev(mpcs::Event::PadUp, 12)); A.handle(ev(mpcs::Event::PadUp, 8)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PAD_FX));
         for (int p : {0, 4, 7}) A.handle(ev(mpcs::Event::PadUp, p));
         A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_KNOB_FX));
         A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
@@ -655,6 +732,7 @@ int main(int argc, char** argv) {
     testBlockSizes();
     testRepeater();
     testFx();
+    testPadFx();
     testApp(outDir);
     renderPresets(outDir);
     bench();

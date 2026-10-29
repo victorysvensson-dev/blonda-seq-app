@@ -21,9 +21,11 @@
 //                     SHIFT + NOTE REPEAT: next mode (REPEAT, ARP UP, DOWN, UP/DN, ORDER, RANDOM)
 //   KNOB FX ......... K1-K3 control the effects (ECHO, SPACE, FILTER; B1/B2: ECHO time / feedback page)
 //                     SHIFT + KNOB FX: all effects off / on
+//   PAD FX .......... pads play BLONDA effects on top of the synth (hold = on, pressure = more); again: notes
 #pragma once
 #include "akai/controls.hpp"
 #include "akai/fx.hpp"
+#include "akai/padfx.hpp"
 #include "akai/repeat.hpp"
 #include "akai/instrument.hpp"
 #include "akai/midi.hpp"
@@ -53,6 +55,8 @@ struct UiState {
     int theme = 0;                       // 0 SHARP (default), 1 BLONDA (SHIFT + TAP TEMPO)
     char repeat[24]{};                   // "REPEAT 1/16", "ARP UP 1/8T"; empty when NOTE REPEAT is off
     bool fxView = false, fxOff = false;  // knobs on KNOB FX / all effects switched off
+    bool padFx = false;                  // pads play effects
+    char padFxText[40]{};                // effects held right now ("LP SWEEP + EKO")
     static constexpr int kScopeCols = 152;
     int8_t scopeMin[kScopeCols]{}, scopeMax[kScopeCols]{};   // output waveform, oldest -> newest, -127..127
 };
@@ -88,6 +92,8 @@ public:
     const Repeater& repeater() const { return rep_; }
     bool repeatOn() const { return repeatOn_; }
     bool fxView() const { return fxView_; }
+    PadFx& padFx() { return padFx_; }
+    bool padFxMode() const { return padFxMode_; }
 
 private:
     static constexpr int kMaxInst = 12;
@@ -142,6 +148,10 @@ private:
     Params& view() { return fxView_ ? static_cast<Params&>(fx_) : static_cast<Params&>(instrument()); }
     const Params& view() const { return fxView_ ? static_cast<const Params&>(fx_) : static_cast<const Params&>(*inst_[cur_]); }
     int viewPage() const { return fxView_ ? fxPage_ : page_; }
+    // PAD FX
+    PadFx padFx_;
+    bool padFxMode_ = false;
+    void setPadFxMode(bool on);
 
     void dirty() { ++uiVersion_; }
     void toast(const char* fmt, ...);

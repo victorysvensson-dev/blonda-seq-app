@@ -51,6 +51,7 @@ void App::prepare(float sampleRate) {
     for (int i = 0; i < nInst_; ++i) { inst_[i]->prepare(sampleRate); inst_[i]->setTempo(bpm_); }
     rep_.prepare(sampleRate); rep_.setTempo(bpm_);
     fx_.prepare(sampleRate); fx_.setTempo(bpm_);
+    padFx_.prepare(sampleRate); padFx_.setTempo(bpm_); padFxMode_ = false;
     cur_ = 0; prev_ = -1; page_ = 0; preset_ = 0;
     forceRefreshLights();
     dirty();
@@ -99,6 +100,15 @@ void App::setRepeat(bool on) {
     updatePressure();
     dirty();
 }
+// PAD FX on/off: notes held on the pads are let go (latched ones keep playing), effects held are let go
+void App::setPadFxMode(bool on) {
+    if (on == padFxMode_) return;
+    if (on) { for (int p = 0; p < 16; ++p) if (padNote_[p] >= 0) padUp(p); }
+    padFxMode_ = on;
+    padFx_.setActive(on);
+    toast("%s", on ? "PAD FX" : instrument().name());
+}
+
 void App::repeatToast() {
     if (!repeatOn_) { toast("%s", "REPEAT OFF"); return; }
     toast("%s %s", Repeater::modeName(rep_.mode()), Repeater::rateName(rep_.rate()));
@@ -213,6 +223,7 @@ void App::button(int b, bool down) {
     switch (b) {
     case BTN_B1: setPage(viewPage() - 1); break;
     case BTN_B2: setPage(viewPage() + 1); break;
+    case BTN_PAD_FX: setPadFxMode(!padFxMode_); break;
     case BTN_KNOB_FX:
         if (shift_) { fx_.setEnabled(!fx_.enabled()); toast("%s", fx_.enabled() ? "FX ON" : "FX OFF"); break; }
         fxView_ = !fxView_;
@@ -244,7 +255,7 @@ void App::button(int b, bool down) {
                 tapAvg_ = taps_ == 0 ? sec : tapAvg_ * 0.6f + sec * 0.4f; ++taps_;
                 bpm_ = std::round(60.f / tapAvg_);
                 for (int i = 0; i < nInst_; ++i) inst_[i]->setTempo(bpm_);
-                rep_.setTempo(bpm_); fx_.setTempo(bpm_);
+                rep_.setTempo(bpm_); fx_.setTempo(bpm_); padFx_.setTempo(bpm_);
                 toast("TEMPO %d", (int)bpm_);
             } else taps_ = 0;
         }
@@ -257,6 +268,7 @@ void App::button(int b, bool down) {
         I.allNotesOff();
         for (int& n : padNote_) n = -1;
         for (bool& l : latched_) l = false;
+        padFx_.releaseAll();
         toast("%s", "ALL NOTES OFF");
         break;
     default: break;
@@ -265,9 +277,20 @@ void App::button(int b, bool down) {
 
 void App::handle(const Event& e) {
     switch (e.type) {
-    case Event::PadDown: padDown(e.id, e.value); break;
-    case Event::PadUp: padUp(e.id); break;
+    case Event::PadDown:
+        if (padFxMode_) {
+            // CPU guard: the measured load without the held effects, plus their estimated cost, stays under 80 %
+            const float base = cpu_ - padFx_.heldCost() > 0.f ? cpu_ - padFx_.heldCost() : 0.f, kBudget = 0.8f;
+            while (base + padFx_.heldCost() + PadFx::cost(e.id) > kBudget && padFx_.releaseOldest()) {}
+            if (base + PadFx::cost(e.id) > kBudget) { toast("%s", "CPU FULL"); break; }
+            padFx_.press(e.id); toast("%s", PadFx::label(e.id)); break;
+        }
+        padDown(e.id, e.value); break;
+    case Event::PadUp:
+        if (padFxMode_ || padFx_.held(e.id)) { padFx_.release(e.id); dirty(); if (padFxMode_) break; }
+        padUp(e.id); break;
     case Event::PadPressure:
+        if (padFxMode_) { padFx_.pressure(e.id, e.value / 127.f); break; }
         if (padNote_[e.id] >= 0) {
             padPressure_[e.id] = e.value; updatePressure();
             if (repeatOn_) rep_.setPressure(padNote_[e.id], e.value / 127.f);
@@ -328,6 +351,7 @@ void App::render(float* L, float* R, int frames) {
     }
     renderInto(instrument(), L, R, frames);
     if (prev_ >= 0) { if (now_ < prevUntil_) renderInto(*inst_[prev_], L, R, frames); else prev_ = -1; }
+    padFx_.process(L, R, frames);   // PAD FX on the synth, then the KNOB FX echo / space / filter
     fx_.process(L, R, frames);
     const float coef = 1.f - std::exp(-1.f / (0.02f * sr_));   // 20 ms volume smoothing
     float pk = 0.f;
@@ -373,6 +397,7 @@ int App::desiredLed(int b) const {
     case BTN_ERASE: return 1;
     case BTN_NOTE_REPEAT: return repeatOn_ ? (rep_.flash() ? 1 : 2) : 1;   // on: bright, dips on every step
     case BTN_KNOB_FX: return fxView_ ? 2 : (fx_.enabled() ? 1 : 0);
+    case BTN_PAD_FX: return padFxMode_ ? 2 : 1;
     default: break;
     }
     for (int i = 0; i < 8; ++i) if (b == kBankLedCC[i]) return i == layout_.octave + 3 ? 2 : 0;   // octave A..H
@@ -380,6 +405,7 @@ int App::desiredLed(int b) const {
 }
 
 uint32_t App::desiredPad(int pad) const {
+    if (padFxMode_) return padFx_.held(pad) ? 0xFFFFFF : PadFx::colour(pad);
     if (padNote_[pad] >= 0) return kPadHit;
     const int note = layout_.note(pad);
     if (latched_[note]) return kPadHit;
@@ -451,6 +477,9 @@ void App::snapshot(UiState& s) const {
     if (repeatOn_) std::snprintf(s.repeat, sizeof s.repeat, "%s %s", Repeater::modeName(rep_.mode()), Repeater::rateName(rep_.rate()));
     else s.repeat[0] = 0;
     s.fxView = fxView_; s.fxOff = !fx_.enabled();
+    s.padFx = padFxMode_;
+    if (padFxMode_ && padFx_.heldText(s.padFxText, sizeof s.padFxText) == 0) std::snprintf(s.padFxText, sizeof s.padFxText, "PAD FX");
+    else if (!padFxMode_) s.padFxText[0] = 0;
     for (int c = 0; c < kScopeCols; ++c) { const int k = (scopeW_ + c) % kScopeCols; s.scopeMin[c] = scopeMin_[k]; s.scopeMax[c] = scopeMax_[k]; }
 }
 
