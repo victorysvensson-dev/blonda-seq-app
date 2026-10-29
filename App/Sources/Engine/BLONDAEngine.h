@@ -28,8 +28,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)isMutedTrack:(NSInteger)track;
 
 /// Live notes from the on-screen keyboard or MIDI (track 0-5 drums, 6-9 bass/keys/lead/pad).
-- (void)noteOn:(NSInteger)note velocity:(float)velocity track:(NSInteger)track;
-- (void)noteOff:(NSInteger)note track:(NSInteger)track;
+- (void)noteOn:(NSInteger)note velocity:(float)velocity track:(NSInteger)track NS_SWIFT_NAME(noteOn(_:velocity:track:));
+- (void)noteOff:(NSInteger)note track:(NSInteger)track NS_SWIFT_NAME(noteOff(_:track:));
 
 /// CoreMIDI input from every connected source (OP-1 field, OP-XY, keyboards...). Notes play `midiTrack`.
 - (void)startMIDI;

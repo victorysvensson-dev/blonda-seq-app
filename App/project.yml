@@ -20,9 +20,9 @@ targets:
       - path: Resources
         buildPhase: resources
       - path: ../Core/src
-        group: Core
+        group: CoreSources
       - path: ../Core/include
-        group: Core
+        group: CoreHeaders
         buildPhase: none
     settings:
       base:
