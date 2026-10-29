@@ -197,6 +197,38 @@ static void testInstruments(const char* outDir) {
     }
 }
 
+// The engines render node by node in segments of up to 128 frames (Core/src/wg.cpp). The result must not depend
+// on how the host cuts the audio into blocks, and no graph may run out of cycle-history buffers.
+static void testBlockSizes() {
+    std::puts("engines: same output for any block size");
+    struct Ev { int frame; bool on; int note; };
+    const int B = 18944;   // a block start for 128, 37 and 512 frame blocks: note-offs go here (they act at block starts)
+    const Ev evs[] = {{0, true, 48}, {5, true, 55}, {300, true, 60}, {2000, true, 64}, {B, false, 48}, {B, false, 55}, {B + 77, true, 67},
+                      {B + 4001, true, 43}, {2 * B, false, 60}, {2 * B, false, 64}, {2 * B, false, 67}, {2 * B + 900, true, 72}, {4 * B, false, 43}, {4 * B, false, 72}};
+    for (blonda::Eng e : {blonda::Eng::Mini, blonda::Eng::SH101, blonda::Eng::Acid, blonda::Eng::Analog, blonda::Eng::Super,
+                          blonda::Eng::FM, blonda::Eng::Pluck, blonda::Eng::Chip, blonda::Eng::Sub}) {
+        std::vector<float> ref;
+        for (int bs : {128, 37, 512}) {
+            EngineInstrument I(e); I.prepare(kSR); I.loadPreset(0); EngineInstrument::noteLimitOff = true;
+            const int n = 5 * B; std::vector<float> L(n, 0.f), R(n, 0.f);
+            for (int s = 0; s < n; s += bs) {
+                const int len = std::min(bs, n - s);
+                for (const Ev& v : evs) if (v.frame >= s && v.frame < s + len) { if (v.on) I.noteOn(v.note, .8f, v.frame - s); else I.noteOff(v.note, 0); }
+                I.process(&L[s], &R[s], len);
+            }
+            EngineInstrument::noteLimitOff = false;
+            CHECK(!I.track().histOverflow(), "%s: a graph ran out of cycle-history buffers", I.name());
+            std::vector<float> both(L); both.insert(both.end(), R.begin(), R.end());
+            if (ref.empty()) { ref = both; continue; }
+            // The engine clock adds block lengths in double precision, so other block sizes move event times by
+            // rounding-level amounts; anything beyond that would be a segmentation error.
+            float md = 0; for (size_t k = 0; k < ref.size(); ++k) md = std::max(md, std::fabs(ref[k] - both[k]));
+            CHECK(md < 1e-4f, "%s: %d-frame blocks differ from 128-frame blocks by %g", I.name(), bs, md);
+            if (md > 0) std::printf("  %s %d-frame blocks: largest difference %.2g (clock rounding)\n", I.name(), bs, md);
+        }
+    }
+}
+
 // BRIS (blonda-motor) voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
 static void testBrisMotorVoices() {
     std::puts("BRIS (blonda-motor) voice modes");
@@ -367,14 +399,15 @@ static void renderPresets(const char* outDir) {
     if (outDir) writeWav(std::string(outDir) + "/bris_all_presets_44k.wav", AL, AR, (int)kSR);
 }
 
-static void bench() {
+static void bench(const char* only = nullptr, double seconds = 10) {
     std::puts("CPU: worst case per instrument, 6 held notes, 128-frame blocks at 44.1 kHz (this machine)");
     auto insts = allInstruments();
     for (auto& ip : insts) {
-        Instrument& I = *ip; I.prepare(kSR); I.loadPreset(0);
+        Instrument& I = *ip; if (only && std::strcmp(only, I.name())) continue;
+        I.prepare(kSR); I.loadPreset(0);
         std::vector<float> L(kBlock), R(kBlock);
         for (int n = 0; n < 6; ++n) I.noteOn(48 + n * 4, .8f, 0);
-        const int blocks = (int)(10 * kSR / kBlock);
+        const int blocks = (int)(seconds * kSR / kBlock);
         double worst = 0, total = 0;
         for (int b = 0; b < blocks; ++b) {
             std::fill(L.begin(), L.end(), 0.f); std::fill(R.begin(), R.end(), 0.f);
@@ -385,6 +418,32 @@ static void bench() {
         }
         const double budget = kBlock / kSR * 1e6;   // 2902 us
         std::printf("  %-9s avg %6.1f us (%4.1f%% of a core)  worst %6.1f us  budget %.0f us\n", I.name(), total / blocks, 100 * total / blocks / budget, worst, budget);
+    }
+}
+
+// Sound fingerprint: a fixed phrase per instrument (chords, overlapping notes, releases, a preset change),
+// hashed over the exact output bits. Optimisations that must not change the sound are checked with this.
+static void fingerprint() {
+    auto insts = allInstruments();
+    for (auto& ip : insts) {
+        Instrument& I = *ip; I.prepare(kSR); I.loadPreset(0); std::vector<float> L, R;
+        const int np = I.numPresets();
+        renderInst(I, L, R, 4.0, [&](int f) {
+            const double t = (double)f / kSR;
+            auto at = [&](double s) { return f == (int)(s * kSR) / kBlock * kBlock; };
+            if (at(0.0)) { I.noteOn(48, .9f, 0); I.noteOn(55, .7f, 0); I.noteOn(60, .8f, 0); }
+            if (at(0.5)) { I.noteOn(64, 1.f, 17); I.noteOff(55, 3); }
+            if (at(1.0)) { I.noteOff(48, 0); I.noteOff(60, 0); I.noteOff(64, 50); }
+            if (at(1.3)) { I.noteOn(52, .6f, 0); I.noteOn(59, .6f, 0); I.noteOn(67, .6f, 0); I.noteOn(71, .6f, 0); }
+            if (at(2.2)) { for (int n : {52, 59, 67, 71}) I.noteOff(n, 0); }
+            if (at(2.4) && np > 1) I.loadPreset(np / 2);
+            if (at(2.5)) I.noteOn(45, .8f, 0);
+            if (at(3.2)) I.noteOff(45, 0);
+            (void)t; });
+        uint64_t h = 1469598103934665603ull; double e = 0;
+        for (size_t k = 0; k < L.size(); ++k) { uint32_t a, b; std::memcpy(&a, &L[k], 4); std::memcpy(&b, &R[k], 4);
+            h = (h ^ a) * 1099511628211ull; h = (h ^ b) * 1099511628211ull; e += (double)L[k] * L[k] + (double)R[k] * R[k]; }
+        std::printf("%-9s %016llx  energy %.6f\n", I.name(), (unsigned long long)h, e);
     }
 }
 
@@ -415,13 +474,15 @@ static void levels() {
 int main(int argc, char** argv) {
     const std::string mode = argc > 1 ? argv[1] : "";
     if (mode == "levels") { levels(); return 0; }
-    if (mode == "bench") { bench(); return 0; }
+    if (mode == "bench") { bench(argc > 2 ? argv[2] : nullptr, argc > 3 ? std::atof(argv[3]) : 10); return 0; }
+    if (mode == "fingerprint") { fingerprint(); return 0; }
     const char* outDir = mode == "render" && argc > 2 ? argv[2] : nullptr;
     testParser();
     testRawMidiFrames();
     testControls();
     testInstruments(outDir);
     testBrisMotorVoices();
+    testBlockSizes();
     testApp(outDir);
     renderPresets(outDir);
     bench();

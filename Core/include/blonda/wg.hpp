@@ -36,9 +36,14 @@ struct Wave {
         }
         for (int l = 0; l < kLevels; ++l) { for (int i = 0; i < kSize; ++i) t[l][i] *= norm; t[l][kSize] = t[l][0]; }
     }
-    inline float read(float phase, float inc) const {
+    inline float read(float phase, float inc) const { return readLevel(phase, level(inc)); }
+    // mip level for a phase increment (the table whose partials stay below Nyquist)
+    inline int level(float inc) const {
         const float maxP = 0.5f / std::max(inc, 1e-7f); int l = 0;
         while (l < kLevels - 1 && (float)partials[l] * 1.26f > maxP) ++l;
+        return l;
+    }
+    inline float readLevel(float phase, int l) const {
         const float x = phase * kSize; const int i = (int)x; const float f = x - (float)i; const float* tb = t[l];
         return tb[i] + (tb[i + 1] - tb[i]) * f;
     }
@@ -90,7 +95,6 @@ public:
         Node& nd = nodes_[node]; nd.arpN = (uint8_t)std::min(n, 6); for (int i = 0; i < nd.arpN; ++i) nd.arp[i] = semis[i]; nd.arpBase = baseNote; nd.arpT0 = t0; nd.arpStep = step; nd.arpEnd = tEnd; }
     void setLiveQ(int node, float q) { nodes_[node].qLive = q; }
     void setLiveDetune(int node, float cents) { nodes_[node].p[2].setDefault(cents); }
-    float outL(int node) const { return nodes_[node].out[0]; }
     void finalize(double endTime);   // sort nodes; the graph stays alive until endTime
     bool active() const { return active_; }
     double endTime() const { return end_; }
@@ -101,9 +105,13 @@ public:
         master_.cancelScheduledValues(at); master_.setValueAtTime(1.f, at); master_.setTargetAtTime(0.f, at, tau);
         if (freeAt < end_) end_ = freeAt;
     }
-    // render one frame at absolute time t, adds stereo into l/r
-    void tick(double t, float& l, float& r);
+    // Render frames i0..i1-1 of a block (frame i at time now + i * dt, i1 - i0 <= kBlock) and add them into
+    // acc[0 .. i1-i0). scratch: kNodes * 2 * kBlock floats, shared by all graphs of a track (used one at a time).
+    static constexpr int kBlock = 128;
+    static constexpr int kScratch = kNodes * 2 * kBlock;
+    void render(double now, double dt, int i0, int i1, float* accL, float* accR, float* scratch);
     int nodeCount() const { return n_; }
+    bool histOverflow() const { return histOverflow_; }
 
 private:
     struct Node {
@@ -111,7 +119,8 @@ private:
         int16_t in[kIn]; Param p[4];
         int16_t mod[4][kMods]; uint8_t nMod[4]{};
         double start = 0, stop = 1e18;
-        float out[2]{0, 0};
+        float out[2]{0, 0};   // output of the last rendered frame
+        float* ob = nullptr;  // this block's output: ob[0..kBlock) left, ob[kBlock..2*kBlock) right
         // state
         float phase = 0; float z[2][2]{}; float co[5]{1, 0, 0, 0, 0}; float lastF = -1, lastQ = -1, lastG = -1e9f;
         float amt = 0, k1 = 1, k1n = 1, k2 = 1, k2n = 1; float up[2]{0, 0}; int os = 1; int lat = 0, li = 0;
@@ -122,21 +131,33 @@ private:
         float* ring = nullptr; int ringN = 0, idx = 0; float fb = 0, norm = 1; long len = 0, pos = 0; float fadeN = 0; float ksPrev = 0, ksCur = 0, ksFrac = 0;
         const float* buf = nullptr; int bufLen = 0; double bufPos = 0;
         double qEnd = 0, qStart = 0; const Wave* wv = nullptr; bool muted = false; float qLive = -1.f;
+        // per-sample memo (bit-exact: recomputed only when the inputs change): oscillator frequency -> increment and
+        // mip level, biquad detune -> factor, panner position -> gains
+        float mF0 = -1e30f, mDet = -1e30f, mInc = 0, mFac = 1, mPan = -1e30f, mGl = 0, mGr = 0; int mLvl = 0; bool srcSt = false;
         uint64_t delayedIn = 0; uint16_t delayedMod = 0; float* hist = nullptr; int hpos = 0;  /* cycle edges read 128 frames back (Chrome) */ uint8_t arpN = 0; float arp[6]{}; float arpBase = 0; double arpT0 = 0, arpStep = 1, arpEnd = 0;
     };
-    float evalParam(Node& nd, int p, double t);
-    void processNode(Node& nd, double t);
+    float paramAt(Node& nd, int p, double t, int r, int self);
+    void processBlock(Node& nd, int self, double now, double dt, int i0, int n);
 
     std::array<Node, kNodes> nodes_; int n_ = 0;
     std::array<int16_t, kNodes> order_{}; std::array<int16_t, 16> outs_{}; int nOut_ = 0;
-    float sr_ = 48000; double end_ = 0; bool active_ = false; WebParamN<6> master_{1.f};
+    float sr_ = 48000; double end_ = 0; bool active_ = false, histOverflow_ = false; WebParamN<6> master_{1.f};
     // pooled state memory
     std::array<HalfbandDecimator, 24> decPool_; int decUsed_ = 0;
     std::array<float, 8 * 256> latPool_{}; int latUsed_ = 0;
     std::array<float, 2 * 8192> dlPool_{}; int dlUsed_ = 0;
     std::array<float, 8 * 1200> ringPool_{}; int ringUsed_ = 0;
     std::array<float, 6 * 256> histPool_{}; int histUsed_ = 0;
-    inline float srcOut(int src, int c, bool delayed) const { const Node& s = nodes_[src]; if (delayed && s.hist) return s.hist[c * 128 + s.hpos]; return s.out[c]; }
+    // output of node `src` at frame r of the block being rendered by node `self`. A cycle edge reads the source's
+    // history 128 frames back: the source runs after `self`, so its write position is still at the block start
+    // (+ r); a node reading itself has already written r frames. Without a history buffer (pool full, which no
+    // engine reaches: histOverflow() is tested) the edge reads the source's last output instead.
+    inline float srcAt(int src, int c, bool delayed, int r, int self) const {
+        const Node& s = nodes_[src];
+        if (!delayed) return s.ob[c * kBlock + r];
+        if (s.hist) return s.hist[c * 128 + ((s.hpos + (src == self ? 0 : r)) & 127)];
+        return src == self && r > 0 ? s.ob[c * kBlock + r - 1] : s.out[c];
+    }
 };
 
 } // namespace blonda::wg

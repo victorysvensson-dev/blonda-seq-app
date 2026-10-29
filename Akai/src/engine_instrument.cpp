@@ -143,20 +143,22 @@ const Page kMiniPages[] = {
 #undef TONE
 #define N(a) (int)(sizeof(a) / sizeof(a[0]))
 
-// maxNotes: held notes at once on the MPC (oldest is released first). Measured on an MPC Sample (fw 1.3.0.12, 6 held
-// notes, worst block): Mini D 113 %, SH-101 157 %, Acid 162 % (4 notes), Super 181 % (4), FM 128 %, Analog 83 % of
-// one core; limits keep the worst block near 60 % until the engines are optimised for ARM.
+// maxNotes: held notes at once on the MPC (oldest is released first). Measured on an MPC Sample (fw 1.3.0.12) after
+// the node-by-node block rendering in Core/src/wg.cpp, worst 128-frame block in % of one core, 6 held notes /
+// 6 held + 6 ringing out: Mini D 31/34, SH-101 36/71, Acid 49/92, Analog 17/33, Super 24/51, FM 22/48, Pluck 14/12,
+// Chip 11/22, Sub 22/21 (before it: Super 181 % with 4 notes). Acid and SH-101 stay lower: their graphs are the
+// heaviest and keep ringing after each note.
 // gain: output trim measured with `akai_test levels` (single note C3 ~ -18 dBFS RMS), like SEQ.3's track levels.
 const Table kTables[] = {
-    {"ANALOG", "2-osc analog", kAnalog, N(kAnalog), kAnalogPages, N(kAnalogPages), 1, 1.0f, 4},
-    {"ACID", "303-style bass", kAcid, N(kAcid), kAcidPages, N(kAcidPages), 1, 0.62f, 2},
+    {"ANALOG", "2-osc analog", kAnalog, N(kAnalog), kAnalogPages, N(kAnalogPages), 1, 1.0f, 6},
+    {"ACID", "303-style bass", kAcid, N(kAcid), kAcidPages, N(kAcidPages), 1, 0.62f, 3},
     {"SUB 808", "808 sub bass", kSub, N(kSub), kSubPages, N(kSubPages), 3, 1.0f, 6},
-    {"FM GLASS", "2-op FM bell", kFM, N(kFM), kFMPages, N(kFMPages), 5, 0.77f, 3},
+    {"FM GLASS", "2-op FM bell", kFM, N(kFM), kFMPages, N(kFMPages), 5, 0.77f, 6},
     {"PLUCK", "Karplus-Strong string", kPluck, N(kPluck), kPluckPages, N(kPluckPages), 1, 1.4f, 6},
     {"CHIP", "8-bit chip", kChip, N(kChip), kChipPages, N(kChipPages), 5, 0.69f, 6},
-    {"SUPER", "7-saw super pad", kSuper, N(kSuper), kSuperPages, N(kSuperPages), 3, 3.16f, 2},
-    {"SH-101", "SH-101-style mono", kSH, N(kSH), kSHPages, N(kSHPages), 9, 1.25f, 2},
-    {"MINI D", "Model D-style mono", kMini, N(kMini), kMiniPages, N(kMiniPages), 15, 0.72f, 3},
+    {"SUPER", "7-saw super pad", kSuper, N(kSuper), kSuperPages, N(kSuperPages), 3, 3.16f, 6},
+    {"SH-101", "SH-101-style mono", kSH, N(kSH), kSHPages, N(kSHPages), 9, 1.25f, 4},
+    {"MINI D", "Model D-style mono", kMini, N(kMini), kMiniPages, N(kMiniPages), 15, 0.72f, 6},
 };
 // Table order follows blonda::Eng.
 static_assert((int)Eng::Analog == 0 && (int)Eng::Acid == 1 && (int)Eng::Sub == 2 && (int)Eng::FM == 3 && (int)Eng::Pluck == 4 &&
@@ -179,6 +181,8 @@ void EngineInstrument::prepare(float sampleRate) {
     loadPreset(0);
 }
 
+bool EngineInstrument::noteLimitOff = false;
+
 void EngineInstrument::reset() { allNotesOff(); }
 
 void EngineInstrument::noteOn(int note, float velocity, int offset) {
@@ -186,7 +190,7 @@ void EngineInstrument::noteOn(int note, float velocity, int offset) {
     if (held_[note]) noteOff(note, offset);
     // voice budget: release the oldest held note when the limit is reached
     int n = 0; for (int i = 0; i < nOrder_; ++i) n += held_[order_[i]] ? 1 : 0;
-    if (n >= tab_->maxNotes) for (int i = 0; i < nOrder_; ++i) if (held_[order_[i]]) { noteOff(order_[i], offset); break; }
+    if (n >= tab_->maxNotes && !noteLimitOff) for (int i = 0; i < nOrder_; ++i) if (held_[order_[i]]) { noteOff(order_[i], offset); break; }
     const int iv[1] = {0};
     track_.trigger(velocity, note, kLiveHoldSec, iv, 1, offset, nullptr, true);
     held_[note] = true;

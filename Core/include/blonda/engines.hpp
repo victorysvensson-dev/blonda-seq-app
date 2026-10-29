@@ -45,6 +45,7 @@ public:
     void releaseLive(int note);
     void process(float* L, float* R, int frames);   // adds
     double now() const { return now_; }
+    bool histOverflow() const { for (auto& g : g_) if (g.histOverflow()) return true; return false; }   // tests
 
 private:
     struct Live { int kind = -1; int nf = 0; int16_t f[3]{}; int16_t q = -1; float c0 = 0, q0 = 0, lc = 0, lq = 0; bool acc = false; };
@@ -60,6 +61,7 @@ private:
     std::array<wg::Graph, kGraphs> g_; std::array<Live, kGraphs> live_{}; std::array<int, kGraphs> liveNote_{}; int lastGraph_ = -1; std::array<uint32_t, kGraphs> age_{}; uint32_t ages_ = 0;
     float sr_ = 48000; double now_ = 0; bool bass_ = false; Noise rng_;
     std::array<Pending, 16> pend_{}; int nPend_ = 0;
+    std::array<float, wg::Graph::kScratch> scratch_{};   // node outputs while one graph renders a block
     // mono state, like acidLast / subLast / shLast / mgLast
     struct Last { bool has = false; double t = 0; float f = 0, gate = 0, key = 0; int graph = -1; int gnode = -1; uint32_t age = 0; float f0r = 1; };
     Last acidLast_, subLast_, shLast_, mgLast_;

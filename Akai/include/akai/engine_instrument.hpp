@@ -9,6 +9,7 @@ namespace akai {
 
 class EngineInstrument final : public Instrument {
 public:
+    static bool noteLimitOff;   // measurements only: ignore the per-engine held-note limit
     explicit EngineInstrument(blonda::Eng engine);
     const char* name() const override;
     const char* description() const override;
@@ -20,6 +21,7 @@ public:
     void allNotesOff() override;
     void pressure(float amount) override;
     void setTempo(float bpm) override { track_.bpm = bpm; }
+    const blonda::MelodicTrack& track() const { return track_; }
     void process(float* L, float* R, int frames) override;
 
     int numParams() const override;

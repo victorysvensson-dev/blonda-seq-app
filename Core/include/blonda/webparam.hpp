@@ -48,6 +48,16 @@ public:
         return e.v + (v0 - e.v) * (float)std::exp(-(t - e.t) / (e.tau > 0 ? e.tau : 1e-6));
     }
     bool empty() const { return n_ == 0; }
+    // True when valueAt() returns one and the same value for every t in [t0, t1] (no event in (t0, t1], no ramp or
+    // setTarget in progress); v is that value, bit for bit what valueAt() would return.
+    bool constantOver(double t0, double t1, float& v) const {
+        if (n_ == 0) { v = def_; return true; }
+        int k = -1; while (k + 1 < n_ && ev_[k + 1].t <= t0) ++k;
+        if (k + 1 < n_ && (ev_[k + 1].t <= t1 || ev_[k + 1].type == Lin || ev_[k + 1].type == Exp)) return false;
+        if (k < 0) { v = def_; return true; }
+        if (ev_[k].type == Target) return false;
+        v = ev_[k].v; return true;
+    }
 
 private:
     struct Ev { Type type; double t; float v; float tau; };

@@ -93,12 +93,19 @@ void MelodicTrack::updateLive() {
 void MelodicTrack::process(float* L, float* R, int frames) {
     updateLive();
     const double dt = 1.0 / sr_;
-    for (int i = 0; i < frames; ++i) {
+    // Rendered in segments of at most 128 frames that end where a queued note starts, so every note is built at
+    // its exact frame; within a segment each graph renders node by node (see Graph::render).
+    float accL[wg::Graph::kBlock], accR[wg::Graph::kBlock];
+    for (int i = 0; i < frames;) {
         const double t = now_ + i * dt;
         for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) { gl_ = pend_[k].gl.n ? &pend_[k].gl : nullptr; build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t); gl_ = nullptr; if (pend_[k].live && lastGraph_ >= 0) liveNote_[lastGraph_] = pend_[k].note; }
-        float l = 0, r = 0;
-        for (auto& g : g_) if (g.active()) g.tick(t, l, r);
-        L[i] += l; R[i] += r;
+        int e = std::min(frames, i + wg::Graph::kBlock);
+        for (int k = 0; k < nPend_; ++k) if (pend_[k].off > i && pend_[k].off < e) e = pend_[k].off;
+        const int n = e - i;
+        for (int r = 0; r < n; ++r) { accL[r] = 0; accR[r] = 0; }
+        for (auto& g : g_) if (g.active()) g.render(now_, dt, i, e, accL, accR, scratch_.data());
+        for (int r = 0; r < n; ++r) { L[i + r] += accL[r]; R[i + r] += accR[r]; }
+        i = e;
     }
     nPend_ = 0; now_ += frames * dt;
 }

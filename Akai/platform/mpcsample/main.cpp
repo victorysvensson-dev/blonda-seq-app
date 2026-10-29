@@ -16,6 +16,7 @@
 //                            stock app runs; also used to check the ARM build under an emulator)
 #include "akai/app.hpp"
 #include "akai/screen.hpp"
+#include "akai/engine_instrument.hpp"
 
 #include <atomic>
 #include <cerrno>
@@ -309,24 +310,36 @@ inline int32_t toS32(float v) {
 
 // ---------------------------------------------------------------- self test (no hardware)
 int selftest() {
-    std::puts("BLONDA AKAI self test (no hardware): 6 held notes per instrument, 10 s each");
+    std::puts("BLONDA AKAI self test (no hardware), % of one core per 128-frame block:");
+    std::puts("  as shipped: 6 pads held (each engine's note limit applies), 4 s");
+    std::puts("  6 / 6+6:    no note limit; 6 held notes, then 6 new notes while the first 6 ring out");
     auto app = std::make_unique<akai::App>(); akai::App& A = *app; A.prepare((float)kRate);
     float L[kPeriod], R[kPeriod];
     const double budget = (double)kPeriod / kRate;
     bool ok = true;
-    for (int i = 0; i < A.numInstruments(); ++i) {
-        A.selectInstrument(i);
-        for (int p = 0; p < 6; ++p) { akai::mpcs::Event e; e.type = akai::mpcs::Event::PadDown; e.id = (uint8_t)(p * 2); e.value = 100; A.handle(e); }
-        double worst = 0, total = 0; float peak = 0; bool finite = true;
-        const int blocks = 10 * kRate / kPeriod;
+    auto pads = [&](int first, bool down) { for (int p = 0; p < 6; ++p) { akai::mpcs::Event e; e.type = down ? akai::mpcs::Event::PadDown : akai::mpcs::Event::PadUp; e.id = (uint8_t)(first + p * 2); e.value = 100; A.handle(e); } };
+    auto run = [&](double sec, double& avg, double& worst, float& peak, bool& finite) {
+        const int blocks = (int)(sec * kRate / kPeriod); double total = 0; worst = 0;
         for (int b = 0; b < blocks; ++b) {
             const double t0 = nowSec(); A.render(L, R, kPeriod); const double dt = nowSec() - t0;
             total += dt; if (dt > worst) worst = dt;
             for (int k = 0; k < kPeriod; ++k) { finite &= L[k] == L[k] && R[k] == R[k]; const float a = L[k] > 0 ? L[k] : -L[k]; if (a > peak) peak = a; }
         }
-        for (int p = 0; p < 6; ++p) { akai::mpcs::Event e; e.type = akai::mpcs::Event::PadUp; e.id = (uint8_t)(p * 2); A.handle(e); }
+        avg = 100 * total / blocks / budget; worst = 100 * worst / budget;
+    };
+    for (int i = 0; i < A.numInstruments(); ++i) {
+        A.selectInstrument(i);
+        float peak = 0; bool finite = true; double a0, w0, a1, w1, a2, w2, ax, wx;
+        akai::EngineInstrument::noteLimitOff = false;
+        pads(0, true); run(4, a0, w0, peak, finite); pads(0, false); run(4, ax, wx, peak, finite);   // then ring out
+        akai::EngineInstrument::noteLimitOff = true;
+        pads(0, true); run(3, a1, w1, peak, finite);
+        pads(0, false); pads(1, true); run(1.5, a2, w2, peak, finite);
+        pads(1, false); run(4, ax, wx, peak, finite);
+        akai::EngineInstrument::noteLimitOff = false;
         akai::UiState s; A.snapshot(s);
-        std::printf("  %-9s avg %5.1f%% of a core  worst %5.1f%%  peak %.2f %s\n", s.instrument, 100 * total / blocks / budget, 100 * worst / budget, peak, finite ? "" : "NaN!");
+        std::printf("  %-9s shipped avg %5.1f%% worst %5.1f%% | 6: avg %5.1f%% worst %5.1f%% | 6+6: avg %5.1f%% worst %5.1f%% | peak %.2f %s\n",
+                    s.instrument, a0, w0, a1, w1, a2, w2, peak, finite ? "" : "NaN!");
         ok &= finite && peak > 0.001f;
     }
     std::puts(ok ? "SELFTEST OK" : "SELFTEST FAIL");
