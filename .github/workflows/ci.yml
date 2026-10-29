@@ -96,10 +96,10 @@ jobs:
         run: |
           mkdir -p ci-shots
           cd ci-shots
-          git init -q && git checkout -q -b ci-shots
+          git init -q && git checkout -q -b "ci-shots-${GITHUB_REF_NAME}"
           git config user.name ci && git config user.email ci@users.noreply.github.com
           git add -A && git commit -qm "screenshots ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" ci-shots
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "ci-shots-${GITHUB_REF_NAME}"
 
   mac:
     runs-on: macos-15
@@ -146,7 +146,7 @@ jobs:
       - name: Publish to the mac-build branch
         run: |
           cd mac-out
-          git init -q && git checkout -q -b mac-build
+          git init -q && git checkout -q -b "mac-build-${GITHUB_REF_NAME}"
           git config user.name ci && git config user.email ci@users.noreply.github.com
           git add -A && git commit -qm "mac build ${GITHUB_SHA}"
-          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" mac-build
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "mac-build-${GITHUB_REF_NAME}"
