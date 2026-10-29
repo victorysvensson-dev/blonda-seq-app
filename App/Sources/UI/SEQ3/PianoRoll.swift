@@ -21,8 +21,11 @@ final class RollState: ObservableObject {
     @Published var notes: [RNote] = []
     @Published var sel = Set<Int>()
     @Published var mode = "draw"
-    @Published var snapI = 0, lenI = 0
-    @Published var scale = true, ghost = true, shiftLock = false
+    @Published var snapI = 0
+    @Published var lenI = 0
+    @Published var scale = true
+    @Published var ghost = true
+    @Published var shiftLock = false
     @Published var zoom: CGFloat = 1
     var sx: CGFloat = 0, sy: CGFloat = 0
     let rowH: CGFloat = 18
