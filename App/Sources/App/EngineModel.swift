@@ -159,7 +159,40 @@ final class EngineModel: NSObject, ObservableObject {
     func variation(_ t: Int) { edit { engine.variation(track: t) } }
     func toggleSolo(_ t: Int) { edit { engine.toggleSolo(track: t) } }
     var soloTrack: Int { _ = revision; return engine.soloTrack }
-    func copyPattern() { edit { engine.copyPatternToNext() } }
+    func copyPattern() { edit { engine.copyPatternToNext() }; showToast("Mönster \(["A", "B", "C", "D"][pattern]) kopierat till \(["A", "B", "C", "D"][(pattern + 1) % 4])") }
+    // ---- dice + toasts
+    @Published var dieFace = 3
+    @Published var rolling = false
+    @Published var toast: String?
+    private var toastWork: DispatchWorkItem?
+    func showToast(_ s: String) {
+        toast = s; toastWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in self?.toast = nil }; toastWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2, execute: w)
+    }
+    /// faces tumble fast, slow down and land — then the pattern changes (like the web dice)
+    func rollDice() {
+        guard !rolling else { return }
+        rolling = true
+        let n = Int.random(in: 1...6)
+        let delays = [40, 45, 50, 60, 70, 85, 105, 130, 160]
+        var t = 0.0, last = dieFace
+        for d in delays {
+            t += Double(d) / 1000
+            DispatchQueue.main.asyncAfter(deadline: .now() + t) { [weak self] in
+                var f = Int.random(in: 1...6); while f == last { f = Int.random(in: 1...6) }; last = f; self?.dieFace = f
+            }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + t + 0.12) { [weak self] in
+            guard let self = self else { return }
+            self.dieFace = n
+            let msg = self.engine.rollDice(n)
+            self.revision += 1; self.paramRevision += 1; self.scheduleSave()
+            self.showToast("Tärning \(n) · \(msg)")
+            self.rolling = false
+        }
+    }
+    func setInstrument(_ name: String, _ t: Int) { edit { engine.setInstrument(name, track: t) }; selColHex = trackHex(selectedTrack) }
     func undo() { edit { _ = engine.undo() } }
     func redo() { edit { _ = engine.redo() } }
     func setBPM(_ v: Float) { engine.bpm = max(40, min(240, v.rounded())); revision += 1; scheduleSave() }

@@ -33,6 +33,10 @@ int main(int argc, char** argv) {
     (void)bassBefore;
     // the saved file reloads with the edits
     blonda::Project back; expect(back.loadJSON(h->toJSON(), &err) && back.len[3] == 12, "save keeps length");
+    for (int n = 1; n <= 6; ++n) { const std::string m = h->dice(n, 1000 + n); pump();
+        int notes = 0; for (int t = 0; t < 10; ++t) notes += h->hits(t);
+        std::printf("     dice %d: %s  (steps %d, bass %d, lead %d)\n", n, m.c_str(), notes, h->hits(6), h->hits(8));
+        expect(notes > 8 && !m.empty(), "dice"); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }

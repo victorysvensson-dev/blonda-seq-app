@@ -115,7 +115,12 @@ struct GridActions: View {
     var body: some View {
         FlowLayout(spacing: 5) {
             DMChip { HStack(spacing: 7) { SVGIcon(d: "M3.5 3h9A1.5 1.5 0 0 1 14 4.5v7a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 11.5v-7A1.5 1.5 0 0 1 3.5 3zM6 3v6M10 3v6", size: 14); Text("piano roll") } }
-            DMChip(fill: T.dmY) { HStack(spacing: 10) { DieFace(); Text("tärning") }.padding(.leading, -7) }
+            DMChip(fill: T.dmY, action: { model.rollDice() }) {
+                HStack(spacing: 10) {
+                    DieFace(n: model.dieFace).rotationEffect(.degrees(model.rolling ? Double(model.dieFace) * 60 : 0)).animation(.spring(response: 0.25, dampingFraction: 0.6), value: model.dieFace)
+                    Text("tärning")
+                }.padding(.leading, -7)
+            }
             DMChip(action: { model.variation(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 12c3 0 4-8 7-8s3 5 5 5", size: 14, stroke: 1.6); Text("variation") } }
             DMChip(action: { model.shift(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 8h11M10 5l3 3-3 3", size: 14, stroke: 1.6); Text("flytta") } }
             DMChip(action: { model.clear(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M3 3l10 10M13 3L3 13", size: 14, stroke: 1.6); Text("rensa spår") } }
@@ -129,10 +134,15 @@ struct GridActions: View {
 
 /// The dice face on the yellow "tärning" chip (5 lit pips + 4 dark).
 struct DieFace: View {
+    var n: Int = 5
     var body: some View {
         Canvas { c, size in
-            let pos: [(CGFloat, CGFloat, Bool)] = [(7, 7, true), (14, 6, false), (22, 7, true), (6, 14, false), (14, 14, true), (22, 14, false), (7, 22, true), (14, 22, false), (22, 22, true)]
-            for (x, y, lit) in pos {
+            // 3×3 pip positions; lit pips per face like a real die
+            let grid: [(CGFloat, CGFloat)] = [(7, 7), (14, 7), (21, 7), (7, 14), (14, 14), (21, 14), (7, 21), (14, 21), (21, 21)]
+            let faces: [[Int]] = [[4], [0, 8], [0, 4, 8], [0, 2, 6, 8], [0, 2, 4, 6, 8], [0, 2, 3, 5, 6, 8]]
+            let litSet = Set(faces[max(1, min(6, n)) - 1])
+            for (k, pt) in grid.enumerated() {
+                let x = pt.0, y = pt.1, lit = litSet.contains(k)
                 let r: CGFloat = lit ? 3 : 2
                 if lit {
                     var g = c; g.addFilter(.shadow(color: T.yellow.opacity(0.8), radius: 2.5))

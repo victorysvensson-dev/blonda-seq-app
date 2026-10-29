@@ -3,6 +3,7 @@
 // Used by the iOS/macOS AVAudioEngine host (App/Sources/Engine/BLONDAEngine.mm) and tested on Linux (tools/hosttest.cpp).
 #pragma once
 #include "seq3.hpp"
+#include "dice.hpp"
 #include <array>
 #include <atomic>
 #include <cmath>
@@ -20,7 +21,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; };
 
     ~Host() { shutdown(); }
@@ -145,6 +146,30 @@ public:
         }
         commitTrack(t);
     }
+    void setInstrument(int k, const std::string& name) {
+        if (k < 0 || k >= 4) return; const int idx = engineIndex(name); ui.inst[k] = kEngineNames[idx];
+        Cmd c; c.type = Inst; c.a = k; c.b = idx; send(c);
+    }
+    // synth module: engine parameters of melodic track k (0..3); e = engine index (kEngineNames)
+    float engParam(int k, int e, int f) { const float* x = engFloat(ui, k, e, f); return x ? *x : 0.f; }
+    void setEngParam(int k, int e, int f, float v) {
+        float* x = engFloat(ui, k, e, f); if (!x) return;
+        const float hi = (e == 3 && f == 0) ? 6.f : 1.f; *x = std::max(0.f, std::min(hi, v));
+        Cmd c; c.type = EngParam; c.a = k; c.b = e; c.c = f; c.f = *x; send(c);
+    }
+    int engOption(int k, int e, int f) { int v = 0; engOpt(ui, k, e, f, &v, nullptr); return v; }
+    void setEngOption(int k, int e, int f, int v) { if (!engOpt(ui, k, e, f, nullptr, &v)) return; Cmd c; c.type = EngOpt; c.a = k; c.b = e; c.c = f; c.f = (float)v; send(c); }
+    // the musical dice (1–6); returns a short description of what happened
+    std::string dice(int n, uint32_t seed) {
+        pushHist();
+        const Project before = ui;
+        Dice d(seed); d.apply(ui, std::max(1, std::min(6, n)), diceStyle_, diceProg_);
+        for (int t = 0; t < kTracks; ++t) commitTrack(t);
+        if (ui.master.swing != before.master.swing) { const float sw = ui.master.swing; ui.master.swing = before.master.swing; setParam(PG_MASTER, 0, 5, sw); }
+        for (int k = 0; k < 4; ++k) if (ui.inst[k] != before.inst[k]) setInstrument(k, ui.inst[k]);
+        for (int t = 0; t < kTracks; ++t) if (ui.len[t] != before.len[t]) { Cmd c; c.type = Len; c.a = t; c.b = trackLen(t); send(c); }
+        return d.message;
+    }
     // dock "copy": this pattern into the next one
     void copyPatternToNext() {
         pushHist(); const int a = ui.pat, b = (a + 1) % kPatterns;
@@ -186,6 +211,9 @@ public:
                 case Param: if (e) e->setParam(c.a, c.b, c.c, c.f); break;
                 case Solo: if (e) e->setSolo(c.a); break;
                 case Len: if (e) e->setLen(c.a, c.b); break;
+                case Inst: if (e) e->setInstrument(c.a, c.b); break;
+                case EngParam: if (e) e->setEngParam(c.a, c.b, c.c, c.f); break;
+                case EngOpt: if (e) e->setEngOpt(c.a, c.b, c.c, (int)c.f); break;
             }
         }
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }
@@ -250,6 +278,7 @@ private:
         for (int s = 0; s < 16; ++s) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = ui.cells[pat][t][s]; send(c); }
     }
     std::array<int, kTracks> rot_{};
+    int diceStyle_ = -1; std::pair<int, int> diceProg_{0, 8};
     std::vector<Snap> hist_, redo_;
     void send(const Cmd& c) { collect(); if (!toAudio_.push(c)) { delete c.roll; delete c.engine; } }
     Seq3* engine_ = nullptr;   // touched only by the audio thread (and shutdown)

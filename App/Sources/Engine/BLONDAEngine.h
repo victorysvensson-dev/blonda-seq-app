@@ -55,6 +55,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)toggleSoloTrack:(NSInteger)track NS_SWIFT_NAME(toggleSolo(track:));
 @property (nonatomic, readonly) NSInteger soloTrack;
 - (void)copyPatternToNext;
+/// The musical dice (1–6). Returns what it did, e.g. "nytt groove · ny bas och melodi · Am – F".
+- (NSString *)rollDice:(NSInteger)n NS_SWIFT_NAME(rollDice(_:));
+- (void)setInstrument:(NSString *)name track:(NSInteger)track NS_SWIFT_NAME(setInstrument(_:track:));
 - (BOOL)undo;
 - (BOOL)redo;
 

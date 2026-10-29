@@ -51,6 +51,15 @@ struct SEQ3View: View {
                 }
                 .transition(.opacity.combined(with: .modifier(active: BlurOut(r: 20), identity: BlurOut(r: 0))))
             }
+            if let t = model.toast {
+                Text(t).font(BFont.mono(10.5, 500)).tracking(0.4).foregroundColor(T.ink)
+                    .padding(.horizontal, 16).frame(height: 34)
+                    .background(Capsule().fill(T.fg))
+                    .shadow(color: .black.opacity(0.35), radius: 14, y: 8)
+                    .padding(.bottom, 100)
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+                    .id(t)
+            }
             if showKeys {
                 KeyboardView().frame(height: 150).padding(.horizontal, 22).padding(.bottom, 92)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -65,6 +74,7 @@ struct SEQ3View: View {
         .onAppear { keysFocused = true }
         .onKeyPress(phases: [.down, .up]) { press in handleKey(press) }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: showKeys)
+        .animation(.spring(response: 0.35, dampingFraction: 0.8), value: model.toast)
         .onAppear { if ProcessInfo.processInfo.arguments.contains("-autoplay") || ProcessInfo.processInfo.arguments.contains("-nointro") { started = true; entered = true } }
     }
 

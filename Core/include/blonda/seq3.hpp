@@ -62,6 +62,44 @@ inline void paramRange(int group, int field, float& lo, float& hi) {
     if (group == PG_MASTER && field == 0) { lo = -1; }
 }
 
+// engine names as stored in projects (S.inst); index = id used by the real-time instrument switch
+static const char* const kEngineNames[10] = {"analog", "acid", "sub", "fm", "pluck", "super", "chip", "sh101", "mini", "bris"};
+inline int engineIndex(const std::string& n) { for (int i = 0; i < 10; ++i) if (n == kEngineNames[i]) return i; return 0; }
+
+// ---- engine parameters by (engine, field index): the sliders of the synth module (ENG[e].ps in the web version)
+inline float* engFloat(Project& p, int k, int e, int f) {
+    if (k < 0 || k >= 4 || f < 0) return nullptr;
+    auto pick = [f](std::initializer_list<float*> l) -> float* { return f < (int)l.size() ? *(l.begin() + f) : nullptr; };
+    switch (e) {
+        case 0: { AnalogP& a = p.synth[k]; return pick({&a.cut, &a.res, &a.env, &a.a, &a.d, &a.s, &a.r}); }
+        case 1: { AcidP& a = p.eng.acid; return pick({&a.cut, &a.res, &a.env, &a.dec, &a.acc, &a.drive, &a.dtone, &a.st}); }
+        case 2: { SubP& a = p.eng.sub; return pick({&a.decay, &a.punch, &a.drive, &a.tone, &a.glide, &a.click}); }
+        case 3: { FMP& a = p.eng.fm; return pick({&a.ratio, &a.index, &a.decay, &a.bell, &a.rel, &a.bright}); }
+        case 4: { PluckP& a = p.eng.pluck; return pick({&a.damp, &a.bright, &a.body, &a.len, &a.width, &a.drive}); }
+        case 5: { SuperP& a = p.eng.super_; return pick({&a.detune, &a.attack, &a.release, &a.bright, &a.width, &a.air}); }
+        case 6: { ChipP& a = p.eng.chip; return pick({&a.dec, &a.vib, &a.arp, &a.crush}); }
+        case 7: { SH101P& a = p.eng.sh101; return pick({&a.cut, &a.res, &a.env, &a.D, &a.S, &a.saw, &a.pulse, &a.sub, &a.pw, &a.porta}); }
+        case 8: { MiniP& a = p.eng.mini; return pick({&a.cut, &a.emph, &a.contour, &a.fD, &a.aD, &a.aS, &a.m1, &a.m2, &a.m3, &a.glide}); }
+        case 9: { BrisParams& a = p.bris; return pick({&a.cut, &a.res, &a.fenv, &a.aA, &a.aR, &a.det, &a.sub, &a.choMix, &a.dly}); }
+    }
+    return nullptr;
+}
+// switch-like options (wave, slide, range ...): read/write as int
+inline bool engOpt(Project& p, int k, int e, int f, int* get, const int* set) {
+    if (k < 0 || k >= 4) return false;
+    auto I = [&](int& r) { if (get) *get = r; if (set) r = *set; return true; };
+    auto F = [&](float& r) { if (get) *get = (int)r; if (set) r = (float)*set; return true; };
+    switch (e) {
+        case 0: if (f == 0) return I(p.synth[k].wave); break;
+        case 1: if (f == 0) return I(p.eng.acid.wave); if (f == 1) return I(p.eng.acid.slide); break;
+        case 6: if (f == 0) return I(p.eng.chip.duty); if (f == 1) return I(p.eng.chip.arpm); if (f == 2) return I(p.eng.chip.oct); break;
+        case 7: if (f == 0) return I(p.eng.sh101.range); if (f == 1) return I(p.eng.sh101.subMode); break;
+        case 8: if (f == 0) return I(p.eng.mini.glideOn); if (f == 1) return I(p.eng.mini.decSw); break;
+        case 9: if (f == 0) return F(p.bris.wave); if (f == 1) return F(p.bris.vmode); break;
+    }
+    return false;
+}
+
 class Seq3 {
 public:
     void prepare(float sampleRate);
@@ -77,6 +115,10 @@ public:
     void setPattern(int p) { if (playing_) queued_ = p; else P_.pat = p; }
     void setMute(int track, bool m) { if (track >= 0 && track < kTracks) { P_.mute[track] = m; applyParams(); } }
     int pattern() const { return P_.pat; }
+    // switch a melodic track's instrument (short names fit std::string's small buffer: no allocation)
+    void setInstrument(int k, int idx) { if (k >= 0 && k < 4 && idx >= 0 && idx < 10) { P_.inst[k] = kEngineNames[idx]; applyParams(); } }
+    void setEngParam(int k, int e, int f, float v) { if (float* x = engFloat(P_, k, e, f)) { *x = v; if (e == 9) applyParams(); } }
+    void setEngOpt(int k, int e, int f, int v) { if (engOpt(P_, k, e, f, nullptr, &v) && e == 9) applyParams(); }
     void setSolo(int t) { P_.solo = (t >= 0 && t < kTracks) ? t : -1; applyParams(); }
     void setLen(int t, int L) { if (t >= 0 && t < kTracks) P_.len[t] = std::max(1, std::min(16, L)); }
     void setParam(int group, int track, int field, float v) {

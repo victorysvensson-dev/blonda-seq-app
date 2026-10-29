@@ -131,6 +131,8 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)toggleSoloTrack:(NSInteger)track { _host->setSolo((int)track); }
 - (NSInteger)soloTrack { return _host->solo(); }
 - (void)copyPatternToNext { _host->copyPatternToNext(); }
+- (NSString *)rollDice:(NSInteger)n { return [NSString stringWithUTF8String:_host->dice((int)n, arc4random()).c_str()]; }
+- (void)setInstrument:(NSString *)name track:(NSInteger)track { if (track >= 6 && track <= 9) _host->setInstrument((int)track - 6, name.UTF8String); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 
