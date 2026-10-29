@@ -21,11 +21,19 @@ void MelodicTrack::prepare(float sampleRate, bool isBassTrack) {
     for (auto& g : g_) g.reset(sampleRate);
 }
 
-void MelodicTrack::trigger(float velocity, int note, float lenSec, const int* iv, int n, int offset) {
+void MelodicTrack::trigger(float velocity, int note, float lenSec, const int* iv, int n, int offset, const Glide* glide) {
     if (nPend_ >= (int)pend_.size()) return;
     Pending& p = pend_[nPend_++]; p.off = offset; p.vel = velocity; p.note = note; p.len = lenSec; p.n = std::min(n, 6);
     for (int i = 0; i < p.n; ++i) p.iv[i] = iv[i];
     if (p.n == 0) { p.iv[0] = 0; p.n = 1; }
+    if (glide) p.gl = *glide; else p.gl.n = 0;
+}
+
+// glideOsc(): slide the parameter through the chain of tied notes
+void MelodicTrack::glide(Param& prm, float f0, double t) {
+    if (!gl_ || gl_->n == 0) return; float last = f0;
+    for (int i = 0; i < gl_->n; ++i) { const double tt = t + gl_->at[i] * gl_->sd; const float f = f0 * std::exp2((gl_->note[i] - gl_->n0) / 12.f);
+        prm.setValueAtTime(last, std::max(t + .002, tt - gl_->gt)); prm.exponentialRampToValueAtTime(f, tt); last = f; }
 }
 
 int MelodicTrack::newGraph(double t) {
@@ -75,7 +83,7 @@ void MelodicTrack::process(float* L, float* R, int frames) {
     const double dt = 1.0 / sr_;
     for (int i = 0; i < frames; ++i) {
         const double t = now_ + i * dt;
-        for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t);
+        for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) { gl_ = pend_[k].gl.n ? &pend_[k].gl : nullptr; build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t); gl_ = nullptr; }
         float l = 0, r = 0;
         for (auto& g : g_) if (g.active()) g.tick(t, l, r);
         L[i] += l; R[i] += r;
@@ -105,10 +113,10 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
             const float* dets = sub ? kDet1 : kDet2; const int nd = sub ? 1 : 2;
             for (int di = 0; di < nd; ++di) { const float dtn = dets[di];
                 const int o = G.osc(builtinWave(sy.wave), fr, t, end), og = G.gain(sub ? 1.f : (k == 0 ? .9f : .55f) / (1 + k * .2f));
-                G.param(o, P1).setDefault(dtn); G.connect(o, og); G.connect(og, f);
+                G.param(o, P1).setDefault(dtn); glide(G.param(o, P0), fr, t); G.connect(o, og); G.connect(og, f);
             }
         }
-        if (sub) { const int o2 = G.osc(W_SQUARE, 440.f * std::exp2((note - 81 + p.tune) / 12.f), t, end), g2 = G.gain(sy.wave == 0 ? .15f : .35f); G.connect(o2, g2); G.connect(g2, f); }
+        if (sub) { const float f2 = 440.f * std::exp2((note - 81 + p.tune) / 12.f); const int o2 = G.osc(W_SQUARE, f2, t, end), g2 = G.gain(sy.wave == 0 ? .15f : .35f); glide(G.param(o2, P0), f2, t); G.connect(o2, g2); G.connect(g2, f); }
         G.connect(f, g); G.toOut(g); G.finalize(end + .05);
         LV.kind = L_ANALOG; LV.nf = 1; LV.f[0] = (int16_t)f; LV.q = (int16_t)f; LV.c0 = liveCents(LV); LV.q0 = liveQ(LV);
         break; }
@@ -117,10 +125,10 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
     case Eng::Acid: {
         const AcidP& E = EP.acid; const float fr = hz(note + p.tune); const bool acc = v >= .95f;
         const int o = G.osc(E.wave == 1 ? W_SQUARE : W_SAW, fr, t, 0);
-        Param& of = G.param(o, P0);
+        Param& of = G.param(o, P0); of.setDefault(440.f);
         if (E.slide && acidLast_.has && t > acidLast_.t && t - acidLast_.t < len * 1.6) { of.setValueAtTime(acidLast_.f, t); of.exponentialRampToValueAtTime(fr, t + .02 + E.st * .28); }
         else of.setValueAtTime(fr, t);
-        acidLast_.has = true; acidLast_.t = t; acidLast_.f = fr;
+        acidLast_.has = true; acidLast_.t = t; acidLast_.f = fr; glide(of, fr, t);
         const float ny = sr_ * .45f; const bool open = E.cut > .97f; const float rs = std::pow(E.res, 1.15f);
         const float base = std::min(ny, acidHz(E.cut) * (.6f + p.tone * .8f)), peak = std::min(ny, base * (1 + E.env * (acc ? 1 + E.acc : 1) * 14)), dec = (.06f + E.dec * .9f) * (acc ? .7f : 1.f);
         const int f1 = G.biquad(BQ_LP, 350, .55f), f = G.biquad(BQ_LP, 350, 1);
@@ -144,8 +152,8 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         const SubP& E = EP.sub; const float fr = hz(note - 12 + p.tune);
         const bool gl = E.glide > 0 && subLast_.has && t > subLast_.t && t - subLast_.t < len * 3;
         killLast(subLast_, t, .012f);
-        const int o = G.osc(W_SINE, fr, t, 0); Param& of = G.param(o, P0);
-        of.setValueAtTime(gl ? subLast_.f : fr * std::exp2(E.punch * 2), t); of.exponentialRampToValueAtTime(fr, t + (gl ? .02 + E.glide * .25 : .03 + E.punch * .06));
+        const int o = G.osc(W_SINE, fr, t, 0); Param& of = G.param(o, P0); of.setDefault(440.f);
+        of.setValueAtTime(gl ? subLast_.f : fr * std::exp2(E.punch * 2), t); of.exponentialRampToValueAtTime(fr, t + (gl ? .02 + E.glide * .25 : .03 + E.punch * .06)); glide(of, fr, t);
         const int sh = G.shaper(C_DRIVE, E.drive, 1), lp = G.biquad(BQ_LP, 150 + E.tone * E.tone * 6000, 1);
         const int g = G.gain(1); const float dec = .1f + E.decay * 2.5f, lvl = v * .32f;
         Param& gg = G.param(g, P0); gg.setValueAtTime(.0001f, t); gg.linearRampToValueAtTime(lvl, t + .003); gg.setTargetAtTime(.0001f, t + .02, dec / 3);
@@ -170,6 +178,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
             const float fr = hz(note + vc[k] + p.tune), I = E.index * 10 * fr * (.6f + v * .4f);
             const int c = G.osc(W_SINE, fr, t, end), m = G.osc(W_SINE, fr * r, t, end), mg = G.gain(1), g = G.gain(1);
             Param& pm = G.param(mg, P0); pm.setValueAtTime(I, t); pm.setTargetAtTime(I * .12f, t, dec / 2.5f);
+            glide(G.param(c, P0), fr, t); glide(G.param(m, P0), fr * r, t);
             G.connect(m, mg); G.connectParam(mg, c, P0);
             if (E.bell > 0) { const int b = G.osc(W_SINE, fr * 14, t, t + .4), bg = G.gain(1); Param& pb = G.param(bg, P0); pb.setValueAtTime(fr * E.bell * 6, t); pb.setTargetAtTime(0, t, .04f);
                               G.connect(b, bg); G.connectParam(bg, c, P0); }
@@ -188,6 +197,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         for (int k = 0; k < nvc; ++k) {
             const double st = t + k * .012 * E.width;
             const int src = G.karplus(hz(note + vc[k] + p.tune), E.damp, E.bright, E.body, E.len, st, rng_.s ^ (uint32_t)(k * 7919 + note)); rng_.next();
+            glide(G.param(src, P0), 1.f, t);
             const int g = G.gain(v * .42f / std::sqrt((float)nvc));
             const float pn = nvc > 1 ? (((float)k / (nvc - 1)) * 2 - 1) * E.width * .7f : (rng_.uni() * 2 - 1) * E.width * .25f;
             const int pnode = G.pan(pn); G.connect(src, g); G.connect(g, pnode); G.connect(pnode, sh);
@@ -208,7 +218,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
             const float fr = hz(note + vc[k] + p.tune);
             for (float dd : {-1.f, -.66f, -.33f, 0.f, .33f, .66f, 1.f}) {
                 const int o = G.osc(W_SAW, fr, t, end), og = G.gain(dd == 0 ? .22f : .14f), pn = G.pan(dd * E.width);
-                G.param(o, P1).setDefault(dd * E.detune * 40 + (rng_.uni() - .5f) * 3);
+                G.param(o, P1).setDefault(dd * E.detune * 40 + (rng_.uni() - .5f) * 3); glide(G.param(o, P0), fr, t);
                 G.connect(o, og); G.connect(og, pn); G.connect(pn, lp);
             }
         }
@@ -223,11 +233,11 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         switch (E.arpm) { case 1: arp[0] = 0; arp[1] = 4; arp[2] = 7; na = 3; break; case 2: arp[0] = 0; arp[1] = 3; arp[2] = 7; na = 3; break; case 3: arp[0] = 0; arp[1] = 12; na = 2; break;
                           case 4: arp[0] = 0; na = 1; break; default: if (nvc > 1) { for (int i = 0; i < nvc && i < 6; ++i) arp[i] = (float)vc[i]; na = std::min(nvc, 6); } else { arp[0] = 0; na = 1; } }
         const WaveId w = E.duty == 3 ? W_TRI : (E.duty == 0 ? W_CHIP_125 : E.duty == 2 ? W_CHIP_50 : W_CHIP_25);
-        const int o = G.osc(w, hz(base), t, end);
+        const int o = G.osc(w, hz(base), t, end); G.param(o, P0).setDefault(440.f);
         const double stp = 1.0 / (10 + E.arp * 40);
         // the web loop schedules steps for tt < t+gate+.1; the last scheduled value then holds
         const double lastStep = t + std::floor((gate + .1 - 1e-9) / stp) * stp;
-        G.setArp(o, arp, na, base, t, stp, lastStep);
+        if (na > 1) G.setArp(o, arp, na, base, t, stp, lastStep); else { G.param(o, P0).setValueAtTime(hz(base + arp[0]), t); glide(G.param(o, P0), hz(base), t); }
         if (E.vib > 0) { const int l = G.osc(W_SINE, 5.5f, t, end), lg = G.gain(0); Param& pl = G.param(lg, P0); pl.setValueAtTime(0, t); pl.linearRampToValueAtTime(E.vib * 30, t + .18);
                          G.connect(l, lg); G.connectParam(lg, o, P1); }
         const int q = G.shaper(C_CRUSH, (float)std::lround(8 - E.crush * 5), 1), g = G.gain(1);
@@ -246,7 +256,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         const bool legato = last.has && t > last.t && t - last.t < (last.gate > 0 ? last.gate : len) + .01;
         const bool glOn = E.portaMode == 1 || (E.portaMode == 2 && legato); const float gt = .004f + E.porta * E.porta * 1.6f;
         killLast(shLast_, t, .006f);
-        auto setF = [&](Param& prm, float m) { if (glOn && last.has && E.porta > .01f) { prm.setValueAtTime(last.f * m, t); prm.exponentialRampToValueAtTime(fr * m, t + gt); } else prm.setValueAtTime(fr * m, t); };
+        auto setF = [&](Param& prm, float m) { if (glOn && last.has && E.porta > .01f) { prm.setValueAtTime(last.f * m, t); prm.exponentialRampToValueAtTime(fr * m, t + gt); } else prm.setValueAtTime(fr * m, t); glide(prm, fr * m, t); };
         // LFO (shLfo)
         const float rate = .1f * std::exp2(E.lfoR * 7.2f); int lfo;
         if (E.lfoW == 2) lfo = G.sampleHold(rate, t, end, rng_.s ^ 0x5151u);
@@ -256,7 +266,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         const int mix = G.gain(1);
         // VCO: saw + variable pulse (saw minus delayed saw)
         const int saw = G.osc(W_SAW, fr, t, end), ps = G.osc(W_SAW, fr, t, end), dl = G.delay(.2f, 0), inv = G.gain(-1), pg = G.gain(1), sg = G.gain(E.saw * .5f);
-        setF(G.param(saw, P0), 1); setF(G.param(ps, P0), 1);
+        G.param(saw, P0).setDefault(440.f); G.param(ps, P0).setDefault(440.f); setF(G.param(saw, P0), 1); setF(G.param(ps, P0), 1);
         G.connect(ps, pg); G.connect(ps, dl); G.connect(dl, inv); G.connect(inv, pg);
         const float w0 = E.pwmSrc == 1 ? .5f + E.pw * .45f : .5f; Param& pd = G.param(dl, P0); pd.setValueAtTime(w0 / fr, t);
         if (E.pwmSrc == 0 && E.pw > .01f) { const int lg = G.gain(E.pw * .42f / fr); G.connect(lfo, lg); G.connectParam(lg, dl, P0); }
@@ -264,7 +274,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         G.param(pg, P0).setDefault(E.pulse * .44f); G.connect(saw, sg); G.connect(sg, mix); G.connect(pg, mix);
         // sub: -1 oct square, -2 oct square, -2 oct 25 % pulse
         const int sub = G.osc(E.subMode == 2 ? W_CHIP_25 : W_SQUARE, fr, t, end), ub = G.gain(E.sub * .45f);
-        setF(G.param(sub, P0), E.subMode == 0 ? .5f : .25f); G.connect(sub, ub); G.connect(ub, mix);
+        G.param(sub, P0).setDefault(440.f); setF(G.param(sub, P0), E.subMode == 0 ? .5f : .25f); G.connect(sub, ub); G.connect(ub, mix);
         if (E.noise > .01f) { const int n = G.noise(t, end, rng_.uni() * 1.5f), ng = G.gain(E.noise * .35f); G.connect(n, ng); G.connect(ng, mix); }
         if (E.vcoMod > .01f) { const int vg = G.gain(E.vcoMod * E.vcoMod * 700); G.connect(lfo, vg); for (int oo : {saw, ps, sub}) G.connectParam(vg, oo, P1); }
         // VCF: 24 dB, env, LFO mod, keyboard follow
@@ -298,8 +308,9 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         if (gl) last.f0r = hz(last.key) / hz(key);
         auto mk = [&](int r, int w, float fine, float lvl, int on, const WaveId* waves, bool track) -> int {
             const float f = oscF(r, fine, track); const int o = G.osc(waves[std::min(5, std::max(0, w))], f, t, end), g = G.gain(on ? lvl * lvl * .36f : 0);
-            Param& pf = G.param(o, P0);
+            Param& pf = G.param(o, P0); pf.setDefault(440.f);
             if (track && gl) { pf.setValueAtTime(oscF(r, fine, true) * last.f0r, t); pf.exponentialRampToValueAtTime(f, t + gt); } else pf.setValueAtTime(f, t);
+            if (track) glide(pf, f, t);
             G.param(o, P1).setDefault((rng_.uni() - .5f) * 4); G.connect(o, g); G.connect(g, mix); return o; };
         const int O1 = mk(E.o1r, E.o1w, 0, E.m1, E.m1on, MG_W12, true), O2 = mk(E.o2r, E.o2w, E.o2f, E.m2, E.m2on, MG_W12, true);
         const int O3 = mk(E.o3r, E.o3w, E.o3f, E.m3, E.m3on, MG_W3, !E.o3lfo);

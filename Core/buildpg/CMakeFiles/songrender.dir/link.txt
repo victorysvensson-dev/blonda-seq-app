@@ -1,0 +1,1 @@
+/usr/bin/c++ -pg -O2 -fno-inline-functions -O3 -DNDEBUG CMakeFiles/songrender.dir/tools/songrender.cpp.o -o songrender  libblonda_core.a 

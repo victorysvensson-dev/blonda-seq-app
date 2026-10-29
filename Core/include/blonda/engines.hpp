@@ -25,6 +25,9 @@ struct MiniP { int o1r = 3, o1w = 2, o2r = 3, o2w = 2; float o2f = .08f; int o3r
                float cut = .4f, emph = .35f, contour = .5f, fA = .02f, fD = .42f, fS = .45f, aA = .01f, aD = .45f, aS = .85f; int decSw = 1, kt1 = 1, kt2 = 0;
                float glide = .15f; int glideOn = 0; float modmix = 0; int oscMod = 0, filtMod = 0; float modAmt = .3f, vol = .8f; };
 
+// Sequencer glide chain (the web's GL): note slides to later notes; `at` in steps from the note start.
+struct Glide { int n = 0; float at[16]{}; int note[16]{}; float sd = .125f, gt = .07f; int n0 = 0; };
+
 struct EngineParams { AnalogP analog; AcidP acid; SubP sub; FMP fm; PluckP pluck; SuperP super_; ChipP chip; SH101P sh101; MiniP mini; };
 
 // One melodic track: plays any of the engines, keeps the per-track mono state (slides, glide, legato).
@@ -38,13 +41,15 @@ public:
     TrackSound sound;
     float bpm = 120.f;
     // intervals = chord voicing (semitones from note), len = note length in seconds (sequencer step length * steps)
-    void trigger(float velocity, int note, float lenSec, const int* intervals, int nIntervals, int offset = 0);
+    void trigger(float velocity, int note, float lenSec, const int* intervals, int nIntervals, int offset = 0, const Glide* glide = nullptr);
     void process(float* L, float* R, int frames);   // adds
     double now() const { return now_; }
 
 private:
     struct Live { int kind = -1; int nf = 0; int16_t f[3]{}; int16_t q = -1; float c0 = 0, q0 = 0, lc = 0, lq = 0; bool acc = false; };
-    struct Pending { int off; float vel; int note; float len; int iv[6]; int n; };
+    struct Pending { int off; float vel; int note; float len; int iv[6]; int n; Glide gl; };
+    const Glide* gl_ = nullptr;
+    void glide(wg::Param& prm, float f0, double t);
     int newGraph(double t);
     void build(float v, int note, float len, const int* iv, int n, double t);
     void updateLive();

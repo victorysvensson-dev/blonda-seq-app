@@ -24,6 +24,8 @@ public:
     void linearRampToValueAtTime(float v, double t) { add({Lin, t, v, 0.f}); }
     void exponentialRampToValueAtTime(float v, double t) { add({Exp, t, v, 0.f}); }
     void setTargetAtTime(float v, double t, float tau) { add({Target, t, v, tau}); }
+    // cancelScheduledValues: drop every event at or after t (the timeline then holds the last remaining value)
+    void cancelScheduledValues(double t) { int k = 0; while (k < n_ && ev_[k].t < t) ++k; n_ = k; hint_ = -1; }
     // cancelAndHoldAtTime: freeze the current value at t, drop later events (no jump, unlike cancelScheduledValues).
     void cancelAndHold(double t) { float v = valueAt(t); int k = 0; while (k < n_ && ev_[k].t <= t) ++k; n_ = k; add({Set, t, v, 0.f}); }
 

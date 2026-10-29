@@ -115,7 +115,7 @@ private:
         // karplus
         float* ring = nullptr; int ringN = 0, idx = 0; float fb = 0, norm = 1; long len = 0, pos = 0; float fadeN = 0; float ksPrev = 0, ksCur = 0, ksFrac = 0;
         const float* buf = nullptr; int bufLen = 0; double bufPos = 0;
-        double qEnd = 0, qStart = 0; bool muted = false; float qLive = -1.f;
+        double qEnd = 0, qStart = 0; const Wave* wv = nullptr; bool muted = false; float qLive = -1.f;
         uint64_t delayedIn = 0; uint16_t delayedMod = 0; float* hist = nullptr; int hpos = 0;  /* cycle edges read 128 frames back (Chrome) */ uint8_t arpN = 0; float arp[6]{}; float arpBase = 0; double arpT0 = 0, arpStep = 1, arpEnd = 0;
     };
     float evalParam(Node& nd, int p, double t);

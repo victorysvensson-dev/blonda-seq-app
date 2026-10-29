@@ -15,14 +15,35 @@ int kitFromName(const char* s) {
 void DrumTrack::prepare(float sampleRate, DrumKind kind) { WebWaves::get(); sr_ = sampleRate; kind_ = kind; rng_.seed(0xD5u + (uint32_t)kind * 7919u); for (auto& v : voices_) v.active = false; }
 void DrumTrack::setKit(const char* kit) { kit_ = kitFromName(kit); }
 
-void DrumTrack::trigger(float velocity, int offset) { if (pendingN_ < (int)pending_.size()) pending_[pendingN_++] = {offset, velocity}; }
-void DrumTrack::choke(int offset) { chokeAt_ = offset; }
+void DrumTrack::triggerAt(float velocity, long long startFrame) {
+    int slot = -1; uint32_t oa = UINT32_MAX;
+    for (int j = 0; j < (int)voices_.size(); ++j) { if (!voices_[j].active) { slot = j; break; } if (voices_[j].age < oa) { oa = voices_[j].age; slot = j; } }
+    Voice& v = voices_[slot]; v = Voice{}; v.active = true; v.age = ++age_; v.start = startFrame;
+    // Chrome: an oscillator started mid render-quantum runs its first partial quantum at the frequency the param had
+    // at the quantum start (the default 440 Hz, before setValueAtTime) - part of the web kicks' click.
+    const int ph = (int)(startFrame % 128); v.qEnd = ph ? (128 - ph - 0.5) / sr_ : 0.0;
+    build(v, velocity);
+    for (int c = 0; c < v.nch; ++c) for (int s = 0; s < v.ch[c].nst; ++s) if (v.ch[c].st[s].type == Shape) {
+        auto* d = &decs_[(slot * 3 + c) * 3 + s]; d->reset(); v.ch[c].st[s].dec = d; auto& L = lats_[(slot * 3 + c) * 3 + s]; L.fill(0.f); v.ch[c].st[s].lat = L.data(); v.ch[c].st[s].li = 0; }
+    if (v.open) { lastOpen_ = slot; lastOpenAge_ = v.age; v.chokeChains = kit_ == KTick ? 1 : 3; }
+    else if (kind_ == DrumKind::Hat && chokeTarget) chokeTarget->chokeAt(startFrame);
+}
+
+void DrumTrack::chokeAt(long long frame) {
+    if (lastOpen_ < 0) return; Voice& v = voices_[lastOpen_];
+    if (v.active && v.age == lastOpenAge_) {
+        const double tl = (double)(frame - v.start) / sr_;
+        for (int c = 0; c < std::min(v.nch, v.chokeChains); ++c) { v.ch[c].gain.cancelScheduledValues(tl); v.ch[c].gain.setTargetAtTime(0.0001f, tl, 0.008f); }
+        v.end = std::min(v.end, std::max(0.0, tl) + 0.12);
+    }
+    lastOpen_ = -1;
+}
 
 DrumTrack::Chain& DrumTrack::chain(Voice& v) { Chain& c = v.ch[v.nch++]; c.nsrc = 0; c.nst = 0; c.gain.reset(1.f); c.end = 0; return c; }
 
 DrumTrack::Source& DrumTrack::osc(Chain& c, OscType type, float f, double stop, int entry) {
     if (c.nsrc >= (int)c.src.size()) c.nsrc = (int)c.src.size() - 1;
-    Source& s = c.src[c.nsrc++]; s.type = type; s.freq.reset(f); s.freq.setValueAtTime(f, 0.0); s.gain = 1.f; s.entry = entry; s.phase = 0.f; s.stop = stop;
+    Source& s = c.src[c.nsrc++]; s.type = type; s.freq.reset(440.f); s.freq.setValueAtTime(f, 0.0); s.gain = 1.f; s.entry = entry; s.phase = 0.f; s.stop = stop;
     if (stop > c.end) c.end = stop;
     return s;
 }
@@ -110,7 +131,7 @@ void DrumTrack::build(Voice& v, float vel) {
         else if (kit_ == KTick) { const float d = open ? .08f + p.decay * .3f : .008f + p.decay * .03f; Chain& c = chain(v); osc(c, Sine, 8800 * tr, d + .05); env(c.gain, 0, .0004f, V * .32f, d);
             Chain& n = chain(v); noise(n, d); env(n.gain, 0, .0004f, V * .3f, d); bq(n, HP, 9000 + p.tone * 3000, 1); }
         else { const float d = open ? .12f + p.decay * .6f : .025f + p.decay * .09f; Chain& c = chain(v);
-            for (float r : {2.f, 3.f, 4.16f, 5.43f, 6.79f, 8.21f}) osc(c, Square, 160 * r * tr, d + .05, 0);
+            for (float r : {2.f, 3.f, 4.16f, 5.43f, 6.79f, 8.21f}) osc(c, Square, 160 * r * tr, d + .05, 0).freq.reset(160 * r * tr);   // web sets .value here (no 440 Hz start)
             noise(c, d, 1, .5f); bq(c, BP, 9000 * tr, .8f); bq(c, HP, 6000 + p.tone * 3000, 1); env(c.gain, 0, .001f, V * .5f, d); }
         break;
     case DrumKind::Perc:
@@ -140,31 +161,18 @@ float DrumTrack::renderStage(Stage& s, float x) {
 
 void DrumTrack::process(float* out, int frames) {
     static const WebWaves& WW = WebWaves::get();
-    const double dt = 1.0 / sr_;
     for (int i = 0; i < frames; ++i) {
-        if (chokeAt_ == i) {   // closed hat chokes the ringing open hat
-            for (auto& v : voices_) if (v.active && v.open) for (int c = 0; c < v.nch; ++c) { v.ch[c].gain.cancelAndHold(v.t); v.ch[c].gain.setTargetAtTime(0.0001f, v.t, 0.008f); v.end = std::min(v.end, v.t + 0.1); }
-            chokeAt_ = -1;
-        }
-        for (int k = 0; k < pendingN_; ++k) if (pending_[k].off == i) {
-            int slot = -1; uint32_t oa = UINT32_MAX;
-            for (int j = 0; j < (int)voices_.size(); ++j) { if (!voices_[j].active) { slot = j; break; } if (voices_[j].age < oa) { oa = voices_[j].age; slot = j; } }
-            Voice& v = voices_[slot]; v = Voice{}; v.active = true; v.age = ++age_; v.t = 0;
-            build(v, pending_[k].vel);
-            for (int c = 0; c < v.nch; ++c) for (int s = 0; s < v.ch[c].nst; ++s) if (v.ch[c].st[s].type == Shape) { auto* d = &decs_[(slot * 3 + c) * 3 + s]; d->reset(); v.ch[c].st[s].dec = d; auto& L = lats_[(slot * 3 + c) * 3 + s]; L.fill(0.f); v.ch[c].st[s].lat = L.data(); v.ch[c].st[s].li = 0; }
-            if (kind_ == DrumKind::Hat && chokeTarget) chokeTarget->choke(i);
-        }
-        float sum = 0.f;
+        const long long fr = frame_ + i; float sum = 0.f;
         for (auto& v : voices_) {
-            if (!v.active) continue;
-            const double t = v.t;
+            if (!v.active || fr < v.start) continue;
+            const double t = (double)(fr - v.start) / sr_;
             for (int c = 0; c < v.nch; ++c) {
-                Chain& ch = v.ch[c]; float x = 0.f; float add[4] = {0, 0, 0, 0};
+                Chain& ch = v.ch[c]; float add[4] = {0, 0, 0, 0};
                 for (int s = 0; s < ch.nsrc; ++s) {
                     Source& sr = ch.src[s]; if (t >= sr.stop) continue; float y;
                     if (sr.type == NoiseSrc) y = sr.nz.next();
                     else {
-                        const float f = sr.freq.valueAt(t), inc = std::min(0.45f, f / sr_), ph = sr.phase;
+                        const float f = t < v.qEnd ? sr.freq.defaultValue() : sr.freq.valueAt(t), inc = std::min(0.45f, f / sr_), ph = sr.phase;
                         switch (sr.type) {
                             case Sine: y = std::sin(kTwoPi * ph); break;
                             case Tri: y = WW.read(WebWaves::Tri, ph, inc); break;
@@ -175,15 +183,15 @@ void DrumTrack::process(float* out, int frames) {
                     }
                     add[std::min(3, sr.entry)] += y * sr.gain;
                 }
-                x = add[0];
+                float x = add[0];
                 for (int s = 0; s < ch.nst; ++s) { x = renderStage(ch.st[s], x); x += add[std::min(3, s + 1)]; }
                 sum += x * ch.gain.valueAt(t);
             }
-            v.t += dt; if (v.t >= v.end) v.active = false;
+            if (t >= v.end) v.active = false;
         }
         out[i] += sum;
     }
-    pendingN_ = 0;
+    frame_ += frames;
 }
 
 } // namespace blonda

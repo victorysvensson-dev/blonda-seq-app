@@ -52,7 +52,7 @@ template <class NodeT> static void initNode(NodeT& nd, NodeType type) {
 }
 
 int Graph::osc(WaveId w, float freq, double start, double stop) {
-    if (n_ >= kNodes) { return kNodes - 1; } Node& nd = nodes_[n_]; initNode(nd, N_OSC); nd.sub = w; nd.p[0].reset(freq); nd.p[1].reset(0.f); nd.start = start; nd.stop = stop;
+    if (n_ >= kNodes) { return kNodes - 1; } Node& nd = nodes_[n_]; initNode(nd, N_OSC); nd.sub = w; nd.wv = w == W_SINE ? nullptr : &wave(w); nd.p[0].reset(freq); nd.p[1].reset(0.f); nd.start = start; nd.stop = stop;
     // Chrome quirk: an oscillator started mid render-quantum runs its first partial quantum at the quantum-start
     // frequency (modulation inputs not applied yet). This shifts FM phase relationships, so emulate it.
     { const long long f0 = (long long)std::llround(start * sr_), q0 = (f0 / 128) * 128; nd.qStart = (double)q0 / sr_; nd.qEnd = f0 % 128 ? (double)(q0 + 128) / sr_ - 0.5 / sr_ : start; }
@@ -168,7 +168,7 @@ void Graph::processNode(Node& nd, double t) {
         else f0 = evalParam(nd, 0, t);
         const float f = f0 * std::exp2((t < nd.qEnd ? nd.p[1].valueAt(nd.qStart) : evalParam(nd, 1, t)) * (1.f / 1200.f));
         const float inc = f / sr_;
-        nd.out[0] = nd.sub == W_SINE ? std::sin(kTwoPi * nd.phase) : wave((WaveId)nd.sub).read(nd.phase, std::fabs(inc));
+        nd.out[0] = !nd.wv ? std::sin(kTwoPi * nd.phase) : nd.wv->read(nd.phase, std::fabs(inc));
         nd.phase += inc; nd.phase -= std::floor(nd.phase);
         break; }
     case N_GAIN: { const float g = evalParam(nd, 0, t); nd.out[0] = in[0] * g; nd.out[1] = in[1] * g; break; }

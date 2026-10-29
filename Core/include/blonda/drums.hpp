@@ -19,8 +19,10 @@ public:
     void setKit(const char* kit);
     DrumParams params;
     DrumTrack* chokeTarget = nullptr;   // closed hat -> open hat track
-    void trigger(float velocity, int offset = 0);
-    void process(float* mono, int frames);   // adds into mono
+    // Schedule a hit at an absolute frame (the sequencer calls this ahead of time, like the web scheduler does).
+    void triggerAt(float velocity, long long startFrame);
+    void trigger(float velocity, int offset = 0) { triggerAt(velocity, frame_ + offset); }   // live hits
+    void process(float* mono, int frames);   // adds into mono; advances the track clock
     bool lastHitWasKick() const { return kind_ == DrumKind::Kick; }
 
 private:
@@ -29,7 +31,7 @@ private:
     struct Source { OscType type = Sine; WebParam freq{440.f}; float gain = 1.f; int entry = 0; float phase = 0; double stop = 1e9; Noise nz; };
     struct Stage { StageType type = LP; float a = 0, b = 0, c = 0, d = 0, e = 0; float z1 = 0, z2 = 0; float k = 1, kn = 1, nk = 1, nkn = 1; float up = 0; HalfbandDecimator* dec = nullptr; float* lat = nullptr; int li = 0; };
     struct Chain { std::array<Source, 8> src; int nsrc = 0; std::array<Stage, 3> st; int nst = 0; WebParam gain{1.f}; double end = 0; };
-    struct Voice { bool active = false; double t = 0, end = 0; std::array<Chain, 3> ch; int nch = 0; uint32_t age = 0; bool open = false; };
+    struct Voice { bool active = false; long long start = 0; double end = 0; std::array<Chain, 3> ch; int nch = 0; uint32_t age = 0; bool open = false; double qEnd = 0; int chokeChains = 3; };
 
     // builder helpers (mirror the web code)
     Chain& chain(Voice& v);
@@ -47,11 +49,11 @@ private:
     std::array<HalfbandDecimator, 8 * 3 * 3> decs_{};
     std::array<std::array<float, 128>, 8 * 3 * 3> lats_{};   // Chrome's WaveShaper 2x adds 128 frames of latency
     Noise rng_;
-    int pendingN_ = 0; struct Pending { int off; float vel; }; std::array<Pending, 16> pending_{};
+    long long frame_ = 0; int lastOpen_ = -1; uint32_t lastOpenAge_ = 0;
 public:
-    void choke(int offset);   // fade the ringing open hat (cancelAndHold + 8 ms target)
+    // hatChoke(): a closed hat cancels the last open hat's envelope from its own start time (web semantics)
+    void chokeAt(long long frame);
 private:
-    int chokeAt_ = -1;
 };
 
 } // namespace blonda

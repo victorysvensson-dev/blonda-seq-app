@@ -1,0 +1,10 @@
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/blonda_core.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/render.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/probe.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/drumprobe.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/engprobe.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/comptest.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/convtest.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/songrender.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/edit_cache.dir
+/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/rebuild_cache.dir
