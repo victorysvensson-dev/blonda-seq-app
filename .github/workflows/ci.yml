@@ -65,7 +65,7 @@ jobs:
           # iPhone too
           PH=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone 16 Pro') or x['name'].startswith('iPhone 17 Pro')))")
           echo "iPhone: $PH"
-          xcrun simctl boot $PH; timeout 300 xcrun simctl bootstatus $PH -b
+          xcrun simctl boot $PH; xcrun simctl bootstatus $PH -b
           xcrun simctl install $PH "$APP"; xcrun simctl ui $PH appearance dark || true
           xcrun simctl launch $PH se.blonda.seq -autoplay; sleep 6
           xcrun simctl io $PH screenshot ../ci-shots/iphone.png
