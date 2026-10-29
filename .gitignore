@@ -5,3 +5,4 @@ build/
 xcuserdata/
 DerivedData/
 App/*.xcodeproj/
+build-mpcsample/

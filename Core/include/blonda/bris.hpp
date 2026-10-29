@@ -44,6 +44,9 @@ public:
     float trackTune = 0.0f;     // semitones
 
     float trackDecay = 0.25f;   // the track's "decay" parameter: gate = length * (0.5 + 2*decay), as in the web version
+    // > 0: live notes (lengthSec <= 0) hold this many seconds instead of the web keyboard's 24 steps, so a host that
+    // sends its own noteOff (MPC pads, MIDI keyboards) can sustain a held note. 0 (default) = exact web behaviour.
+    float liveHoldSec = 0.0f;
 
     // offset = sample position inside the next process() block; chordSize = notes triggered together (level scaling).
     // lengthSec > 0: sequenced note with known length (envelopes follow the web version's scheduled timeline exactly).

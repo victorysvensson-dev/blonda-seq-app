@@ -14,6 +14,7 @@ a real-time C++ audio engine, a SwiftUI interface with the same design, CoreMIDI
 | `Core/src/seq3.cpp` | The whole groovebox: sequencer, channel strips, echo/space, master chain. Loads the web version's project JSON. |
 | `Core/include/blonda/host.hpp` | Thread glue: lock-free UI→audio and MIDI→audio queues, engine hot-swap, retire queue. |
 | `Core/tools/` | `songrender` (render a project offline), `hosttest` (threading stress test, also under ThreadSanitizer), `livetest` (held-note release for every engine), probes for A/B tests. |
+| `Akai/` | **BLONDA AKAI** — the same engines as instruments for the Akai MPC Sample (and the coming Sample Key): instrument library, MPC app, device host. See `Akai/README.md`. |
 | `App/` | iOS/iPadOS app: `BLONDAEngine` (ObjC++ bridge: AVAudioEngine 48 kHz / 5 ms, CoreMIDI), SwiftUI grid, patterns, BPM, sound panel, multi-touch keyboard. `project.yml` is the XcodeGen spec. |
 
 ## Build and listen (Mac or Linux)

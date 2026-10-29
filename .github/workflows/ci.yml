@@ -15,6 +15,22 @@ jobs:
         run: cd Core/build && ./livetest ../../App/Resources/default_project.json && ./savetest ../../App/Resources/default_project.json && ./edittest ../../App/Resources/default_project.json
       - name: Render 8 s of the default song
         run: cd Core/build && ./songrender ../../App/Resources/default_project.json 8 song.f32
+  akai:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Akai library and tests
+        run: cmake -S Akai -B Akai/build -DCMAKE_BUILD_TYPE=Release && cmake --build Akai/build -j4
+      - name: Akai tests (protocol, held notes, real-time safety, levels, app logic)
+        run: ./Akai/build/akai_test
+      - name: Cross-build the MPC Sample binary (static aarch64)
+        run: pip install ziglang && ZIG="python3 -m ziglang" Akai/platform/mpcsample/build.sh
+      - name: Self test of the ARM binary under emulation
+        run: sudo apt-get install -y -q qemu-user-static && qemu-aarch64-static Akai/build-mpcsample/blonda-akai --selftest
+      - uses: actions/upload-artifact@v4
+        with:
+          name: blonda-akai-mpcsample
+          path: Akai/build-mpcsample/blonda-akai
   ios:
     runs-on: macos-15
     timeout-minutes: 35

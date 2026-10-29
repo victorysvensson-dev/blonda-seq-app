@@ -75,7 +75,7 @@ void Bris::startVoice(int note, float vel, int chord, float lenSec, const Glide*
     v.subOsc.phase = 0.f;
     // timeline: gate from the note length (live notes use the web keyboard's 24-step length and an outer fade on release)
     v.live = lenSec <= 0.f;
-    const float len = v.live ? 60.f / bpm / 4.f * 24.f : lenSec;
+    const float len = v.live ? (liveHoldSec > 0.f ? liveHoldSec : 60.f / bpm / 4.f * 24.f) : lenSec;
     v.gate = std::max(0.03f, len * (0.5f + trackDecay * 2.f));
     const float aA = brT(E.aA, 6.f), aR = brT(E.aR, 10.f);
     v.relAt = std::max(v.gate, aA);
