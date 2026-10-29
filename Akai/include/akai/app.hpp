@@ -14,7 +14,7 @@
 //   MINUS / PLUS .... octave down / up          SHIFT: transpose a semitone
 //   16 LEVELS ....... chromatic / in-key pads   SHIFT: next scale
 //   PLAY ............ latch (hold notes)
-//   TAP TEMPO ....... tap the tempo for synced LFO / delay
+//   TAP TEMPO ....... tap the tempo for synced LFO / delay     SHIFT: switch screen colours (BLONDA / MPC)
 //   ERASE ........... undo edits (reload the preset)
 //   STOP ............ all notes off             SHIFT + STOP: quit back to the MPC Sample software
 #pragma once
@@ -43,6 +43,10 @@ struct UiState {
     float bpm = 120.f, volume = 0.f, cpu = 0.f, peak = 0.f;
     int voices = 0, xruns = 0;
     char toast[32]{};                    // short message ("OCTAVE +1"), empty when none
+    char prevPage[16]{}, nextPage[16]{}; // neighbour page names for the B1 / B2 tabs
+    int theme = 0;                       // 0 BLONDA, 1 MPC look (SHIFT + TAP TEMPO)
+    static constexpr int kScopeCols = 152;
+    int8_t scopeMin[kScopeCols]{}, scopeMax[kScopeCols]{};   // output waveform, oldest -> newest, -127..127
 };
 
 class App {
@@ -69,6 +73,7 @@ public:
 
     int numInstruments() const { return nInst_; }
     Instrument& instrument() { return *inst_[cur_]; }
+    int current() const { return cur_; }
     void selectInstrument(int i);
     const PadLayout& layout() const { return layout_; }
 
@@ -95,6 +100,12 @@ private:
     int xruns_ = 0;
     bool quit_ = false;
     uint32_t uiVersion_ = 1;
+    int theme_ = 0;
+    // live output waveform for the screen
+    static constexpr int kScopeCols = UiState::kScopeCols, kScopeSamplesPerCol = 96;   // 152 x 96 samples = 0.33 s
+    int8_t scopeMin_[kScopeCols]{}, scopeMax_[kScopeCols]{};
+    int scopeW_ = 0, colN_ = 0; float colMin_ = 0.f, colMax_ = 0.f;
+    long long scopeTick_ = 0; bool scopeLive_ = false;
     static constexpr int kScratch = 256;
     float sL_[kScratch]{}, sR_[kScratch]{};
     void renderInto(Instrument& I, float* L, float* R, int frames);

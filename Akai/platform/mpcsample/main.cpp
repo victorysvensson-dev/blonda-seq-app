@@ -215,7 +215,21 @@ struct Trace {
     }
 };
 Trace gTrace;
+// Live stats from the audio thread, printed every 10 s by the logger.
+std::atomic<int> gXruns{0}, gInstrument{0};
+std::atomic<uint32_t> gWorstUs{0}, gLoadPct{0};
+// Keep the audio thread alone on the last core; other threads use the rest.
+void pinTo(bool audio) {
+    const int n = (int)sysconf(_SC_NPROCESSORS_ONLN);
+    if (n < 2) return;
+    cpu_set_t set; CPU_ZERO(&set);
+    if (audio) CPU_SET(n - 1, &set); else for (int i = 0; i < n - 1; ++i) CPU_SET(i, &set);
+    const int e = pthread_setaffinity_np(pthread_self(), sizeof set, &set);
+    if (e) std::fprintf(stderr, "cpu affinity: %s\n", std::strerror(e));
+}
 void loggerThread() {
+    pinTo(false);
+    double lastStats = nowSec();
     while (!gStop) {
         const uint32_t w = gTrace.w.load(std::memory_order_acquire);
         if (w - gTrace.r > Trace::kSize) gTrace.r = w - Trace::kSize;
@@ -223,6 +237,11 @@ void loggerThread() {
             const TraceEntry& t = gTrace.e[gTrace.r % Trace::kSize];
             if ((t.status & 0xF0) == 0xA0 && t.d2 != 0) continue;   // skip non-zero pad pressure (very frequent)
             std::printf("midi %s t=%.3f %02X %d %d\n", t.src ? "ext" : "srf", t.block * 128.0 / 44100.0, t.status, t.d1, t.d2);
+        }
+        if (nowSec() - lastStats >= 10.0) {
+            lastStats = nowSec();
+            std::printf("stats: load %u%%, worst block %u us (budget 2902), xruns %d, instrument %d\n",
+                        gLoadPct.load(), gWorstUs.exchange(0), gXruns.load(), gInstrument.load());
         }
         usleep(100000);
     }
@@ -251,6 +270,7 @@ struct UiMailbox {
 };
 
 void displayThread(Screen* scr, UiMailbox* box) {
+    pinTo(false);
     static uint32_t frame[akai::kScreenW * akai::kScreenH], shown[akai::kScreenW * akai::kScreenH];
     std::memset(shown, 0xff, sizeof shown);
     akai::gfx::Canvas c{frame, akai::kScreenW, akai::kScreenH, akai::kScreenW};
@@ -258,7 +278,7 @@ void displayThread(Screen* scr, UiMailbox* box) {
     const int stride = (int)(scr->pitch / 4);
     while (!gStop) {
         if (box->read(s, last)) {
-            akai::drawScreen(c, s);
+            akai::drawScreen(c, s, s.theme ? akai::kThemeMpc : akai::kThemeBlonda);
             int x0 = akai::kScreenW, y0 = akai::kScreenH, x1 = -1, y1 = -1;
             for (int y = 0; y < akai::kScreenH; ++y) for (int x = 0; x < akai::kScreenW; ++x) {
                 const uint32_t v = frame[y * akai::kScreenW + x];
@@ -273,6 +293,7 @@ void displayThread(Screen* scr, UiMailbox* box) {
 }
 
 void realtime(int priority) {
+    pinTo(true);
     if (mlockall(MCL_CURRENT | MCL_FUTURE) < 0) std::perror("mlockall");
     sched_param sp{}; sp.sched_priority = priority;
     const int e = pthread_setschedparam(pthread_self(), SCHED_FIFO, &sp);
@@ -385,7 +406,9 @@ int main(int argc, char** argv) {
         if (A.uiVersion() != published && ui.joinable()) { box.publish(A); published = A.uiVersion(); }
         const double dt = nowSec() - t0;
         busy += dt; if (dt > worst) worst = dt; ++blocks;
-        if (t0 - windowStart > 0.5) { load = (float)(busy / (t0 - windowStart)); A.setStats(load, xruns); windowStart = t0; busy = 0; }
+        if (t0 - windowStart > 0.5) { load = (float)(busy / (t0 - windowStart)); A.setStats(load, xruns); windowStart = t0; busy = 0;
+            gLoadPct.store((uint32_t)(load * 100.f + 0.5f)); gXruns.store(xruns); gInstrument.store(A.current()); }
+        { const uint32_t us = (uint32_t)(dt * 1e6); if (us > gWorstUs.load(std::memory_order_relaxed)) gWorstUs.store(us, std::memory_order_relaxed); }
         // 5. hand the block to the codec (blocks until there is room: this paces the loop)
         if (!pcmWrite(pcm, out, kPeriod, xruns)) { exitReason = "audio output error"; break; }
     }

@@ -305,6 +305,19 @@ static void testApp(const char* outDir) {
         A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
     }
 
+    // SHIFT + TAP TEMPO switches the screen colours; the waveform follows the output
+    A.snapshot(s); const int th0 = s.theme;
+    A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_SHIFT)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_TAP_TEMPO)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
+    A.snapshot(s);
+    CHECK(s.theme != th0 && std::string(s.toast).find("COLOURS") != std::string::npos, "SHIFT + TAP TEMPO switches colours (%d -> %d)", th0, s.theme);
+    A.handle(ev(mpcs::Event::Knob, mpcs::CC_MAIN_VOLUME, 100));
+    A.handle(ev(mpcs::Event::PadDown, 3, 110)); run(0.6);
+    A.snapshot(s); int span = 0; for (int k = 0; k < UiState::kScopeCols; ++k) span = std::max(span, s.scopeMax[k] - s.scopeMin[k]);
+    CHECK(span > 20, "waveform shows the sound (span %d)", span);
+    A.handle(ev(mpcs::Event::PadUp, 3)); run(8.0);
+    A.snapshot(s); span = 0; for (int k = 0; k < UiState::kScopeCols; ++k) span = std::max(span, s.scopeMax[k] - s.scopeMin[k]);
+    CHECK(span < 4, "waveform goes flat after the sound stops (span %d)", span);
+
     // instruments cycle and come back; quit combo
     A.snapshot(s); const int startInst = s.instrumentIndex;
     for (int i = 0; i < A.numInstruments(); ++i) {

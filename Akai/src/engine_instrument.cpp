@@ -48,7 +48,7 @@ const Def kAnalog[] = {
     FL(G_ANALOG, AnalogP, a, "a", "ATTACK", .001f, 2), FL(G_ANALOG, AnalogP, d, "d", "DECAY", .01f, 2),
     FL(G_ANALOG, AnalogP, s, "s", "SUSTAIN", 0, 1), FL(G_ANALOG, AnalogP, r, "r", "RELEASE", .01f, 3), TONE,
 };
-const Page kAnalogPages[] = {{"OSC", {0, 8, -1}}, {"FILTER", {1, 2, 3}}, {"ENVELOPE", {4, 5, 6}}, {"RELEASE", {7, -1, -1}}};
+const Page kAnalogPages[] = {{"OSC", {0, 8, -1}}, {"FILTER", {1, 2, 3}}, {"ENV", {4, 5, 6}}, {"RELEASE", {7, -1, -1}}};
 
 // ---------------------------------------------------------------- Acid (303)
 const Def kAcid[] = {
@@ -109,8 +109,8 @@ const Def kSH[] = {
     TONE,                                                                                                                                                      // 24
 };
 const Page kSHPages[] = {
-    {"VCO", {0, 6, 7}}, {"MIXER", {1, 2, 3}}, {"SUB/NOISE", {4, 5, 8}}, {"VCF", {9, 10, 11}}, {"VCF MOD", {12, 13, 24}},
-    {"ENV", {15, 16, 17}}, {"VCA", {18, 14, 23}}, {"LFO", {19, 20, -1}}, {"PORTAMENTO", {21, 22, -1}},
+    {"VCO", {0, 6, 7}}, {"MIXER", {1, 2, 3}}, {"SUB/NSE", {4, 5, 8}}, {"VCF", {9, 10, 11}}, {"VCF MOD", {12, 13, 24}},
+    {"ENV", {15, 16, 17}}, {"VCA", {18, 14, 23}}, {"LFO", {19, 20, -1}}, {"PORTA", {21, 22, -1}},
 };
 
 // ---------------------------------------------------------------- Minimoog Model D
@@ -132,9 +132,9 @@ const Def kMini[] = {
     IN(G_MINI, MiniP, m2on, "m2on", "OSC 2", 0, 1, kOffOn), IN(G_MINI, MiniP, m3on, "m3on", "OSC 3", 0, 1, kOffOn), TONE,                // 35-37
 };
 const Page kMiniPages[] = {
-    {"OSC 1", {0, 1, 9}}, {"OSC 2", {2, 3, 4}}, {"OSC 3", {5, 6, 7}}, {"MIXER", {9, 10, 11}}, {"MIXER ON", {34, 35, 36}},
-    {"NOISE", {12, 13, 14}}, {"FILTER", {15, 16, 17}}, {"FILTER ENV", {18, 19, 20}}, {"KEYTRACK", {25, 26, 37}},
-    {"LOUDNESS", {21, 22, 23}}, {"DECAY/VOL", {24, 33, -1}}, {"GLIDE", {27, 28, -1}}, {"MOD", {29, 30, 31}}, {"MOD AMT", {32, 8, -1}},
+    {"OSC 1", {0, 1, 9}}, {"OSC 2", {2, 3, 4}}, {"OSC 3", {5, 6, 7}}, {"MIXER", {9, 10, 11}}, {"MIX ON", {34, 35, 36}},
+    {"NOISE", {12, 13, 14}}, {"FILTER", {15, 16, 17}}, {"FLT ENV", {18, 19, 20}}, {"KEYTRK", {25, 26, 37}},
+    {"AMP ENV", {21, 22, 23}}, {"DEC/VOL", {24, 33, -1}}, {"GLIDE", {27, 28, -1}}, {"MOD", {29, 30, 31}}, {"MOD AMT", {32, 8, -1}},
 };
 
 #undef FL

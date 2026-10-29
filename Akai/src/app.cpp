@@ -187,6 +187,7 @@ void App::button(int b, bool down) {
         toast("%s", latch_ ? "LATCH ON" : "LATCH OFF");
         break;
     case BTN_TAP_TEMPO: {
+        if (shift_) { theme_ = 1 - theme_; toast("%s", theme_ ? "MPC COLOURS" : "BLONDA COLOURS"); break; }
         if (lastTap_ >= 0) {
             const float sec = (float)(now_ - lastTap_) / sr_;
             if (sec > 0.25f && sec < 2.0f) {
@@ -275,9 +276,23 @@ void App::render(float* L, float* R, int frames) {
         L[i] = l; R[i] = r;
         const float a = std::fabs(l) > std::fabs(r) ? std::fabs(l) : std::fabs(r);
         pk = a > pk ? a : pk;
+        const float m = 0.5f * (l + r);   // scope: min / max per column
+        if (colN_ == 0) colMin_ = colMax_ = m; else { colMin_ = m < colMin_ ? m : colMin_; colMax_ = m > colMax_ ? m : colMax_; }
+        if (++colN_ >= kScopeSamplesPerCol) {
+            auto q = [](float v) { v *= 127.f * 4.f; return (int8_t)(v > 127.f ? 127 : (v < -127.f ? -127 : (int)v)); };
+            scopeMin_[scopeW_] = q(colMin_); scopeMax_[scopeW_] = q(colMax_);
+            scopeW_ = (scopeW_ + 1) % kScopeCols; colN_ = 0;
+        }
     }
     peakHold_ = pk > peakHold_ ? pk : peakHold_ * 0.97f;
     now_ += frames;
+    // redraw the waveform ~15 times a second while there is sound (and once more after it stops)
+    if (now_ >= scopeTick_) {
+        scopeTick_ = now_ + (long long)(sr_ / 15.f);
+        const bool live = peakHold_ > 0.002f;
+        if (live || scopeLive_) dirty();
+        scopeLive_ = live;
+    }
     if (toast_[0] && now_ >= toastUntil_) { toast_[0] = 0; dirty(); }
     if (activeKnob_ >= 0 && now_ >= activeUntil_) { activeKnob_ = -1; dirty(); }
 }
@@ -364,6 +379,11 @@ void App::snapshot(UiState& s) const {
     s.bpm = bpm_; s.volume = volume_; s.cpu = cpu_; s.peak = peakHold_;
     s.voices = I.activeVoices(); s.xruns = xruns_;
     std::snprintf(s.toast, sizeof s.toast, "%s", toast_);
+    s.theme = theme_;
+    const int np = I.numPages();
+    std::snprintf(s.prevPage, sizeof s.prevPage, "%s", I.page((page_ + np - 1) % np).name);
+    std::snprintf(s.nextPage, sizeof s.nextPage, "%s", I.page((page_ + 1) % np).name);
+    for (int c = 0; c < kScopeCols; ++c) { const int k = (scopeW_ + c) % kScopeCols; s.scopeMin[c] = scopeMin_[k]; s.scopeMax[c] = scopeMax_[k]; }
 }
 
 } // namespace akai
