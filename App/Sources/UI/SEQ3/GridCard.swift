@@ -65,8 +65,14 @@ struct GridRow: View {
                 let L = model.length(track)
                 let ph = model.playing && model.step >= 0 ? (L < 16 ? model.globalStep % L : model.step) : -1
                 ForEach(0..<16, id: \.self) { s in
+                    let ref = EngineModel.StepRef(track: track, step: s)
                     DotCell(value: model.value(track, s), colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L)
                         .onTapGesture { model.cycle(track, s) }
+                        .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
+                        .popover(isPresented: Binding(get: { model.inspect == ref }, set: { if !$0 && model.inspect == ref { model.inspect = nil } }),
+                                 attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
+                            StepInspector(ref: ref).environmentObject(model).presentationCompactAdaptation(.popover).presentationBackground(Color(rgb: 250, 249, 245))
+                        }
                 }
             }
         }

@@ -85,6 +85,31 @@ public:
         for (const auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
         if (cell.v != before.v || cell.n != before.n) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); }
     }
+    // ---- step inspector (web: sins) — velocity, ratchet, probability, accent for one step -------------------
+    float stepVel(int t, int s) const {
+        if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return 0;
+        if (t >= 6) { float v = -1; for (const auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) v = std::max(v, n.v); return v < 0 ? .72f : v; }
+        const Cell& c = ui.cells[ui.pat][t][s]; return c.vel >= 0 ? c.vel : (c.v == 2 ? 1.f : .72f);
+    }
+    int stepRatchet(int t, int s) const { return (t >= 0 && t < kTracks && s >= 0 && s < kSteps) ? std::max(1, ui.cells[ui.pat][t][s].r) : 1; }
+    float stepProb(int t, int s) const { return (t >= 0 && t < kTracks && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].p : 1.f; }
+    void setStepVel(int t, int s, float v) {
+        if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; v = std::max(.05f, std::min(1.f, v));
+        if (t >= 6) { for (auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) n.v = v; commitTrack(t); sendCell(t, s); return; }
+        Cell& c = ui.cells[ui.pat][t][s]; if (!c.v) return; c.vel = v; c.v = v >= .95f ? 2 : 1; sendCell(t, s);
+    }
+    void setStepRatchet(int t, int s, int r) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].r = std::max(1, std::min(4, r)); sendCell(t, s); }
+    void setStepProb(int t, int s, float p) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].p = std::max(0.f, std::min(1.f, p)); sendCell(t, s); }
+    void toggleAccent(int t, int s) {
+        if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return;
+        if (t >= 6) { const bool acc = stepValue(t, s) != 2; for (auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) n.v = acc ? 1.f : .72f; commitTrack(t); sendCell(t, s); return; }
+        Cell& c = ui.cells[ui.pat][t][s]; const bool acc = c.v != 2; c.v = acc ? 2 : 1; c.vel = acc ? 1.f : .72f; sendCell(t, s);
+    }
+    void clearStep(int t, int s) {
+        if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return;
+        if (t >= 6) { auto& R = ui.roll[ui.pat][t - 6]; std::vector<RollNote> keep; for (const auto& n : R) if ((int)std::floor(n.s + 1e-4f) != s) keep.push_back(n); R.swap(keep); for (auto& n : R) n.g = -1; }
+        ui.cells[ui.pat][t][s] = Cell{}; if (t >= 6) commitTrack(t); sendCell(t, s);
+    }
     // ---- track editing (the grid / orbit actions in the web version) ----------------------------------------
     int trackLen(int t) const { const int v = ui.len[t]; return v >= 1 && v <= 16 ? v : 16; }
     int hits(int t) const { int k = 0; for (int s = 0; s < trackLen(t); ++s) k += stepValue(t, s) > 0; return k; }
@@ -354,6 +379,7 @@ private:
         commitTrack(t);
     }
     // send a whole track (cells, and the roll for melodic tracks) to the engine
+    void sendCell(int t, int s) { Cmd c; c.type = SetCell; c.a = ui.pat; c.b = t; c.c = s; c.cell = ui.cells[ui.pat][t][s]; send(c); }
     void commitTrack(int t, int pat = -1) {
         if (pat < 0) pat = ui.pat;
         if (t >= 6) {

@@ -168,6 +168,15 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (NSString *)drumSample:(NSInteger)t { return [NSString stringWithUTF8String:_host->drumSample((int)t).c_str()]; }
 - (void)assignDrum:(NSInteger)t sample:(NSString *)sid { _host->assignDrum((int)t, sid.UTF8String); }
 - (void)bindDrum:(NSInteger)t norm:(float)norm { _host->bindDrum((int)t, norm); }
+- (float)stepVelocity:(NSInteger)t step:(NSInteger)s { return _host->stepVel((int)t, (int)s); }
+- (NSInteger)stepRatchet:(NSInteger)t step:(NSInteger)s { return _host->stepRatchet((int)t, (int)s); }
+- (float)stepProbability:(NSInteger)t step:(NSInteger)s { return _host->stepProb((int)t, (int)s); }
+- (void)setStepVelocity:(float)v track:(NSInteger)t step:(NSInteger)s { _host->setStepVel((int)t, (int)s, v); }
+- (void)setStepRatchet:(NSInteger)r track:(NSInteger)t step:(NSInteger)s { _host->setStepRatchet((int)t, (int)s, (int)r); }
+- (void)setStepProbability:(float)p track:(NSInteger)t step:(NSInteger)s { _host->setStepProb((int)t, (int)s, p); }
+- (void)toggleAccent:(NSInteger)t step:(NSInteger)s { _host->toggleAccent((int)t, (int)s); }
+- (void)clearStep:(NSInteger)t step:(NSInteger)s { _host->clearStep((int)t, (int)s); }
+- (void)pushUndo { _host->pushHist(); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

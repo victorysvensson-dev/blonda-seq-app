@@ -285,6 +285,35 @@ final class EngineModel: NSObject, ObservableObject {
             self.engine.previewSample(m.id, rate: m.kind == "loop" && self.playing ? self.engine.bpm / Float(m.bpm) : 1, gain: m.norm * 0.8)
         }
     }
+    // MARK: step inspector (web: long-press a step)
+    struct StepRef: Equatable { let track: Int; let step: Int }
+    @Published var inspect: StepRef?
+    func openInspector(_ t: Int, _ s: Int) {
+        engine.pushUndo()
+        if engine.stepValue(forTrack: t, step: s) == 0 { engine.cycleStep(forTrack: t, step: s) }   // web: an empty step is lit first
+        revision += 1; scheduleSave(); inspect = StepRef(track: t, step: s)
+    }
+    func stepVel(_ r: StepRef) -> Float { _ = revision; return engine.stepVelocity(r.track, step: r.step) }
+    func stepRatchet(_ r: StepRef) -> Int { _ = revision; return engine.stepRatchet(r.track, step: r.step) }
+    func stepProb(_ r: StepRef) -> Float { _ = revision; return engine.stepProbability(r.track, step: r.step) }
+    func setStepVel(_ r: StepRef, _ v: Float) { engine.setStepVelocity(v, track: r.track, step: r.step); revision += 1; scheduleSave() }
+    func setStepRatchet(_ r: StepRef, _ n: Int) { engine.setStepRatchet(n, track: r.track, step: r.step); revision += 1; scheduleSave(); auditionStep(r) }
+    func setStepProb(_ r: StepRef, _ p: Float) { engine.setStepProbability(p, track: r.track, step: r.step); revision += 1; scheduleSave() }
+    func toggleAccent(_ r: StepRef) { engine.toggleAccent(r.track, step: r.step); revision += 1; scheduleSave(); auditionStep(r) }
+    func clearStep(_ r: StepRef) { engine.clearStep(r.track, step: r.step); revision += 1; scheduleSave(); inspect = nil }
+    /// web: inspPreview — the step as it will sound (ratchets included)
+    func auditionStep(_ r: StepRef) {
+        let n = stepRatchet(r), v = stepVel(r), sd = stepDur
+        for k in 0..<n {
+            DispatchQueue.main.asyncAfter(deadline: .now() + Double(k) * sd / Double(n)) { [weak self] in
+                guard let self = self else { return }
+                let vel = v * (k > 0 ? 0.8 : 1)
+                if r.track < 6 { self.engine.noteOn(60, velocity: vel, track: r.track); self.hitTime[r.track] = CACurrentMediaTime() }
+                else { let note = self.previewNote(r.track); self.engine.noteOn(note, velocity: vel, track: r.track)
+                       DispatchQueue.main.asyncAfter(deadline: .now() + sd / Double(n) * 0.9) { self.engine.noteOff(note, track: r.track) } }
+            }
+        }
+    }
     @Published var chainIdx = -1
     var songMode: Bool { _ = revision; return engine.songMode }
     func toggleSong() {

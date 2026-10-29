@@ -98,6 +98,16 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSString *)drumSample:(NSInteger)track NS_SWIFT_NAME(drumSample(_:));
 - (void)assignDrum:(NSInteger)track sample:(NSString *)sid NS_SWIFT_NAME(assignDrum(_:sample:));
 - (void)bindDrum:(NSInteger)track norm:(float)norm NS_SWIFT_NAME(bindDrum(_:norm:));
+/// Step inspector (current pattern).
+- (float)stepVelocity:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepVelocity(_:step:));
+- (NSInteger)stepRatchet:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepRatchet(_:step:));
+- (float)stepProbability:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepProbability(_:step:));
+- (void)setStepVelocity:(float)v track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepVelocity(_:track:step:));
+- (void)setStepRatchet:(NSInteger)r track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepRatchet(_:track:step:));
+- (void)setStepProbability:(float)p track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepProbability(_:track:step:));
+- (void)toggleAccent:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(toggleAccent(_:step:));
+- (void)clearStep:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(clearStep(_:step:));
+- (void)pushUndo;
 - (BOOL)undo;
 - (BOOL)redo;
 

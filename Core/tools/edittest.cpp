@@ -88,6 +88,18 @@ int main(int argc, char** argv) {
     h->togglePlay(); pump();
     expect(h->fx(1) == .85f && h->fx(8) == 4.f && fin && pk > .01f && pk < 1.5f, "fx set + reverb swap");
     { blonda::Project b; expect(b.loadJSON(h->toJSON(), &err) && b.fx.crushOn && b.fx.crushBits == 4.f && std::abs(b.fx.spaceSize - 1.2f) < 1e-5f && std::abs(b.fx.echoFb - .85f) < 1e-5f, "save keeps plugins"); }
+    // step inspector
+    h->selectPattern(0); pump();
+    { int s0 = -1; for (int s = 0; s < 16; ++s) if (h->stepValue(0, s)) { s0 = s; break; }
+      h->setStepVel(0, s0, .5f); h->setStepRatchet(0, s0, 3); h->setStepProb(0, s0, .25f); pump();
+      expect(std::abs(h->stepVel(0, s0) - .5f) < 1e-6f && h->stepRatchet(0, s0) == 3 && h->stepProb(0, s0) == .25f && h->stepValue(0, s0) == 1, "step vel / ratchet / prob");
+      h->toggleAccent(0, s0); expect(h->stepValue(0, s0) == 2 && h->stepVel(0, s0) == 1.f, "accent");
+      blonda::Project b; expect(b.loadJSON(h->toJSON(), &err) && b.cells[0][0][s0].r == 3 && b.cells[0][0][s0].p == .25f, "save keeps step details");
+      h->clearStep(0, s0); expect(h->stepValue(0, s0) == 0, "clear step");
+      int m0 = -1; for (int s = 0; s < 16; ++s) if (h->stepValue(6, s)) { m0 = s; break; }
+      h->setStepVel(6, m0, .4f); expect(std::abs(h->stepVel(6, m0) - .4f) < 1e-6f, "melodic step velocity");
+      h->toggleAccent(6, m0); expect(h->stepValue(6, m0) == 2, "melodic accent");
+      h->clearStep(6, m0); expect(h->stepValue(6, m0) == 0, "melodic clear"); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }
