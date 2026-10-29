@@ -49,7 +49,14 @@ final class EngineModel: NSObject, ObservableObject {
         }
         engine.startMIDI()
         engine.midiTrack = selectedTrack
-        if ProcessInfo.processInfo.arguments.contains("-autoplay") { engine.togglePlay() }
+        if ProcessInfo.processInfo.arguments.contains("-autoplay") {
+            engine.togglePlay()
+            // diagnostics for the CI simulator run: is the audio thread advancing?
+            Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+                guard let self = self else { return }
+                NSLog("BLONDA-DIAG step=%d playing=%d", self.engine.currentStep, self.engine.isPlaying ? 1 : 0)
+            }
+        }
         let l = CADisplayLink(target: self, selector: #selector(tick))
         l.add(to: .main, forMode: .common)
         link = l
