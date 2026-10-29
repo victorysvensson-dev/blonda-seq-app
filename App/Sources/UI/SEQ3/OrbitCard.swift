@@ -8,9 +8,16 @@ struct OrbitCard: View {
         let sel = model.selectedTrack
         Card(style: .dark, title: [("Orbit · ", false), (String(format: "%02d ", sel + 1) + kTracks[sel].name, true)]) {
             VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .center, spacing: 16) {
-                    OrbitDial().frame(width: 320, height: 320)
-                    OrbitSide()
+                // wide: dial + controls side by side; narrow (like the web under 1100 px): big dial, controls below
+                ViewThatFits(in: .horizontal) {
+                    HStack(alignment: .center, spacing: 16) {
+                        OrbitDial().frame(width: 320, height: 320)
+                        OrbitSide()
+                    }
+                    VStack(spacing: 14) {
+                        OrbitDial().aspectRatio(1, contentMode: .fit).frame(maxWidth: 420)
+                        OrbitSideRow()
+                    }
                 }
                 OrbitTrackButtons()
                 TrackTags()
@@ -74,7 +81,7 @@ struct OrbitDial: View {
                 if on {
                     var g = c
                     let blur: CGFloat = cur ? 14 : (isSel ? 6 : 3) + CGFloat(flare) * 10
-                    g.addFilter(.shadow(color: col, radius: blur / 2))
+                    g.addFilter(.shadow(color: col.opacity(0.85), radius: blur / 3))
                     g.opacity = cur ? 1 : (isSel ? 1 : 0.82)
                     g.fill(Path(ellipseIn: rect), with: .color(cur ? Color.white : col))
                 } else {
@@ -108,6 +115,35 @@ struct OrbitSide: View {
     }
     private func sq(_ s: String) -> some View {
         Text(s).font(BFont.mono(14)).foregroundColor(T.dmInk).frame(width: 28, height: 28).overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+    }
+}
+
+/// The three steppers in a row with captions above (narrow layout).
+struct OrbitSideRow: View {
+    @EnvironmentObject var model: EngineModel
+    var body: some View {
+        let hits = (0..<16).filter { model.value(model.selectedTrack, $0) > 0 }.count
+        VStack(spacing: 8) {
+            HStack(spacing: 6) {
+                stepper("slag", "\(hits)")
+                stepper("rotera", "0")
+                stepper("längd", "16")
+            }
+            Text("tryck på en ring för att välja spår · på en prick för att tända")
+                .font(BFont.mono(9)).foregroundColor(T.dmInk.opacity(0.32)).multilineTextAlignment(.center)
+        }
+    }
+    private func stepper(_ l: String, _ v: String) -> some View {
+        VStack(spacing: 6) {
+            Text(l).font(BFont.mono(10)).tracking(0.4).foregroundColor(T.dmInk.opacity(0.5))
+            HStack(spacing: 0) {
+                Text("−").font(BFont.mono(14)).frame(width: 28, height: 28).overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+                Text(v).font(BFont.linje(15)).frame(maxWidth: .infinity)
+                Text("+").font(BFont.mono(14)).frame(width: 28, height: 28).overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+            }
+            .foregroundColor(T.dmInk)
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 

@@ -35,7 +35,7 @@ struct SEQ3View: View {
                     .padding(.horizontal, 22)
                     .modifier(Enter(index: 7, on: entered))
             }
-            .blur(radius: started ? 0 : 22)
+            .blur(radius: started ? 0 : 36)
             .saturation(started ? 1 : 1.6)
 
             if !started {

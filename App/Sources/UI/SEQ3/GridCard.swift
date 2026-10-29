@@ -81,7 +81,7 @@ struct DotCell: View {
     var body: some View {
         let on = value > 0, acc = value == 2
         let bg: Color = on ? (playhead ? Color(hex: 0x201E16) : Color(hex: 0x18191C)) : (playhead ? Color(hex: 0x29282A) : (dimGroup ? T.dmCell2 : T.dmCell))
-        let line: Color = on && playhead ? T.dmY : (acc ? T.dmInk.opacity(0.6) : (on ? Color(hex: 0x3A3B40) : T.dmLine))
+        let line: Color = on && playhead ? T.dmY : (acc ? mixColor(colorHex, 0xFFFFFF, 0.85).opacity(0.8) : (on ? Color(hex: 0x3A3B40) : T.dmLine))
         Canvas { ctx, size in
             let inset = size.width * 0.1414, inner = size.width - 2 * inset, tile = inner / 4
             var path = Path()
