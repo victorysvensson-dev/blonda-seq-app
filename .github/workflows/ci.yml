@@ -19,19 +19,33 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
+      # blonda-motor is private: the job needs a read-only token for it in the secret BLONDA_MOTOR_TOKEN.
+      - name: Fetch the BLONDA engine library (submodule, pinned tag)
+        id: motor
+        env:
+          TOKEN: ${{ secrets.BLONDA_MOTOR_TOKEN }}
+        run: |
+          if [ -z "$TOKEN" ]; then echo "::warning::BLONDA_MOTOR_TOKEN is not set, so the Akai job is skipped"; echo "ok=0" >> "$GITHUB_OUTPUT"; exit 0; fi
+          git -c url."https://x-access-token:${TOKEN}@github.com/".insteadOf="https://github.com/" submodule update --init --depth 1 Akai/third_party/blonda-motor
+          echo "ok=1" >> "$GITHUB_OUTPUT"
       - name: Build the Akai library and tests
+        if: steps.motor.outputs.ok == '1'
         run: cmake -S Akai -B Akai/build -DCMAKE_BUILD_TYPE=Release && cmake --build Akai/build -j4
       - name: Akai tests (protocol, held notes, real-time safety, levels, app logic)
+        if: steps.motor.outputs.ok == '1'
         run: ./Akai/build/akai_test
       - name: Cross-build the MPC Sample binary (static aarch64)
+        if: steps.motor.outputs.ok == '1'
         run: pip install ziglang && ZIG="python3 -m ziglang" Akai/platform/mpcsample/build.sh
       - name: Self test of the ARM binary under emulation
+        if: steps.motor.outputs.ok == '1'
         run: |
           sudo apt-get update -q
           sudo apt-get install -y -q qemu-user-static || sudo apt-get install -y -q qemu-user
           Q=$(command -v qemu-aarch64-static || command -v qemu-aarch64)
           $Q Akai/build-mpcsample/blonda-akai --selftest
       - uses: actions/upload-artifact@v4
+        if: steps.motor.outputs.ok == '1'
         with:
           name: blonda-akai-mpcsample
           path: Akai/build-mpcsample/blonda-akai

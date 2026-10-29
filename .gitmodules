@@ -1,0 +1,3 @@
+[submodule "Akai/third_party/blonda-motor"]
+	path = Akai/third_party/blonda-motor
+	url = https://github.com/victorysvensson-dev/blonda-motor

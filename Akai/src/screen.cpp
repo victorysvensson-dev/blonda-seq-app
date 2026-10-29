@@ -7,10 +7,11 @@ namespace akai {
 
 using namespace gfx;
 
+const Theme kThemeSkarp = {"SKARP", 0x05080B, 0xF2F4F5, 0xF2CF1F, 0x49C9EE, 0x1A232C, 0x2FA9DA, 0xEED52C,
+                           0xC9AE1A, 0x49C9EE, 0x173847, 0xFFFFFF, false, true};
 const Theme kThemeBlonda = {"BLONDA", 0x17181A, 0xE8E6DC, 0xE9C54A, 0x227E7A, 0x2A2B2E, 0x227E7A, 0xE9C54A,
-                            0x3A3B3E, 0xE9C54A, 0x5C4F24, 0xE8E6DC, 0xE9C54A, 0x17181A, true, false};
-const Theme kThemeMpc = {"MPC", 0x0A1017, 0xF0F3F5, 0xF2CF1F, 0x49C9EE, 0x1C2733, 0x2FA9DA, 0xEED52C,
-                         0xC9AE1A, 0x49C9EE, 0x173847, 0xFFFFFF, 0xF0F3F5, 0x0A1017, false, true};
+                            0x3A3B3E, 0xE9C54A, 0x5C4F24, 0xE8E6DC, true, false};
+const Theme& themeByIndex(int i) { return i == 1 ? kThemeBlonda : kThemeSkarp; }
 
 namespace {
 int dotOf(const Theme& t, int pitch) { return t.dotFont && pitch >= 3 ? pitch - 1 : pitch; }   // dot matrix only for large text
@@ -60,14 +61,9 @@ void drawScreen(Canvas& c, const UiState& s, const Theme& t) {
     else std::snprintf(buf, sizeof buf, "%02d/%02d", s.presetIndex + 1, s.presetCount);
     rightText(c, t, kScreenW - 6, 32, buf, 2, s.shift ? t.label : t.text);
 
-    // ---- preset name (inverted block in the MPC look, large yellow dots in BLONDA)
+    // ---- preset name: large yellow dot matrix in every theme
     const int pitch = Canvas::length(s.preset) <= 16 ? 3 : 2;
-    if (t.boxOutline) {
-        c.rect(4, 50, kScreenW - 8, 27, t.tabSelBg);
-        text(c, t, 10, 53 + (3 - pitch) * 3, s.preset, pitch, t.tabSelText);
-    } else {
-        text(c, t, 6, 52 + (3 - pitch) * 3, s.preset, pitch, t.accent);
-    }
+    c.text(6, 52 + (3 - pitch) * 3, s.preset, pitch, pitch - 1 > 0 ? pitch - 1 : 1, t.accent);
 
     // ---- waveform box: page name, key, live output
     const int bx = 4, by = 84, bw = kScreenW - 8, bh = 76;

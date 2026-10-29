@@ -4,28 +4,40 @@ The BLONDA SEQ.3 sound engines as playable instruments on the MPC Sample: pads p
 the sound, the screen shows it in the BLONDA dot-matrix style. The engines are the exact same code as
 SEQ.3 (`../Core`), so a sound is the same on the iPhone, the web prototype and the MPC.
 
-**Status:** library, app and MPC Sample host build and pass 745 desktop tests; the ARM binary passes its
-self test under emulation. **Not yet run on real hardware** — CPU headroom on the MPC's Cortex-A55 cores is
-the open question (see *CPU* below).
+**Status:** runs on a real MPC Sample (firmware 1.3.0.12). Library, app and host pass 914 desktop tests; the
+ARM binary passes its self test under emulation. Measured on the device: BRIS with 6 voices uses about 29 % of
+one Cortex-A55 core. Open: occasional audio dropouts (the host logs load, slowest block and xruns per
+instrument every 10 s) and optimising the heavier SEQ.3 engines for ARM (see *CPU* below).
 
 ## What is in it
 
 | Instrument | From | Notes |
 |---|---|---|
-| **BRIS** | `Core/src/bris.cpp` | Bree6-style 6-voice poly, 29 presets, 32 parameters on 11 pages |
+| **BRIS** | **blonda-motor** (`third_party/blonda-motor`, tag v0.1.0) | BLONDA BRIS, the Bree6-style poly: same GenExpr as the Max for Live device, 90 presets, 36 parameters on 12 pages |
+| BRIS SEQ | `Core/src/bris.cpp` | SEQ.3's own 6-voice poly, 29 presets |
 | MINI D | `Core/src/engines.cpp` | Model D-style, 38 parameters on 14 pages |
 | SH-101 | 〃 | 25 parameters on 9 pages |
-| ACID | 〃 | 303-style (max 4 notes for now) |
-| ANALOG, SUPER, FM GLASS, PLUCK, CHIP, SUB 808 | 〃 | SUPER max 4 notes for now |
+| ACID | 〃 | 303-style |
+| ANALOG, SUPER, FM GLASS, PLUCK, CHIP, SUB 808 | 〃 | |
 
 The engine instruments start from the SEQ.3 defaults ("INIT"); their web presets are not ported yet.
+
+### The shared engine library
+
+Engines that exist in **victorysvensson-dev/blonda-motor** come from there and nowhere else: the library is a git
+submodule pinned to a tag (`git submodule update --init` after cloning; update with
+`git -C Akai/third_party/blonda-motor checkout vX.Y.Z`). `src/motor_instrument.cpp` wraps any library engine as an
+Akai instrument and holds only MPC presentation (knob pages, 8-character names, value labels, pad pressure ->
+filter, level trim) - nothing that changes the sound. New engines are added to blonda-motor (see its CLAUDE.md),
+then get a skin here.
 
 ## Layout
 
 | Path | What |
 |---|---|
 | `include/akai/instrument.hpp` | The interface every instrument implements (params, pages, presets, notes). No hardware in it, so the same instrument can move to the Sample Key / Akai's SDK later |
-| `src/bris_instrument.cpp`, `src/engine_instrument.cpp` | Bris and the nine SEQ.3 engines as instruments (parameter tables, pages, level trims) |
+| `src/motor_instrument.cpp` | blonda-motor engines as instruments (MPC skins: pages, names, labels) |
+| `src/bris_instrument.cpp`, `src/engine_instrument.cpp` | SEQ.3's Bris and nine engines as instruments (parameter tables, pages, level trims) |
 | `include/akai/surface.hpp`, `src/surface.cpp` | MPC Sample control surface: pads, buttons, knobs, encoder, LEDs, pad colours |
 | `include/akai/app.hpp`, `src/app.cpp` | The instrument app: controls, latch, scales, tap tempo, lights |
 | `src/screen.cpp`, `src/gfx.cpp`, `src/font5x7.cpp` | 320×240 screen with an original 5×7 dot font (Å Ä Ö included) |
@@ -48,7 +60,7 @@ The engine instruments start from the SEQ.3 defaults ("INIT"); their web presets
 | MINUS / PLUS | Octave (bank LEDs A–H show it) · SHIFT: transpose |
 | 16 LEVELS / SHIFT + 16 LEVELS | Chromatic ↔ in-key pads / next scale |
 | PLAY | Latch |
-| TAP TEMPO | Tempo for synced LFO and delay (LED blinks on the beat) |
+| TAP TEMPO | Tempo for synced LFO and delay (LED blinks on the beat) · SHIFT: screen colours (sharp black / BLONDA) |
 | ERASE | Undo edits (reload the preset) |
 | STOP / SHIFT + STOP | All notes off / quit back to the MPC Sample software |
 | SHIFT (held) | Shows CPU load and voices |

@@ -278,7 +278,7 @@ void displayThread(Screen* scr, UiMailbox* box) {
     const int stride = (int)(scr->pitch / 4);
     while (!gStop) {
         if (box->read(s, last)) {
-            akai::drawScreen(c, s, s.theme ? akai::kThemeMpc : akai::kThemeBlonda);
+            akai::drawScreen(c, s, akai::themeByIndex(s.theme));
             int x0 = akai::kScreenW, y0 = akai::kScreenH, x1 = -1, y1 = -1;
             for (int y = 0; y < akai::kScreenH; ++y) for (int x = 0; x < akai::kScreenW; ++x) {
                 const uint32_t v = frame[y * akai::kScreenW + x];

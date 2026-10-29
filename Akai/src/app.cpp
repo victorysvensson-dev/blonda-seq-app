@@ -1,5 +1,5 @@
 #include "akai/app.hpp"
-#include "akai/bris6_instrument.hpp"
+#include "akai/motor_instrument.hpp"
 #include "akai/bris_instrument.hpp"
 #include "akai/engine_instrument.hpp"
 #include <cmath>
@@ -34,7 +34,7 @@ constexpr int kNumLit = (int)sizeof(kLitButtons);
 } // namespace
 
 App::App() {
-    inst_[nInst_++].reset(new Bris6Instrument());   // BLONDA BRIS (M4L), the Bree6-style poly
+    inst_[nInst_++].reset(new MotorInstrument(*findMotorSkin("bris")));   // BLONDA BRIS from blonda-motor (Bree6-style)
     inst_[nInst_++].reset(new BrisInstrument());    // the SEQ.3 Bris
     const blonda::Eng order[] = {blonda::Eng::Mini, blonda::Eng::SH101, blonda::Eng::Acid, blonda::Eng::Analog, blonda::Eng::Super,
                                  blonda::Eng::FM, blonda::Eng::Pluck, blonda::Eng::Chip, blonda::Eng::Sub};
@@ -187,7 +187,7 @@ void App::button(int b, bool down) {
         toast("%s", latch_ ? "LATCH ON" : "LATCH OFF");
         break;
     case BTN_TAP_TEMPO: {
-        if (shift_) { theme_ = 1 - theme_; toast("%s", theme_ ? "MPC COLOURS" : "BLONDA COLOURS"); break; }
+        if (shift_) { theme_ = (theme_ + 1) % 2; toast("%s", theme_ ? "BLONDA COLOURS" : "SHARP COLOURS"); break; }
         if (lastTap_ >= 0) {
             const float sec = (float)(now_ - lastTap_) / sr_;
             if (sec > 0.25f && sec < 2.0f) {

@@ -3,7 +3,7 @@
 //   akai_test render <dir>    also write WAV demos of every instrument / Bris preset and screen shots (PPM)
 //   akai_test bench           CPU benchmark only
 #include "akai/app.hpp"
-#include "akai/bris6_instrument.hpp"
+#include "akai/motor_instrument.hpp"
 #include "akai/bris_instrument.hpp"
 #include "akai/controls.hpp"
 #include "akai/engine_instrument.hpp"
@@ -62,7 +62,7 @@ template <class F> static void renderInst(Instrument& I, std::vector<float>& L, 
 }
 static std::vector<std::unique_ptr<Instrument>> allInstruments() {
     std::vector<std::unique_ptr<Instrument>> v;
-    v.emplace_back(new Bris6Instrument());
+    v.emplace_back(new MotorInstrument(*findMotorSkin("bris")));
     v.emplace_back(new BrisInstrument());
     for (blonda::Eng e : {blonda::Eng::Mini, blonda::Eng::SH101, blonda::Eng::Acid, blonda::Eng::Analog, blonda::Eng::Super,
                           blonda::Eng::FM, blonda::Eng::Pluck, blonda::Eng::Chip, blonda::Eng::Sub})
@@ -197,10 +197,10 @@ static void testInstruments(const char* outDir) {
     }
 }
 
-// BRIS 6 voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
-static void testBris6Voices() {
-    std::puts("BRIS 6 voice modes");
-    Bris6Instrument I; I.prepare(kSR);
+// BRIS (blonda-motor) voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
+static void testBrisMotorVoices() {
+    std::puts("BRIS (blonda-motor) voice modes");
+    MotorInstrument I(*findMotorSkin("bris")); I.prepare(kSR);
     std::vector<float> L(kBlock), R(kBlock);
     auto run = [&](double sec) { for (int i = 0; i < (int)(sec * kSR / kBlock); ++i) { std::fill(L.begin(), L.end(), 0.f); std::fill(R.begin(), R.end(), 0.f); I.process(L.data(), R.data(), kBlock); } };
     int lage = -1; for (int i = 0; i < I.numParams(); ++i) if (std::string(I.param(i).id) == "lage") lage = i;
@@ -244,7 +244,7 @@ static void testApp(const char* outDir) {
 
     A.handle(ev(mpcs::Event::PadDown, 0, 110));
     run(0.3);
-    CHECK(A.instrument().activeVoices() == 1, "pad plays one BRIS 6 voice (%d)", A.instrument().activeVoices());
+    CHECK(A.instrument().activeVoices() == 1, "pad plays one BRIS voice (%d)", A.instrument().activeVoices());
     const int lit = A.surfaceOutput(out, sizeof out);
     CHECK(lit >= 12, "pressed pad lights up (%d bytes)", lit);
     A.handle(ev(mpcs::Event::PadUp, 0));
@@ -266,7 +266,7 @@ static void testApp(const char* outDir) {
 
     // pages, knobs, presets
     UiState s; A.snapshot(s);
-    CHECK(std::string(s.instrument) == "BRIS 6" && std::string(s.preset) == "init" && s.presetCount == 90, "starts on BRIS 6 / init (%s %s %d)", s.instrument, s.preset, s.presetCount);
+    CHECK(std::string(s.instrument) == "BRIS" && std::string(s.preset) == "init" && s.presetCount == 90, "starts on BRIS / init (%s %s %d)", s.instrument, s.preset, s.presetCount);
     A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_B2)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_B2));
     A.snapshot(s);
     CHECK(std::string(s.page) == "FILTER", "B2 twice = FILTER page (%s)", s.page);
@@ -421,7 +421,7 @@ int main(int argc, char** argv) {
     testRawMidiFrames();
     testControls();
     testInstruments(outDir);
-    testBris6Voices();
+    testBrisMotorVoices();
     testApp(outDir);
     renderPresets(outDir);
     bench();
