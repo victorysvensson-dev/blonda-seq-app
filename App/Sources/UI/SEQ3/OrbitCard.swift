@@ -24,39 +24,7 @@ struct OrbitDial: View {
     var body: some View {
         ZStack {
             TimelineView(.animation) { tl in
-                Canvas { c, size in
-                    let w = size.width, cx = w / 2, R0 = cx * 0.34, R1 = cx * 0.95, gap = (R1 - R0) / 9
-                    let playing = model.playing, step = model.step
-                    if playing && step >= 0 {
-                        // smooth hand: interpolate inside the step
-                        let sd = 60.0 / Double(model.bpm) / 4.0
-                        let frac = min(1, (CACurrentMediaTime() - model.stepTime) / sd)
-                        let a = (Double(step) + frac) / 16 * 2 * .pi - .pi / 2
-                        var p = Path(); p.move(to: CGPoint(x: cx + cos(a) * R0 * 0.7, y: cx + sin(a) * R0 * 0.7)); p.addLine(to: CGPoint(x: cx + cos(a) * (R1 + 6), y: cx + sin(a) * (R1 + 6)))
-                        c.stroke(p, with: .linearGradient(Gradient(colors: [T.dmY.opacity(0), T.dmY.opacity(0.55)]), startPoint: CGPoint(x: cx, y: cx), endPoint: CGPoint(x: cx + cos(a) * R1, y: cx + sin(a) * R1)), lineWidth: 1.5)
-                    }
-                    for i in 0..<10 {
-                        let R = R1 - CGFloat(i) * gap, isSel = i == model.selectedTrack, col = model.trackColor(i)
-                        let flare = model.flash(i, 0.25), dot = min(gap * 0.36, 5.5)
-                        c.stroke(Path(ellipseIn: CGRect(x: cx - R, y: cx - R, width: 2 * R, height: 2 * R)), with: .color(isSel ? T.dmY.opacity(0.35) : T.dmInk.opacity(0.06)), lineWidth: 1)
-                        let L = 16, pos = playing ? step : -1
-                        for s in 0..<L {
-                            let a = Double(s) / Double(L) * 2 * .pi - .pi / 2
-                            let x = cx + cos(a) * R, y = cx + sin(a) * R
-                            let on = model.value(i, s) > 0, cur = s == pos
-                            let r = on ? dot * (cur ? 1.35 : 1) : max(1.2, dot * 0.4)
-                            let rect = CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r)
-                            if on {
-                                var g = c
-                                g.addFilter(.shadow(color: col, radius: (cur ? 14 : (isSel ? 6 : 3) + flare * 10) / 2))
-                                g.opacity = cur ? 1 : (isSel ? 1 : 0.82)
-                                g.fill(Path(ellipseIn: rect), with: .color(cur ? Color.white : col))
-                            } else {
-                                c.fill(Path(ellipseIn: rect), with: .color(T.dmInk.opacity(cur ? 0.6 : 0.16)))
-                            }
-                        }
-                    }
-                }
+                Canvas { c, size in drawOrbit(&c, size) }
             }
             VStack(spacing: 6) {
                 let hits = (0..<16).filter { model.value(model.selectedTrack, $0) > 0 }.count
@@ -65,6 +33,55 @@ struct OrbitDial: View {
             }
         }
         .id(model.revision)
+    }
+
+    private func drawOrbit(_ c: inout GraphicsContext, _ size: CGSize) {
+        let w: CGFloat = size.width
+        let cx: CGFloat = w / 2
+        let R0: CGFloat = cx * 0.34
+        let R1: CGFloat = cx * 0.95
+        let gap: CGFloat = (R1 - R0) / 9
+        let playing: Bool = model.playing
+        let step: Int = model.step
+        if playing && step >= 0 {
+            // smooth hand: interpolate inside the step
+            let sd: Double = 60.0 / Double(model.bpm) / 4.0
+            let frac: Double = min(1, (CACurrentMediaTime() - model.stepTime) / sd)
+            let a: CGFloat = CGFloat((Double(step) + frac) / 16 * 2 * Double.pi - Double.pi / 2)
+            var p = Path()
+            p.move(to: CGPoint(x: cx + cos(a) * R0 * 0.7, y: cx + sin(a) * R0 * 0.7))
+            p.addLine(to: CGPoint(x: cx + cos(a) * (R1 + 6), y: cx + sin(a) * (R1 + 6)))
+            let grad = Gradient(colors: [T.dmY.opacity(0), T.dmY.opacity(0.55)])
+            c.stroke(p, with: .linearGradient(grad, startPoint: CGPoint(x: cx, y: cx), endPoint: CGPoint(x: cx + cos(a) * R1, y: cx + sin(a) * R1)), lineWidth: 1.5)
+        }
+        let dot: CGFloat = min(gap * 0.36, 5.5)
+        for i in 0..<10 {
+            let R: CGFloat = R1 - CGFloat(i) * gap
+            let isSel: Bool = i == model.selectedTrack
+            let col: Color = model.trackColor(i)
+            let flare: Double = model.flash(i, 0.25)
+            let ring = Path(ellipseIn: CGRect(x: cx - R, y: cx - R, width: 2 * R, height: 2 * R))
+            c.stroke(ring, with: .color(isSel ? T.dmY.opacity(0.35) : T.dmInk.opacity(0.06)), lineWidth: 1)
+            let pos: Int = playing ? step : -1
+            for s in 0..<16 {
+                let a: CGFloat = CGFloat(Double(s) / 16 * 2 * Double.pi - Double.pi / 2)
+                let x: CGFloat = cx + cos(a) * R
+                let y: CGFloat = cx + sin(a) * R
+                let on: Bool = model.value(i, s) > 0
+                let cur: Bool = s == pos
+                let r: CGFloat = on ? dot * (cur ? 1.35 : 1) : max(1.2, dot * 0.4)
+                let rect = CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r)
+                if on {
+                    var g = c
+                    let blur: CGFloat = cur ? 14 : (isSel ? 6 : 3) + CGFloat(flare) * 10
+                    g.addFilter(.shadow(color: col, radius: blur / 2))
+                    g.opacity = cur ? 1 : (isSel ? 1 : 0.82)
+                    g.fill(Path(ellipseIn: rect), with: .color(cur ? Color.white : col))
+                } else {
+                    c.fill(Path(ellipseIn: rect), with: .color(T.dmInk.opacity(cur ? 0.6 : 0.16)))
+                }
+            }
+        }
     }
 }
 
