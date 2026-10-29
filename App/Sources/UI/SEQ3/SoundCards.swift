@@ -26,12 +26,14 @@ struct ParamDrag: ViewModifier {
     var horizontal = true
     var points: CGFloat = 220        // drag distance for the full range
     @State private var start: Float?
+    @GestureState private var live = false
     func body(content: Content) -> some View {
-        content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).onChanged { g in
+        content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).updating($live) { _, s, _ in s = true }.onChanged { g in
             if start == nil { start = model.param(def, track) }
             let d = horizontal ? g.translation.width : -g.translation.height
             model.setParam(def, track, start! + Float(d / points) * (def.hi - def.lo))
         }.onEnded { _ in start = nil })
+        .onChange(of: live) { _, v in if !v { start = nil }; ScrollLock.shared.set(v) }
     }
 }
 

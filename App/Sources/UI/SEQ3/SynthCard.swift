@@ -347,14 +347,16 @@ struct VDrag: ViewModifier {
     var onEnd: () -> Void = {}
     @Binding var active: Bool
     @State private var start: Float?
+    @GestureState private var live = false
     func body(content: Content) -> some View {
-        content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).onChanged { g in
+        content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).updating($live) { _, s, _ in s = true }.onChanged { g in
             if start == nil { start = get(); active = true }
             var v = start! + Float(-g.translation.height / points) * (range.upperBound - range.lowerBound)
             v = min(range.upperBound, max(range.lowerBound, v))
             if step > 0 { v = (v / step).rounded() * step }
             set(v)
         }.onEnded { _ in start = nil; active = false; onEnd() })
+        .onChange(of: live) { _, v in if !v && start != nil { start = nil; active = false; onEnd() }; ScrollLock.shared.set(v) }
     }
 }
 

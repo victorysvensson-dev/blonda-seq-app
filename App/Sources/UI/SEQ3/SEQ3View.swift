@@ -69,6 +69,7 @@ struct SEQ3View: View {
                         Self.card(k).frame(maxWidth: 1200).padding(14).padding(.bottom, 90)
                             .background(ScrollTuner())
                     }
+                    .lockedWhileDragging()
                     Button("") { full.toggle(k) }.keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
@@ -176,6 +177,7 @@ struct SEQ3View: View {
             .padding(.bottom, 24)
             .background(ScrollTuner())
         }
+        .lockedWhileDragging()
         .frame(width: width)
     }
 }
@@ -211,6 +213,23 @@ struct Hinge: View {
 
 /// On the Mac a mouse drag inside the card columns should turn knobs and faders, not scroll the column:
 /// the columns scroll with the wheel / trackpad only (iPad keeps finger scrolling).
+/// While a knob or slider is being dragged on a touch screen, the page must not scroll with it.
+final class ScrollLock: ObservableObject {
+    static let shared = ScrollLock()
+    @Published private(set) var locked = false
+    func set(_ on: Bool) {
+        #if !targetEnvironment(macCatalyst)
+        if locked != on { locked = on }
+        #endif
+    }
+}
+
+private struct LockedScroll: ViewModifier {
+    @ObservedObject private var lock = ScrollLock.shared
+    func body(content: Content) -> some View { content.scrollDisabled(lock.locked) }
+}
+extension View { func lockedWhileDragging() -> some View { modifier(LockedScroll()) } }
+
 struct ScrollTuner: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         let v = UIView(); v.isUserInteractionEnabled = false

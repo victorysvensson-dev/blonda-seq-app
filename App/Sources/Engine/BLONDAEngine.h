@@ -37,6 +37,9 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 /// CoreMIDI input from every connected source (OP-1 field, OP-XY, keyboards...). Notes play `midiTrack`.
 - (void)startMIDI;
 @property (nonatomic) NSInteger midiTrack;
+/// While true, every MIDI note is also reported on the main thread (for recording into the pattern).
+@property (nonatomic) BOOL midiRecord;
+@property (nonatomic, copy, nullable) void (^midiNoteHandler)(NSInteger track, NSInteger note, float velocity, BOOL on);
 /// Number of MIDI sources currently connected.
 @property (nonatomic, readonly) NSInteger midiSourceCount;
 

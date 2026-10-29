@@ -7,7 +7,7 @@
 #include <atomic>
 #include <memory>
 
-struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}; };
+struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}; std::atomic<bool> rec{false}; };
 
 @implementation BLONDAEngine {
     AVAudioEngine *_avEngine;
@@ -84,8 +84,15 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
                 if ((word >> 28) != 0x2) continue;
                 const int status = (word >> 16) & 0xF0, d1 = (word >> 8) & 0x7F, d2 = word & 0x7F;
                 const int track = st->track.load(std::memory_order_relaxed);
-                if (status == 0x90 && d2 > 0) st->host->midiNoteOn(track, d1, .25f + .75f * d2 / 127.f);   // same curve as the web MIDI input
-                else if (status == 0x80 || (status == 0x90 && d2 == 0)) st->host->midiNoteOff(track, d1);
+                const bool on = status == 0x90 && d2 > 0, off = status == 0x80 || (status == 0x90 && d2 == 0);
+                const float vel = .25f + .75f * d2 / 127.f;   // same curve as the web MIDI input
+                if (on) st->host->midiNoteOn(track, d1, vel);
+                else if (off) st->host->midiNoteOff(track, d1);
+                if ((on || off) && st->rec.load(std::memory_order_relaxed)) {   // MIDI thread, not the audio thread
+                    dispatch_async(dispatch_get_main_queue(), ^{
+                        BLONDAEngine *s = weakSelf; if (s && s.midiNoteHandler) s.midiNoteHandler(track, d1, vel, on);
+                    });
+                }
             }
             p = MIDIEventPacketNext(p);
         }
@@ -95,6 +102,8 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 
 - (NSInteger)midiTrack { return _midi ? _midi->track.load() : 7; }
 - (void)setMidiTrack:(NSInteger)midiTrack { if (!_midi) [self startMIDI]; _midi->track.store((int)std::max<NSInteger>(0, std::min<NSInteger>(9, midiTrack))); }
+- (BOOL)midiRecord { return _midi && _midi->rec.load(); }
+- (void)setMidiRecord:(BOOL)on { if (!_midi) [self startMIDI]; _midi->rec.store(on); }
 - (NSInteger)midiSourceCount { return (NSInteger)MIDIGetNumberOfSources(); }
 
 - (void)togglePlay { _host->togglePlay(); }

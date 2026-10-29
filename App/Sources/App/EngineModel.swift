@@ -77,6 +77,10 @@ final class EngineModel: NSObject, ObservableObject {
         engine.startMIDI()
         keyboard = KeyboardInput(model: self)
         engine.midiTrack = selectedTrack
+        engine.midiNoteHandler = { [weak self] t, n, v, on in
+            guard let self, self.recording else { return }
+            if on { self.recOn(t, n, v); self.hitTime[t] = CACurrentMediaTime(); self.hitVel[t] = Double(v) } else { self.recOff(t, n) }
+        }
         if ProcessInfo.processInfo.arguments.contains("-autoplay") {
             engine.togglePlay()
             // diagnostics for the CI simulator run: is the audio thread advancing?
@@ -486,6 +490,7 @@ final class EngineModel: NSObject, ObservableObject {
     private var lastRecUndo: CFTimeInterval = 0
     func toggleRecord() {
         recording.toggle()
+        engine.midiRecord = recording
         showToast(recording ? "Inspelning: spela på pads eller klaviaturen medan loopen går" : "Inspelning av")
         if recording && !playing { togglePlay() }
     }

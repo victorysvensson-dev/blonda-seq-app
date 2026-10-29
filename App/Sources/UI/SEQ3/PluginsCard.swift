@@ -152,8 +152,9 @@ private struct PlugDrag: ViewModifier {
     let q: PlugParam
     let model: EngineModel
     @State private var start: Float?
+    @GestureState private var live = false
     func body(content: Content) -> some View {
-        content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).onChanged { g in
+        content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).updating($live) { _, s, _ in s = true }.onChanged { g in
             let dy = Float(-g.translation.height)
             if !q.opts.isEmpty {
                 if start == nil { start = Float(q.opts.firstIndex { abs($0 - q.get(model)) < 1e-4 } ?? 0) }
@@ -166,5 +167,6 @@ private struct PlugDrag: ViewModifier {
                 q.set(model, v)
             }
         }.onEnded { _ in start = nil })
+        .onChange(of: live) { _, v in if !v { start = nil }; ScrollLock.shared.set(v) }
     }
 }
