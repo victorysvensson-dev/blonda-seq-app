@@ -4,6 +4,7 @@ import SwiftUI
 /// split by a hinge, and the yellow transport — with the blurred "SEQ.3" start screen on launch.
 struct SEQ3View: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var full = FullStore.shared
     @State private var started = false
     @State private var entered = true
     @State private var showKeys = false
@@ -60,6 +61,19 @@ struct SEQ3View: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .id(t)
             }
+            if let k = full.key {
+                ZStack {
+                    Rectangle().fill(.ultraThinMaterial).overlay(Color(rgb: 6, 7, 9, 0.55)).ignoresSafeArea()
+                        .onTapGesture { full.toggle(k) }
+                    ScrollView(.vertical, showsIndicators: false) {
+                        Self.card(k).frame(maxWidth: 1200).padding(14).padding(.bottom, 90)
+                            .background(ScrollTuner())
+                    }
+                    Button("") { full.toggle(k) }.keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
+                }
+                .transition(.opacity.combined(with: .scale(scale: 0.97)))
+                .zIndex(3)
+            }
             if let t = model.rollTrack {
                 PianoRoll(track: t).transition(.move(edge: .bottom)).zIndex(4)
             }
@@ -93,8 +107,28 @@ struct SEQ3View: View {
             if args.contains("-projects") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {   // CI screenshot with a few projects
                 let st = model.projects; while st.items.count < 4 { _ = st.duplicate(st.current) }
                 model.openProjects() } }
+            if args.contains("-full") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mönster") } }   // CI screenshot
             if args.contains("-roll") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openRoll(8) } }
             if args.contains("-inspect") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openInspector(1, 4) } }   // CI screenshot
+        }
+    }
+
+    /// The card for a fold/full key (the card's own caption name).
+    static func card(_ k: String) -> AnyView {
+        switch k {
+        case "orbit": return AnyView(OrbitCard())
+        case "pads": return AnyView(PadsCard())
+        case "ljud": return AnyView(SoundCard())
+        case "fx": return AnyView(FXCard())
+        case "synth": return AnyView(SynthCard())
+        case "mönster": return AnyView(GridCard())
+        case "loopar": return AnyView(LoopsCard())
+        case "live": return AnyView(LiveCard())
+        case "låt": return AnyView(SongCard())
+        case "master": return AnyView(MasterCard())
+        case "mixer": return AnyView(MixerCard())
+        case "plugins": return AnyView(PluginsCard())
+        default: return AnyView(EmptyView())
         }
     }
 

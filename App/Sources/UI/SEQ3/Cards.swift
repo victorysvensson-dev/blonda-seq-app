@@ -76,12 +76,12 @@ struct Card<Content: View>: View {
                 if let e = extra { e }
                 HStack(spacing: 5) {
                     CapButton(kind: .min, dark: dark, fold: key)
-                    CapButton(kind: .full, dark: dark)
+                    CapButton(kind: .full, dark: dark, fold: key)
                 }
                 CapButton(kind: .grab, dark: dark).padding(.leading, 8)
             }
             .frame(height: 26)
-            if !store.isFolded(key) { content().transition(.opacity.combined(with: .move(edge: .top))) }
+            if !store.isFolded(key) || FullStore.shared.key == key { content().transition(.opacity.combined(with: .move(edge: .top))) }
         }
         .padding(16)
         .background(background)
@@ -135,11 +135,18 @@ final class FoldStore: ObservableObject {
     static let shared = FoldStore()
     @Published private(set) var folded: Set<String>
     private init() { folded = Set(UserDefaults.standard.stringArray(forKey: "cmin") ?? []) }
-    func isFolded(_ k: String) -> Bool { folded.contains(k) }
+    func isFolded(_ k: String) -> Bool { folded.contains(k) && FullStore.shared.key != k }
     func toggle(_ k: String) {
         withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) { if folded.contains(k) { folded.remove(k) } else { folded.insert(k) } }
         UserDefaults.standard.set(Array(folded), forKey: "cmin")
     }
+}
+
+/// The card shown large over everything (web: setFull / .fullhost).
+final class FullStore: ObservableObject {
+    static let shared = FullStore()
+    @Published var key: String?
+    func toggle(_ k: String) { withAnimation(.spring(response: 0.42, dampingFraction: 0.86)) { key = key == k ? nil : k } }
 }
 
 struct CapButton: View {
@@ -150,9 +157,15 @@ struct CapButton: View {
     var fill: Color? = nil
     var fold: String? = nil            // .min: the card this chevron folds
     @ObservedObject private var store = FoldStore.shared
+    @ObservedObject private var full = FullStore.shared
     var body: some View {
         if kind == .min, let k = fold {
-            Button { store.toggle(k) } label: { face.rotationEffect(.degrees(store.isFolded(k) ? 180 : 0)) }
+            if full.key == k { EmptyView() } else {
+                Button { store.toggle(k) } label: { face.rotationEffect(.degrees(store.isFolded(k) ? 180 : 0)) }
+                    .buttonStyle(PressScale())
+            }
+        } else if kind == .full, let k = fold {
+            Button { full.toggle(k) } label: { face.rotationEffect(.degrees(full.key == k ? 180 : 0)) }
                 .buttonStyle(PressScale())
         } else { face }
     }

@@ -50,7 +50,7 @@ struct SoundCard: View {
                     (Text("ljud · ").foregroundColor(.white.opacity(0.7)) + Text("\(kTracks[t].name.lowercased()) · \(model.trackSub(t).lowercased())").foregroundColor(.white).font(BFont.mono(9.5, 500)))
                         .font(BFont.mono(9.5)).tracking(0.855)
                     Spacer()
-                    HStack(spacing: 5) { LiteCap(.min, dark: true, fold: "ljud"); LiteCap(.full, dark: true) }
+                    HStack(spacing: 5) { LiteCap(.min, dark: true, fold: "ljud"); LiteCap(.full, dark: true, fold: "ljud") }
                     LiteCap(.grab, dark: true).padding(.leading, 8)
                 }
                 .frame(height: 26).padding(.top, 10).padding(.bottom, fold.isFolded("ljud") ? 10 : 0)
@@ -396,7 +396,7 @@ struct MasterCard: View {
                 (Text("master · ").foregroundColor(kInk.opacity(0.5)) + Text("glue · tape").foregroundColor(kInk).font(BFont.mono(9.5, 500)))
                     .font(BFont.mono(9.5)).tracking(0.855)
                 Spacer()
-                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "master"); LiteCap(.full, dark: false) }
+                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "master"); LiteCap(.full, dark: false, fold: "master") }
                 LiteCap(.grab, dark: false).padding(.leading, 8)
             }
             .frame(height: 26)

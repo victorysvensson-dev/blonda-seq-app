@@ -262,7 +262,7 @@ struct SynthCard: View {
             .buttonStyle(PressScale())
             HStack(spacing: 5) {
                 CapButton(kind: .min, dark: false, tint: th.fg, fill: th.chip, fold: "synth")
-                CapButton(kind: .full, dark: false, tint: th.fg, fill: th.chip)
+                CapButton(kind: .full, dark: false, tint: th.fg, fill: th.chip, fold: "synth")
             }
             CapButton(kind: .grab, dark: false, tint: th.fg, fill: th.chip).padding(.leading, 4)
         }

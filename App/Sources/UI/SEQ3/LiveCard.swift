@@ -43,7 +43,7 @@ struct LiveCard: View {
                 (Text("live · ").foregroundColor(kLm) + Text(read).foregroundColor(kLk).font(BFont.mono(9.5, 500)))
                     .font(BFont.mono(9.5)).tracking(0.855).lineLimit(1)
                 Spacer()
-                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "live"); LiteCap(.full, dark: false) }
+                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "live"); LiteCap(.full, dark: false, fold: "live") }
                 LiteCap(.grab, dark: false).padding(.leading, 8)
             }
             .frame(height: 26)
