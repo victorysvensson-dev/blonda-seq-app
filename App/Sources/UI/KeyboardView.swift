@@ -4,6 +4,7 @@ import UIKit
 /// Two-octave touch keyboard (multi-touch) that plays the selected track, like the web version's keys.
 struct KeyboardView: View {
     @EnvironmentObject var model: EngineModel
+    @Environment(\.horizontalSizeClass) private var hsc
     @State private var octave = 4
     @State private var held: [Int: Int] = [:]   // touch id -> note (one finger per key)
 
@@ -20,7 +21,7 @@ struct KeyboardView: View {
             .foregroundStyle(.white)
             .background(Color.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
             GeometryReader { geo in
-                let nW = 14
+                let nW = whiteCount
                 let w = geo.size.width / CGFloat(nW)
                 let h = geo.size.height
                 ZStack(alignment: .topLeading) {
@@ -31,7 +32,7 @@ struct KeyboardView: View {
                             .frame(width: w - 3, height: h)
                             .offset(x: CGFloat(i) * w)
                     }
-                    ForEach(0..<10, id: \.self) { j in
+                    ForEach(0..<(whiteCount / 7 * 5), id: \.self) { j in
                         let oct = j / 5, b = blacks[j % 5], note = baseNote + oct * 12 + b.0
                         RoundedRectangle(cornerRadius: 5)
                             .fill(held.values.contains(note) ? Color(hex: 0xFFD21F) : Color(hex: 0x1C1C20))
@@ -44,19 +45,20 @@ struct KeyboardView: View {
         }
     }
 
+    private var whiteCount: Int { hsc == .compact ? 7 : 14 }   // one octave on iPhone, two on iPad
     private var baseNote: Int { 12 * (octave + 1) - 12 }   // octave 4 -> C3 (48), like the web keys
 
     private func noteAt(_ p: CGPoint, _ size: CGSize) -> Int? {
         guard p.x >= 0, p.y >= 0, p.x < size.width, p.y < size.height else { return nil }
-        let w = size.width / 14
+        let w = size.width / CGFloat(whiteCount)
         if p.y < size.height * 0.6 {
-            for j in 0..<10 {
+            for j in 0..<(whiteCount / 7 * 5) {
                 let oct = j / 5, b = blacks[j % 5]
                 let cx = CGFloat(oct * 7 + b.1 + 1) * w
                 if abs(p.x - cx) < w * 0.31 { return baseNote + oct * 12 + b.0 }
             }
         }
-        let i = min(13, Int(p.x / w))
+        let i = min(whiteCount - 1, Int(p.x / w))
         return baseNote + (i / 7) * 12 + whites[i % 7]
     }
 
