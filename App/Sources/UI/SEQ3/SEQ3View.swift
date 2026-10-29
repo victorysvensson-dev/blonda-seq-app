@@ -60,6 +60,10 @@ struct SEQ3View: View {
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .id(t)
             }
+            if model.libOpen {
+                LibraryView().transition(.opacity.combined(with: .scale(scale: 0.985)))
+                    .zIndex(5)
+            }
             if showKeys {
                 KeyboardView().frame(height: 150).padding(.horizontal, 22).padding(.bottom, 92)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
@@ -67,6 +71,8 @@ struct SEQ3View: View {
         }
         .ignoresSafeArea(edges: .bottom)
         .background(T.bg)
+        // web: dragging audio files onto the app opens the library and imports them
+        .dropDestination(for: URL.self) { urls, _ in model.openLibrary(); model.importFiles(urls); return true }
         // computer keyboard, like the web version: A W S E D F T G Y H U J K O L P ; ' play notes, Z/X octave, space play/stop
         .focusable()
         .focusEffectDisabled()

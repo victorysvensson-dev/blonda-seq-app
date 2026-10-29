@@ -1,4 +1,5 @@
 #include "blonda/seq3.hpp"
+#include <climits>
 #include <cstring>
 #include <map>
 #include <cstdlib>
@@ -81,6 +82,8 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
 #undef NI
     chordKeys = (int)S["chord"]["keys"].numOr(1); chordPad = (int)S["chord"]["pad"].numOr(1);
     for (int i = 0; i < 6; ++i) kit[i] = S["dk"][kTrackIds[i]].strOr("");
+    for (int k = 0; k < 4; ++k) { const json::Value& L = S["loops"][k]; LoopSlot& o = loops[k];
+        o.sid = L["sid"].strOr(""); o.on = L["on"].numOr(1) != 0; o.vol = (float)L["vol"].numOr(.8); o.bars = (int)L["bars"].numOr(0); }
     song = S["song"].numOr(0) != 0; for (int k = 0; k < 8; ++k) chain[k] = (int)S["chain"][k].numOr(-1);
     glideT = (float)S["glideT"].numOr(.07);
     for (int pi = 0; pi < kPatterns; ++pi) {
@@ -110,6 +113,9 @@ std::string Project::toJSON(const std::string& base) const {
       X.at("space").at("on") = V::number(fx.spaceOn ? 1 : 0); X.at("space").at("size") = V::number(fx.spaceSize);
       X.at("tape").at("on") = V::number(fx.tapeOn ? 1 : 0); X.at("tape").at("color") = V::number(fx.tapeColor);
       X.at("crush").at("on") = V::number(fx.crushOn ? 1 : 0); X.at("crush").at("bits") = V::number(fx.crushBits); X.at("crush").at("mix") = V::number(fx.crushMix); }
+    for (int i = 0; i < 6; ++i) { if (!kit[i].empty()) S.at("dk").at(kTrackIds[i]) = V::string_(kit[i]); else if (S.has("dk")) S.at("dk").erase(kTrackIds[i]); }
+    for (int k = 0; k < 4; ++k) { V& L = S.at("loops").at((size_t)k); const LoopSlot& o = loops[k];
+        L.at("sid") = o.sid.empty() ? V() : V::string_(o.sid); L.at("on") = V::number(o.on ? 1 : 0); L.at("vol") = V::number(o.vol); L.at("bars") = V::number(o.bars); }
     S.at("song") = V::number(song ? 1 : 0); for (int k = 0; k < 8; ++k) S.at("chain").at((size_t)k) = V::number(chain[k]);
     for (int i = 0; i < kTracks; ++i) {
         S.at("mute").at((size_t)i) = V::number(mute[i]);
@@ -294,8 +300,96 @@ void Seq3::repeat(int mode, int div) {
     rpT_ = (long long)std::llround(T * sr_); rpNew_ = len; rpShort_ = 0; rpPh_ = 1;
 }
 
+// ---------------------------------------------------------------- samples
+void Seq3::setLoop(int k, const SampleData* smp, float srcBpm, int bars, float norm) {
+    if (k < 0 || k >= 4) return;
+    if (loopRt_[k].s != smp) killLoops(k);
+    loopRt_[k] = {smp, srcBpm, std::max(1, bars), norm};
+}
+void Seq3::setLoopOn(int k, bool on) { if (k < 0 || k >= 4) return; P_.loops[k].on = on; if (!on) killLoops(k); }
+void Seq3::setLoopVol(int k, float v) {
+    if (k < 0 || k >= 4) return; P_.loops[k].vol = std::max(0.f, std::min(1.f, v));
+    for (auto& L : lvox_) if (L.active && L.slot == k && !L.killing) L.lv = P_.loops[k].vol * loopRt_[k].norm * .8f;
+}
+void Seq3::setDrumSample(int i, const SampleData* smp, float norm) {
+    if (i < 0 || i >= 6) return;
+    dsmp_[i] = smp; dnorm_[i] = norm;
+    if (!smp) { P_.kit[i].clear(); drums_[i].setKit(""); }
+}
+void Seq3::previewSample(const SampleData* smp, float rate, float gain) {
+    killLoops(-2);
+    if (smp && smp->frames > 0) startLoop(-2, smp, frame_ + 64, smp->frames / (double)sr_ / std::max(.05f, rate), rate, gain);
+}
+void Seq3::dropSample(const SampleData* smp) {
+    for (auto& v : svox_) if (v.s == smp) v.active = false;
+    for (auto& v : lvox_) if (v.s == smp) v.active = false;
+    for (auto& R : loopRt_) if (R.s == smp) R.s = nullptr;
+    for (int i = 0; i < 6; ++i) if (dsmp_[i] == smp) dsmp_[i] = nullptr;
+}
+void Seq3::startSample(int i, long long f, float vel) {
+    const SampleData* s = dsmp_[i]; if (!s || s->frames < 2) return;
+    SampleVoice* v = nullptr; long long oldest = LLONG_MAX;
+    for (auto& x : svox_) { if (!x.active) { v = &x; break; } if (x.start < oldest) { oldest = x.start; v = &x; } }
+    const TrackParams& p = P_.params[i];
+    *v = SampleVoice{}; v->s = s; v->track = i; v->active = true; v->start = f;
+    v->rate = std::pow(2.0, p.tune / 12.0);
+    const double len = s->frames / (double)sr_ / v->rate;
+    v->len = p.decay >= .97f ? len : std::min(len, .025 + std::pow((double)p.decay, 1.7) * 2.6); v->holdEnd = v->len * .55;
+    v->lv = vel * dnorm_[i] * .95f;
+    const float tn = p.tone;
+    designBQ(0, tn >= .5f ? 20000.f : 180.f * std::pow(110.f, tn * 2), 1.f, sr_, v->lpc);
+    designBQ(1, tn <= .5f ? 18.f : 18.f * std::pow(45.f, (tn - .5f) * 2), 1.f, sr_, v->hpc);
+    sampleTail_[i] = true;
+    if (i == T_KICK) pump((double)f / sr_);
+}
+void Seq3::renderSamples(long long b0, int n) {
+    for (int i = 0; i < 6; ++i) { bool any = false; for (const auto& v : svox_) if (v.active && v.track == i) any = true; if (!any && !dsmp_[i]) sampleTail_[i] = false; }
+    const float chk = std::exp(-1.f / (.008f * sr_));
+    for (auto& v : svox_) {
+        if (!v.active) continue;
+        float* cl = chL_[v.track].data(); float* cr = chR_[v.track].data(); const SampleData& S = *v.s;
+        const float lg = std::log(.0001f / std::max(1e-4f, v.lv));
+        for (int x = 0; x < n; ++x) {
+            const long long f = b0 + x; if (f < v.start) continue;
+            const double tau = (double)(f - v.start) / sr_;
+            if (tau >= v.len || v.pos >= S.frames - 1) { v.active = false; break; }
+            float g = v.lv; if (tau > v.holdEnd) g = v.lv * std::exp(lg * (float)((tau - v.holdEnd) / std::max(1e-4, v.len - v.holdEnd)));
+            if (v.choked && f >= v.chokeAt) { v.chokeG *= chk; g *= v.chokeG; if (v.chokeG < 1e-4f) { v.active = false; break; } }
+            float l = hermiteAt(S.L.data(), S.frames, v.pos), r = hermiteAt(S.R.data(), S.frames, v.pos); v.pos += v.rate;
+            l = runBQ(v.hpc, &v.z[0][2], runBQ(v.lpc, &v.z[0][0], l)); r = runBQ(v.hpc, &v.z[1][2], runBQ(v.lpc, &v.z[1][0], r));
+            cl[x] += l * g; cr[x] += r * g;
+        }
+    }
+}
+void Seq3::startLoop(int slot, const SampleData* s, long long f, double dur, double rate, float lv) {
+    LoopVoice* v = nullptr; long long oldest = LLONG_MAX;
+    for (auto& x : lvox_) { if (!x.active) { v = &x; break; } if (x.start < oldest) { oldest = x.start; v = &x; } }
+    *v = LoopVoice{}; v->s = s; v->slot = slot; v->active = true; v->start = f; v->end = f + (long long)std::llround(dur * sr_); v->rate = rate; v->lv = lv;
+}
+void Seq3::killLoops(int slot) {
+    for (auto& v : lvox_) if (v.active && (slot == -1 ? v.slot >= 0 : v.slot == slot)) { if (v.start > frame_) v.active = false; else v.killing = true; }
+}
+void Seq3::renderLoops(long long b0, int n) {
+    const float kc = std::exp(-1.f / (.01f * sr_)), up = .004f * sr_, dn = .008f * sr_;
+    for (auto& v : lvox_) {
+        if (!v.active) continue; const SampleData& S = *v.s;
+        for (int x = 0; x < n; ++x) {
+            const long long f = b0 + x; if (f < v.start) continue;
+            if (f >= v.end) { v.active = false; break; }
+            float env = 1; const float a = (float)(f - v.start), b = (float)(v.end - f);
+            if (a < up) env = a / up; if (b < dn) env = std::min(env, b / dn);
+            if (v.killing) { v.g = v.g == 0 ? 1 : v.g * kc; if (v.g < 1e-4f) { v.active = false; break; } env *= v.g; }
+            if (v.pos < S.frames - 1) {
+                const float gg = env * v.lv;
+                busL_[x] += hermiteAt(S.L.data(), S.frames, v.pos) * gg; busR_[x] += hermiteAt(S.R.data(), S.frames, v.pos) * gg;
+            }
+            v.pos += v.rate;
+        }
+    }
+}
+
 void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); }
-void Seq3::stop() { playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
+void Seq3::stop() { killLoops(-1); playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
 
 // ---------------------------------------------------------------- pump (duckAt)
 void Seq3::duckAt(WebParam& g, double t, float a, float base) {
@@ -312,7 +406,8 @@ void Seq3::pump(double t) {
 void Seq3::trigger(int i, long long f, float vel, int note, float ls, int glide) {
     if (i < 6) {   // drums are built at schedule time (like the web), so a later closed hat can choke a scheduled open hat
         if (i == T_KICK && isMuted(i)) return;
-        drums_[i].triggerAt(vel, f);
+        if (i == T_HAT) for (auto& v : svox_) if (v.active && v.track == T_OHAT && !v.choked) { v.choked = true; v.chokeAt = f; }   // web hatChoke
+        if (dsmp_[i]) startSample(i, f, vel); else drums_[i].triggerAt(vel, f);
         if (i == T_KICK) pump((double)f / sr_);
         return;
     }
@@ -326,6 +421,14 @@ void Seq3::scheduleStep(long long) {
             auto next = [&](int i) { for (int k = 1; k <= 8; ++k) { int j = ((i < 0 ? -1 : i) + k + 8) % 8; if (P_.chain[j] >= 0) return j; } return first(); };
             chainIdx_ = songStart_ ? first() : next(chainIdx_); songStart_ = false; P_.pat = P_.chain[chainIdx_]; queued_ = -1;
         } else if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; }
+    }
+    if (step_ == 0) {   // web loopsBar(t, bar): every N bars each loop restarts on the downbeat
+        const long long f0 = (long long)std::llround(nextT_ * sr_);
+        for (int k = 0; k < 4; ++k) {
+            const LoopRt& R = loopRt_[k]; const LoopSlot& o = P_.loops[k];
+            if (!R.s || !o.on) continue; const int bars = std::max(1, R.bars); if (bar_ % bars) continue;
+            startLoop(k, R.s, f0, bars * 240.0 / P_.bpm, P_.bpm / std::max(1.f, R.srcBpm), o.vol * R.norm * .8f);
+        }
     }
     Noise& prob = prob_;
     const int ps = step_; const double sd = stepDur();
@@ -396,7 +499,7 @@ void Seq3::dispatch(long long blockStart, int frames) {
 }
 
 void Seq3::liveNote(int track, int note, float vel, bool on) {
-    if (track < 6) { if (on) drums_[track].trigger(vel, 0); return; }
+    if (track < 6) { if (on) trigger(track, frame_, vel, 60, 1, -1); return; }
     const int k = track - 6;
     if (P_.inst[k] == "bris") { if (on) bris_[k].noteOn(note, vel, 0, 1, 0.f); else bris_[k].noteOff(note, 0); return; }
     if (on) { const int iv[1] = {0}; mel_[k].trigger(vel, note, (float)(60.0 / P_.bpm / 4.0 * 24), iv, 1, 0, nullptr, true); }
@@ -412,6 +515,8 @@ void Seq3::render(float* L, float* R, int frames) {
         // instruments into their channels
         for (int i = 0; i < kTracks; ++i) { std::memset(chL_[i].data(), 0, sizeof(float) * n); std::memset(chR_[i].data(), 0, sizeof(float) * n); }
         for (int i = 0; i < 6; ++i) drums_[i].process(chL_[i].data(), n);
+        for (int i = 0; i < 6; ++i) if (dsmp_[i] || sampleTail_[i]) std::memcpy(chR_[i].data(), chL_[i].data(), sizeof(float) * n);
+        renderSamples(b0, n);
         for (int k = 0; k < 4; ++k) { mel_[k].process(chL_[6 + k].data(), chR_[6 + k].data(), n); bris_[k].process(chL_[6 + k].data(), chR_[6 + k].data(), n); }
         std::memset(busL_.data(), 0, sizeof(float) * n); std::memset(busR_.data(), 0, sizeof(float) * n);
         std::memset(dInL_.data(), 0, sizeof(float) * n); std::memset(dInR_.data(), 0, sizeof(float) * n);
@@ -420,7 +525,7 @@ void Seq3::render(float* L, float* R, int frames) {
         // channel strips
         for (int i = 0; i < kTracks; ++i) {
             Strip& s = strips_[i]; float* cl = chL_[i].data(); float* cr = chR_[i].data();
-            const bool stereoSrc = i >= 6 && (P_.inst[i - 6] == "pluck" || P_.inst[i - 6] == "super" || P_.inst[i - 6] == "bris");
+            const bool stereoSrc = (i >= 6 && (P_.inst[i - 6] == "pluck" || P_.inst[i - 6] == "super" || P_.inst[i - 6] == "bris")) || (i < 6 && (dsmp_[i] || sampleTail_[i]));
             if (!stereoSrc) for (int x = 0; x < n; ++x) cr[x] = cl[x];
             const float kn = 1.f / std::tanh(s.driveK);
             for (int x = 0; x < n; ++x) {
@@ -451,6 +556,7 @@ void Seq3::render(float* L, float* R, int frames) {
         }
         // duck (melodic) -> dry -> bus
         for (int x = 0; x < n; ++x) { const float d = duck_.valueAt((double)(b0 + x) / sr_); busL_[x] += tmpL_[x] * d; busR_[x] += tmpR_[x] * d; }
+        renderLoops(b0, n);   // web: loopBus -> dry
         // live throw (web: dry -> perf -> dIn + rIn)
         for (int x = 0; x < n; ++x) { const float g = perf_.next(); if (g > 1e-5f) { dInL_[x] += busL_[x] * g; dInR_[x] += busR_[x] * g; rInL_[x] += busL_[x] * g; rInR_[x] += busR_[x] * g; } }
         // echo: dIn -> delay -> bandpass 1800 -> feedback; return to bus

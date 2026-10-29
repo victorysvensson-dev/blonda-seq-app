@@ -55,6 +55,7 @@ final class EngineModel: NSObject, ObservableObject {
         guard link == nil else { return }
         do { try engine.startAudio() } catch { errorText = "Ljud: \(error.localizedDescription)" }
         if !loadSaved() { loadDemo() }
+        rebindSamples()
         revision += 1; paramRevision += 1   // redraw everything with the loaded project
         selColHex = trackHex(selectedTrack)
         engine.startMIDI()
@@ -84,6 +85,7 @@ final class EngineModel: NSObject, ObservableObject {
         guard let url = Bundle.main.url(forResource: "default_project", withExtension: "json"),
               let json = try? String(contentsOf: url, encoding: .utf8) else { return }
         do { try engine.loadProjectJSON(json) } catch { errorText = "Projekt: \(error.localizedDescription)" }
+        rebindSamples()
         revision += 1; paramRevision += 1; scheduleSave()
     }
     /// Debounced: writes one second after the last edit, off the main thread.
@@ -175,6 +177,114 @@ final class EngineModel: NSObject, ObservableObject {
     }
     func setMaster(_ i: Int, _ v: Float) { setParam(kMasterParams[i], 0, v) }
     func master(_ i: Int) -> Float { param(kMasterParams[i], 0) }
+    // MARK: samples · loops · library
+    static let sharedLibrary = SampleLibrary()
+    var library: SampleLibrary { Self.sharedLibrary }
+    enum LibTarget: Equatable { case loop(Int), drum(Int) }
+    @Published var libOpen = false
+    @Published var libTab = "hit"
+    @Published var libTarget: LibTarget?
+    @Published var libBusy = false
+    private var inEngine = Set<String>()
+    private var decoding = Set<String>()
+
+    func openLibrary(_ tab: String? = nil, target: LibTarget? = nil) {
+        if let t = tab { libTab = t }
+        libTarget = target
+        withAnimation(.easeOut(duration: 0.25)) { libOpen = true }
+    }
+    func closeLibrary() { withAnimation(.easeIn(duration: 0.2)) { libOpen = false }; libTarget = nil }
+
+    /// Decodes what is not in the engine yet (off the main thread), then calls back on the main thread.
+    func ensureLoaded(_ ids: [String], then done: @escaping () -> Void) {
+        let need = ids.filter { !$0.isEmpty && !inEngine.contains($0) && !decoding.contains($0) }.compactMap { library.item($0) }
+        if need.isEmpty { done(); return }
+        need.forEach { decoding.insert($0.id) }
+        let rate = engine.sampleRate, lib = library
+        DispatchQueue.global(qos: .userInitiated).async {
+            let decoded = need.map { ($0.id, SampleLibrary.decode(lib.url($0), rate: rate)) }
+            DispatchQueue.main.async {
+                for (id, a) in decoded {
+                    self.decoding.remove(id)
+                    guard let a = a else { continue }
+                    a.left.withUnsafeBufferPointer { l in a.right.withUnsafeBufferPointer { r in
+                        self.engine.addSample(id, left: Data(buffer: l), right: Data(buffer: r), frames: a.frames)
+                    } }
+                    self.inEngine.insert(id)
+                }
+                done()
+            }
+        }
+    }
+
+    /// Hands the engine the samples the project uses (after loading a project, importing or editing the library).
+    func rebindSamples() {
+        let ids = (0..<4).map { engine.loopSample($0) } + (0..<6).map { engine.drumSample($0) }
+        ensureLoaded(ids) { [weak self] in
+            guard let self = self else { return }
+            for k in 0..<4 {
+                if let m = self.library.item(self.engine.loopSample(k)) {
+                    let b = self.engine.loopBars(k)
+                    self.engine.bindLoop(k, sourceBPM: Float(m.bpm), bars: b > 0 ? b : m.bars, norm: m.norm)
+                } else { self.engine.bindLoop(k, sourceBPM: 120, bars: 1, norm: 1) }
+            }
+            for i in 0..<6 { self.engine.bindDrum(i, norm: self.library.item(self.engine.drumSample(i))?.norm ?? 1) }
+            self.revision += 1
+        }
+    }
+
+    func importFiles(_ urls: [URL]) {
+        guard !urls.isEmpty else { return }
+        libBusy = true
+        let rate = engine.sampleRate
+        DispatchQueue.global(qos: .userInitiated).async {
+            let r = self.library.importFiles(urls, rate: rate)
+            DispatchQueue.main.async {
+                self.libBusy = false
+                if let first = r.added.first { self.libTab = first.kind }
+                self.showToast(r.added.isEmpty ? "Kunde inte läsa filerna" : "\(r.added.count) ljud tillagda" + (r.bad > 0 ? " · \(r.bad) kunde inte läsas" : ""))
+            }
+        }
+    }
+
+    func assignLoop(_ m: SampleMeta, _ k: Int) {
+        engine.assignLoop(k, sample: m.id); scheduleSave(); rebindSamples()
+        showToast("\(m.name) → loop \(k + 1)" + (playing ? " · startar nästa varv" : " · tryck play"))
+        if libTarget != nil { closeLibrary() }
+    }
+    func assignHit(_ m: SampleMeta, _ i: Int) {
+        engine.assignDrum(i, sample: m.id)
+        setParam(kTrackParams[1], i, 0.5); setParam(kTrackParams[2], i, 1); setParam(kTrackParams[3], i, 0)
+        scheduleSave()
+        ensureLoaded([m.id]) { [weak self] in self?.engine.bindDrum(i, norm: m.norm); self?.hitPad(i); self?.revision += 1 }
+        showToast("\(m.name) → \(kTracks[i].name)")
+        if libTarget != nil { closeLibrary() }
+    }
+    func clearDrumSample(_ i: Int) { engine.assignDrum(i, sample: ""); engine.bindDrum(i, norm: 1); revision += 1; scheduleSave() }
+    func clearLoop(_ k: Int) { engine.assignLoop(k, sample: ""); engine.bindLoop(k, sourceBPM: 120, bars: 1, norm: 1); revision += 1; scheduleSave() }
+    func toggleLoop(_ k: Int) { engine.setLoop(k, on: !engine.loopOn(k)); revision += 1; scheduleSave() }
+    func setLoopVolume(_ k: Int, _ v: Float) { engine.setLoop(k, volume: v); revision += 1; scheduleSave() }
+    func loopMeta(_ k: Int) -> SampleMeta? { _ = revision; return library.item(engine.loopSample(k)) }
+    func loopOn(_ k: Int) -> Bool { _ = revision; return engine.loopOn(k) }
+    func loopVolume(_ k: Int) -> Float { _ = revision; return engine.loopVolume(k) }
+    func loopBarsEff(_ k: Int) -> Int { let b = engine.loopBars(k); return b > 0 ? b : (loopMeta(k)?.bars ?? 1) }
+    func drumSampleMeta(_ i: Int) -> SampleMeta? { _ = revision; return i < 6 ? library.item(engine.drumSample(i)) : nil }
+    /// 0…1 through the current pass of a loop, nil when it is not sounding (web: loopFrame).
+    func loopProgress(_ k: Int) -> Double? {
+        guard playing, step >= 0, let m = loopMeta(k), loopOn(k) else { return nil }
+        _ = m; let bars = max(1, loopBarsEff(k))
+        return (Double(bar % bars) * 16 + Double(step) + 0.5) / Double(bars * 16)
+    }
+    func setSampleBars(_ m: SampleMeta, _ bars: Int) { library.setBars(m.id, bars); rebindSamples() }
+    func deleteSample(_ m: SampleMeta) {
+        engine.removeSample(m.id); inEngine.remove(m.id); library.remove(m.id); revision += 1; scheduleSave()
+    }
+    func previewSample(_ m: SampleMeta) {
+        ensureLoaded([m.id]) { [weak self] in
+            guard let self = self else { return }
+            self.engine.previewSample(m.id, rate: m.kind == "loop" && self.playing ? self.engine.bpm / Float(m.bpm) : 1, gain: m.norm * 0.8)
+        }
+    }
     @Published var chainIdx = -1
     var songMode: Bool { _ = revision; return engine.songMode }
     func toggleSong() {

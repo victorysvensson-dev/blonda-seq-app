@@ -12,7 +12,7 @@ jobs:
       - name: Host / threading stress test
         run: cd Core/build && ./hosttest ../../App/Resources/default_project.json
       - name: Live-note release test (all engines)
-        run: cd Core/build && ./livetest ../../App/Resources/default_project.json && ./savetest ../../App/Resources/default_project.json && ./edittest ../../App/Resources/default_project.json
+        run: cd Core/build && ./livetest ../../App/Resources/default_project.json && ./savetest ../../App/Resources/default_project.json && ./edittest ../../App/Resources/default_project.json && ./samptest ../../App/Resources/default_project.json
       - name: Render 8 s of the default song
         run: cd Core/build && ./songrender ../../App/Resources/default_project.json 8 song.f32
   ios:

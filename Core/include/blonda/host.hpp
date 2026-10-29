@@ -6,6 +6,7 @@
 #include "dice.hpp"
 #include <array>
 #include <atomic>
+#include <unordered_map>
 #include <cmath>
 #include <cstring>
 #include <memory>
@@ -21,8 +22,8 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb };
-    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop };
+    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; };
 
     ~Host() { shutdown(); }
 
@@ -186,6 +187,40 @@ public:
 
     // the project in the web format (for saving); `base` keeps fields the app does not model
     std::string toJSON() const { return ui.toJSON(base_); }
+    // ---- samples (UI thread). The bank owns the audio; the engine only borrows pointers.
+    /// Adds (or replaces) a sample; L/R at `sampleRate`. Allocates here, never on the audio thread.
+    void addSample(const std::string& id, const float* L, const float* R, int frames) {
+        auto* d = new SampleData(); d->frames = std::max(0, frames); d->L.assign(L, L + d->frames); d->R.assign(R, R + d->frames);
+        auto it = bank_.find(id); if (it != bank_.end()) dropPtr(it->second);
+        bank_[id] = d;
+    }
+    bool hasSample(const std::string& id) const { return bank_.count(id) != 0; }
+    void removeSample(const std::string& id) {
+        auto it = bank_.find(id); if (it == bank_.end()) return;
+        dropPtr(it->second); bank_.erase(it);
+        for (auto& L : ui.loops) if (L.sid == id) L.sid.clear();
+        for (auto& k : ui.kit) if (k == "smp:" + id) k.clear();
+    }
+    // loops: the slot remembers the sample id; bindLoop hands the engine the pointer plus the tempo data
+    const LoopSlot& loop(int k) const { static LoopSlot none; return (k >= 0 && k < 4) ? ui.loops[k] : none; }
+    void assignLoop(int k, const std::string& sid) { if (k < 0 || k >= 4) return; ui.loops[k].sid = sid; ui.loops[k].on = true; ui.loops[k].bars = 0; Cmd c; c.type = LoopOn; c.a = k; c.b = 1; send(c); }
+    void bindLoop(int k, float srcBpm, int bars, float norm) {
+        if (k < 0 || k >= 4) return; auto it = bank_.find(ui.loops[k].sid);
+        Cmd c; c.type = Loop; c.a = k; c.b = bars; c.f = srcBpm; c.g = norm; c.smp = it == bank_.end() ? nullptr : it->second; send(c);
+    }
+    void setLoopOn(int k, bool on) { if (k < 0 || k >= 4) return; ui.loops[k].on = on; Cmd c; c.type = LoopOn; c.a = k; c.b = on ? 1 : 0; send(c); }
+    void setLoopVol(int k, float v) { if (k < 0 || k >= 4) return; ui.loops[k].vol = std::max(0.f, std::min(1.f, v)); Cmd c; c.type = LoopVol; c.a = k; c.f = ui.loops[k].vol; send(c); }
+    void setLoopBars(int k, int bars) { if (k >= 0 && k < 4) ui.loops[k].bars = std::max(0, bars); }
+    // one-shots on drum tracks (web: S.dk[id] = "smp:<id>")
+    std::string drumSample(int i) const { return (i >= 0 && i < 6 && ui.kit[i].rfind("smp:", 0) == 0) ? ui.kit[i].substr(4) : std::string(); }
+    void assignDrum(int i, const std::string& sid) { if (i >= 0 && i < 6) ui.kit[i] = sid.empty() ? std::string() : "smp:" + sid; }
+    void bindDrum(int i, float norm) {
+        if (i < 0 || i >= 6) return; const std::string sid = drumSample(i); auto it = sid.empty() ? bank_.end() : bank_.find(sid);
+        Cmd c; c.type = DrumSmp; c.a = i; c.f = norm; c.smp = it == bank_.end() ? nullptr : it->second; send(c);
+    }
+    void previewSample(const std::string& id, float rate, float gain) {
+        auto it = bank_.find(id); Cmd c; c.type = Preview; c.smp = it == bank_.end() ? nullptr : it->second; c.f = rate; c.g = gain; send(c);
+    }
     // plugins: echo / space / tape / crush (fields as Seq3::setFx)
     float fx(int f) const {
         const FxParams& X = ui.fx;
@@ -224,9 +259,13 @@ public:
     }
     int currentStep() const { return step_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playing_.load(std::memory_order_relaxed); }
-    void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; } }   // free what audio handed back
+    void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; delete c.smp; } }   // free what audio handed back
     // call after the audio callback can no longer run
-    void shutdown() { collect(); Cmd c; while (toAudio_.pop(c)) { delete c.roll; delete c.engine; } delete engine_; engine_ = nullptr; }
+    void shutdown() {
+        collect(); Cmd c; while (toAudio_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; if (c.type == Drop) delete c.smp; }
+        delete engine_; engine_ = nullptr;
+        for (auto& kv : bank_) delete kv.second; bank_.clear();
+    }
     Project ui;   // UI-thread mirror
 
     // ---- audio thread ----------------------------------------------------------------------------------------
@@ -249,6 +288,12 @@ public:
                 case Len: if (e) e->setLen(c.a, c.b); break;
                 case Inst: if (e) e->setInstrument(c.a, c.b); break;
                 case EngParam: if (e) e->setEngParam(c.a, c.b, c.c, c.f); break;
+                case Loop: if (e) e->setLoop(c.a, c.smp, c.f, c.b, c.g); break;
+                case LoopOn: if (e) e->setLoopOn(c.a, c.b != 0); break;
+                case LoopVol: if (e) e->setLoopVol(c.a, c.f); break;
+                case DrumSmp: if (e) e->setDrumSample(c.a, c.smp, c.f); break;
+                case Preview: if (e) e->previewSample(c.smp, c.f, c.g); break;
+                case Drop: { if (e) e->dropSample(c.smp); Cmd r; r.type = Drop; r.smp = c.smp; retire_.push(r); break; }
                 case Fx: if (e) e->setFx(c.a, c.f); break;
                 case Reverb: { Cmd r; r.type = Reverb; r.rev = e ? e->swapReverb(c.rev) : c.rev; if (r.rev) retire_.push(r); break; }
                 case Perform: if (e) e->setPerform(c.a != 0, c.f, c.g); break;
@@ -326,6 +371,8 @@ private:
     void send(const Cmd& c) { collect(); if (!toAudio_.push(c)) { delete c.roll; delete c.engine; } }
     Seq3* engine_ = nullptr;   // touched only by the audio thread (and shutdown)
     std::string base_;
+    std::unordered_map<std::string, SampleData*> bank_;
+    void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
     SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_;
     std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1};
 };

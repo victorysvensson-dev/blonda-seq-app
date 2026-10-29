@@ -44,46 +44,6 @@ struct Pad: View {
     }
 }
 
-// MARK: - Loops (visual for now)
-
-struct LoopsCard: View {
-    var body: some View {
-        Card(style: .tinted(T.loopGreen), title: [("Loopar · ", false), ("följer tempot", true)]) {
-            VStack(spacing: 6) {
-                ForEach(1...4, id: \.self) { n in LoopRow(n: n) }
-                HStack {
-                    Text("dra in ljudfiler i biblioteket").font(BFont.mono(9.5)).foregroundColor(T.mute)
-                    Spacer()
-                    Text("bibliotek").font(BFont.sans(12)).foregroundColor(T.fg).padding(.horizontal, 12).frame(height: 28).background(Capsule().fill(.white.opacity(0.08)))
-                }
-                .padding(.top, 2)
-            }
-        }
-    }
-}
-
-struct LoopRow: View {
-    let n: Int
-    var body: some View {
-        HStack(spacing: 10) {
-            Circle().fill(.white.opacity(0.07)).frame(width: 22, height: 22).overlay(Circle().fill(T.loopGreen.opacity(0.35)).frame(width: 9, height: 9))
-            HStack { Text("loop \(n) · välj").font(BFont.mono(9.5)).tracking(0.5).foregroundColor(T.mute); Spacer() }
-                .padding(.horizontal, 12).frame(height: 36)
-                .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.18), style: StrokeStyle(lineWidth: 1, dash: [3, 3])))
-            ZStack(alignment: .leading) {
-                Capsule().fill(.white.opacity(0.14)).frame(width: 70, height: 3)
-                Capsule().fill(T.loopGreen).frame(width: 56, height: 3)
-                Circle().fill(.white).frame(width: 12, height: 12).shadow(color: .black.opacity(0.4), radius: 4, y: 2).offset(x: 50)
-            }
-            .frame(width: 70)
-            SVGIcon(d: "M3 3l6 6M9 3 3 9", box: 12, size: 10, stroke: 1.4).foregroundColor(T.mute).frame(width: 22, height: 22)
-        }
-        .padding(.horizontal, 8).padding(.vertical, 7)
-        .background(RoundedRectangle(cornerRadius: 12).fill(.white.opacity(0.04)))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(.white.opacity(0.05), lineWidth: 1))
-    }
-}
-
 // MARK: - Mixer (faders follow the track level; drag to change)
 
 struct MixerCard: View {

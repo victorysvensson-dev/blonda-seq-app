@@ -1,0 +1,1 @@
+/usr/bin/c++ -fsanitize=address,undefined -fno-omit-frame-pointer -g CMakeFiles/samptest.dir/tools/samptest.cpp.o -o samptest  libblonda_core.a 

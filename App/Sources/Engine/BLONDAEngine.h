@@ -80,6 +80,24 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setFxValue:(NSInteger)field value:(float)v NS_SWIFT_NAME(setFxValue(_:value:));
 /// Builds the reverb for the current space size (allocates; call after the size settles).
 - (void)rebuildReverb;
+/// Samples. Audio is handed over at the engine's sample rate (see `sampleRate`).
+@property (nonatomic, readonly) double sampleRate;
+- (void)addSample:(NSString *)sid left:(NSData *)left right:(NSData *)right frames:(NSInteger)frames NS_SWIFT_NAME(addSample(_:left:right:frames:));
+- (BOOL)hasSample:(NSString *)sid NS_SWIFT_NAME(hasSample(_:));
+- (void)removeSample:(NSString *)sid NS_SWIFT_NAME(removeSample(_:));
+- (void)previewSample:(NSString *)sid rate:(float)rate gain:(float)gain NS_SWIFT_NAME(previewSample(_:rate:gain:));
+- (NSString *)loopSample:(NSInteger)k NS_SWIFT_NAME(loopSample(_:));
+- (BOOL)loopOn:(NSInteger)k NS_SWIFT_NAME(loopOn(_:));
+- (float)loopVolume:(NSInteger)k NS_SWIFT_NAME(loopVolume(_:));
+- (NSInteger)loopBars:(NSInteger)k NS_SWIFT_NAME(loopBars(_:));
+- (void)assignLoop:(NSInteger)k sample:(NSString *)sid NS_SWIFT_NAME(assignLoop(_:sample:));
+- (void)bindLoop:(NSInteger)k sourceBPM:(float)bpm bars:(NSInteger)bars norm:(float)norm NS_SWIFT_NAME(bindLoop(_:sourceBPM:bars:norm:));
+- (void)setLoop:(NSInteger)k on:(BOOL)on NS_SWIFT_NAME(setLoop(_:on:));
+- (void)setLoop:(NSInteger)k volume:(float)v NS_SWIFT_NAME(setLoop(_:volume:));
+- (void)setLoop:(NSInteger)k bars:(NSInteger)bars NS_SWIFT_NAME(setLoop(_:bars:));
+- (NSString *)drumSample:(NSInteger)track NS_SWIFT_NAME(drumSample(_:));
+- (void)assignDrum:(NSInteger)track sample:(NSString *)sid NS_SWIFT_NAME(assignDrum(_:sample:));
+- (void)bindDrum:(NSInteger)track norm:(float)norm NS_SWIFT_NAME(bindDrum(_:norm:));
 - (BOOL)undo;
 - (BOOL)redo;
 

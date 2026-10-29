@@ -8,6 +8,7 @@
 #include "dynamics.hpp"
 #include "engines.hpp"
 #include "json.hpp"
+#include "sampler.hpp"
 #include <array>
 #include <string>
 #include <vector>
@@ -28,6 +29,8 @@ struct FxParams { bool echoOn = true; float echoFb = .38f, echoTime = .75f; bool
 // parameter addressing for the UI / MIDI learn: group 0 = track sound, 1 = track FX, 2 = master
 enum ParamGroup { PG_TRACK, PG_TFX, PG_MASTER };
 
+struct LoopSlot { std::string sid; bool on = true; float vol = .8f; int bars = 0; };   // web: S.loops[k] (bars 0 = the sample's own)
+
 struct Project {
     float bpm = 118; int pat = 0; int solo = -1; std::array<int, kTracks> mute{};
     std::array<TrackParams, kTracks> params; std::array<TrackFX, kTracks> tfx; std::array<int, kTracks> len{};
@@ -36,6 +39,7 @@ struct Project {
     EngineParams eng; BrisParams bris; std::array<AnalogP, 4> synth;
     int chordKeys = 1, chordPad = 1; std::array<std::string, 6> kit{};
     bool song = false; std::array<int, 8> chain{{-1, -1, -1, -1, -1, -1, -1, -1}}; float glideT = .07f;
+    std::array<LoopSlot, 4> loops;
     Cell cells[kPatterns][kTracks][kSteps];
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
@@ -137,6 +141,13 @@ public:
     // a new reverb built off the audio thread (space size); returns the old one to free elsewhere (nullptr if built in)
     Convolver* swapReverb(Convolver* c);
     ~Seq3() { if (rev_ != &revA_) delete rev_; }
+    // samples (pointers owned by the Host; see sampler.hpp)
+    void setLoop(int k, const SampleData* smp, float srcBpm, int bars, float norm);
+    void setLoopOn(int k, bool on);
+    void setLoopVol(int k, float v);
+    void setDrumSample(int i, const SampleData* smp, float norm);   // nullptr: back to the synth kit
+    void previewSample(const SampleData* smp, float rate, float gain);   // nullptr stops the preview
+    void dropSample(const SampleData* smp);                          // nothing may play it after this returns
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
     void setChain(int k, int v) { if (k >= 0 && k < 8) P_.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; }
     int chainIndex() const { return P_.song && playing_ ? chainIdx_ : -1; }
@@ -186,6 +197,14 @@ private:
     std::vector<float> chL_[kTracks], chR_[kTracks];
     WebParam duck_{1.f};
     // master
+    struct LoopRt { const SampleData* s = nullptr; float srcBpm = 120; int bars = 1; float norm = 1; };
+    std::array<LoopRt, 4> loopRt_{}; std::array<const SampleData*, 6> dsmp_{}; std::array<float, 6> dnorm_{};
+    std::array<SampleVoice, 32> svox_{}; std::array<bool, 6> sampleTail_{}; std::array<LoopVoice, 16> lvox_{}; long long sAge_ = 0;
+    void startSample(int i, long long f, float vel);
+    void startLoop(int slot, const SampleData* s, long long f, double dur, double rate, float lv);
+    void killLoops(int slot);   // -1: every loop, -2: the preview
+    void renderSamples(long long b0, int n);
+    void renderLoops(long long b0, int n);
     Smoother perf_, rpDry_, rpWet_;
     std::vector<float> rpBuf_[2][2]; int rpPh_ = 0, rpCur_ = 0, rpCap_ = 1, rpW_ = 0, rpPos_ = 0, rpLen_ = 1, rpNew_ = 1, rpShort_ = 0; long long rpT_ = 0; bool rpLoop_ = false;
     std::vector<float> dlL_, dlR_; int dlW_ = 0; Smoother dlTime_, fb_, dRet_, rRet_, pre_, post_, tapeF_, crushWet_, crushDry_, lpF_, hpF_, out_;

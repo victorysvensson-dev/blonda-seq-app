@@ -148,6 +148,26 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (float)fxValue:(NSInteger)f { return _host->fx((int)f); }
 - (void)setFxValue:(NSInteger)f value:(float)v { _host->setFx((int)f, v); }
 - (void)rebuildReverb { _host->rebuildReverb(); _host->collect(); }
+- (double)sampleRate { return _host->sampleRate; }
+- (void)addSample:(NSString *)sid left:(NSData *)l right:(NSData *)r frames:(NSInteger)n {
+    const NSInteger m = MIN(n, (NSInteger)MIN(l.length, r.length) / (NSInteger)sizeof(float));
+    _host->addSample(sid.UTF8String, (const float *)l.bytes, (const float *)r.bytes, (int)m);
+}
+- (BOOL)hasSample:(NSString *)sid { return _host->hasSample(sid.UTF8String); }
+- (void)removeSample:(NSString *)sid { _host->removeSample(sid.UTF8String); _host->collect(); }
+- (void)previewSample:(NSString *)sid rate:(float)rate gain:(float)gain { _host->previewSample(sid.UTF8String, rate, gain); }
+- (NSString *)loopSample:(NSInteger)k { return [NSString stringWithUTF8String:_host->loop((int)k).sid.c_str()]; }
+- (BOOL)loopOn:(NSInteger)k { return _host->loop((int)k).on; }
+- (float)loopVolume:(NSInteger)k { return _host->loop((int)k).vol; }
+- (NSInteger)loopBars:(NSInteger)k { return _host->loop((int)k).bars; }
+- (void)assignLoop:(NSInteger)k sample:(NSString *)sid { _host->assignLoop((int)k, sid.UTF8String); }
+- (void)bindLoop:(NSInteger)k sourceBPM:(float)bpm bars:(NSInteger)bars norm:(float)norm { _host->bindLoop((int)k, bpm, (int)bars, norm); }
+- (void)setLoop:(NSInteger)k on:(BOOL)on { _host->setLoopOn((int)k, on); }
+- (void)setLoop:(NSInteger)k volume:(float)v { _host->setLoopVol((int)k, v); }
+- (void)setLoop:(NSInteger)k bars:(NSInteger)bars { _host->setLoopBars((int)k, (int)bars); }
+- (NSString *)drumSample:(NSInteger)t { return [NSString stringWithUTF8String:_host->drumSample((int)t).c_str()]; }
+- (void)assignDrum:(NSInteger)t sample:(NSString *)sid { _host->assignDrum((int)t, sid.UTF8String); }
+- (void)bindDrum:(NSInteger)t norm:(float)norm { _host->bindDrum((int)t, norm); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

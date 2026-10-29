@@ -54,7 +54,7 @@ struct Dock: View {
                 }
                 GButton(width: 64) { HStack(spacing: 6) { Circle().fill(.white.opacity(0.35)).frame(width: 7, height: 7); Text("midi") } }
                 GButton(width: 90) { HStack(spacing: 6) { SVGIcon(d: "M2 4.5a1 1 0 0 1 1-1h3.2l1.5 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z", size: 14); Text("projekt") } }
-                GButton(width: 65) { HStack(spacing: 6) { SVGIcon(d: "M3 2.5v11M6.5 2.5v11M10 3l3 10.2", size: 14); Text("lib") } }
+                GButton(width: 65, action: { model.openLibrary() }) { HStack(spacing: 6) { SVGIcon(d: "M3 2.5v11M6.5 2.5v11M10 3l3 10.2", size: 14); Text("lib") } }
             }
             .padding(.top, 12)
             RoundedRectangle(cornerRadius: 2).fill(.white.opacity(0.35)).frame(width: 38, height: 4).padding(.top, 8).padding(.bottom, 4)
