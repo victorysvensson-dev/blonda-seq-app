@@ -54,6 +54,8 @@ final class EngineModel: NSObject, ObservableObject {
         guard link == nil else { return }
         do { try engine.startAudio() } catch { errorText = "Ljud: \(error.localizedDescription)" }
         if !loadSaved() { loadDemo() }
+        revision += 1; paramRevision += 1   // redraw everything with the loaded project
+        selColHex = trackHex(selectedTrack)
         engine.startMIDI()
         engine.midiTrack = selectedTrack
         if ProcessInfo.processInfo.arguments.contains("-autoplay") {
