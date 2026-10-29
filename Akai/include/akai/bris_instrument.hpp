@@ -1,4 +1,4 @@
-// BLONDA AKAI — Bris (the Bree6-style 6-voice polysynth from BLONDA SEQ.3) as an Akai library instrument.
+// BLONDA AKAI — Bris (the 6-voice polysynth from BLONDA SEQ.3; the Bree6-style M4L BRIS is BRIS 6) as an Akai library instrument.
 // The sound engine is blonda::Bris from Core/ unchanged, so SEQ.3 and the MPC version always sound the same.
 #pragma once
 #include "akai/instrument.hpp"
@@ -9,8 +9,8 @@ namespace akai {
 class BrisInstrument final : public Instrument {
 public:
     BrisInstrument();
-    const char* name() const override { return "BRIS"; }
-    const char* description() const override { return "6-voice poly, Bree6-style"; }
+    const char* name() const override { return "BRIS SEQ"; }
+    const char* description() const override { return "SEQ.3 Bris 6-voice poly"; }
 
     void prepare(float sampleRate) override;
     void reset() override;

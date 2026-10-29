@@ -1,0 +1,16 @@
+{
+  "vform": ["SAW", "PULSE", "SAW+PLS"],
+  "lwave": ["TRI", "RAMP+", "RAMP-", "SQUARE", "S&H"],
+  "lage": ["POLY ST", "POLY", "MONO", "UNISON"],
+  "_short": {
+    "vform": "WAVE", "lfoosc": "LFO>OSC", "pw": "PW", "sub": "SUB", "lfopwm": "LFO>PWM",
+    "cut": "CUTOFF", "res": "RESO", "eg1": "EG1 MOD", "lfocut": "LFO>CUT", "kbd": "KEYTRK",
+    "lfoamp": "LFO>AMP", "kbda": "AMP KEY", "vol": "VOLUME", "lwave": "LFO WAV", "lrate": "LFO RTE",
+    "fa": "ATTACK", "fd": "DECAY", "fs": "SUSTAIN", "fr": "RELEASE",
+    "aa": "ATTACK", "ad": "DECAY", "asus": "SUSTAIN", "ar": "RELEASE",
+    "lage": "VOICES", "porta": "PORTA", "detune": "DETUNE", "uniint": "UNI INT",
+    "chorus": "CHORUS", "dtime": "TIME", "dfb": "FEEDBK", "dmix": "MIX",
+    "velf": "VEL>EG1", "vela": "VEL>AMP", "mwosc": "WHL>LFO", "mwcut": "WHL>CUT", "bendr": "BEND"
+  },
+  "_skip": ["hyll"]
+}

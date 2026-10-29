@@ -10,7 +10,7 @@ endif()
 set(CORE ${CMAKE_CURRENT_SOURCE_DIR}/../Core)
 add_library(akai_core STATIC
   ${CORE}/src/bris.cpp ${CORE}/src/drums.cpp ${CORE}/src/wg.cpp ${CORE}/src/engines.cpp ${CORE}/src/seq3.cpp
-  src/bris_instrument.cpp src/engine_instrument.cpp src/surface.cpp src/app.cpp src/gfx.cpp src/font5x7.cpp src/screen.cpp)
+  src/bris6_instrument.cpp src/bris_instrument.cpp src/engine_instrument.cpp src/surface.cpp src/app.cpp src/gfx.cpp src/font5x7.cpp src/screen.cpp)
 target_include_directories(akai_core PUBLIC include ${CORE}/include)
 target_compile_options(akai_core PRIVATE -O3 -Wall -Wextra)
 

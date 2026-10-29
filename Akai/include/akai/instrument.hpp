@@ -38,6 +38,9 @@ public:
     virtual void allNotesOff() = 0;
     virtual void pressure(float amount) { (void)amount; }    // 0..1, strongest pad / channel pressure
     virtual void setTempo(float bpm) { (void)bpm; }
+    // Optional MIDI control from an external keyboard: return true if the instrument used the CC itself.
+    virtual bool controlChange(int cc, int value) { (void)cc; (void)value; return false; }
+    virtual void pitchBend(float bend) { (void)bend; }        // -1..1
 
     // Adds the instrument's output into L/R (the host clears the buffers).
     virtual void process(float* L, float* R, int frames) = 0;

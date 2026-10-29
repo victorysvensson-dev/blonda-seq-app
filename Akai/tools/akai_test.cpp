@@ -3,6 +3,7 @@
 //   akai_test render <dir>    also write WAV demos of every instrument / Bris preset and screen shots (PPM)
 //   akai_test bench           CPU benchmark only
 #include "akai/app.hpp"
+#include "akai/bris6_instrument.hpp"
 #include "akai/bris_instrument.hpp"
 #include "akai/controls.hpp"
 #include "akai/engine_instrument.hpp"
@@ -61,6 +62,7 @@ template <class F> static void renderInst(Instrument& I, std::vector<float>& L, 
 }
 static std::vector<std::unique_ptr<Instrument>> allInstruments() {
     std::vector<std::unique_ptr<Instrument>> v;
+    v.emplace_back(new Bris6Instrument());
     v.emplace_back(new BrisInstrument());
     for (blonda::Eng e : {blonda::Eng::Mini, blonda::Eng::SH101, blonda::Eng::Acid, blonda::Eng::Analog, blonda::Eng::Super,
                           blonda::Eng::FM, blonda::Eng::Pluck, blonda::Eng::Chip, blonda::Eng::Sub})
@@ -167,6 +169,39 @@ static void testInstruments(const char* outDir) {
     }
 }
 
+// BRIS 6 voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
+static void testBris6Voices() {
+    std::puts("BRIS 6 voice modes");
+    Bris6Instrument I; I.prepare(kSR);
+    std::vector<float> L(kBlock), R(kBlock);
+    auto run = [&](double sec) { for (int i = 0; i < (int)(sec * kSR / kBlock); ++i) { std::fill(L.begin(), L.end(), 0.f); std::fill(R.begin(), R.end(), 0.f); I.process(L.data(), R.data(), kBlock); } };
+    int lage = -1; for (int i = 0; i < I.numParams(); ++i) if (std::string(I.param(i).id) == "lage") lage = i;
+    CHECK(lage >= 0, "lage parameter exists");
+    I.loadPreset(0);                                   // init: poly stereo
+    for (int n = 0; n < 8; ++n) I.noteOn(48 + n, .8f, 0);
+    run(0.3);
+    CHECK(I.activeVoices() == 6, "poly: 8 notes use all 6 voices (%d)", I.activeVoices());
+    I.allNotesOff(); run(8.0);
+    CHECK(I.activeVoices() == 0, "all notes off releases every voice (%d)", I.activeVoices());
+    I.set(lage, 2);                                    // mono
+    I.noteOn(48, .8f, 0); I.noteOn(52, .8f, 0); run(0.3);
+    CHECK(I.activeVoices() == 1, "mono: one voice (%d)", I.activeVoices());
+    I.noteOff(52, 0); run(0.3);
+    CHECK(I.activeVoices() == 1, "mono: falls back to the held note (%d)", I.activeVoices());
+    I.noteOff(48, 0); run(8.0);
+    CHECK(I.activeVoices() == 0, "mono: released (%d)", I.activeVoices());
+    I.set(lage, 3);                                    // unison
+    I.noteOn(48, .8f, 0); run(0.3);
+    CHECK(I.activeVoices() == 6, "unison: one note uses all 6 voices (%d)", I.activeVoices());
+    I.noteOff(48, 0); run(8.0);
+    I.set(lage, 1);                                    // poly + sustain pedal
+    I.controlChange(64, 127); I.noteOn(60, .8f, 0); run(0.2); I.noteOff(60, 0); run(2.0);
+    CHECK(I.activeVoices() == 1, "sustain pedal holds the note (%d)", I.activeVoices());
+    I.controlChange(64, 0); run(8.0);
+    CHECK(I.activeVoices() == 0, "pedal up releases (%d)", I.activeVoices());
+    CHECK(I.numPresets() == 90 && std::string(I.presetName(48)) == "Hello Bree6", "90 presets incl. Hello Bree6");
+}
+
 static void testApp(const char* outDir) {
     std::puts("app: pads, latch, pages, presets, instruments, lights");
     auto app = std::make_unique<App>(); App& A = *app; A.prepare(kSR);
@@ -181,7 +216,7 @@ static void testApp(const char* outDir) {
 
     A.handle(ev(mpcs::Event::PadDown, 0, 110));
     run(0.3);
-    CHECK(A.instrument().activeVoices() == 1, "pad plays one Bris voice (%d)", A.instrument().activeVoices());
+    CHECK(A.instrument().activeVoices() == 1, "pad plays one BRIS 6 voice (%d)", A.instrument().activeVoices());
     const int lit = A.surfaceOutput(out, sizeof out);
     CHECK(lit >= 12, "pressed pad lights up (%d bytes)", lit);
     A.handle(ev(mpcs::Event::PadUp, 0));
@@ -203,7 +238,7 @@ static void testApp(const char* outDir) {
 
     // pages, knobs, presets
     UiState s; A.snapshot(s);
-    CHECK(std::string(s.instrument) == "BRIS" && std::string(s.preset) == "Bris" && s.presetCount == 29, "starts on Bris / preset Bris");
+    CHECK(std::string(s.instrument) == "BRIS 6" && std::string(s.preset) == "init" && s.presetCount == 90, "starts on BRIS 6 / init (%s %s %d)", s.instrument, s.preset, s.presetCount);
     A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_B2)); A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_B2));
     A.snapshot(s);
     CHECK(std::string(s.page) == "FILTER", "B2 twice = FILTER page (%s)", s.page);
@@ -213,10 +248,10 @@ static void testApp(const char* outDir) {
     CHECK(std::string(s.paramName[0]) == "CUTOFF" && std::string(s.paramValue[0]) == "100", "K1 opens the cutoff fully (%s %s)", s.paramName[0], s.paramValue[0]);
     A.handle(ev(mpcs::Event::Encoder, mpcs::CC_ENCODER, 0, 2));
     A.snapshot(s);
-    CHECK(std::string(s.preset) == "Juno dröm", "encoder +2 = Juno dröm (%s)", s.preset);
+    CHECK(std::string(s.preset) == "PWM ARP", "encoder +2 = PWM ARP (%s)", s.preset);
     A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_SHIFT)); A.handle(ev(mpcs::Event::Encoder, mpcs::CC_ENCODER, 0, -1)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_SHIFT));
     A.snapshot(s);
-    CHECK(std::string(s.page) == "TONE", "SHIFT + encoder changes page (%s)", s.page);
+    CHECK(std::string(s.page) == "OSC MOD", "SHIFT + encoder changes page (%s)", s.page);
     A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PLUS));
     A.snapshot(s);
     CHECK(s.octave == 1 && std::string(s.toast) == "OCTAVE +1", "PLUS = octave up");
@@ -344,6 +379,7 @@ int main(int argc, char** argv) {
     testParser();
     testControls();
     testInstruments(outDir);
+    testBris6Voices();
     testApp(outDir);
     renderPresets(outDir);
     bench();

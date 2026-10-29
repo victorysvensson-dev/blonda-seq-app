@@ -1,4 +1,5 @@
 #include "akai/app.hpp"
+#include "akai/bris6_instrument.hpp"
 #include "akai/bris_instrument.hpp"
 #include "akai/engine_instrument.hpp"
 #include <cmath>
@@ -33,7 +34,8 @@ constexpr int kNumLit = (int)sizeof(kLitButtons);
 } // namespace
 
 App::App() {
-    inst_[nInst_++].reset(new BrisInstrument());
+    inst_[nInst_++].reset(new Bris6Instrument());   // BLONDA BRIS (M4L), the Bree6-style poly
+    inst_[nInst_++].reset(new BrisInstrument());    // the SEQ.3 Bris
     const blonda::Eng order[] = {blonda::Eng::Mini, blonda::Eng::SH101, blonda::Eng::Acid, blonda::Eng::Analog, blonda::Eng::Super,
                                  blonda::Eng::FM, blonda::Eng::Pluck, blonda::Eng::Chip, blonda::Eng::Sub};
     for (blonda::Eng e : order) inst_[nInst_++].reset(new EngineInstrument(e));
@@ -237,7 +239,9 @@ void App::handleMidi(const MidiMsg& m) {
     case 0x90: if (m.d2 > 0) { notePlay(m.d1, m.d2 / 127.f); break; } [[fallthrough]];
     case 0x80: instrument().noteOff(m.d1, 0); break;
     case 0xD0: instrument().pressure(m.d1 / 127.f); break;
+    case 0xE0: instrument().pitchBend((float)(((m.d2 << 7) | m.d1) - 8192) / 8192.f); break;
     case 0xB0:
+        if (instrument().controlChange(m.d1, m.d2)) { dirty(); break; }
         if (m.d1 == 123 || m.d1 == 120) instrument().allNotesOff();          // all notes / sound off
         else if (m.d1 == 1) { const int prm = instrument().faderParam(); if (prm >= 0) { instrument().setNorm(prm, m.d2 / 127.f); dirty(); } }   // mod wheel
         break;
