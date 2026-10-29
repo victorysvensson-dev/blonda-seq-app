@@ -41,7 +41,7 @@ const float* noiseBuffer(int& length, float sampleRate) {
 
 // ---------------------------------------------------------------- graph building
 void Graph::reset(float sampleRate) {
-    sr_ = sampleRate; n_ = 0; nOut_ = 0; decUsed_ = latUsed_ = dlUsed_ = ringUsed_ = histUsed_ = 0; active_ = false; end_ = 0;
+    sr_ = sampleRate; n_ = 0; nOut_ = 0; decUsed_ = latUsed_ = dlUsed_ = ringUsed_ = histUsed_ = 0; active_ = false; end_ = 0; master_.reset(1.f);
 }
 
 template <class NodeT> static void initNode(NodeT& nd, NodeType type) {
@@ -260,7 +260,10 @@ void Graph::tick(double t, float& l, float& r) {
     if (!active_) return;
     if (t >= end_) { active_ = false; return; }
     for (int k = 0; k < n_; ++k) processNode(nodes_[order_[k]], t);
-    for (int k = 0; k < nOut_; ++k) { const Node& o = nodes_[outs_[k]]; l += o.out[0]; r += o.out[1]; }
+    float gl = 0, gr = 0;
+    for (int k = 0; k < nOut_; ++k) { const Node& o = nodes_[outs_[k]]; gl += o.out[0]; gr += o.out[1]; }
+    if (!master_.empty()) { const float m = master_.valueAt(t); gl *= m; gr *= m; }
+    l += gl; r += gr;
 }
 
 } // namespace blonda::wg

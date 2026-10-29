@@ -84,7 +84,7 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
                 if ((word >> 28) != 0x2) continue;
                 const int status = (word >> 16) & 0xF0, d1 = (word >> 8) & 0x7F, d2 = word & 0x7F;
                 const int track = st->track.load(std::memory_order_relaxed);
-                if (status == 0x90 && d2 > 0) st->host->midiNoteOn(track, d1, d2 / 127.f);
+                if (status == 0x90 && d2 > 0) st->host->midiNoteOn(track, d1, .25f + .75f * d2 / 127.f);   // same curve as the web MIDI input
                 else if (status == 0x80 || (status == 0x90 && d2 == 0)) st->host->midiNoteOff(track, d1);
             }
             p = MIDIEventPacketNext(p);

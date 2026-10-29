@@ -41,13 +41,15 @@ public:
     TrackSound sound;
     float bpm = 120.f;
     // intervals = chord voicing (semitones from note), len = note length in seconds (sequencer step length * steps)
-    void trigger(float velocity, int note, float lenSec, const int* intervals, int nIntervals, int offset = 0, const Glide* glide = nullptr);
+    void trigger(float velocity, int note, float lenSec, const int* intervals, int nIntervals, int offset = 0, const Glide* glide = nullptr, bool live = false);
+    // release a held live note (keyboard / MIDI): fades with the engine's release time, like the web keyboard
+    void releaseLive(int note);
     void process(float* L, float* R, int frames);   // adds
     double now() const { return now_; }
 
 private:
     struct Live { int kind = -1; int nf = 0; int16_t f[3]{}; int16_t q = -1; float c0 = 0, q0 = 0, lc = 0, lq = 0; bool acc = false; };
-    struct Pending { int off; float vel; int note; float len; int iv[6]; int n; Glide gl; };
+    struct Pending { int off; float vel; int note; float len; int iv[6]; int n; Glide gl; bool live; };
     const Glide* gl_ = nullptr;
     void glide(wg::Param& prm, float f0, double t);
     int newGraph(double t);
@@ -56,7 +58,7 @@ private:
     float liveCents(const Live& L) const;
     float liveQ(const Live& L) const;
 
-    std::array<wg::Graph, kGraphs> g_; std::array<Live, kGraphs> live_{}; std::array<uint32_t, kGraphs> age_{}; uint32_t ages_ = 0;
+    std::array<wg::Graph, kGraphs> g_; std::array<Live, kGraphs> live_{}; std::array<int, kGraphs> liveNote_{}; int lastGraph_ = -1; std::array<uint32_t, kGraphs> age_{}; uint32_t ages_ = 0;
     float sr_ = 48000; double now_ = 0; bool bass_ = false; Noise rng_;
     std::array<Pending, 16> pend_{}; int nPend_ = 0;
     // mono state, like acidLast / subLast / shLast / mgLast

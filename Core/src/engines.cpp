@@ -19,14 +19,26 @@ void MelodicTrack::prepare(float sampleRate, bool isBassTrack) {
     sr_ = sampleRate; bass_ = isBassTrack; now_ = 0; rng_.seed(isBassTrack ? 0xBA55u : 0x1EADu);
     warmWaves(); int n; noiseBuffer(n, sampleRate);
     for (auto& g : g_) g.reset(sampleRate);
+    liveNote_.fill(-1);
 }
 
-void MelodicTrack::trigger(float velocity, int note, float lenSec, const int* iv, int n, int offset, const Glide* glide) {
+void MelodicTrack::trigger(float velocity, int note, float lenSec, const int* iv, int n, int offset, const Glide* glide, bool live) {
     if (nPend_ >= (int)pend_.size()) return;
     Pending& p = pend_[nPend_++]; p.off = offset; p.vel = velocity; p.note = note; p.len = lenSec; p.n = std::min(n, 6);
     for (int i = 0; i < p.n; ++i) p.iv[i] = iv[i];
     if (p.n == 0) { p.iv[0] = 0; p.n = 1; }
     if (glide) p.gl = *glide; else p.gl.n = 0;
+    p.live = live;
+}
+
+void MelodicTrack::releaseLive(int note) {
+    // web relTime(): super .35, pluck / chip .05, others .12 (setTargetAtTime(0, at, rel/3), freed after rel*4+.4)
+    const float rel = engine == Eng::Super ? .35f : (engine == Eng::Pluck || engine == Eng::Chip) ? .05f : .12f;
+    const double at = now_;
+    for (int i = 0; i < kGraphs; ++i)
+        if (liveNote_[i] == note && g_[i].active()) { g_[i].release(at, rel / 3.f, at + rel * 4.f + .4f); liveNote_[i] = -1; }
+    // a note-on queued in this same block that has not started yet: drop it
+    for (int k = 0; k < nPend_; ++k) if (pend_[k].live && pend_[k].note == note) pend_[k].live = false, pend_[k].len = std::min(pend_[k].len, .03f);
 }
 
 // glideOsc(): slide the parameter through the chain of tied notes
@@ -39,7 +51,7 @@ void MelodicTrack::glide(Param& prm, float f0, double t) {
 int MelodicTrack::newGraph(double t) {
     int slot = -1; uint32_t oa = UINT32_MAX;
     for (int i = 0; i < kGraphs; ++i) { if (!g_[i].active()) { slot = i; break; } if (age_[i] < oa) { oa = age_[i]; slot = i; } }
-    g_[slot].reset(sr_); age_[slot] = ++ages_; live_[slot] = Live{}; (void)t;
+    g_[slot].reset(sr_); age_[slot] = ++ages_; live_[slot] = Live{}; liveNote_[slot] = -1; lastGraph_ = slot; (void)t;
     return slot;
 }
 
@@ -83,7 +95,7 @@ void MelodicTrack::process(float* L, float* R, int frames) {
     const double dt = 1.0 / sr_;
     for (int i = 0; i < frames; ++i) {
         const double t = now_ + i * dt;
-        for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) { gl_ = pend_[k].gl.n ? &pend_[k].gl : nullptr; build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t); gl_ = nullptr; }
+        for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) { gl_ = pend_[k].gl.n ? &pend_[k].gl : nullptr; build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t); gl_ = nullptr; if (pend_[k].live && lastGraph_ >= 0) liveNote_[lastGraph_] = pend_[k].note; }
         float l = 0, r = 0;
         for (auto& g : g_) if (g.active()) g.tick(t, l, r);
         L[i] += l; R[i] += r;

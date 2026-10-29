@@ -270,7 +270,8 @@ void Seq3::liveNote(int track, int note, float vel, bool on) {
     if (track < 6) { if (on) drums_[track].trigger(vel, 0); return; }
     const int k = track - 6;
     if (P_.inst[k] == "bris") { if (on) bris_[k].noteOn(note, vel, 0, 1, 0.f); else bris_[k].noteOff(note, 0); return; }
-    if (on) { const int iv[1] = {0}; mel_[k].trigger(vel, note, (float)(60.0 / P_.bpm / 4.0 * 24), iv, 1, 0); }
+    if (on) { const int iv[1] = {0}; mel_[k].trigger(vel, note, (float)(60.0 / P_.bpm / 4.0 * 24), iv, 1, 0, nullptr, true); }
+    else mel_[k].releaseLive(note);
 }
 
 // ---------------------------------------------------------------- render

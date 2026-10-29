@@ -95,6 +95,12 @@ public:
     bool active() const { return active_; }
     double endTime() const { return end_; }
     void kill() { active_ = false; }
+    // live-note release: an outer gain (like the web keyboard's per-note GainNode) decays to 0 from `at`,
+    // and the graph is freed at `freeAt`
+    void release(double at, float tau, double freeAt) {
+        master_.cancelScheduledValues(at); master_.setValueAtTime(1.f, at); master_.setTargetAtTime(0.f, at, tau);
+        if (freeAt < end_) end_ = freeAt;
+    }
     // render one frame at absolute time t, adds stereo into l/r
     void tick(double t, float& l, float& r);
     int nodeCount() const { return n_; }
@@ -123,7 +129,7 @@ private:
 
     std::array<Node, kNodes> nodes_; int n_ = 0;
     std::array<int16_t, kNodes> order_{}; std::array<int16_t, 16> outs_{}; int nOut_ = 0;
-    float sr_ = 48000; double end_ = 0; bool active_ = false;
+    float sr_ = 48000; double end_ = 0; bool active_ = false; WebParamN<6> master_{1.f};
     // pooled state memory
     std::array<HalfbandDecimator, 24> decPool_; int decUsed_ = 0;
     std::array<float, 8 * 256> latPool_{}; int latUsed_ = 0;

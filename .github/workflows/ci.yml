@@ -11,6 +11,8 @@ jobs:
         run: cmake -S Core -B Core/build -DCMAKE_BUILD_TYPE=Release && cmake --build Core/build -j4
       - name: Host / threading stress test
         run: cd Core/build && ./hosttest ../../App/Resources/default_project.json
+      - name: Live-note release test (all engines)
+        run: cd Core/build && ./livetest ../../App/Resources/default_project.json
       - name: Render 8 s of the default song
         run: cd Core/build && ./songrender ../../App/Resources/default_project.json 8 song.f32
   ios:
