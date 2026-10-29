@@ -176,8 +176,10 @@ struct EngBackground: View {
 
 struct SynthCard: View {
     @EnvironmentObject var model: EngineModel
-    @State private var synT = 6
+    @State private var synT: Int
     @State private var swap = false
+    private let pinned: Bool
+    init(initialTrack: Int? = nil) { _synT = State(initialValue: initialTrack ?? 6); pinned = initialTrack != nil }
 
     var body: some View {
         let inst = model.instrument(synT)
@@ -202,12 +204,12 @@ struct SynthCard: View {
         .compositingGroup()
         .shadow(color: .black.opacity(0.55), radius: 25, y: 13)
         .animation(.easeInOut(duration: 0.25), value: inst)
-        .onChange(of: model.selectedTrack) { _, t in if t >= 6 { synT = t } }
+        .onChange(of: model.selectedTrack) { _, t in if t >= 6 && !pinned { synT = t } }
         .onChange(of: inst) { _, _ in
             swap = true   // web: .syn-in.swap — blur in the new engine
             DispatchQueue.main.async { withAnimation(.timingCurve(0.2, 0.8, 0.2, 1, duration: 0.6)) { swap = false } }
         }
-        .onAppear { if model.selectedTrack >= 6 { synT = model.selectedTrack } }
+        .onAppear { if model.selectedTrack >= 6 && !pinned { synT = model.selectedTrack } }
     }
 
     private func caption(_ th: EngTheme, _ inst: String) -> some View {

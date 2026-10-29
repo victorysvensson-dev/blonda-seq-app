@@ -66,6 +66,11 @@ jobs:
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/ipad.png || echo "screenshot failed"
           sleep 1
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/ipad2.png || true
+          for g in 0 1 2 3; do
+            T 30 xcrun simctl terminate $UDID se.blonda.seq || true
+            T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -gallery $g || true; sleep 5
+            T 60 xcrun simctl io $UDID screenshot ../ci-shots/synth_$g.png || true
+          done
           date
           T 60 xcrun simctl spawn $UDID log show --last 2m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -v UIFocus | tail -60 > ../ci-shots/log.txt || true
           T 30 xcrun simctl shutdown $UDID || true
