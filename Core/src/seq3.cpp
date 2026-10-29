@@ -105,6 +105,7 @@ std::string Project::toJSON(const std::string& base) const {
     json::Value S; if (!json::parse(base, S) || S.type != json::Value::Object) S = json::Value::object();
     using V = json::Value;
     S.at("bpm") = V::number(std::round(bpm * 100) / 100); S.at("pat") = V::number(pat); S.at("solo") = V::number(solo);
+    S.at("song") = V::number(song ? 1 : 0); for (int k = 0; k < 8; ++k) S.at("chain").at((size_t)k) = V::number(chain[k]);
     for (int i = 0; i < kTracks; ++i) {
         S.at("mute").at((size_t)i) = V::number(mute[i]);
         if (len[i] >= 1 && len[i] < 16) S.at("len").at(kTrackIds[i]) = V::number(len[i]); else if (S.has("len")) S.at("len").erase(kTrackIds[i]);
@@ -177,6 +178,8 @@ void Seq3::prepare(float sampleRate) {
     for (int i = 0; i < kTracks; ++i) { chL_[i].assign(maxB, 0); chR_[i].assign(maxB, 0); strips_[i].comp.prepare(sr_); }
     for (auto* v : {&busL_, &busR_, &dInL_, &dInR_, &rInL_, &rInR_, &tmpL_, &tmpR_}) v->assign(maxB, 0);
     dlL_.assign((size_t)(2.5 * sr_), 0); dlR_.assign((size_t)(2.5 * sr_), 0); dlW_ = 0;
+    for (auto& b : rpBuf_) for (auto& c : b) c.assign((size_t)(4.1 * sr_), 0.f);
+    perf_.setTau(.03f, sr_); perf_.snap(0); rpDry_.setTau(.0025f, sr_); rpDry_.snap(1); rpWet_.setTau(.0025f, sr_); rpWet_.snap(0); rpPh_ = 0; rpLoop_ = false;
     comp_.prepare(sr_); lim_.prepare(sr_);
     evq_.reserve(1024); glides_.resize(64);
     load(P_);
@@ -229,6 +232,33 @@ void Seq3::applyParams() {
         M.params = &P_.eng; M.analog = &P_.synth[k]; M.bpm = P_.bpm; const TrackParams& tp = P_.params[6 + k]; M.sound = {tp.tone, tp.tune, tp.decay};
         Bris& B = bris_[k]; B.params = P_.bris; B.bpm = P_.bpm; B.trackTone = tp.tone; B.trackTune = tp.tune; B.trackDecay = tp.decay;
     }
+}
+
+void Seq3::setPerform(bool on, float f, float fx) {
+    const MasterParams& m = P_.master; const FxParams& X = P_.fx;
+    if (!on) {   // web xyEnd: perf 0 (.12), feedback back (.4), filters and returns back to the master settings
+        perf_.setTau(.12f, sr_); perf_.target = 0; applyParams(); fb_.setTau(.4f, sr_); fb_.target = X.echoFb; return;
+    }
+    f = std::max(-1.f, std::min(1.f, f)); fx = std::max(0.f, std::min(1.f, fx));
+    lpF_.setTau(.02f, sr_); lpF_.target = f < 0 ? 200.f * std::pow(100.f, 1 + f) : 20000.f;
+    hpF_.setTau(.02f, sr_); hpF_.target = f > 0 ? 20.f * std::pow(100.f, f * 1.15f) : 20.f;
+    perf_.setTau(.03f, sr_); perf_.target = fx * .45f;
+    fb_.setTau(.05f, sr_); fb_.target = std::min(.85f, X.echoFb + fx * .42f);
+    dRet_.setTau(.05f, sr_); dRet_.target = m.echo + fx * .45f;
+    rRet_.setTau(.05f, sr_); rRet_.target = m.space * .7f + fx * .55f;
+}
+
+void Seq3::repeat(int mode, int div) {
+    static const double kBeats[9] = {2, 1, .5, 1. / 3, .25, 1. / 6, .125, 1. / 12, .0625};
+    if (mode == 0) { if (rpPh_) { rpPh_ = 0; rpDry_.target = 1; rpWet_.target = 0; } return; }
+    div = std::max(0, std::min(8, div));
+    const int len = std::max(16, std::min((int)rpBuf_[0][0].size() - 1, (int)std::lround(kBeats[div] * 60.0 / P_.bpm * sr_)));
+    if (mode == 2 && rpPh_ == 3 && len < rpLen_) { rpShort_ = len; return; }   // shorter: switch at the next loop boundary
+    // next 16th on the grid (or right away when stopped), then capture `len` frames into the free buffer
+    const double now = (double)frame_ / sr_ + .02, sd = 60.0 / P_.bpm / 4;
+    double T = now;
+    if (playing_) { T = nextT_ - std::floor((nextT_ - now) / sd) * sd; if (T < now) T += sd; }
+    rpT_ = (long long)std::llround(T * sr_); rpNew_ = len; rpShort_ = 0; rpPh_ = 1;
 }
 
 void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); }
@@ -388,6 +418,8 @@ void Seq3::render(float* L, float* R, int frames) {
         }
         // duck (melodic) -> dry -> bus
         for (int x = 0; x < n; ++x) { const float d = duck_.valueAt((double)(b0 + x) / sr_); busL_[x] += tmpL_[x] * d; busR_[x] += tmpR_[x] * d; }
+        // live throw (web: dry -> perf -> dIn + rIn)
+        for (int x = 0; x < n; ++x) { const float g = perf_.next(); if (g > 1e-5f) { dInL_[x] += busL_[x] * g; dInR_[x] += busR_[x] * g; rInL_[x] += busL_[x] * g; rInR_[x] += busR_[x] * g; } }
         // echo: dIn -> delay -> bandpass 1800 -> feedback; return to bus
         const int DL = (int)dlL_.size();
         for (int x = 0; x < n; ++x) {
@@ -404,6 +436,26 @@ void Seq3::render(float* L, float* R, int frames) {
         for (int x = 0; x < n; ++x) { const float g = rRet_.next(); busL_[x] += tmpL_[x] * g; busR_[x] += tmpR_[x] * g; }
         if (dbgInBus) for (int x = 0; x < n; ++x) { busL_[x] = dbgInPos + 1 < dbgInBus->size() ? (*dbgInBus)[dbgInPos] : 0.f; busR_[x] = dbgInPos + 1 < dbgInBus->size() ? (*dbgInBus)[dbgInPos + 1] : 0.f; dbgInPos += 2; }
         if (dbgBus) for (int x = 0; x < n; ++x) { dbgBus->push_back(busL_[x]); dbgBus->push_back(busR_[x]); }
+        // beat repeat (web: bus -> rpDry -> pre, bus -> rpIn -> delay(fb) -> rpWet -> pre)
+        if (rpPh_ || rpLoop_ || rpWet_.target > 0 || rpDry_.v < .9999f) {
+            for (int x = 0; x < n; ++x) {
+                const long long f = (long long)(b0 + x);
+                if (rpPh_ == 1 && f >= rpT_) { rpPh_ = 2; rpW_ = 0; rpCap_ = rpLoop_ ? 1 - rpCur_ : rpCap_; rpDry_.target = 1; rpWet_.target = 0; }
+                const float inL = busL_[x], inR = busR_[x];
+                if (rpPh_ == 2) {
+                    rpBuf_[rpCap_][0][rpW_] = inL; rpBuf_[rpCap_][1][rpW_] = inR;
+                    if (++rpW_ >= rpNew_) { rpPh_ = 3; rpCur_ = rpCap_; rpCap_ = 1 - rpCur_; rpLen_ = rpNew_; rpPos_ = 0; rpLoop_ = true; rpDry_.target = 0; rpWet_.target = 1; }
+                }
+                float lL = 0, lR = 0;
+                if (rpLoop_) {
+                    lL = rpBuf_[rpCur_][0][rpPos_]; lR = rpBuf_[rpCur_][1][rpPos_];
+                    if (++rpPos_ >= rpLen_) { rpPos_ = 0; if (rpShort_) { rpLen_ = rpShort_; rpShort_ = 0; } }
+                }
+                const float d = rpDry_.next(), w = rpWet_.next();
+                if (rpLoop_ && rpPh_ != 3 && w < 1e-4f && rpWet_.target == 0) rpLoop_ = false;
+                busL_[x] = inL * d + lL * w; busR_[x] = inR * d + lR * w;
+            }
+        }
         // master: pre -> tape drive (2x shaper, 128 latency) -> post -> tape LP -> crush -> filter -> comp -> limiter -> out
         const float dr = P_.fx.tapeOn ? P_.master.drive : 0.f, k = 1 + dr * 6, kn = 1.f / std::tanh(k);
         for (int x = 0; x < n; ++x) {

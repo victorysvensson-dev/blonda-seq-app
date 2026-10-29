@@ -21,8 +21,8 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt };
-    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat };
+    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; };
 
     ~Host() { shutdown(); }
 
@@ -186,6 +186,22 @@ public:
 
     // the project in the web format (for saving); `base` keeps fields the app does not model
     std::string toJSON() const { return ui.toJSON(base_); }
+    // live: XY performance (f −1..1 lowpass/highpass, fx 0..1 echo + space) and beat repeat (mode 1 engage, 2 change, 0 release)
+    void perform(bool on, float f, float fx) { Cmd c; c.type = Perform; c.a = on ? 1 : 0; c.f = f; c.g = fx; send(c); }
+    void beatRepeat(int mode, int div) { Cmd c; c.type = Repeat; c.a = mode; c.b = div; send(c); }
+    // song mode: the chain of patterns (A–D or empty) played bar by bar
+    bool song() const { return ui.song; }
+    void setSong(bool on) { ui.song = on; Cmd c; c.type = Song; c.a = on ? 1 : 0; send(c); }
+    int chain(int k) const { return (k >= 0 && k < 8) ? ui.chain[k] : -1; }
+    void setChain(int k, int v) { if (k < 0 || k >= 8) return; ui.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; Cmd c; c.type = Chain; c.a = k; c.b = ui.chain[k]; send(c); }
+    int chainIndex() const { return chainIdx_.load(std::memory_order_relaxed); }
+    /// UI thread, once per frame: in song mode the pattern on screen follows the one playing. Returns true when it changed.
+    bool followSong() {
+        if (!ui.song || !isPlaying()) return false;
+        const int p = audioPat_.load(std::memory_order_relaxed);
+        if (p == ui.pat || p < 0 || p >= kPatterns) return false;
+        ui.pat = p; return true;
+    }
     int currentStep() const { return step_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playing_.load(std::memory_order_relaxed); }
     void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; } }   // free what audio handed back
@@ -213,12 +229,17 @@ public:
                 case Len: if (e) e->setLen(c.a, c.b); break;
                 case Inst: if (e) e->setInstrument(c.a, c.b); break;
                 case EngParam: if (e) e->setEngParam(c.a, c.b, c.c, c.f); break;
+                case Perform: if (e) e->setPerform(c.a != 0, c.f, c.g); break;
+                case Repeat: if (e) e->repeat(c.a, c.b); break;
+                case Song: if (e) e->setSong(c.a != 0); break;
+                case Chain: if (e) e->setChain(c.a, c.b); break;
                 case EngOpt: if (e) e->setEngOpt(c.a, c.b, c.c, (int)c.f); break;
             }
         }
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }
         engine_->render(L, R, frames);
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
+        audioPat_.store(engine_->pattern(), std::memory_order_relaxed); chainIdx_.store(engine_->chainIndex(), std::memory_order_relaxed);
     }
 
 private:
@@ -284,7 +305,7 @@ private:
     Seq3* engine_ = nullptr;   // touched only by the audio thread (and shutdown)
     std::string base_;
     SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_;
-    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false};
+    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1};
 };
 
 } // namespace blonda

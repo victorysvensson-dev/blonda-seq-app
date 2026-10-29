@@ -63,6 +63,18 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setEngineParam:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track value:(float)v NS_SWIFT_NAME(setEngineParam(_:engine:track:value:));
 - (NSInteger)engineOption:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track NS_SWIFT_NAME(engineOption(_:engine:track:));
 - (void)setEngineOption:(NSInteger)field engine:(NSInteger)e track:(NSInteger)track value:(NSInteger)v NS_SWIFT_NAME(setEngineOption(_:engine:track:value:));
+/// Song mode: a chain of 8 slots (pattern 0–3 or -1 = empty) played one bar each.
+@property (nonatomic) BOOL songMode;
+- (NSInteger)chainSlot:(NSInteger)k NS_SWIFT_NAME(chainSlot(_:));
+- (void)setChainSlot:(NSInteger)k pattern:(NSInteger)p NS_SWIFT_NAME(setChainSlot(_:pattern:));
+/// The slot playing right now (-1 when song mode is off or stopped).
+@property (nonatomic, readonly) NSInteger chainIndex;
+/// Call once per frame: in song mode the pattern on screen follows the playing one. YES when it changed.
+- (BOOL)followSong;
+/// Live: XY performance (filter −1..1 = lowpass…highpass, fx 0..1 = echo + space throw); on = NO releases it.
+- (void)performActive:(BOOL)on filter:(float)f fx:(float)fx NS_SWIFT_NAME(perform(active:filter:fx:));
+/// Beat repeat: mode 1 engage, 2 change length, 0 release; division 0..8 = 1/2 1/4 1/8 1/8T 1/16 1/16T 1/32 1/32T 1/64.
+- (void)beatRepeat:(NSInteger)mode division:(NSInteger)div NS_SWIFT_NAME(beatRepeat(_:division:));
 - (BOOL)undo;
 - (BOOL)redo;
 

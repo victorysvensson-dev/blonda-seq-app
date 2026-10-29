@@ -100,6 +100,8 @@ final class EngineModel: NSObject, ObservableObject {
 
     @objc private func tick() {
         let now = CACurrentMediaTime(), dt = lastTick == 0 ? 0 : min(0.033, now - lastTick); lastTick = now
+        if engine.followSong() { revision += 1 }
+        let ci = engine.chainIndex; if ci != chainIdx { chainIdx = ci }
         let s = engine.currentStep, p = engine.isPlaying
         if p != playing { playing = p; if p { playStart = now; bar = 0; globalStep = 0 } }
         if s != step {
@@ -161,6 +163,15 @@ final class EngineModel: NSObject, ObservableObject {
     var soloTrack: Int { _ = revision; return engine.soloTrack }
     func copyPattern() { edit { engine.copyPatternToNext() }; showToast("Mönster \(["A", "B", "C", "D"][pattern]) kopierat till \(["A", "B", "C", "D"][(pattern + 1) % 4])") }
     // ---- dice + toasts
+    @Published var chainIdx = -1
+    var songMode: Bool { _ = revision; return engine.songMode }
+    func toggleSong() {
+        edit { engine.songMode = !engine.songMode }
+        showToast(engine.songMode ? "Låtläge på · kedjan startar vid nästa takt" : "Låtläge av")
+    }
+    func chainSlot(_ k: Int) -> Int { _ = revision; return engine.chainSlot(k) }
+    func setChainSlot(_ k: Int, _ v: Int) { edit { engine.setChainSlot(k, pattern: v) } }
+    func cycleChain(_ k: Int) { let v = engine.chainSlot(k); edit { engine.setChainSlot(k, pattern: v >= 3 ? -1 : v + 1) } }
     @Published var dieFace = 3
     @Published var rolling = false
     @Published var toast: String?

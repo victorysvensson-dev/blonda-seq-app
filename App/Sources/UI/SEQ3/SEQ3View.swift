@@ -26,7 +26,7 @@ struct SEQ3View: View {
                             ], base: 0)
                             Hinge().frame(width: 26)
                             column(width: unit * (wide ? 1.2 : 1.1), cards: [
-                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(MixerCard()),
+                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(MixerCard()),
                             ], base: 1)
                         }
                     }

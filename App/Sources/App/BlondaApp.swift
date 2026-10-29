@@ -49,7 +49,14 @@ struct SynthGallery: View {
     var body: some View {
         ZStack(alignment: .top) {
             LivingBackground()
-            if ready {
+            if ready && page >= Self.pages.count {
+                HStack(alignment: .top, spacing: 18) {
+                    LiveCard().frame(width: 440)
+                    VStack(spacing: 14) { SongCard(); MixerCard() }.frame(width: 440)
+                    SynthCard(initialTrack: 9).frame(width: 420)
+                }
+                .padding(22)
+            } else if ready {
                 HStack(alignment: .top, spacing: 18) {
                     ForEach(0..<3, id: \.self) { k in SynthCard(initialTrack: 6 + k) }
                 }
@@ -59,8 +66,8 @@ struct SynthGallery: View {
         .background(T.bg)
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                let p = Self.pages[max(0, min(Self.pages.count - 1, page))]
-                for k in 0..<3 { model.setInstrument(p[k], 6 + k) }
+                if page < Self.pages.count { let p = Self.pages[max(0, page)]; for k in 0..<3 { model.setInstrument(p[k], 6 + k) } }
+                else { model.setChainSlot(0, 0); model.setChainSlot(1, 0); model.setChainSlot(2, 1); model.setChainSlot(3, 2); model.toggleSong(); model.togglePlay() }
                 ready = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { for k in 0..<3 { model.preview(6 + k) } }
             }

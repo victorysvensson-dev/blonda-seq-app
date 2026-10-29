@@ -137,6 +137,14 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)setEngineParam:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t value:(float)v { if (t >= 6 && t <= 9) _host->setEngParam((int)t - 6, (int)e, (int)f, v); }
 - (NSInteger)engineOption:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->engOption((int)t - 6, (int)e, (int)f) : 0; }
 - (void)setEngineOption:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t value:(NSInteger)v { if (t >= 6 && t <= 9) _host->setEngOption((int)t - 6, (int)e, (int)f, (int)v); }
+- (BOOL)songMode { return _host->song(); }
+- (void)setSongMode:(BOOL)on { _host->setSong(on); }
+- (NSInteger)chainSlot:(NSInteger)k { return _host->chain((int)k); }
+- (void)setChainSlot:(NSInteger)k pattern:(NSInteger)p { _host->setChain((int)k, (int)p); }
+- (NSInteger)chainIndex { return _host->chainIndex(); }
+- (BOOL)followSong { return _host->followSong(); }
+- (void)performActive:(BOOL)on filter:(float)f fx:(float)fx { _host->perform(on, f, fx); }
+- (void)beatRepeat:(NSInteger)mode division:(NSInteger)div { _host->beatRepeat((int)mode, (int)div); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

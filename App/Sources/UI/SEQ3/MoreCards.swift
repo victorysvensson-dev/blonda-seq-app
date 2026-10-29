@@ -142,21 +142,40 @@ struct Strip: View {
 // MARK: - Song chain (visual)
 
 struct SongCard: View {
+    @EnvironmentObject var model: EngineModel
     var body: some View {
-        Card(style: .glass, title: [("Låt · ", false), ("av", true)], extra: AnyView(
-            Text("låtläge").font(BFont.mono(9.5, 500)).foregroundColor(T.fg).padding(.horizontal, 10).frame(height: 22).background(Capsule().fill(.white.opacity(0.12)))
+        let on = model.songMode
+        let filled = (0..<8).filter { model.chainSlot($0) >= 0 }.count
+        let read = on ? (model.playing && model.chainIdx >= 0 ? "del \(model.chainIdx + 1) av \(filled)" : "på") : "av"
+        Card(style: .glass, title: [("Låt · ", false), (read, true)], extra: AnyView(
+            Button { model.toggleSong() } label: {
+                Text("Låtläge").font(BFont.sans(10, 500)).foregroundColor(on ? T.ink : T.fg)
+                    .padding(.horizontal, 10).frame(height: 26)
+                    .background(Capsule().fill(on ? T.fg : Color.white.opacity(0.12)))
+            }
+            .buttonStyle(PressScale())
         )) {
             HStack(spacing: 6) {
-                ForEach(Array(["A", "A", "B", "B", "A", "A", "C", "D"].enumerated()), id: \.offset) { k, p in
-                    ZStack(alignment: .topLeading) {
-                        RoundedRectangle(cornerRadius: 8).fill(.white.opacity(0.06))
-                        RoundedRectangle(cornerRadius: 8).strokeBorder(.white.opacity(0.12), lineWidth: 1)
-                        Text("\(k + 1)").font(BFont.mono(8)).foregroundColor(T.mute).padding(6)
-                        DotMatrixText(text: p, height: 16, color: T.fg.opacity(0.8)).padding(6).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
-                    }
-                    .frame(height: 64)
-                }
+                ForEach(0..<8, id: \.self) { k in slot(k, on) }
             }
         }
+    }
+
+    private func slot(_ k: Int, _ on: Bool) -> some View {
+        let v = model.chainSlot(k)
+        let cur = on && model.playing && k == model.chainIdx
+        let ink: Color = cur ? Color(hex: 0x111211) : (v < 0 ? T.mute : T.fg)
+        return Button { model.cycleChain(k) } label: {
+            ZStack(alignment: .topLeading) {
+                RoundedRectangle(cornerRadius: 8).fill(cur ? T.yellow : Color.white.opacity(0.06))
+                RoundedRectangle(cornerRadius: 8).strokeBorder(cur ? Color.clear : Color.white.opacity(v < 0 ? 0.12 : 0.14), lineWidth: 1)
+                Text("\(k + 1)").font(BFont.mono(9, 500)).foregroundColor(ink.opacity(0.6)).padding(6)
+                DotMatrixText(text: v < 0 ? "+" : ["A", "B", "C", "D"][v], height: 16, color: ink.opacity(v < 0 ? 0.6 : 0.9))
+                    .padding(6).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
+            }
+            .aspectRatio(1 / 0.9, contentMode: .fit)
+            .animation(.easeOut(duration: 0.15), value: cur)
+        }
+        .buttonStyle(PressScale())
     }
 }

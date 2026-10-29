@@ -212,15 +212,27 @@ struct SynthCard: View {
         .onAppear { if model.selectedTrack >= 6 && !pinned { synT = model.selectedTrack } }
     }
 
+    /// Caption: title + track segment + buttons. Like the web version the title gives way when the card is narrow.
     private func caption(_ th: EngTheme, _ inst: String) -> some View {
+        ViewThatFits(in: .horizontal) {
+            captionRow(th, inst, title: true)
+            captionRow(th, inst, title: false)
+        }
+        .frame(height: 26)
+        .padding(.bottom, 10)
+    }
+
+    private func captionRow(_ th: EngTheme, _ inst: String, title: Bool) -> some View {
         HStack(spacing: 8) {
-            (Text("\(kTracks[synT].name.lowercased()) · ").foregroundColor(th.mute) + Text((kEngDefs[engIndex(inst)].name).lowercased()).foregroundColor(th.fg).font(BFont.mono(9.5, 500)))
-                .font(BFont.mono(9.5)).tracking(0.855).lineLimit(1)
+            if title {
+                (Text("\(kTracks[synT].name.lowercased()) · ").foregroundColor(th.mute) + Text((kEngDefs[engIndex(inst)].name).lowercased()).foregroundColor(th.fg).font(BFont.mono(9.5, 500)))
+                    .font(BFont.mono(9.5)).tracking(0.855).lineLimit(1).fixedSize()
+            }
             Spacer(minLength: 4)
             HStack(spacing: 0) {
                 ForEach(6..<10, id: \.self) { t in
                     Button { synT = t; model.selectedTrack = t; model.preview(t) } label: {
-                        Text(kTracks[t].name.lowercased()).font(BFont.mono(10.5, synT == t ? 500 : 400))
+                        Text(kTracks[t].name.lowercased()).font(BFont.mono(10.5, synT == t ? 500 : 400)).lineLimit(1).fixedSize()
                             .foregroundColor(synT == t ? th.on : th.fg)
                             .padding(.horizontal, 9).frame(height: 22)
                             .background(Capsule().fill(synT == t ? th.fg : Color.clear))
@@ -231,6 +243,7 @@ struct SynthCard: View {
             .padding(2)
             .background(Capsule().fill(th.chip))
             .animation(.spring(response: 0.3, dampingFraction: 0.8), value: synT)
+            .fixedSize()
             SVGIcon(d: "M2.5 2h9a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM5 2v6M9 2v6M5 8v4M9 8v4", box: 14, size: 14, stroke: 1.3)
                 .frame(width: 14, height: 14).frame(width: 30, height: 22)
                 .background(RoundedRectangle(cornerRadius: 6).fill(th.chip))
@@ -240,8 +253,6 @@ struct SynthCard: View {
             }
             CapButton(kind: .grab, dark: false, tint: th.fg, fill: th.chip).padding(.leading, 4)
         }
-        .frame(height: 26)
-        .padding(.bottom, 10)
     }
 }
 
@@ -668,7 +679,7 @@ struct EngViz {
         let tune = Double(model.param(kTrackParams[3], track))
         let fr: Double = 440 * pow(2, (Double(model.previewNote(track) - 12) + tune - 69) / 12)
         ctx.draw(Text("\(Int(fr.rounded()))").font(BFont.sans(30, 200)).foregroundColor(fg.opacity(0.9)), at: CGPoint(x: 8, y: h - 12), anchor: .bottomLeading)
-        ctx.draw(Text("hz · grundton").font(BFont.mono(9, 500)).foregroundColor(fg.opacity(0.9)), at: CGPoint(x: 8, y: h - 42), anchor: .bottomLeading)
+        ctx.draw(Text("hz · grundton").font(BFont.mono(9, 500)).foregroundColor(fg.opacity(0.9)), at: CGPoint(x: 8, y: h - 50), anchor: .bottomLeading)
     }
 
     private func fm(_ ctx: inout GraphicsContext, _ size: CGSize, _ el: Double, _ T: Double) {

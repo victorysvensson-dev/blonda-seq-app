@@ -125,6 +125,14 @@ public:
     void setInstrument(int k, int idx) { if (k >= 0 && k < 4 && idx >= 0 && idx < 10) { P_.inst[k] = kEngineNames[idx]; applyParams(); } }
     void setEngParam(int k, int e, int f, float v) { if (float* x = engFloat(P_, k, e, f)) { *x = v; if (e == 9) applyParams(); } }
     void setEngOpt(int k, int e, int f, int v) { if (engOpt(P_, k, e, f, nullptr, &v) && e == 9) applyParams(); }
+    // live (web: XY pad + beat repeat). f −1..1 = lowpass/highpass, fx 0..1 = echo + space throw.
+    void setPerform(bool on, float f, float fx);
+    // beat repeat: mode 1 engage, 2 change length, 0 release; div 0..8 = 1/2 1/4 1/8 1/8T 1/16 1/16T 1/32 1/32T 1/64
+    void repeat(int mode, int div);
+    bool repeating() const { return rpPh_ != 0; }
+    void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
+    void setChain(int k, int v) { if (k >= 0 && k < 8) P_.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; }
+    int chainIndex() const { return P_.song && playing_ ? chainIdx_ : -1; }
     void setSolo(int t) { P_.solo = (t >= 0 && t < kTracks) ? t : -1; applyParams(); }
     void setLen(int t, int L) { if (t >= 0 && t < kTracks) P_.len[t] = std::max(1, std::min(16, L)); }
     void setParam(int group, int track, int field, float v) {
@@ -171,6 +179,8 @@ private:
     std::vector<float> chL_[kTracks], chR_[kTracks];
     WebParam duck_{1.f};
     // master
+    Smoother perf_, rpDry_, rpWet_;
+    std::vector<float> rpBuf_[2][2]; int rpPh_ = 0, rpCur_ = 0, rpCap_ = 1, rpW_ = 0, rpPos_ = 0, rpLen_ = 1, rpNew_ = 1, rpShort_ = 0; long long rpT_ = 0; bool rpLoop_ = false;
     std::vector<float> dlL_, dlR_; int dlW_ = 0; Smoother dlTime_, fb_, dRet_, rRet_, pre_, post_, tapeF_, crushWet_, crushDry_, lpF_, hpF_, out_;
     float dToneC_[5]{}, dToneZ_[2][2]{}, rHpC_[5]{}, rHpZ_[2][2]{}, tapeC_[5]{}, tapeZ_[2][2]{}, mLpC_[5]{}, mLpZ_[2][2]{}, mHpC_[5]{}, mHpZ_[2][2]{};
     float lastTape_ = -1, lastMLp_ = -1, lastMHp_ = -1;
