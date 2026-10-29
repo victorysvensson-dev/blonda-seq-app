@@ -4,6 +4,20 @@ import SwiftUI
 
 private let kInk = Color(rgb: 29, 29, 27)
 
+/// One radial tick on a knob ring (angles in degrees, 0 = 3 o'clock).
+func knobTick(_ c: inout GraphicsContext, center: CGFloat, r0: CGFloat, r1: CGFloat, deg: Double, color: Color, width: CGFloat) {
+    let a: CGFloat = CGFloat(deg * Double.pi / 180)
+    let ca: CGFloat = cos(a), sa: CGFloat = sin(a)
+    var p = Path()
+    p.move(to: CGPoint(x: center + ca * r0, y: center + sa * r0))
+    p.addLine(to: CGPoint(x: center + ca * r1, y: center + sa * r1))
+    c.stroke(p, with: .color(color), lineWidth: width)
+}
+func knobPoint(center: CGFloat, r: CGFloat, deg: Double) -> CGPoint {
+    let a: CGFloat = CGFloat(deg * Double.pi / 180)
+    return CGPoint(x: center + cos(a) * r, y: center + sin(a) * r)
+}
+
 /// Drag horizontally (or vertically) to change a parameter; reports values in the parameter's own range.
 private struct ParamDrag: ViewModifier {
     @EnvironmentObject var model: EngineModel
@@ -103,23 +117,24 @@ struct DecayCurve: View {
     var body: some View {
         let hitsAt = (0..<16).filter { model.value(track, $0) > 0 }
         Canvas { c, size in
-            let w = size.width, h = size.height, top: CGFloat = 18
+            let w: CGFloat = size.width, h: CGFloat = size.height, top: CGFloat = 18
             guard !hitsAt.isEmpty else { return }
-            let tau = 0.05 + decay * 0.55      // in bars-of-16 units (visual)
+            let tau: Double = 0.05 + decay * 0.55      // in bars-of-16 units (visual)
             var p = Path(); var first = true
             for x in stride(from: CGFloat(0), through: w, by: 1.5) {
-                let pos = Double(x / w) * 16
-                let last = hitsAt.last(where: { Double($0) <= pos }) ?? (hitsAt.last! - 16)
-                let dt = (pos - Double(last)) / 16
-                let wob = sin(Double(x) * 0.9) * 0.012
-                let v = exp(-dt / max(0.01, tau) * 3) * 0.92 + wob
-                let y = top + (h - top) * CGFloat(1 - max(0, min(1, v)))
+                let pos: Double = Double(x / w) * 16
+                let last: Int = hitsAt.last(where: { Double($0) <= pos }) ?? (hitsAt.last! - 16)
+                let dt: Double = (pos - Double(last)) / 16
+                let wob: Double = sin(Double(x) * 0.9) * 0.012
+                let v: Double = exp(-dt / max(0.01, tau) * 3) * 0.92 + wob
+                let y: CGFloat = top + (h - top) * CGFloat(1 - max(0, min(1, v)))
                 if first { p.move(to: CGPoint(x: x, y: y)); first = false } else { p.addLine(to: CGPoint(x: x, y: y)) }
             }
             c.stroke(p, with: .color(.white), lineWidth: 1.6)
             for (k, s) in hitsAt.enumerated() where k % max(1, hitsAt.count / 4) == 0 {
-                let x = CGFloat(s) / 16 * w
-                c.draw(Text("\(s + 1)").font(BFont.sans(13, 300)).foregroundColor(.white) + Text(" steg").font(BFont.sans(9, 300)).foregroundColor(.white.opacity(0.8)), at: CGPoint(x: x + 2, y: 6), anchor: .leading)
+                let x: CGFloat = CGFloat(s) / 16 * w
+                let label: Text = Text("\(s + 1)").font(BFont.sans(13, 300)).foregroundColor(.white) + Text(" steg").font(BFont.sans(9, 300)).foregroundColor(Color.white.opacity(0.8))
+                c.draw(label, at: CGPoint(x: x + 2, y: 6), anchor: .leading)
             }
         }
     }
@@ -157,14 +172,17 @@ struct LevelTile: View {
                 .foregroundColor(kInk).frame(width: 70, alignment: .leading)
                 VStack(spacing: 4) {
                     Canvas { c, size in
-                        let n = 42, gap: CGFloat = 2.4, bw = (size.width - gap * CGFloat(n - 1)) / CGFloat(n)
+                        let n: Int = 42
+                        let gap: CGFloat = 2.4
+                        let bw: CGFloat = (size.width - gap * CGFloat(n - 1)) / CGFloat(n)
                         for i in 0..<n {
-                            let f = Double(i) / Double(n - 1), h = size.height * CGFloat(0.12 + 0.88 * f)
-                            let on = f <= v
+                            let f: Double = Double(i) / Double(n - 1)
+                            let h: CGFloat = size.height * CGFloat(0.12 + 0.88 * f)
                             let r = CGRect(x: CGFloat(i) * (bw + gap), y: size.height - h, width: bw, height: h)
-                            c.fill(Path(roundedRect: r, cornerRadius: bw / 2), with: .color(on ? kInk.opacity(0.35 + 0.35 * f) : kInk.opacity(0.07)))
+                            let col: Color = f <= v ? kInk.opacity(0.35 + 0.35 * f) : kInk.opacity(0.07)
+                            c.fill(Path(roundedRect: r, cornerRadius: bw / 2), with: .color(col))
                         }
-                        let mx = CGFloat(v) * size.width
+                        let mx: CGFloat = CGFloat(v) * size.width
                         c.fill(Path(CGRect(x: mx - 1, y: 0, width: 2, height: size.height)), with: .color(kInk))
                     }
                     .frame(height: 58)
@@ -238,12 +256,15 @@ struct PanTile: View {
                 Text(abs(v) < 0.02 ? "C" : (v < 0 ? "L" : "R") + "\(Int(abs(v) * 100))").font(BFont.sans(38, 200)).foregroundColor(kInk).frame(width: 110, alignment: .leading)
                 VStack(spacing: 2) {
                     Canvas { c, size in
-                        let n = 41
+                        let n: Int = 41
+                        let H: CGFloat = size.height
                         for i in 0..<n {
-                            let x = CGFloat(i) / CGFloat(n - 1) * size.width, major = i % 10 == 0
-                            c.fill(Path(CGRect(x: x - 0.5, y: major ? 0 : size.height * 0.25, width: 1, height: major ? size.height : size.height * 0.5)), with: .color(kInk.opacity(major ? 0.6 : 0.3)))
+                            let x: CGFloat = CGFloat(i) / CGFloat(n - 1) * size.width
+                            let major: Bool = i % 10 == 0
+                            let r = major ? CGRect(x: x - 0.5, y: 0, width: 1, height: H) : CGRect(x: x - 0.5, y: H * 0.25, width: 1, height: H * 0.5)
+                            c.fill(Path(r), with: .color(kInk.opacity(major ? 0.6 : 0.3)))
                         }
-                        let x = CGFloat((v + 1) / 2) * size.width
+                        let x: CGFloat = CGFloat((v + 1) / 2) * size.width
                         c.fill(Path(ellipseIn: CGRect(x: x - 6, y: size.height / 2 - 6, width: 12, height: 12)), with: .color(kInk.opacity(0.7)))
                     }
                     .frame(height: 26)
@@ -309,14 +330,18 @@ struct FxRuler: View {
     let value: Float
     var body: some View {
         Canvas { c, size in
-            let n = 31, f = CGFloat((value - def.lo) / (def.hi - def.lo))
+            let n: Int = 31
+            let f: CGFloat = CGFloat((value - def.lo) / (def.hi - def.lo))
+            let w: CGFloat = size.width, h: CGFloat = size.height
             for i in 0..<n {
-                let x = size.width * (0.3 + 0.7 * CGFloat(i) / CGFloat(n - 1)) - size.width * 0.3 * f * 0
-                let major = i % 10 == 0
-                c.fill(Path(CGRect(x: x, y: major ? 4 : 10, width: 1.5, height: major ? size.height - 8 : size.height - 20)),
-                       with: .color(.white.opacity(major ? 0.35 : 0.17 * (1 - Double(i) / Double(n) * 0.6))))
+                let fi: CGFloat = CGFloat(i) / CGFloat(n - 1)
+                let x: CGFloat = w * (0.3 + 0.7 * fi)
+                let major: Bool = i % 10 == 0
+                let rect = major ? CGRect(x: x, y: 4, width: 1.5, height: h - 8) : CGRect(x: x, y: 10, width: 1.5, height: h - 20)
+                let op: Double = major ? 0.35 : 0.17 * (1 - Double(fi) * 0.6)
+                c.fill(Path(rect), with: .color(Color.white.opacity(op)))
             }
-            let mx = size.width * (0.3 + 0.7 * f)
+            let mx: CGFloat = w * (0.3 + 0.7 * f)
             var g = c; g.addFilter(.shadow(color: T.yellow, radius: 5))
             g.fill(Path(roundedRect: CGRect(x: mx - 1.5, y: 2, width: 3, height: size.height - 4), cornerRadius: 1.5), with: .color(T.yellow))
         }
@@ -342,11 +367,10 @@ struct BigKnob: View {
     var body: some View {
         ZStack {
             Canvas { c, size in
-                let cx = size.width / 2, r1 = size.width / 2, r0 = r1 - 10
+                let cx: CGFloat = size.width / 2
                 for i in 0..<44 {
-                    let a = (-225 + 270 * Double(i) / 43) * .pi / 180
-                    var p = Path(); p.move(to: CGPoint(x: cx + cos(a) * r0, y: cx + sin(a) * r0)); p.addLine(to: CGPoint(x: cx + cos(a) * r1, y: cx + sin(a) * r1))
-                    c.stroke(p, with: .color(.white.opacity(Double(i) / 43 <= value ? 0.9 : 0.25)), lineWidth: 1.4)
+                    let f: Double = Double(i) / 43
+                    knobTick(&c, center: cx, r0: cx - 10, r1: cx, deg: -225 + 270 * f, color: Color.white.opacity(f <= value ? 0.9 : 0.25), width: 1.4)
                 }
             }
             Circle().fill(RadialGradient(colors: [.white, Color(rgb: 225, 225, 220)], center: UnitPoint(x: 0.4, y: 0.35), startRadius: 0, endRadius: 60)).padding(16)
@@ -409,14 +433,13 @@ struct MasterKnob: View {
             ZStack {
                 Circle().fill(kInk.opacity(0.06)).padding(12)
                 Canvas { c, size in
-                    let cx = size.width / 2, r1 = size.width / 2 - 2, r0 = r1 - 7
+                    let cx: CGFloat = size.width / 2
+                    let r1: CGFloat = cx - 2
                     for i in 0..<30 {
-                        let p = Double(i) / 29, a = (-225 + 270 * p) * .pi / 180
-                        var path = Path(); path.move(to: CGPoint(x: cx + cos(a) * r0, y: cx + sin(a) * r0)); path.addLine(to: CGPoint(x: cx + cos(a) * r1, y: cx + sin(a) * r1))
-                        c.stroke(path, with: .color(p <= f ? kInk : kInk.opacity(0.15)), lineWidth: 2.4)
+                        let p: Double = Double(i) / 29
+                        knobTick(&c, center: cx, r0: r1 - 7, r1: r1, deg: -225 + 270 * p, color: p <= f ? kInk : kInk.opacity(0.15), width: 2.4)
                     }
-                    let a = (-225 + 270 * f) * .pi / 180, rr = r1 - 3
-                    let hp = CGPoint(x: cx + cos(a) * rr, y: cx + sin(a) * rr)
+                    let hp: CGPoint = knobPoint(center: cx, r: r1 - 3, deg: -225 + 270 * f)
                     c.fill(Path(ellipseIn: CGRect(x: hp.x - 9, y: hp.y - 9, width: 18, height: 18)), with: .color(Color(rgb: 252, 238, 214)))
                     c.fill(Path(ellipseIn: CGRect(x: hp.x - 6.5, y: hp.y - 6.5, width: 13, height: 13)), with: .color(Color(hex: 0xF0692A)))
                 }
