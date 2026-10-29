@@ -37,7 +37,16 @@ final class EngineModel: NSObject, ObservableObject {
     @Published var playing = false
     @Published var revision = 0          // bump to redraw the grid after edits
     @Published var paramRevision = 0     // bump to redraw the sound panel
-    @Published var selectedTrack = 7 { didSet { engine.midiTrack = selectedTrack } }
+    @Published var selectedTrack = 0 { didSet { engine.midiTrack = selectedTrack; selColHex = trackHex(selectedTrack) } }
+    // visuals (SEQ.3 design): background energy, last hit per track, transport clock
+    var energy: Double = 0
+    var selColHex: UInt32 = 0xF5F5F2
+    var hitTime = [CFTimeInterval](repeating: -10, count: 10)
+    var hitVel = [Double](repeating: 0, count: 10)
+    @Published var bar = 0
+    var playStart: CFTimeInterval = 0
+    var stepTime: CFTimeInterval = 0
+    private var lastTick: CFTimeInterval = 0
     @Published var errorText: String?
     private var link: CADisplayLink?
 
@@ -87,9 +96,34 @@ final class EngineModel: NSObject, ObservableObject {
     }
 
     @objc private func tick() {
+        let now = CACurrentMediaTime(), dt = lastTick == 0 ? 0 : min(0.033, now - lastTick); lastTick = now
         let s = engine.currentStep, p = engine.isPlaying
-        if s != step { step = s }
-        if p != playing { playing = p }
+        if p != playing { playing = p; if p { playStart = now; bar = 0 } }
+        if s != step {
+            if s >= 0 {
+                if step >= 0 && s < step { bar += 1 }
+                for i in 0..<10 where !engine.isMutedTrack(i) {
+                    let v = engine.stepValue(forTrack: i, step: s)
+                    if v > 0 {
+                        hitTime[i] = now; hitVel[i] = v == 2 ? 1 : 0.72
+                        energy = min(1, energy + (i == 0 ? 0.9 : i < 3 ? 0.35 : 0.12) * hitVel[i])
+                        if i == selectedTrack || i == 0 { selColHex = trackHex(selectedTrack) }
+                    }
+                }
+            }
+            step = s; stepTime = now
+        }
+        energy *= pow(0.02, dt)
+    }
+    /// 0…1 flash for a track hit (pads, row labels)
+    func flash(_ i: Int, _ len: Double = 0.12) -> Double {
+        let d = CACurrentMediaTime() - hitTime[i]; return d >= 0 && d < len ? 1 - d / len : 0
+    }
+    func hitPad(_ i: Int) {
+        engine.noteOn(i < 6 ? 60 : (i == 6 ? 45 : 57), velocity: 0.85, track: i)
+        if i >= 6 { let n = i == 6 ? 45 : 57; DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in self?.engine.noteOff(n, track: i) } }
+        hitTime[i] = CACurrentMediaTime(); hitVel[i] = 0.85
+        energy = min(1, energy + (i == 0 ? 0.9 : i < 3 ? 0.35 : 0.12) * 0.85)
     }
 
     var bpm: Float { engine.bpm }
