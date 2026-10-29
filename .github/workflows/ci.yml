@@ -77,3 +77,48 @@ jobs:
           git config user.name ci && git config user.email ci@users.noreply.github.com
           git add -A && git commit -qm "screenshots ${GITHUB_SHA}"
           git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" ci-shots
+
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 35
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Build the Mac app (Mac Catalyst, Release, ad-hoc signed)
+        run: |
+          cd App && xcodegen
+          set +e
+          xcodebuild -project BLONDA.xcodeproj -scheme BLONDA -configuration Release \
+            -destination 'generic/platform=macOS,variant=Mac Catalyst' -derivedDataPath dd \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= ONLY_ACTIVE_ARCH=NO build > mac.log 2>&1
+          rc=$?
+          tail -30 mac.log
+          grep -E "error:" mac.log | sort -u | head -30 | sed 's#^/Users/runner/work/blonda-seq-app/blonda-seq-app/##' > errs.txt
+          while IFS= read -r l; do echo "::error::$l"; done < errs.txt
+          exit $rc
+      - name: Launch it and take a screenshot
+        run: |
+          cd App
+          APP=$(find dd -name "*.app" -path "*maccatalyst*" -maxdepth 6 | head -1)
+          echo "app: $APP"
+          codesign --force --deep -s - "$APP"
+          codesign -dv "$APP" 2>&1 | head -5
+          lipo -info "$APP/Contents/MacOS/"* || true
+          mkdir -p ../mac-out
+          "$APP/Contents/MacOS/BLONDA SEQ" -autoplay > ../mac-out/stdout.txt 2>&1 &
+          sleep 10
+          screencapture -x ../mac-out/mac.png || true
+          log show --last 1m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -E "DIAG|rror|crash" | tail -40 > ../mac-out/log.txt || true
+          pkill -f "BLONDA SEQ" || true
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "../mac-out/BLONDA SEQ (Mac).zip"
+          ls -la ../mac-out
+      - name: Publish to the mac-build branch
+        run: |
+          cd mac-out
+          git init -q && git checkout -q -b mac-build
+          git config user.name ci && git config user.email ci@users.noreply.github.com
+          git add -A && git commit -qm "mac build ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" mac-build
