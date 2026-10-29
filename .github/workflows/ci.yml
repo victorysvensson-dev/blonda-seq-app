@@ -17,6 +17,7 @@ jobs:
         run: cd Core/build && ./songrender ../../App/Resources/default_project.json 8 song.f32
   ios:
     runs-on: macos-15
+    timeout-minutes: 35
     permissions:
       contents: write
     steps:
@@ -63,7 +64,8 @@ jobs:
           xcrun simctl io $UDID screenshot ../ci-shots/ipad3.png
           # iPhone too
           PH=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone 16 Pro') or x['name'].startswith('iPhone 17 Pro')))")
-          xcrun simctl boot $PH; xcrun simctl bootstatus $PH -b
+          echo "iPhone: $PH"
+          xcrun simctl boot $PH; timeout 300 xcrun simctl bootstatus $PH -b
           xcrun simctl install $PH "$APP"; xcrun simctl ui $PH appearance dark || true
           xcrun simctl launch $PH se.blonda.seq -autoplay; sleep 6
           xcrun simctl io $PH screenshot ../ci-shots/iphone.png
