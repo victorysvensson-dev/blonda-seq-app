@@ -39,9 +39,9 @@ const Def kDefs[PadFx::kPads] = {
     {"BAND", 14, false, {{"glue", 50}, {"wobble", 20}, {"tape", 60}}, {}, {}, "tape", 60, 100, kCyan},
 };
 constexpr int kFrysEngine = 8;
-// Share of one Cortex-A55 core per effect at 44.1 kHz (desktop measurement x 3.5, the BRIS ratio between the two);
-// FRYS is listening anyway while PAD FX is on, so pressing it costs nothing extra.
-const float kCost[PadFx::kPads] = {.03f, .03f, .03f, .03f, .06f, .11f, .11f, .11f, 0.f, 0.f, .07f, .07f, .05f, .13f, .21f, .11f};
+// Share of one Cortex-A55 core per effect at 44.1 kHz: desktop measurement x 4.6 (the ratio the device self test
+// shows for the three heaviest together); FRYS is listening anyway while PAD FX is on, so pressing it adds nothing.
+const float kCost[PadFx::kPads] = {.04f, .04f, .04f, .04f, .075f, .14f, .14f, .14f, 0.f, 0.f, .09f, .09f, .055f, .16f, .27f, .14f};
 } // namespace
 
 struct PadFx::Engine { std::unique_ptr<blonda::Effect> fx; int pressIdx = -1; float lastP = -1.f; };
