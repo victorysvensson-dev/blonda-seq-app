@@ -19,8 +19,8 @@ push() {
   echo "copied $(wc -c < "$BIN") bytes to /run/blonda-akai"
 }
 case "${1:-}" in
-  check)    ssh_mpc 'uname -a; cat /proc/cpuinfo | grep -m1 -i "cpu part\|model name" || true; nproc; free -m | head -2; systemctl is-active ac50.service' ;;
-  selftest) push; ssh_mpc 'nice -n 10 /run/blonda-akai --selftest' ;;
+  check)    ssh_mpc 'uname -a; cat /proc/cpuinfo | grep -m1 -i "cpu part\|model name" || true; nproc; free -m | head -n 2; systemctl is-active ac50.service' ;;
+  selftest) push; ssh_mpc '/run/blonda-akai --selftest' ;;
   run)      push
             ssh_mpc 'systemctl stop blonda-akai.service 2>/dev/null || true; systemd-run --unit=blonda-akai --collect -p RuntimeMaxSec=3600 -p ExecStartPre="/usr/bin/systemctl stop ac50.service" -p ExecStopPost="/usr/bin/systemctl start ac50.service" /run/blonda-akai'
             echo "running. Quit on the MPC with SHIFT + STOP, or ./mpc.sh stop. Output: ./mpc.sh log" ;;
