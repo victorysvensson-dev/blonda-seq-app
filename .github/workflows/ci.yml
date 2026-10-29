@@ -31,7 +31,9 @@ jobs:
           rc=$?
           tail -40 build.log
           # surface compiler errors as annotations (readable through the API)
+          grep -E -A12 "Undefined symbols" build.log | head -24 >> errs0.txt
           grep -E "error:" build.log | sort -u | head -40 | sed 's#^/Users/runner/work/blonda-seq-app/blonda-seq-app/##' > errs.txt
+          cat errs0.txt 2>/dev/null >> errs.txt
           while IFS= read -r l; do echo "::error::$l"; done < errs.txt
           grep -E "warning:" build.log | grep -v "ld: warning" | sort -u | head -30 | sed 's#^/Users/runner/work/blonda-seq-app/blonda-seq-app/##' > warns.txt
           while IFS= read -r l; do echo "::warning::$l"; done < warns.txt
