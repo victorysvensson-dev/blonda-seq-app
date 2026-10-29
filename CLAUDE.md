@@ -5,3 +5,4 @@
 - Audio code must stay real-time safe: no allocation, locks or exceptions in process().
 - Verify every engine with the A/B method: render the web engine offline in headless Chromium (OfflineAudioContext) with the same notes, compare level, octave bands, envelope and spectral-centroid correlation.
 - Studio runs at 48 kHz; render tests at 48 kHz.
+- Shared engines come from BLONDA motor (repo victorysvensson-dev/blonda-motor, read its CLAUDE.md). They are copied at a pinned tag into `External/blonda-motor/` with `tools/update_motor.sh <tag>` (the copy records the tag in `VERSION`). Never edit files under `External/` — change the motor repo, tag it, then update the copy here. Engine "bris6" in SEQ.3 = BLONDA BRIS from the motor; the engine "bris" stays the web SEQ.3 port.

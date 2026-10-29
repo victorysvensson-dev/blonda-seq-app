@@ -9,6 +9,7 @@
 #include "engines.hpp"
 #include "json.hpp"
 #include "sampler.hpp"
+#include "bris/bris.h"   // BLONDA motor (External/blonda-motor, pinned tag)
 #include <array>
 #include <string>
 #include <vector>
@@ -29,6 +30,9 @@ struct FxParams { bool echoOn = true; float echoFb = .38f, echoTime = .75f; bool
 // parameter addressing for the UI / MIDI learn: group 0 = track sound, 1 = track FX, 2 = master
 enum ParamGroup { PG_TRACK, PG_TFX, PG_MASTER };
 
+// BLONDA motor state per melodic track: chosen factory sound + every parameter (in the motor's own units)
+struct MotorState { int preset = 1; std::array<double, bris::kNumParams> vals{}; bool set = false; };
+
 struct LoopSlot { std::string sid; bool on = true; float vol = .8f; int bars = 0; };   // web: S.loops[k] (bars 0 = the sample's own)
 
 struct Project {
@@ -40,6 +44,7 @@ struct Project {
     int chordKeys = 1, chordPad = 1; std::array<std::string, 6> kit{};
     bool song = false; std::array<int, 8> chain{{-1, -1, -1, -1, -1, -1, -1, -1}}; float glideT = .07f;
     std::array<LoopSlot, 4> loops;
+    std::array<MotorState, 4> motor;
     Cell cells[kPatterns][kTracks][kSteps];
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
@@ -67,8 +72,10 @@ inline void paramRange(int group, int field, float& lo, float& hi) {
 }
 
 // engine names as stored in projects (S.inst); index = id used by the real-time instrument switch
-static const char* const kEngineNames[10] = {"analog", "acid", "sub", "fm", "pluck", "super", "chip", "sh101", "mini", "bris"};
-inline int engineIndex(const std::string& n) { for (int i = 0; i < 10; ++i) if (n == kEngineNames[i]) return i; return 0; }
+constexpr int kNumEngines = 11;
+// "bris6" = BLONDA BRIS from the shared BLONDA motor library (Bree6 clone, same code as the Max for Live plugin)
+static const char* const kEngineNames[kNumEngines] = {"analog", "acid", "sub", "fm", "pluck", "super", "chip", "sh101", "mini", "bris", "bris6"};
+inline int engineIndex(const std::string& n) { for (int i = 0; i < kNumEngines; ++i) if (n == kEngineNames[i]) return i; return 0; }
 
 // ---- engine parameters by (engine, field index): the sliders of the synth module (ENG[e].ps in the web version)
 inline float* engFloat(Project& p, int k, int e, int f) {
@@ -128,7 +135,7 @@ public:
     void setMute(int track, bool m) { if (track >= 0 && track < kTracks) { P_.mute[track] = m; applyParams(); } }
     int pattern() const { return P_.pat; }
     // switch a melodic track's instrument (short names fit std::string's small buffer: no allocation)
-    void setInstrument(int k, int idx) { if (k >= 0 && k < 4 && idx >= 0 && idx < 10) { P_.inst[k] = kEngineNames[idx]; applyParams(); } }
+    void setInstrument(int k, int idx) { if (k >= 0 && k < 4 && idx >= 0 && idx < kNumEngines) { if (P_.inst[k] == "bris6" && idx != 10) mot_[k].allNotesOff(); P_.inst[k] = kEngineNames[idx]; applyParams(); } }
     void setEngParam(int k, int e, int f, float v) { if (float* x = engFloat(P_, k, e, f)) { *x = v; if (e == 9) applyParams(); } }
     void setEngOpt(int k, int e, int f, int v) { if (engOpt(P_, k, e, f, nullptr, &v) && e == 9) applyParams(); }
     // live (web: XY pad + beat repeat). f −1..1 = lowpass/highpass, fx 0..1 = echo + space throw.
@@ -148,6 +155,10 @@ public:
     void setDrumSample(int i, const SampleData* smp, float norm);   // nullptr: back to the synth kit
     void previewSample(const SampleData* smp, float rate, float gain);   // nullptr stops the preview
     void dropSample(const SampleData* smp);                          // nothing may play it after this returns
+    // BLONDA motor (engine "bris6")
+    void setMotorPreset(int k, int i) { if (k < 0 || k >= 4) return; mot_[k].loadPreset(i); P_.motor[k].preset = i; for (int p = 0; p < bris::kNumParams; ++p) P_.motor[k].vals[p] = mot_[k].getParam(p); }
+    void setMotorParam(int k, int p, double v) { if (k < 0 || k >= 4 || p < 0 || p >= bris::kNumParams) return; mot_[k].setParam(p, v); P_.motor[k].vals[p] = mot_[k].getParam(p); }
+    double motorMeter(int k) const { return (k >= 0 && k < 4) ? motEnv_[k] : 0; }
     void setGlideT(float v) { P_.glideT = v; }
     void setChord(int t, bool on) { if (t == 7) P_.chordKeys = on; else if (t == 9) P_.chordPad = on; }
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
@@ -199,6 +210,12 @@ private:
     std::vector<float> chL_[kTracks], chR_[kTracks];
     WebParam duck_{1.f};
     // master
+    std::array<bris::Bris, 4> mot_;
+    struct MotEv { long long f; int note; float vel; bool on; uint32_t gen; };
+    std::array<std::array<MotEv, 128>, 4> motQ_{}; std::array<int, 4> motN_{};
+    std::array<std::array<uint32_t, 128>, 4> motGen_{}; std::array<double, 4> motEnv_{};
+    void motorEvent(int k, long long f, int note, float vel, bool on, uint32_t gen = 0) { if (motN_[k] < 128) motQ_[k][motN_[k]++] = {f, note, vel, on, gen}; }
+    void renderMotor(int k, long long b0, int n, float* L, float* R);
     struct LoopRt { const SampleData* s = nullptr; float srcBpm = 120; int bars = 1; float norm = 1; };
     std::array<LoopRt, 4> loopRt_{}; std::array<const SampleData*, 6> dsmp_{}; std::array<float, 6> dnorm_{};
     std::array<SampleVoice, 32> svox_{}; std::array<bool, 6> sampleTail_{}; std::array<LoopVoice, 16> lvox_{}; long long sAge_ = 0;

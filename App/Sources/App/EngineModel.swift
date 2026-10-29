@@ -314,6 +314,14 @@ final class EngineModel: NSObject, ObservableObject {
             }
         }
     }
+    // MARK: BLONDA motor (engine "bris6")
+    func motorPreset(_ t: Int) -> Int { _ = paramRevision; return engine.motorPreset(t) }
+    func setMotorPreset(_ t: Int, _ i: Int) {
+        let n = BLONDAEngine.motorPresetCount, ii = ((i % n) + n) % n
+        engine.setMotorPreset(ii, track: t); paramRevision += 1; scheduleSave()
+    }
+    func motorParam(_ p: Int, _ t: Int) -> Double { _ = paramRevision; return engine.motorParam(p, track: t) }
+    func setMotorParam(_ p: Int, _ t: Int, _ v: Double) { engine.setMotorParam(p, track: t, value: v); paramRevision += 1; scheduleSave() }
     // MARK: piano roll
     @Published var rollTrack: Int?
     func openRoll(_ t: Int) {

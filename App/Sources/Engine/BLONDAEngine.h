@@ -117,6 +117,20 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 @property (nonatomic) float glideTime;
 - (BOOL)chordOn:(NSInteger)track NS_SWIFT_NAME(chordOn(_:));
 - (void)setChord:(BOOL)on track:(NSInteger)track NS_SWIFT_NAME(setChord(_:track:));
+/// BLONDA motor (engine "bris6", shared library External/blonda-motor) on melodic track 6–9.
+@property (class, nonatomic, readonly) NSInteger motorParamCount;
+@property (class, nonatomic, readonly) NSInteger motorPresetCount;
++ (NSString *)motorParamId:(NSInteger)p NS_SWIFT_NAME(motorParamId(_:));
++ (NSString *)motorParamName:(NSInteger)p NS_SWIFT_NAME(motorParamName(_:));
++ (double)motorParamMin:(NSInteger)p NS_SWIFT_NAME(motorParamMin(_:));
++ (double)motorParamMax:(NSInteger)p NS_SWIFT_NAME(motorParamMax(_:));
++ (BOOL)motorParamInteger:(NSInteger)p NS_SWIFT_NAME(motorParamInteger(_:));
++ (NSString *)motorPresetName:(NSInteger)i NS_SWIFT_NAME(motorPresetName(_:));
+- (NSInteger)motorPreset:(NSInteger)track NS_SWIFT_NAME(motorPreset(_:));
+- (void)setMotorPreset:(NSInteger)i track:(NSInteger)track NS_SWIFT_NAME(setMotorPreset(_:track:));
+- (double)motorParam:(NSInteger)p track:(NSInteger)track NS_SWIFT_NAME(motorParam(_:track:));
+- (void)setMotorParam:(NSInteger)p track:(NSInteger)track value:(double)v NS_SWIFT_NAME(setMotorParam(_:track:value:));
+- (float)motorMeter:(NSInteger)track NS_SWIFT_NAME(motorMeter(_:));
 - (BOOL)undo;
 - (BOOL)redo;
 

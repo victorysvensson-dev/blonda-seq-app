@@ -48,11 +48,11 @@ extension Color {
 /// Web track colours; melodic tracks take the colour of the engine loaded on them (ENG[e].dot).
 let kEngineDot: [String: UInt32] = [
     "analog": 0xF2788E, "acid": 0xC9F23A, "sub": 0xFF3B2F, "fm": 0x8CCBFF, "pluck": 0x1F8A5B,
-    "bris": 0x3D7BFF, "sh101": 0x2F6FE0, "mini": 0xE89B3C, "chip": 0x8BAC0F, "super": 0xB9A6FF,
+    "bris": 0x3D7BFF, "sh101": 0x2F6FE0, "mini": 0xE89B3C, "chip": 0x8BAC0F, "super": 0xB9A6FF, "bris6": 0xF2C318,
 ]
 let kEngineName: [String: String] = [
     "analog": "Analog", "acid": "Acid", "sub": "Sub 808", "fm": "FM Glass", "pluck": "Pluck",
-    "bris": "Bris", "sh101": "SH-101", "mini": "Moog", "chip": "Chip", "super": "Super Pad",
+    "bris": "Bris", "sh101": "SH-101", "mini": "Moog", "chip": "Chip", "super": "Super Pad", "bris6": "BLONDA BRIS",
 ]
 let kTrackHex: [UInt32] = [0xF5F5F2, 0x3D6CF5, 0x27B26B, 0xBDBDB8, 0xFFD21F, 0xFF6A1A, 0xFF3B2F, 0x8E7CFF, 0x00C2C7, 0xF7A6C8]
 

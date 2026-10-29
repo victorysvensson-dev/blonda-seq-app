@@ -75,9 +75,10 @@ let kEngDefs: [EngDef] = [
         EngParamDef(label: "attack", fmt: { msF(brT($0, 6)) }), EngParamDef(label: "release", fmt: { msF(brT($0, 10)) }), EngParamDef(label: "detune", fmt: pcF),
         EngParamDef(label: "sub", fmt: pcF), EngParamDef(label: "chorus", fmt: pcF), EngParamDef(label: "delay", fmt: pcF),
     ], opts: [[(0, "såg"), (1, "fyrkant")], [(0, "poly 6"), (1, "mono"), (2, "unison")]]),
+    EngDef(key: "bris6", name: "BLONDA BRIS", tag: "bree6 · 6 röster · blonda-motor"),   // its own panel: MotorSynth
 ]
 /// Chip order in the engine row (web: ENG_ORDER).
-let kEngOrder = ["analog", "bris", "acid", "sh101", "mini", "sub", "fm", "pluck", "chip", "super"]
+let kEngOrder = ["analog", "bris", "bris6", "acid", "sh101", "mini", "sub", "fm", "pluck", "chip", "super"]
 func engIndex(_ key: String) -> Int { kEngDefs.firstIndex { $0.key == key } ?? 0 }
 
 // MARK: - per-engine colours
@@ -97,6 +98,7 @@ func engTheme(_ e: String) -> EngTheme {
     case "sh101": return EngTheme(fg: Color(hex: 0xEEF2F6), mute: rgba(0xEEF2F6, 0.55), acc: Color(hex: 0x5B9BFF), chip: rgba(0xFFFFFF, 0.1), line: rgba(0xEEF2F6, 0.18), on: Color(hex: 0x16202E))
     case "mini": return EngTheme(fg: Color(hex: 0xF6E7CC), mute: rgba(0xF6E7CC, 0.55), acc: Color(hex: 0xF2A541), chip: rgba(0xF2A541, 0.14), line: rgba(0xF6E7CC, 0.2), on: Color(hex: 0x1A120B))
     case "chip": return EngTheme(fg: Color(hex: 0x0F380F), mute: rgba(0x0F380F, 0.6), acc: Color(hex: 0x0F380F), chip: rgba(0x0F380F, 0.12), line: rgba(0x0F380F, 0.25), on: Color(hex: 0x9BBC0F), pixel: true)
+    case "bris6": return EngTheme(fg: Color(hex: 0xF2EFE6), mute: rgba(0xF2EFE6, 0.5), acc: Color(hex: 0xF2C318), chip: rgba(0xFFFFFF, 0.09), line: rgba(0xF2EFE6, 0.14), on: Color(hex: 0x111211))
     case "bris": return EngTheme(fg: Color(hex: 0xEAF1FF), mute: rgba(0xEAF1FF, 0.6), acc: Color(hex: 0x8FC2FF), chip: rgba(0xFFFFFF, 0.13), line: rgba(0xEAF1FF, 0.2), on: Color(hex: 0x132B74))
     default: return EngTheme(fg: .white, mute: rgba(0xFFFFFF, 0.78), acc: .white, chip: rgba(0xFFFFFF, 0.22), line: rgba(0xFFFFFF, 0.35), on: Color(hex: 0xC2416E))
     }
@@ -163,6 +165,9 @@ struct EngBackground: View {
             ctx.fill(Path(CGRect(x: size.width - 10, y: 0, width: 10, height: size.height)), with: .color(Color(hex: 0x5A3620)))
         case "chip":
             cssLinear(&ctx, full, deg: 170, [st(0xA8C820, 1, 0), st(0x8BAC0F, 1, 0.6), st(0x6E8C0A, 1, 1)])
+        case "bris6":
+            cssLinear(&ctx, full, deg: 170, [st(0x22211D, 1, 0), st(0x10100F, 1, 1)])
+            cssRadial(&ctx, size, rx: 0.9, ry: 0.6, cx: 0.9, cy: 0, [st(0xF2C318, 0.16, 0), st(0xF2C318, 0, 0.6)])
         case "bris":
             cssLinear(&ctx, full, deg: 165, [st(0x2A5BD6, 1, 0), st(0x132B74, 1, 1)])
             cssRadial(&ctx, size, rx: 0.9, ry: 0.7, cx: 0.8, cy: 0.1, [st(0x5BA7FF, 0.45, 0), st(0x5BA7FF, 0, 0.6)])
@@ -192,7 +197,9 @@ struct SynthCard: View {
                 EngineChips(track: synT, current: inst, theme: th)
                     .padding(.bottom, 10)
                 Group {
-                    if e == 0 { AnalogSynth(track: synT, theme: th) } else { GenericSynth(track: synT, e: e, theme: th) }
+                    if e == 0 { AnalogSynth(track: synT, theme: th) }
+                    else if inst == "bris6" { MotorSynth(track: synT, theme: th) }
+                    else { GenericSynth(track: synT, e: e, theme: th) }
                 }
                 .opacity(swap ? 0.15 : 1).blur(radius: swap ? 12 : 0).scaleEffect(swap ? 0.97 : 1)
             }

@@ -35,7 +35,7 @@ targets:
         SUPPORTS_MACCATALYST: YES       # also runs as a Mac app
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.music
         SWIFT_OBJC_BRIDGING_HEADER: Sources/BLONDA-Bridging-Header.h
-        HEADER_SEARCH_PATHS: $(SRCROOT)/../Core/include
+        HEADER_SEARCH_PATHS: "$(SRCROOT)/../Core/include $(SRCROOT)/../External/blonda-motor/include $(SRCROOT)/../External/blonda-motor/motorer"
         OTHER_CPLUSPLUSFLAGS: $(inherited) -Wno-unused-parameter
         GCC_OPTIMIZATION_LEVEL: "3"   # DSP must be optimised even in Debug, or the audio thread overloads
         GENERATE_INFOPLIST_FILE: YES

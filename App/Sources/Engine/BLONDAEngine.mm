@@ -194,6 +194,19 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)setGlideTime:(float)v { _host->setGlideTime(v); }
 - (BOOL)chordOn:(NSInteger)t { return _host->chordOn((int)t); }
 - (void)setChord:(BOOL)on track:(NSInteger)t { _host->setChord((int)t, on); }
++ (NSInteger)motorParamCount { return blonda::bris::kNumParams; }
++ (NSInteger)motorPresetCount { return blonda::bris::kNumPresets; }
++ (NSString *)motorParamId:(NSInteger)p { return (p >= 0 && p < blonda::bris::kNumParams) ? @(blonda::bris::kParams[p].id) : @""; }
++ (NSString *)motorParamName:(NSInteger)p { return (p >= 0 && p < blonda::bris::kNumParams) ? @(blonda::bris::kParams[p].name) : @""; }
++ (double)motorParamMin:(NSInteger)p { return (p >= 0 && p < blonda::bris::kNumParams) ? blonda::bris::kParams[p].min : 0; }
++ (double)motorParamMax:(NSInteger)p { return (p >= 0 && p < blonda::bris::kNumParams) ? blonda::bris::kParams[p].max : 1; }
++ (BOOL)motorParamInteger:(NSInteger)p { return (p >= 0 && p < blonda::bris::kNumParams) ? blonda::bris::kParams[p].integer : NO; }
++ (NSString *)motorPresetName:(NSInteger)i { return (i >= 0 && i < blonda::bris::kNumPresets) ? @(blonda::bris::kPresets[i].name) : @""; }
+- (NSInteger)motorPreset:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorPreset((int)t - 6) : 0; }
+- (void)setMotorPreset:(NSInteger)i track:(NSInteger)t { if (t >= 6 && t <= 9) _host->setMotorPreset((int)t - 6, (int)i); }
+- (double)motorParam:(NSInteger)p track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorParam((int)t - 6, (int)p) : 0; }
+- (void)setMotorParam:(NSInteger)p track:(NSInteger)t value:(double)v { if (t >= 6 && t <= 9) _host->setMotorParam((int)t - 6, (int)p, v); }
+- (float)motorMeter:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorMeter((int)t - 6) : 0; }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

@@ -82,6 +82,12 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
 #undef NI
     chordKeys = (int)S["chord"]["keys"].numOr(1); chordPad = (int)S["chord"]["pad"].numOr(1);
     for (int i = 0; i < 6; ++i) kit[i] = S["dk"][kTrackIds[i]].strOr("");
+    for (int k = 0; k < 4; ++k) {   // BLONDA motor (app field; the web version keeps it untouched)
+        const json::Value& M = S["motor"][kMelIds[k]]; MotorState& o = motor[k];
+        bris::Bris tmp; tmp.prepare(48000); o.preset = (int)M["preset"].numOr(1); tmp.loadPreset(o.preset);
+        for (int p = 0; p < bris::kNumParams; ++p) { const json::Value& v = M["p"][bris::kParams[p].id]; if (v.type == json::Value::Number) tmp.setParam(p, v.num); o.vals[p] = tmp.getParam(p); }
+        o.set = true;
+    }
     for (int k = 0; k < 4; ++k) { const json::Value& L = S["loops"][k]; LoopSlot& o = loops[k];
         o.sid = L["sid"].strOr(""); o.on = L["on"].numOr(1) != 0; o.vol = (float)L["vol"].numOr(.8); o.bars = (int)L["bars"].numOr(0); }
     song = S["song"].numOr(0) != 0; for (int k = 0; k < 8; ++k) chain[k] = (int)S["chain"][k].numOr(-1);
@@ -113,6 +119,8 @@ std::string Project::toJSON(const std::string& base) const {
       X.at("space").at("on") = V::number(fx.spaceOn ? 1 : 0); X.at("space").at("size") = V::number(fx.spaceSize);
       X.at("tape").at("on") = V::number(fx.tapeOn ? 1 : 0); X.at("tape").at("color") = V::number(fx.tapeColor);
       X.at("crush").at("on") = V::number(fx.crushOn ? 1 : 0); X.at("crush").at("bits") = V::number(fx.crushBits); X.at("crush").at("mix") = V::number(fx.crushMix); }
+    for (int k = 0; k < 4; ++k) { V& M = S.at("motor").at(kMelIds[k]); M.at("preset") = V::number(motor[k].preset);
+        for (int p = 0; p < bris::kNumParams; ++p) M.at("p").at(bris::kParams[p].id) = V::number(motor[k].vals[p]); }
     for (int i = 0; i < 6; ++i) { if (!kit[i].empty()) S.at("dk").at(kTrackIds[i]) = V::string_(kit[i]); else if (S.has("dk")) S.at("dk").erase(kTrackIds[i]); }
     for (int k = 0; k < 4; ++k) { V& L = S.at("loops").at((size_t)k); const LoopSlot& o = loops[k];
         L.at("sid") = o.sid.empty() ? V() : V::string_(o.sid); L.at("on") = V::number(o.on ? 1 : 0); L.at("vol") = V::number(o.vol); L.at("bars") = V::number(o.bars); }
@@ -185,6 +193,7 @@ void Seq3::prepare(float sampleRate) {
     sr_ = sampleRate; frame_ = 0;
     for (int i = 0; i < 6; ++i) drums_[i].prepare(sr_, (DrumKind)i);
     drums_[T_HAT].chokeTarget = &drums_[T_OHAT];
+    for (auto& m : mot_) m.prepare(sr_);
     for (int k = 0; k < 4; ++k) { mel_[k].prepare(sr_, k == 0); bris_[k].prepare(sr_); }
     const int maxB = 4096;
     for (int i = 0; i < kTracks; ++i) { chL_[i].assign(maxB, 0); chR_[i].assign(maxB, 0); strips_[i].comp.prepare(sr_); }
@@ -228,6 +237,7 @@ Convolver* Seq3::swapReverb(Convolver* c) {
 
 void Seq3::load(const Project& p) {
     P_ = p; playing_ = false; evq_.clear();
+    for (int k = 0; k < 4; ++k) { mot_[k].reset(); motN_[k] = 0; for (int q = 0; q < bris::kNumParams; ++q) mot_[k].setParam(q, P_.motor[k].vals[q]); }
     // web: comp threshold -12 ratio 1.8 attack .025 release .25 knee 12; limiter -1.5 / 20 / .002 / .12 / 0
     comp_.threshold = -12; comp_.ratio = 1.8f; comp_.attack = .025f; comp_.release = .25f; comp_.knee = 12;
     lim_.threshold = -1.5f; lim_.ratio = 20; lim_.attack = .002f; lim_.release = .12f; lim_.knee = 0;
@@ -389,6 +399,26 @@ void Seq3::renderLoops(long long b0, int n) {
     }
 }
 
+// ---------------------------------------------------------------- BLONDA motor
+void Seq3::renderMotor(int k, long long b0, int n, float* L, float* R) {
+    bris::Bris& m = mot_[k];
+    if (P_.inst[k] != "bris6" && motN_[k] == 0 && motEnv_[k] < 1e-5) return;   // silent and not in use
+    float bl[128], br[128]; int at = 0;
+    auto run = [&](int to) { if (to > at) { m.process(bl + at, br + at, to - at); at = to; } };
+    for (;;) {   // next event inside this block
+        int best = -1; long long bf = LLONG_MAX;
+        for (int i = 0; i < motN_[k]; ++i) if (motQ_[k][i].f < b0 + n && motQ_[k][i].f < bf) { bf = motQ_[k][i].f; best = i; }
+        if (best < 0) break;
+        const MotEv e = motQ_[k][best]; motQ_[k][best] = motQ_[k][--motN_[k]];
+        run((int)std::max(0LL, e.f - b0));
+        if (e.on) m.noteOn(e.note, std::max(1, std::min(127, (int)std::lround(e.vel * 127))));
+        else if (e.gen == 0 || e.gen == motGen_[k][e.note]) m.noteOff(e.note);
+    }
+    run(n);
+    for (int x = 0; x < n; ++x) { L[x] += bl[x]; R[x] += br[x]; }
+    motEnv_[k] = m.envelope();
+}
+
 void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); }
 void Seq3::stop() { killLoops(-1); playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
 
@@ -490,7 +520,12 @@ void Seq3::dispatch(long long blockStart, int frames) {
             else { const auto& sc = SCALE(); const int idx = scaleIndex(sc, ev.note);
                    if (idx < 0 || idx + 6 >= (int)sc.size()) { iv[0] = 0; iv[1] = 7; iv[2] = 10; iv[3] = 15; }
                    else { iv[0] = 0; iv[1] = sc[idx + 2] - ev.note; iv[2] = sc[idx + 4] - ev.note; iv[3] = sc[idx + 6] - ev.note; } n = 4; }
-            if (P_.inst[k] == "bris") {
+            if (P_.inst[k] == "bris6") {   // BLONDA motor: note on now, note off after the note length (a newer hit of the same note wins)
+                const long long f0 = blockStart + off, f1 = f0 + std::max<long long>(1, (long long)std::llround(len * sr_));
+                const int tr = (int)std::lround(P_.params[6 + k].tune);
+                for (int x = 0; x < n; ++x) { const int nn = std::max(0, std::min(127, ev.note + iv[x] + tr)); const uint32_t g = ++motGen_[k][nn];
+                    motorEvent(k, f0, nn, ev.vel, true); motorEvent(k, f1, nn, 0, false, g); }
+            } else if (P_.inst[k] == "bris") {
                 Bris& B = bris_[k]; const int nn = B.params.vmode > .5f && B.params.vmode < 1.5f ? 1 : n;
                 for (int x = 0; x < nn; ++x) B.noteOn(ev.note + iv[x], ev.vel, off, nn, len, ev.glide >= 0 ? &glides_[ev.glide] : nullptr);
             } else mel_[k].trigger(ev.vel, ev.note, len, iv, n, off, ev.glide >= 0 ? &glides_[ev.glide] : nullptr);
@@ -503,6 +538,7 @@ void Seq3::liveNote(int track, int note, float vel, bool on) {
     if (track < 6) { if (on) trigger(track, frame_, vel, 60, 1, -1); return; }
     const int k = track - 6;
     if (P_.inst[k] == "bris") { if (on) bris_[k].noteOn(note, vel, 0, 1, 0.f); else bris_[k].noteOff(note, 0); return; }
+    if (P_.inst[k] == "bris6") { const int nn = std::max(0, std::min(127, note + (int)std::lround(P_.params[6 + k].tune))); if (on) { ++motGen_[k][nn]; motorEvent(k, frame_, nn, vel, true); } else motorEvent(k, frame_, nn, 0, false, motGen_[k][nn]); return; }
     if (on) { const int iv[1] = {0}; mel_[k].trigger(vel, note, (float)(60.0 / P_.bpm / 4.0 * 24), iv, 1, 0, nullptr, true); }
     else mel_[k].releaseLive(note);
 }
@@ -519,6 +555,7 @@ void Seq3::render(float* L, float* R, int frames) {
         for (int i = 0; i < 6; ++i) if (dsmp_[i] || sampleTail_[i]) std::memcpy(chR_[i].data(), chL_[i].data(), sizeof(float) * n);
         renderSamples(b0, n);
         for (int k = 0; k < 4; ++k) { mel_[k].process(chL_[6 + k].data(), chR_[6 + k].data(), n); bris_[k].process(chL_[6 + k].data(), chR_[6 + k].data(), n); }
+        for (int k = 0; k < 4; ++k) renderMotor(k, b0, n, chL_[6 + k].data(), chR_[6 + k].data());
         std::memset(busL_.data(), 0, sizeof(float) * n); std::memset(busR_.data(), 0, sizeof(float) * n);
         std::memset(dInL_.data(), 0, sizeof(float) * n); std::memset(dInR_.data(), 0, sizeof(float) * n);
         std::memset(rInL_.data(), 0, sizeof(float) * n); std::memset(rInR_.data(), 0, sizeof(float) * n);
@@ -526,7 +563,7 @@ void Seq3::render(float* L, float* R, int frames) {
         // channel strips
         for (int i = 0; i < kTracks; ++i) {
             Strip& s = strips_[i]; float* cl = chL_[i].data(); float* cr = chR_[i].data();
-            const bool stereoSrc = (i >= 6 && (P_.inst[i - 6] == "pluck" || P_.inst[i - 6] == "super" || P_.inst[i - 6] == "bris")) || (i < 6 && (dsmp_[i] || sampleTail_[i]));
+            const bool stereoSrc = (i >= 6 && (P_.inst[i - 6] == "pluck" || P_.inst[i - 6] == "super" || P_.inst[i - 6] == "bris" || P_.inst[i - 6] == "bris6")) || (i < 6 && (dsmp_[i] || sampleTail_[i]));
             if (!stereoSrc) for (int x = 0; x < n; ++x) cr[x] = cl[x];
             const float kn = 1.f / std::tanh(s.driveK);
             for (int x = 0; x < n; ++x) {

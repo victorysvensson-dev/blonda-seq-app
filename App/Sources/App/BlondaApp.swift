@@ -46,7 +46,7 @@ struct RootView: View {
 struct SynthGallery: View {
     @EnvironmentObject var model: EngineModel
     let page: Int
-    private static let pages = [["analog", "acid", "bris"], ["sh101", "mini", "sub"], ["fm", "pluck", "chip"], ["super", "acid", "analog"]]
+    private static let pages = [["analog", "acid", "bris"], ["sh101", "mini", "sub"], ["fm", "pluck", "chip"], ["super", "bris6", "analog"]]
     @State private var ready = false
     var body: some View {
         ZStack(alignment: .top) {

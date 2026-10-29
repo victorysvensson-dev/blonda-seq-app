@@ -22,7 +22,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; };
 
     ~Host() { shutdown(); }
@@ -85,6 +85,24 @@ public:
         for (const auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
         if (cell.v != before.v || cell.n != before.n) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); }
     }
+    // ---- BLONDA motor (engine "bris6") on melodic track k 0..3: factory sound + parameters in the motor's units
+    int motorPreset(int k) const { return (k >= 0 && k < 4) ? ui.motor[k].preset : 0; }
+    double motorParam(int k, int p) const { return (k >= 0 && k < 4 && p >= 0 && p < bris::kNumParams) ? ui.motor[k].vals[p] : 0; }
+    void setMotorPreset(int k, int i) {
+        if (k < 0 || k >= 4 || i < 0 || i >= bris::kNumPresets) return;
+        MotorState& m = ui.motor[k]; m.preset = i;   // same rule as Bris::loadPreset: unnamed parameters go to default, kept ones stay
+        for (int p = 0; p < bris::kNumParams; ++p) if (!bris::kParams[p].keepOnPreset) m.vals[p] = bris::kParams[p].def;
+        const PresetInfo& pr = bris::kPresets[i];
+        for (int j = 0; j < pr.count; ++j) { const PresetValue& v = bris::kPresetValues[pr.first + j]; if (!bris::kParams[v.param].keepOnPreset) m.vals[v.param] = v.value; }
+        for (int p = 0; p < bris::kNumParams; ++p) { const ParamInfo& q = bris::kParams[p]; m.vals[p] = std::min(q.max, std::max(q.min, q.integer ? std::round(m.vals[p]) : m.vals[p])); }
+        Cmd c; c.type = MotPreset; c.a = k; c.b = i; send(c);
+    }
+    void setMotorParam(int k, int p, double v) {
+        if (k < 0 || k >= 4 || p < 0 || p >= bris::kNumParams) return;
+        const ParamInfo& q = bris::kParams[p]; v = std::min(q.max, std::max(q.min, v)); if (q.integer) v = std::round(v);
+        ui.motor[k].vals[p] = v; Cmd c; c.type = MotParam; c.a = k; c.b = p; c.f = (float)v; send(c);
+    }
+    float motorMeter(int k) const { return (k >= 0 && k < 4) ? motMeter_[k].load(std::memory_order_relaxed) : 0.f; }   // loudest voice envelope 0..1
     // ---- piano roll: the whole note list of a melodic track (current pattern); g = index of the glide target or -1
     const std::vector<RollNote>& rollNotes(int t) const { static const std::vector<RollNote> none; return (t >= 6 && t < kTracks) ? ui.roll[ui.pat][t - 6] : none; }
     void setRollNotes(int t, const std::vector<RollNote>& notes) {
@@ -333,6 +351,8 @@ public:
                 case DrumSmp: if (e) e->setDrumSample(c.a, c.smp, c.f); break;
                 case Preview: if (e) e->previewSample(c.smp, c.f, c.g); break;
                 case Drop: { if (e) e->dropSample(c.smp); Cmd r; r.type = Drop; r.smp = c.smp; retire_.push(r); break; }
+                case MotPreset: if (e) e->setMotorPreset(c.a, c.b); break;
+                case MotParam: if (e) e->setMotorParam(c.a, c.b, c.f); break;
                 case GlideT: if (e) e->setGlideT(c.f); break;
                 case Chord: if (e) e->setChord(c.a, c.b != 0); break;
                 case Fx: if (e) e->setFx(c.a, c.f); break;
@@ -347,6 +367,7 @@ public:
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }
         engine_->render(L, R, frames);
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
+        for (int k = 0; k < 4; ++k) motMeter_[k].store((float)engine_->motorMeter(k), std::memory_order_relaxed);
         audioPat_.store(engine_->pattern(), std::memory_order_relaxed); chainIdx_.store(engine_->chainIndex(), std::memory_order_relaxed);
     }
 
@@ -416,7 +437,7 @@ private:
     std::unordered_map<std::string, SampleData*> bank_;
     void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
     SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_;
-    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1};
+    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {};
 };
 
 } // namespace blonda
