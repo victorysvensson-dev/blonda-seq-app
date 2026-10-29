@@ -95,11 +95,12 @@ MPC Sample and Sample Key, and this host is meant to be replaced by that when it
 
 ## CPU
 
-The MPC Sample is a Rockchip RK3566 (4 × Cortex-A55, 2 GB RAM). The host uses one core for audio.
-Desktop numbers (x86, noisy shared VM) for 6 held notes: Bris ~6 % of a core, Mini D ~7 %, SH-101 ~8 %,
-Acid ~12 %, Super ~13 %. An A55 is several times slower per core, so `mpc.sh selftest` on the device gives the
-real numbers. Next steps when they are in: per-block envelope coefficients in Core (the voices call `exp()`
-per sample), NEON-friendly loops, and running voices on a second core.
+The MPC Sample is a Rockchip RK3566 (4 × Cortex-A55, 2 GB RAM). The host runs audio alone on one core.
+`mpc.sh selftest` (or `1 Kolla MPC`) measures every instrument on the device. Worst 128-frame block with 6 held
+notes, in % of one core: BRIS 35, BRIS SEQ 84, Mini D 31, SH-101 36, Acid 49, Analog 17, Super 24, FM 22,
+Pluck 14, Chip 11, Sub 22. The SEQ.3 engines render node by node per block (`Core/src/wg.cpp`), bit-identical
+to frame-by-frame rendering; per-engine held-note limits in `src/engine_instrument.cpp` keep the worst case
+(notes still ringing out included) below the budget.
 
 ## Credits
 
