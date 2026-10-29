@@ -104,7 +104,6 @@ struct WebWaves {
                 }
                 if (l == 0) { for (int i = 0; i < kSize; ++i) norm = std::max(norm, std::fabs(tb[i])); norm = 1.f / norm; }
             }
-            if (ty == Saw) norm *= 0.842f / 0.918f;   // measured: Chrome's built-in sawtooth sits at +/-0.842
             for (int l = 0; l < kLevels; ++l) { for (int i = 0; i < kSize; ++i) t[ty][l][i] *= norm; t[ty][l][kSize] = t[ty][l][0]; }
         }
     }

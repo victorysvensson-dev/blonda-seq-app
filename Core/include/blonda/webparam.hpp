@@ -8,13 +8,17 @@
 
 namespace blonda {
 
-class WebParam {
+template <int N = 24>
+class WebParamN {
 public:
     enum Type : uint8_t { Set, Lin, Exp, Target };
-    static constexpr int kMax = 24;
+    static constexpr int kMax = N;
 
-    explicit WebParam(float def = 0.f) : def_(def) {}
-    void reset(float def) { def_ = def; n_ = 0; held_ = false; }
+    explicit WebParamN(float def = 0.f) : def_(def) {}
+    void reset(float def) { def_ = def; n_ = 0; held_ = false; hint_ = -1; }
+    float defaultValue() const { return def_; }
+    void setDefault(float v) { def_ = v; }
+    int count() const { return n_; }
 
     void setValueAtTime(float v, double t) { add({Set, t, v, 0.f}); }
     void linearRampToValueAtTime(float v, double t) { add({Lin, t, v, 0.f}); }
@@ -24,7 +28,8 @@ public:
     void cancelAndHold(double t) { float v = valueAt(t); int k = 0; while (k < n_ && ev_[k].t <= t) ++k; n_ = k; add({Set, t, v, 0.f}); }
 
     float valueAt(double t) const {
-        int k = -1; while (k + 1 < n_ && ev_[k + 1].t <= t) ++k;
+        if (n_ == 0) return def_;
+        int k = (hint_ < n_ && hint_ >= 0 && ev_[hint_].t <= t) ? hint_ : -1; while (k + 1 < n_ && ev_[k + 1].t <= t) ++k; hint_ = k;
         if (k + 1 < n_ && (ev_[k + 1].type == Lin || ev_[k + 1].type == Exp)) {
             const Ev& e2 = ev_[k + 1]; double T0; float V0;
             if (k < 0) { T0 = 0.0; V0 = def_; }
@@ -47,7 +52,7 @@ private:
     void add(Ev e) {
         if (n_ >= kMax) return;
         int i = n_; while (i > 0 && ev_[i - 1].t > e.t) { ev_[i] = ev_[i - 1]; --i; }   // stable: equal times keep insertion order
-        ev_[i] = e; ++n_;
+        ev_[i] = e; ++n_; hint_ = -1;
     }
     float endValue(int k) const { return ev_[k].v; }
     // value of the timeline just before event k starts (used by setTarget and ramps that follow a setTarget)
@@ -58,7 +63,9 @@ private:
         if (e.type != Target) return e.v;
         return e.v + (startValue(j) - e.v) * (float)std::exp(-(t - e.t) / (e.tau > 0 ? e.tau : 1e-6));
     }
-    Ev ev_[kMax]{}; int n_ = 0; float def_ = 0.f; bool held_ = false;
+    Ev ev_[kMax]{}; int n_ = 0; float def_ = 0.f; bool held_ = false; mutable int hint_ = -1;
 };
+
+using WebParam = WebParamN<24>;
 
 } // namespace blonda
