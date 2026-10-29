@@ -167,7 +167,7 @@ struct InspectorPopover: ViewModifier {
     func body(content: Content) -> some View {
         if model.inspect == ref {
             content.popover(isPresented: Binding(get: { model.inspect == ref }, set: { if !$0 && model.inspect == ref { model.inspect = nil } }),
-                            attachmentAnchor: .rect(.bounds), arrowEdge: .bottom) {
+                            attachmentAnchor: .rect(.bounds), arrowEdge: .top) {
                 StepInspector(ref: ref).environmentObject(model).presentationCompactAdaptation(.popover).presentationBackground(Color(rgb: 250, 249, 245))
             }
         } else { content }

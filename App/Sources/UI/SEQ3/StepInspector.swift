@@ -58,6 +58,7 @@ struct StepInspector: View {
         .foregroundColor(kInk)
         .padding(14)
         .frame(width: 272)
+        .fixedSize(horizontal: false, vertical: true)
         .background(Color(rgb: 250, 249, 245))
     }
 
