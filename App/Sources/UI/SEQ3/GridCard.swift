@@ -79,6 +79,7 @@ struct GridRow: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .simultaneousGesture(TapGesture(count: 2).onEnded { model.openDrumEditor(track) })
             HStack(spacing: kGap) {
                 let L = model.length(track)
                 let ph = model.playing && model.step >= 0 ? (L < 16 ? model.globalStep % L : model.step) : -1

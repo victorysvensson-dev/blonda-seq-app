@@ -167,6 +167,8 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)setLoop:(NSInteger)k bars:(NSInteger)bars { _host->setLoopBars((int)k, (int)bars); }
 - (NSString *)drumSample:(NSInteger)t { return [NSString stringWithUTF8String:_host->drumSample((int)t).c_str()]; }
 - (void)assignDrum:(NSInteger)t sample:(NSString *)sid { _host->assignDrum((int)t, sid.UTF8String); }
+- (NSString *)kit:(NSInteger)t { return [NSString stringWithUTF8String:_host->kit((int)t).c_str()]; }
+- (void)setKit:(NSString *)name track:(NSInteger)t { _host->setKit((int)t, name.UTF8String); }
 - (void)bindDrum:(NSInteger)t norm:(float)norm { _host->bindDrum((int)t, norm); }
 - (float)stepVelocity:(NSInteger)t step:(NSInteger)s { return _host->stepVel((int)t, (int)s); }
 - (NSInteger)stepRatchet:(NSInteger)t step:(NSInteger)s { return _host->stepRatchet((int)t, (int)s); }
@@ -207,6 +209,8 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (double)motorParam:(NSInteger)p track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorParam((int)t - 6, (int)p) : 0; }
 - (void)setMotorParam:(NSInteger)p track:(NSInteger)t value:(double)v { if (t >= 6 && t <= 9) _host->setMotorParam((int)t - 6, (int)p, v); }
 - (float)motorMeter:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorMeter((int)t - 6) : 0; }
+- (NSInteger)world { return _host->world(); }
+- (void)setWorld:(NSInteger)w { _host->setWorld((int)w); }
 - (BOOL)undo { return _host->undo(); }
 - (BOOL)redo { return _host->redo(); }
 

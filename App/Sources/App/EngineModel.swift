@@ -17,6 +17,22 @@ extension Color {
 }
 
 /// Same tracks and colours as the web version (TRACKS in BLONDA SEQ.3 Glass).
+/// web DEF_P for the drums, in kTrackParams order (level, tone, decay, tune, pan, echo, space)
+let kDrumDefaults: [[Float]] = [
+    [0.8, 0.35, 0.45, 0, 0, 0, 0.03], [0.48, 0.55, 0.4, 0, 0, 0.06, 0.2], [0.4, 0.5, 0.45, 0, 0.05, 0.1, 0.28],
+    [0.28, 0.6, 0.3, 0, 0.18, 0, 0.05], [0.22, 0.55, 0.45, 0, -0.18, 0.05, 0.1], [0.34, 0.4, 0.35, 0, -0.3, 0.35, 0.15],
+]
+/// web DKM: drum kits per track (id, name, tag); Open uses the hat kits
+let kDrumKits: [[(String, String, String)]] = {
+    let hat = [("", "metall", "808-metall"), ("909", "909", "brus · ljus"), ("shaker", "shaker", "mjuk"), ("tick", "tick", "minimal")]
+    return [
+        [("", "blonda", "rund · tight"), ("808", "808", "lång boom"), ("909", "909", "punch · klick"), ("thump", "thump", "kort · djup"), ("dist", "dist", "smutsig")],
+        [("", "blonda", "klassisk"), ("808", "808", "tonad"), ("909", "909", "frasig"), ("rim", "rim", "kantslag"), ("lofi", "lo-fi", "krossad")],
+        [("", "blonda", "tight"), ("808", "808", "rumsklang"), ("snap", "snap", "fingerknäpp"), ("stack", "stack", "bred")],
+        hat, hat,
+        [("", "blonda", "rim-tom"), ("conga", "conga", "varm"), ("cowbell", "cowbell", "808-klocka"), ("clave", "clave", "trä"), ("tom", "tom", "låg tom")],
+    ]
+}()
 let kTracks: [TrackInfo] = [
     TrackInfo(id: 0, name: "Kick", sub: "Trumma", color: Color(hex: 0xF5F5F2)),
     TrackInfo(id: 1, name: "Snare", sub: "Virvel", color: Color(hex: 0x3D6CF5)),
@@ -257,6 +273,7 @@ final class EngineModel: NSObject, ObservableObject {
 
     /// Hands the engine the samples the project uses (after loading a project, importing or editing the library).
     func rebindSamples() {
+        applyWorld()
         let ids = (0..<4).map { engine.loopSample($0) } + (0..<6).map { engine.drumSample($0) }
         ensureLoaded(ids) { [weak self] in
             guard let self = self else { return }
@@ -372,6 +389,32 @@ final class EngineModel: NSObject, ObservableObject {
     var keyboard: KeyboardInput?
     /// true once the hardware keyboard is read directly (then the SwiftUI key handlers leave notes and space alone)
     var keyboardDirect: Bool { keyboard?.active ?? false }
+    // MARK: drum editor (web: #ded)
+    @Published var drumEdit: Int?
+    func openDrumEditor(_ t: Int) {
+        guard t >= 0 && t < 6 else { selectedTrack = t; FullStore.shared.toggle("synth"); return }
+        selectedTrack = t; withAnimation(.spring(response: 0.38, dampingFraction: 0.84)) { drumEdit = t }
+    }
+    func closeDrumEditor() { withAnimation(.easeIn(duration: 0.18)) { drumEdit = nil } }
+    func kit(_ t: Int) -> String { _ = revision; return engine.kit(t) }
+    func setKit(_ t: Int, _ name: String) {
+        engine.pushUndo(); engine.setKit(name, track: t); revision += 1; paramRevision += 1; scheduleSave(); hitPad(t)
+    }
+    /// web: dedReset — the track's default sound and the blonda kit
+    func resetDrum(_ t: Int) {
+        guard t >= 0 && t < 6 else { return }
+        engine.pushUndo()
+        let d = kDrumDefaults[t]   // kTrackParams order: nivå ton decay tune pan eko rymd
+        for (i, def) in kTrackParams.enumerated() { setParam(def, t, d[i]) }
+        engine.setKit("", track: t); revision += 1; paramRevision += 1; scheduleSave(); hitPad(t)
+    }
+    // MARK: colour worlds
+    var world: Int { _ = revision; return max(0, min(kWorlds.count - 1, engine.world)) }
+    func applyWorld() { Palette.current = kWorlds[world].palette }
+    func nextWorld() {
+        engine.world = (world + 1) % kWorlds.count; applyWorld(); revision += 1; scheduleSave()
+        showToast("\(kWorlds[world].name) · bara färg och bakgrund")
+    }
     @Published var chainIdx = -1
     var songMode: Bool { _ = revision; return engine.songMode }
     func toggleSong() {

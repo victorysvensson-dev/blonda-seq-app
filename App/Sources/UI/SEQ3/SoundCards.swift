@@ -19,7 +19,7 @@ func knobPoint(center: CGFloat, r: CGFloat, deg: Double) -> CGPoint {
 }
 
 /// Drag horizontally (or vertically) to change a parameter; reports values in the parameter's own range.
-private struct ParamDrag: ViewModifier {
+struct ParamDrag: ViewModifier {
     @EnvironmentObject var model: EngineModel
     let def: ParamDef
     let track: Int

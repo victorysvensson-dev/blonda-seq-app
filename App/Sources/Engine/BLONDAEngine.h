@@ -100,6 +100,9 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (void)setLoop:(NSInteger)k bars:(NSInteger)bars NS_SWIFT_NAME(setLoop(_:bars:));
 - (NSString *)drumSample:(NSInteger)track NS_SWIFT_NAME(drumSample(_:));
 - (void)assignDrum:(NSInteger)track sample:(NSString *)sid NS_SWIFT_NAME(assignDrum(_:sample:));
+/// Synth drum kit of a drum track: "" = blonda, "808", "909", "conga" … (a sample shows as "smp:<id>").
+- (NSString *)kit:(NSInteger)track NS_SWIFT_NAME(kit(_:));
+- (void)setKit:(NSString *)name track:(NSInteger)track NS_SWIFT_NAME(setKit(_:track:));
 - (void)bindDrum:(NSInteger)track norm:(float)norm NS_SWIFT_NAME(bindDrum(_:norm:));
 /// Step inspector (current pattern).
 - (float)stepVelocity:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepVelocity(_:step:));
@@ -131,6 +134,8 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (double)motorParam:(NSInteger)p track:(NSInteger)track NS_SWIFT_NAME(motorParam(_:track:));
 - (void)setMotorParam:(NSInteger)p track:(NSInteger)track value:(double)v NS_SWIFT_NAME(setMotorParam(_:track:value:));
 - (float)motorMeter:(NSInteger)track NS_SWIFT_NAME(motorMeter(_:));
+/// Colour world of the project (web: S.world).
+@property (nonatomic) NSInteger world;
 - (BOOL)undo;
 - (BOOL)redo;
 

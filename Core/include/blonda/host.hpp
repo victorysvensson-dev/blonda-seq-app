@@ -22,7 +22,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; };
 
     ~Host() { shutdown(); }
@@ -103,6 +103,14 @@ public:
         ui.motor[k].vals[p] = v; Cmd c; c.type = MotParam; c.a = k; c.b = p; c.f = (float)v; send(c);
     }
     float motorMeter(int k) const { return (k >= 0 && k < 4) ? motMeter_[k].load(std::memory_order_relaxed) : 0.f; }   // loudest voice envelope 0..1
+    // drum kits: "" (blonda) or a kit name; "smp:<id>" is a sample (see assignDrum)
+    std::string kit(int i) const { return (i >= 0 && i < 6) ? ui.kit[i] : std::string(); }
+    void setKit(int i, const std::string& name) {
+        if (i < 0 || i >= 6) return; int idx = -1; for (int k = 0; k < kNumKits; ++k) if (name == kKitNames[k]) idx = k; if (idx < 0) return;
+        ui.kit[i] = kKitNames[idx]; Cmd c; c.type = Kit; c.a = i; c.b = idx; send(c);
+    }
+    int world() const { return ui.world; }
+    void setWorld(int w) { ui.world = w; }   // colour only: nothing for the audio thread
     // ---- piano roll: the whole note list of a melodic track (current pattern); g = index of the glide target or -1
     const std::vector<RollNote>& rollNotes(int t) const { static const std::vector<RollNote> none; return (t >= 6 && t < kTracks) ? ui.roll[ui.pat][t - 6] : none; }
     void setRollNotes(int t, const std::vector<RollNote>& notes) {
@@ -351,6 +359,7 @@ public:
                 case DrumSmp: if (e) e->setDrumSample(c.a, c.smp, c.f); break;
                 case Preview: if (e) e->previewSample(c.smp, c.f, c.g); break;
                 case Drop: { if (e) e->dropSample(c.smp); Cmd r; r.type = Drop; r.smp = c.smp; retire_.push(r); break; }
+                case Kit: if (e) e->setKit(c.a, c.b); break;
                 case MotPreset: if (e) e->setMotorPreset(c.a, c.b); break;
                 case MotParam: if (e) e->setMotorParam(c.a, c.b, c.f); break;
                 case GlideT: if (e) e->setGlideT(c.f); break;

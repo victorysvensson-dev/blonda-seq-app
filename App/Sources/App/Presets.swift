@@ -14,6 +14,7 @@ struct SoundPreset: Codable, Identifiable {
     var motorPreset: Int = 0
     var motor: [Double] = []  // BLONDA motor, every parameter
     var sample: String = ""   // drum: sample id ("" = synth kit)
+    var kit: String? = nil    // drum: synth kit ("" blonda, "808" …), when no sample
     var t: Double
 }
 
@@ -55,7 +56,8 @@ extension EngineModel {
             p.name = "\(kTracks[t].name) · \(kEngDefs[e].name)"
         } else {
             p.sample = engine.drumSample(t)
-            p.name = "\(kTracks[t].name) · \(drumSampleMeta(t)?.name ?? kTracks[t].sub.lowercased())"
+            if p.sample.isEmpty { p.kit = engine.kit(t) }
+            p.name = "\(kTracks[t].name) · \(drumSampleMeta(t)?.name ?? kDrumKits[t].first(where: { $0.0 == engine.kit(t) })?.1 ?? kTracks[t].sub.lowercased())"
         }
         return p
     }
@@ -81,6 +83,7 @@ extension EngineModel {
         } else {
             if p.sample.isEmpty || library.item(p.sample) != nil {
                 engine.assignDrum(t, sample: p.sample)
+                if p.sample.isEmpty { engine.setKit(p.kit ?? "", track: t) }
                 rebindSamples()
             }
         }

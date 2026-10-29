@@ -107,6 +107,15 @@ int main(int argc, char** argv) {
       blonda::Project b; expect(b.loadJSON(h->toJSON(), &err) && b.roll[b.pat][2].size() == 3 && b.roll[b.pat][2][0].g == 1 && std::abs(b.roll[b.pat][2][2].s - 8.5f) < 1e-5f, "roll saved with glide");
       h->setGlideTime(.2f); h->setChord(7, false); expect(h->glideTime() == .2f && !h->chordOn(7), "glide time + chord");
       blonda::Project c2; expect(c2.loadJSON(h->toJSON(), &err) && c2.glideT == .2f && c2.chordKeys == 0, "glide/chord saved"); }
+    // drum kits: the 808 kick sounds different from the blonda kick, and the choice is saved
+    { auto hitE = [&](const char* kit) { h->setKit(0, kit); pump(); h->noteOn(0, 60, 1.f); double e = 0, z = 0; float pv = 0;
+          for (int i = 0; i < 150; ++i) { h->render(L, R, 128); for (int j = 0; j < 128; ++j) { e += L[j] * L[j]; if ((L[j] > 0) != (pv > 0)) ++z; pv = L[j]; } } for (int i = 0; i < 300; ++i) h->render(L, R, 128); return std::make_pair(e, z); };
+      for (int t = 1; t < 10; ++t) h->setMute(t, true); h->setMute(0, false);
+      const auto a = hitE(""), b = hitE("808"), c = hitE("909");
+      std::printf("     kick blonda e=%.2f z=%.0f · 808 e=%.2f z=%.0f · 909 e=%.2f z=%.0f\n", a.first, a.second, b.first, b.second, c.first, c.second);
+      expect(a.first > .1 && b.first > .1 && c.first > .1 && (std::abs(a.first - b.first) > .05 * a.first || a.second != b.second), "kits sound");
+      blonda::Project q; expect(q.loadJSON(h->toJSON(), &err) && q.kit[0] == "909", "kit saved");
+      for (int t = 1; t < 10; ++t) h->setMute(t, false); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }

@@ -189,6 +189,7 @@ struct OrbitTrackButtons: View {
                     .overlay(Rectangle().strokeBorder(on ? Color.clear : T.dmLine, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture(count: 2).onEnded { model.openDrumEditor(i) })
             }
         }
     }
@@ -214,6 +215,7 @@ struct TrackTags: View {
                     .background(Capsule().fill(sel ? T.fg : Color.white.opacity(0.07)))
                 }
                 .buttonStyle(.plain)
+                .simultaneousGesture(TapGesture(count: 2).onEnded { model.openDrumEditor(i) })
             }
         }
     }

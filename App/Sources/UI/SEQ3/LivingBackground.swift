@@ -8,7 +8,23 @@ struct Palette {
     let c: [UInt32]
     var mono = false
     static let aurora = Palette(base: (11, 11, 18), c: [0x6B4CFF, 0xF255A8, 0x2EC5FF, 0xB9A6FF])   // world "Velvet"
+    static let glod = Palette(base: (18, 9, 6), c: [0xF27A2E, 0xFF4A33, 0xF2C318, 0x8A2BE2])
+    static let lime = Palette(base: (6, 14, 10), c: [0x3FA56E, 0xC9F23A, 0xF2C318, 0x1E6BFF])
+    static let isPal = Palette(base: (6, 10, 18), c: [0x2E7BFF, 0x9FE7FF, 0xB9A6FF, 0xE6F0FF])
+    static let mork = Palette(base: (5, 5, 6), c: [0x26262B, 0x1C1C20, 0x303036, 0x202024], mono: true)
+    /// The palette of the open project's world; the background eases its blobs toward it.
+    static var current = aurora
 }
+
+/// Colour worlds (web: WORLDS) — the dock's colour button steps through them; only colour and background change.
+struct World { let name: String; let short: String; let palette: Palette }
+let kWorlds: [World] = [
+    World(name: "Velvet Night", short: "Velvet", palette: .aurora),
+    World(name: "Acid Garden", short: "Acid", palette: .lime),
+    World(name: "Chrome Club", short: "Chrome", palette: .isPal),
+    World(name: "Mörk Studio", short: "Mörk", palette: .mork),
+    World(name: "Sunset Tape", short: "Sunset", palette: .glod),
+]
 
 final class BlobState {
     static let shared = BlobState()
@@ -21,7 +37,7 @@ private func rgb(_ h: UInt32) -> [Double] { [Double((h >> 16) & 0xFF), Double((h
 
 struct LivingBackground: View {
     @EnvironmentObject var model: EngineModel
-    var palette = Palette.aurora
+    var palette: Palette? = nil
 
     var body: some View {
         GeometryReader { geo in
@@ -29,7 +45,7 @@ struct LivingBackground: View {
                 let t = tl.date.timeIntervalSince(Field.start)
                 Canvas { ctx, size in
                     ScreenSize.current = size
-                    let state = BlobState.shared, P = palette
+                    let state = BlobState.shared, P = palette ?? Palette.current
                     // ease blob colours toward their targets (web: += (target-col)*.04 per ~32 ms frame)
                     let dt = state.last == 0 ? 1.0 / 30.0 : max(0, min(0.25, t - state.last)); state.last = t
                     let k = 1 - pow(1 - 0.04, dt * 30)

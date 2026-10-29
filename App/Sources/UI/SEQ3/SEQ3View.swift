@@ -74,6 +74,9 @@ struct SEQ3View: View {
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .zIndex(3)
             }
+            if let t = model.drumEdit {
+                DrumEditor(track: t).transition(.opacity.combined(with: .scale(scale: 0.96))).zIndex(3.5)
+            }
             if let t = model.rollTrack {
                 PianoRoll(track: t).transition(.move(edge: .bottom)).zIndex(4)
             }
@@ -107,6 +110,9 @@ struct SEQ3View: View {
             if args.contains("-projects") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {   // CI screenshot with a few projects
                 let st = model.projects; while st.items.count < 4 { _ = st.duplicate(st.current) }
                 model.openProjects() } }
+            if let i = args.firstIndex(of: "-world"), i + 1 < args.count, let w = Int(args[i + 1]) { for _ in 0..<kWorlds.count where model.world != w % kWorlds.count { model.nextWorld() } }
+            if let i = args.firstIndex(of: "-drumedit"), i + 1 < args.count, let t = Int(args[i + 1]) {   // CI screenshot
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.setKit(t, "808"); model.openDrumEditor(t) } }
             if args.contains("-full") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mönster") } }   // CI screenshot
             if args.contains("-roll") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openRoll(8) } }
             if args.contains("-inspect") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openInspector(1, 4) } }   // CI screenshot
@@ -136,6 +142,7 @@ struct SEQ3View: View {
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         if model.rollTrack != nil || model.libOpen || model.projOpen || model.textEditing { return .ignored }
+        if model.drumEdit != nil, press.key == .escape { model.closeDrumEditor(); return .handled }
         guard let ch = press.characters.lowercased().first else { return .ignored }
         if press.modifiers.contains(.command) {
             if press.phase == .down && ch == "z" { if press.modifiers.contains(.shift) { model.redo() } else { model.undo() }; return .handled }

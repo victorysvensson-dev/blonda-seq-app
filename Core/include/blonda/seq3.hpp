@@ -45,6 +45,7 @@ struct Project {
     bool song = false; std::array<int, 8> chain{{-1, -1, -1, -1, -1, -1, -1, -1}}; float glideT = .07f;
     std::array<LoopSlot, 4> loops;
     std::array<MotorState, 4> motor;
+    int world = 0;   // web: S.world (colour world, the sound does not change)
     Cell cells[kPatterns][kTracks][kSteps];
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
@@ -72,6 +73,8 @@ inline void paramRange(int group, int field, float& lo, float& hi) {
 }
 
 // engine names as stored in projects (S.inst); index = id used by the real-time instrument switch
+constexpr int kNumKits = 15;
+static const char* const kKitNames[kNumKits] = {"", "808", "909", "thump", "dist", "rim", "lofi", "snap", "stack", "shaker", "tick", "conga", "cowbell", "clave", "tom"};
 constexpr int kNumEngines = 11;
 // "bris6" = BLONDA BRIS from the shared BLONDA motor library (Bree6 clone, same code as the Max for Live plugin)
 static const char* const kEngineNames[kNumEngines] = {"analog", "acid", "sub", "fm", "pluck", "super", "chip", "sh101", "mini", "bris", "bris6"};
@@ -159,6 +162,8 @@ public:
     void setMotorPreset(int k, int i) { if (k < 0 || k >= 4) return; mot_[k].loadPreset(i); P_.motor[k].preset = i; for (int p = 0; p < bris::kNumParams; ++p) P_.motor[k].vals[p] = mot_[k].getParam(p); }
     void setMotorParam(int k, int p, double v) { if (k < 0 || k >= 4 || p < 0 || p >= bris::kNumParams) return; mot_[k].setParam(p, v); P_.motor[k].vals[p] = mot_[k].getParam(p); }
     double motorMeter(int k) const { return (k >= 0 && k < 4) ? motEnv_[k] : 0; }
+    // drum kit of track i (web: S.dk[id]); index into kKitNames
+    void setKit(int i, int idx) { if (i < 0 || i >= 6 || idx < 0 || idx >= kNumKits) return; dsmp_[i] = nullptr; P_.kit[i] = kKitNames[idx]; drums_[i].setKit(kKitNames[idx]); }
     void setGlideT(float v) { P_.glideT = v; }
     void setChord(int t, bool on) { if (t == 7) P_.chordKeys = on; else if (t == 9) P_.chordPad = on; }
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }

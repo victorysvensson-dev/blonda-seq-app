@@ -6,7 +6,7 @@ import SwiftUI
 /// so glass cards can redraw exactly the part of the field behind them (their "backdrop").
 enum Field {
     static let start = Date()
-    static func draw(_ ctx: inout GraphicsContext, size: CGSize, origin: CGPoint, screen: CGSize, t: Double, energy: Double, palette: Palette = .aurora) {
+    static func draw(_ ctx: inout GraphicsContext, size: CGSize, origin: CGPoint, screen: CGSize, t: Double, energy: Double, palette: Palette = .current) {
         let st = BlobState.shared
         let W = screen.width, H = screen.height
         let rect = CGRect(origin: .zero, size: size)

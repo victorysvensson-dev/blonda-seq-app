@@ -63,7 +63,10 @@ extension EngineModel {
     }
     func trackColor(_ i: Int) -> Color { Color(hex: trackHex(i)) }
     func trackSub(_ i: Int) -> String {
-        if i < 6 { return drumSampleMeta(i)?.name ?? kTracks[i].sub }
+        if i < 6 {
+            if let m = drumSampleMeta(i) { return m.name }
+            let k = kit(i); return k.isEmpty ? kTracks[i].sub : (kDrumKits[i].first(where: { $0.0 == k })?.1 ?? kTracks[i].sub)
+        }
         return kEngineName[engine.instrument(forTrack: i)] ?? kTracks[i].sub
     }
 }

@@ -80,6 +80,7 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
       NF(o, j, cho) NF(o, j, choMix) NF(o, j, dly) NF(o, j, dlyT) NF(o, j, dlyFb) NF(o, j, vmode) NF(o, j, vol) }
 #undef NF
 #undef NI
+    world = (int)S["world"].numOr(0);
     chordKeys = (int)S["chord"]["keys"].numOr(1); chordPad = (int)S["chord"]["pad"].numOr(1);
     for (int i = 0; i < 6; ++i) kit[i] = S["dk"][kTrackIds[i]].strOr("");
     for (int k = 0; k < 4; ++k) {   // BLONDA motor (app field; the web version keeps it untouched)
@@ -125,6 +126,7 @@ std::string Project::toJSON(const std::string& base) const {
     for (int k = 0; k < 4; ++k) { V& L = S.at("loops").at((size_t)k); const LoopSlot& o = loops[k];
         L.at("sid") = o.sid.empty() ? V() : V::string_(o.sid); L.at("on") = V::number(o.on ? 1 : 0); L.at("vol") = V::number(o.vol); L.at("bars") = V::number(o.bars); }
     S.at("glideT") = V::number(glideT); S.at("chord").at("keys") = V::number(chordKeys); S.at("chord").at("pad") = V::number(chordPad);
+    S.at("world") = V::number(world);
     S.at("song") = V::number(song ? 1 : 0); for (int k = 0; k < 8; ++k) S.at("chain").at((size_t)k) = V::number(chain[k]);
     for (int i = 0; i < kTracks; ++i) {
         S.at("mute").at((size_t)i) = V::number(mute[i]);

@@ -47,11 +47,11 @@ struct Dock: View {
             HStack(spacing: 6) {
                 PatternSegment()
                 GButton(width: 38, action: { model.copyPattern() }) { SVGIcon(d: "M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5", size: 14).overlay(SVGIcon(d: "M7 5h4.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", size: 14)) }
-                GButton(width: 112) {
+                GButton(width: 112, action: { model.nextWorld() }) {
                     HStack(spacing: 8) {
                         Circle().fill(AngularGradient(colors: [Color(hex: 0xF255A8), Color(hex: 0xF2C318), Color(hex: 0x6BE28C), Color(hex: 0x3D6CF5), Color(hex: 0xB9A6FF), Color(hex: 0xF255A8)], center: .center, angle: .degrees(30 - 90)))
                             .frame(width: 9, height: 9).shadow(color: Color.white.opacity(0.35), radius: 4)
-                        Text("velvet")
+                        Text(kWorlds[model.world].short.lowercased())
                     }
                 }
                 GButton(width: 64) { HStack(spacing: 6) { Circle().fill(.white.opacity(0.35)).frame(width: 7, height: 7); Text("midi") } }
