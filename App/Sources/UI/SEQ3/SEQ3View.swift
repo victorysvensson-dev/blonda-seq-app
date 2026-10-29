@@ -101,6 +101,9 @@ struct SEQ3View: View {
             if press.phase == .down && ch == "z" { if press.modifiers.contains(.shift) { model.redo() } else { model.undo() }; return .handled }
             return .ignored
         }
+        if model.keyboardDirect {   // KeyboardInput plays notes and space; swallow them here so nothing else reacts too
+            return press.key == .space || ch == "z" || ch == "x" || Self.keyMap.contains(ch) ? .handled : .ignored
+        }
         if press.key == .space { if press.phase == .down { model.togglePlay() }; return .handled }
         if ch == "z" || ch == "x" { if press.phase == .down { octave = max(1, min(7, octave + (ch == "z" ? -1 : 1))) }; return .handled }
         guard let ix = Self.keyMap.firstIndex(of: ch) else { return .ignored }
@@ -124,6 +127,7 @@ struct SEQ3View: View {
                 }
             }
             .padding(.bottom, 24)
+            .background(ScrollTuner())
         }
         .frame(width: width)
     }
@@ -155,5 +159,25 @@ struct Hinge: View {
             .fill(LinearGradient(stops: [.init(color: Color.clear, location: 0), .init(color: Color.white.opacity(0.25), location: 0.2), .init(color: Color.white.opacity(0.25), location: 0.8), .init(color: Color.clear, location: 1)], startPoint: .top, endPoint: .bottom))
             .frame(width: 1)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+/// On the Mac a mouse drag inside the card columns should turn knobs and faders, not scroll the column:
+/// the columns scroll with the wheel / trackpad only (iPad keeps finger scrolling).
+struct ScrollTuner: UIViewRepresentable {
+    func makeUIView(context: Context) -> UIView {
+        let v = UIView(); v.isUserInteractionEnabled = false
+        DispatchQueue.main.async { Self.tune(from: v) }
+        return v
+    }
+    func updateUIView(_ v: UIView, context: Context) { DispatchQueue.main.async { Self.tune(from: v) } }
+    static func tune(from v: UIView) {
+        #if targetEnvironment(macCatalyst)
+        var p = v.superview
+        while let s = p, !(s is UIScrollView) { p = s.superview }
+        guard let sv = p as? UIScrollView else { return }
+        sv.panGestureRecognizer.allowedTouchTypes = []                 // no click-drag scrolling
+        sv.panGestureRecognizer.allowedScrollTypesMask = .all          // wheel and trackpad still scroll
+        #endif
     }
 }

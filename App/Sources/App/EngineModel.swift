@@ -59,6 +59,7 @@ final class EngineModel: NSObject, ObservableObject {
         revision += 1; paramRevision += 1   // redraw everything with the loaded project
         selColHex = trackHex(selectedTrack)
         engine.startMIDI()
+        keyboard = KeyboardInput(model: self)
         engine.midiTrack = selectedTrack
         if ProcessInfo.processInfo.arguments.contains("-autoplay") {
             engine.togglePlay()
@@ -331,6 +332,9 @@ final class EngineModel: NSObject, ObservableObject {
         if selectedTrack != tt { selectedTrack = tt }
     }
     func closeRoll() { withAnimation(.easeIn(duration: 0.22)) { rollTrack = nil } }
+    var keyboard: KeyboardInput?
+    /// true once the hardware keyboard is read directly (then the SwiftUI key handlers leave notes and space alone)
+    var keyboardDirect: Bool { keyboard?.active ?? false }
     @Published var chainIdx = -1
     var songMode: Bool { _ = revision; return engine.songMode }
     func toggleSong() {

@@ -3,32 +3,49 @@ import SwiftUI
 /// "Mönster": the 10×16 step grid in the dot-matrix look (.seqlite.dotm in the web version). Fully playable.
 struct GridCard: View {
     @EnvironmentObject var model: EngineModel
+    @State private var width: CGFloat = 0
     var body: some View {
         Card(style: .dark, title: [("Mönster ", false), (["A", "B", "C", "D"][model.pattern].lowercased(), true), (" · takt ", false), ("\(model.bar % 4 + 1)", true)]) {
             VStack(alignment: .leading, spacing: 6) {
-                StepRule()
-                ForEach(0..<10, id: \.self) { i in GridRow(track: i) }
+                StepRule(cell: cell)
+                ForEach(0..<10, id: \.self) { i in GridRow(track: i, cell: cell) }
                 GridActions().padding(.top, 8)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(GeometryReader { g in Color.clear.preference(key: GridWidthKey.self, value: g.size.width) })
+            .onPreferenceChange(GridWidthKey.self) { width = $0 }
         }
+    }
+    /// The steps grow with the card (a big window gives big steps), from 20 up to 64 points.
+    private var cell: CGFloat {
+        guard width > 0 else { return 35 }
+        return min(64, max(20, ((width - kLabelW - 15 * kGap) / 16).rounded(.down)))
     }
 }
 
+private struct GridWidthKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+}
+
 private let kLabelW: CGFloat = 104
+private let kGap: CGFloat = 5.4
 
 struct StepRule: View {
     @EnvironmentObject var model: EngineModel
+    var cell: CGFloat = 35
     var body: some View {
         HStack(spacing: 0) {
             Color.clear.frame(width: kLabelW)
-            HStack(spacing: 5.4) {
+            HStack(spacing: kGap) {
                 ForEach(0..<16, id: \.self) { s in
                     let beat = s % 4 == 0, dimGroup = (s >= 4 && s < 8) || s >= 12, ph = model.playing && model.step == s
                     Text("\(s + 1)").font(BFont.linje(8.5)).fontWeight(beat ? .semibold : .regular)
                         .foregroundColor(ph ? T.dmY : beat ? T.dmInk : T.dmInk.opacity(dimGroup ? 0.18 : 0.28))
-                        .frame(maxWidth: .infinity)
+                        .frame(width: cell)
                 }
             }
+            Spacer(minLength: 0)
         }
         .frame(height: 17, alignment: .top)
     }
@@ -37,6 +54,7 @@ struct StepRule: View {
 struct GridRow: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
+    var cell: CGFloat = 35
     var body: some View {
         let sel = track == model.selectedTrack, col = model.trackHex(track), muted = model.isMuted(track)
         HStack(spacing: 0) {
@@ -57,23 +75,25 @@ struct GridRow: View {
                         .opacity(muted ? 0.3 : 1)
                     Spacer(minLength: 0)
                 }
-                .frame(width: kLabelW, height: 35)
+                .frame(width: kLabelW, height: cell)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
-            HStack(spacing: 5.4) {
+            HStack(spacing: kGap) {
                 let L = model.length(track)
                 let ph = model.playing && model.step >= 0 ? (L < 16 ? model.globalStep % L : model.step) : -1
                 ForEach(0..<16, id: \.self) { s in
                     let ref = EngineModel.StepRef(track: track, step: s)
                     DotCell(value: model.value(track, s), colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L)
+                        .frame(width: cell, height: cell)
                         .onTapGesture { model.cycle(track, s) }
                         .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
                         .modifier(InspectorPopover(ref: ref))
                 }
             }
+            Spacer(minLength: 0)
         }
-        .frame(height: 35)
+        .frame(height: cell)
     }
 }
 
