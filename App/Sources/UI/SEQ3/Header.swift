@@ -22,11 +22,11 @@ struct Brand: View {
     @ObservedObject private var store = EngineModel.sharedProjects
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text("BLONDA").font(BFont.pixel(16)).tracking(1.28).foregroundColor(T.fg)
+            Text("BLONDA").font(BFont.pixel(16)).tracking(1.28).foregroundColor(T.hfg)
             HStack(spacing: 0) {
-                Text("seq.3 · ").foregroundColor(T.mute)
-                Text((store.currentMeta?.name ?? "projekt").lowercased()).foregroundColor(T.fg)
-                Text(" ▾").foregroundColor(T.mute)
+                Text("seq.3 · ").foregroundColor(T.hmute)
+                Text((store.currentMeta?.name ?? "projekt").lowercased()).foregroundColor(T.hfg)
+                Text(" ▾").foregroundColor(T.hmute)
             }
             .font(BFont.mono(9)).tracking(0.36)
         }
@@ -81,7 +81,7 @@ struct GButton<L: View>: View {
     @ViewBuilder var label: () -> L
     var body: some View {
         Button(action: action) {
-            label().font(BFont.mono(10, 500)).tracking(0.3).foregroundColor(T.fg).lineLimit(1)
+            label().font(BFont.mono(10, 500)).tracking(0.3).foregroundColor(T.hfg).lineLimit(1)
                 .frame(width: width, height: 38)
                 .background(Capsule().fill(.white.opacity(0.1)))
                 .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
@@ -102,7 +102,7 @@ struct PatternSegment: View {
             HStack(spacing: 2) {
                 ForEach(0..<4, id: \.self) { p in
                     Button { model.selectPattern(p) } label: {
-                        DotMatrixText(text: ["A", "B", "C", "D"][p], height: 13, color: p == cur ? T.ink : T.fg.opacity(0.45))
+                        DotMatrixText(text: ["A", "B", "C", "D"][p], height: 13, color: p == cur ? T.ink : T.hfg.opacity(0.45))
                             .frame(width: 32, height: 32).contentShape(Circle())
                     }
                     .buttonStyle(.plain)
@@ -130,7 +130,7 @@ struct BPMPill: View {
                         if bpm0 == nil { bpm0 = model.bpm }
                         model.setBPM(bpm0! - Float(g.translation.height / 6))
                     }.onEnded { _ in bpm0 = nil })
-                Text("bpm").font(BFont.mono(8.5)).tracking(0.34).foregroundColor(T.mute).padding(.bottom, -1)
+                Text("bpm").font(BFont.mono(8.5)).tracking(0.34).foregroundColor(T.hmute).padding(.bottom, -1)
             }
             .frame(width: 84)
             roundBtn { model.nudgeBPM(1) } icon: { SVGIcon(d: "M4 8h8M8 4v8", size: 14, stroke: 1.6, cap: .round) }
@@ -141,6 +141,6 @@ struct BPMPill: View {
         .overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
             }
     private func roundBtn<I: View>(_ action: @escaping () -> Void, @ViewBuilder icon: () -> I) -> some View {
-        Button(action: action) { icon().foregroundColor(T.fg).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.08))) }.buttonStyle(.plain)
+        Button(action: action) { icon().foregroundColor(T.hfg).frame(width: 30, height: 30).background(Circle().fill(.white.opacity(0.08))) }.buttonStyle(.plain)
     }
 }

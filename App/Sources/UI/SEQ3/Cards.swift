@@ -11,7 +11,7 @@ enum Field {
         let W = screen.width, H = screen.height
         let rect = CGRect(origin: .zero, size: size)
         ctx.fill(Path(rect), with: .color(Color(rgb: palette.base.0, palette.base.1, palette.base.2)))
-        ctx.blendMode = .plusLighter
+        ctx.blendMode = palette.light ? .normal : .plusLighter
         for (i, b) in st.blobs.enumerated() {
             let x = W * (0.5 + 0.38 * sin(t * b.sp * 6 + b.ph)) - origin.x
             let y = H * (0.45 + 0.36 * cos(t * b.sp * 4.3 + b.ph * 1.3)) - origin.y
@@ -25,7 +25,7 @@ enum Field {
             ctx.fill(Path(rect), with: .radialGradient(g, center: CGPoint(x: x, y: y), startRadius: 0, endRadius: R))
         }
         ctx.blendMode = .normal
-        ctx.fill(Path(rect), with: .color(.black.opacity(0.36)))
+        if !palette.light { ctx.fill(Path(rect), with: .color(.black.opacity(0.36))) }
     }
 }
 
@@ -41,6 +41,8 @@ struct Backdrop: View {
                 Canvas { ctx, size in
                     var c = ctx
                     Field.draw(&c, size: size, origin: f.origin, screen: ScreenSize.current, t: tl.date.timeIntervalSince(Field.start), energy: model.energy)
+                    // light world (web body.bg-light --glass): the glass gets a dark tint so the cards stay dark
+                    if Palette.current.light { c.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(rgb: 17, 18, 17, 0.56))) }
                 }
             }
             .saturation(saturation)

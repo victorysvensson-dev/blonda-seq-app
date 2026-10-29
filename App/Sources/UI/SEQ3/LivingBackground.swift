@@ -7,11 +7,13 @@ struct Palette {
     let base: (Double, Double, Double)
     let c: [UInt32]
     var mono = false
+    var light = false
     static let aurora = Palette(base: (11, 11, 18), c: [0x6B4CFF, 0xF255A8, 0x2EC5FF, 0xB9A6FF])   // world "Velvet"
     static let glod = Palette(base: (18, 9, 6), c: [0xF27A2E, 0xFF4A33, 0xF2C318, 0x8A2BE2])
     static let lime = Palette(base: (6, 14, 10), c: [0x3FA56E, 0xC9F23A, 0xF2C318, 0x1E6BFF])
     static let isPal = Palette(base: (6, 10, 18), c: [0x2E7BFF, 0x9FE7FF, 0xB9A6FF, 0xE6F0FF])
     static let mork = Palette(base: (5, 5, 6), c: [0x26262B, 0x1C1C20, 0x303036, 0x202024], mono: true)
+    static let gul = Palette(base: (242, 195, 24), c: [0xFFD84A, 0xE0AE00, 0xFFE680, 0xD89A00], light: true)
     /// The palette of the open project's world; the background eases its blobs toward it.
     static var current = aurora
 }
@@ -22,6 +24,7 @@ let kWorlds: [World] = [
     World(name: "Velvet Night", short: "Velvet", palette: .aurora),
     World(name: "Acid Garden", short: "Acid", palette: .lime),
     World(name: "Chrome Club", short: "Chrome", palette: .isPal),
+    World(name: "Gul Studio", short: "Gul", palette: .gul),   // web index 3 — keep the order, projects store the index
     World(name: "Mörk Studio", short: "Mörk", palette: .mork),
     World(name: "Sunset Tape", short: "Sunset", palette: .glod),
 ]
