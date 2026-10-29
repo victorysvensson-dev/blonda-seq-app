@@ -115,6 +115,7 @@ struct LoopRow: View {
 
 struct LibraryView: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var presetStore = EngineModel.sharedPresets
     @ObservedObject private var lib: SampleLibrary
     @State private var importing = false
     @State private var dropping = false
@@ -124,7 +125,7 @@ struct LibraryView: View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .firstTextBaseline, spacing: 10) {
                 Text("Bibliotek").font(BFont.sans(26, 300)).foregroundColor(T.fg)
-                Text("\(lib.items.count) ljud").font(BFont.mono(10)).foregroundColor(T.mute)
+                Text("\(lib.items.count) ljud · \(presetStore.items.count) presets").font(BFont.mono(10)).foregroundColor(T.mute)
                 Spacer()
                 HStack(spacing: 6) {
                     Circle().fill(.white.opacity(0.35)).frame(width: 6, height: 6)
@@ -149,7 +150,7 @@ struct LibraryView: View {
             }
             .padding(.bottom, 26)
             HStack(spacing: 0) {
-                tab("hit", "one-shots"); tab("loop", "loopar")
+                tab("hit", "one-shots"); tab("loop", "loopar"); tab("preset", "presets")
             }
             .padding(4).background(Capsule().fill(.white.opacity(0.06)))
             .padding(.bottom, 12)
@@ -158,7 +159,9 @@ struct LibraryView: View {
             }
             ScrollView(.vertical, showsIndicators: false) {
                 let items = model.libTab == "loop" ? lib.loops : lib.hits
-                if items.isEmpty {
+                if model.libTab == "preset" {
+                    PresetGrid().padding(.top, 8).padding(.bottom, 40)
+                } else if items.isEmpty {
                     empty.frame(maxWidth: .infinity, alignment: .leading).padding(.top, 30)
                 } else {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 172, maximum: 210), spacing: 10, alignment: .top)], alignment: .leading, spacing: 10) {
@@ -276,5 +279,80 @@ struct LibTile: View {
             .background(Capsule().fill(on ? (plain ? Color.white.opacity(0.16) : T.fg) : Color.white.opacity(plain ? 0 : 0.08)))
         }
         .buttonStyle(PressScale())
+    }
+}
+
+
+// MARK: - presets tab (web: libTab "preset")
+
+struct PresetGrid: View {
+    @EnvironmentObject var model: EngineModel
+    @ObservedObject private var store = EngineModel.sharedPresets
+    @State private var confirm: String?
+
+    var body: some View {
+        let t = model.selectedTrack
+        VStack(alignment: .leading, spacing: 14) {
+            Button { model.savePreset(t) } label: {
+                Text("+ spara \(kTracks[t].name.lowercased()) som preset").font(BFont.sans(13)).foregroundColor(T.fg)
+                    .padding(.horizontal, 14).frame(height: 36)
+                    .background(Capsule().fill(.white.opacity(0.08))).overlay(Capsule().strokeBorder(.white.opacity(0.14), lineWidth: 1))
+            }
+            .buttonStyle(PressScale())
+            if store.items.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Inga presets än").font(BFont.sans(15, 500)).foregroundColor(T.fg)
+                    Text("Välj ett spår, ställ in ljudet och tryck “spara som preset”.").font(BFont.sans(13)).foregroundColor(T.mute)
+                }
+                .padding(.top, 10)
+            } else {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 220, maximum: 280), spacing: 10, alignment: .top)], alignment: .leading, spacing: 10) {
+                    ForEach(store.items) { p in tile(p) }
+                }
+            }
+        }
+    }
+
+    private func tile(_ p: SoundPreset) -> some View {
+        let d = Date(timeIntervalSince1970: p.t / 1000), f = DateFormatter()
+        f.locale = Locale(identifier: "sv_SE"); f.dateFormat = "d MMM"
+        return VStack(alignment: .leading, spacing: 0) {
+            Text(p.name).font(BFont.sans(13.5)).foregroundColor(T.fg).lineLimit(2)
+            HStack(spacing: 6) {
+                Circle().fill(Color(hex: model.trackHex(p.from))).frame(width: 7, height: 7)
+                Text((p.kind == "mel" ? "synth" : "trumma") + " · " + f.string(from: d)).font(BFont.mono(9.5)).foregroundColor(T.mute)
+            }
+            .padding(.top, 6)
+            FlowLayout(spacing: 6) {
+                ForEach(0..<10, id: \.self) { i in
+                    if (i >= 6) == (p.kind == "mel") {
+                        Button { model.applyPreset(p, i) } label: {
+                            HStack(spacing: 5) {
+                                Circle().fill(Color(hex: model.trackHex(i))).frame(width: 6, height: 6)
+                                Text(kTracks[i].name.lowercased()).font(BFont.mono(10, 500))
+                            }
+                            .foregroundColor(i == model.selectedTrack ? T.ink : T.fg.opacity(0.9))
+                            .padding(.horizontal, 8).frame(height: 24)
+                            .background(Capsule().fill(i == model.selectedTrack ? T.fg : Color.white.opacity(0.08)))
+                        }
+                        .buttonStyle(PressScale())
+                    }
+                }
+                Button {
+                    if confirm == p.id { store.remove(p.id); confirm = nil } else {
+                        confirm = p.id; DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) { if confirm == p.id { confirm = nil } }
+                    }
+                } label: {
+                    Text(confirm == p.id ? "säker?" : "radera").font(BFont.mono(10, 500)).foregroundColor(confirm == p.id ? .white : T.mute)
+                        .padding(.horizontal, 9).frame(height: 24)
+                        .background(Capsule().fill(confirm == p.id ? Color(hex: 0xC9452F) : Color.white.opacity(0.06)))
+                }
+                .buttonStyle(PressScale())
+            }
+            .padding(.top, 10)
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(.white.opacity(0.05)))
+        .overlay(RoundedRectangle(cornerRadius: 16, style: .continuous).strokeBorder(.white.opacity(0.09), lineWidth: 1))
     }
 }

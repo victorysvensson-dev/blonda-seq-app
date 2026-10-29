@@ -200,7 +200,19 @@ struct ProjectsView: View {
                 Text((p.id == store.current ? "öppet nu · " : "") + "sparat \(dateText(p.t)) · \(Int(p.bpm.rounded())) bpm · \(p.patterns)/4 mönster")
                     .font(BFont.mono(10)).tracking(0.4).foregroundColor(T.mute).padding(.top, 6)
             }
-            FlowLayout(spacing: 8) {
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 8) {
+                pill("M5 5h8.5v8.5H5zM3 10.5V3.5A1 1 0 0 1 4 2.5h6.5", "duplicera") {
+                    guard let p = sel else { return }
+                    if p.id == store.current { model.openProjects() }   // saves the open one first
+                    if let m = store.duplicate(p.id) { refresh(); focusOn(m.id); model.showToast("Duplicerat") }
+                }
+                pill("M8 2v9M4.5 7.5 8 11l3.5-3.5M3 10v3.5h10V10", "exportera") { exporting = true }
+                pill("M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.6 9h4.8l.6-9", delArm ? "säker?" : "radera", warn: delArm) { delete() }
+                    Spacer(minLength: 8)
+                pill("M3 8h10M9 4l4 4-4 4", sel?.id == store.current ? "tillbaka" : "öppna", go: true) { openSelected() }
+                }
+                FlowLayout(spacing: 8) {
                 pill("M5 5h8.5v8.5H5zM3 10.5V3.5A1 1 0 0 1 4 2.5h6.5", "duplicera") {
                     guard let p = sel else { return }
                     if p.id == store.current { model.openProjects() }   // saves the open one first
@@ -209,6 +221,7 @@ struct ProjectsView: View {
                 pill("M8 2v9M4.5 7.5 8 11l3.5-3.5M3 10v3.5h10V10", "exportera") { exporting = true }
                 pill("M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.6 9h4.8l.6-9", delArm ? "säker?" : "radera", warn: delArm) { delete() }
                 pill("M3 8h10M9 4l4 4-4 4", sel?.id == store.current ? "tillbaka" : "öppna", go: true) { openSelected() }
+                }
             }
             .padding(.top, 14)
             timeline.frame(height: 58).padding(.top, 14)

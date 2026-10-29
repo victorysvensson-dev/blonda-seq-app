@@ -135,6 +135,7 @@ struct LibDemo: View {
                     if page == 0 { model.libTab = "loop" }
                     if page == 2 { model.libTab = "hit"; model.libTarget = .drum(1) }
                     if page == 1 { model.togglePlay() }
+                    if page == 3 { for p in model.presets.items { model.presets.remove(p.id) }; model.savePreset(8); model.savePreset(6); model.savePreset(0); model.libTab = "preset" }
                     ready = true
                 }
             }
