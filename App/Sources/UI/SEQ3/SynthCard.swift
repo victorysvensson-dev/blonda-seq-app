@@ -338,6 +338,12 @@ struct SupNumber: View {
 }
 
 /// Vertical drag on a value (web: drag up/down, 200–220 px for the full range); previews the sound when released.
+#if targetEnvironment(macCatalyst)
+let kSliderScale: CGFloat = 1.6
+#else
+let kSliderScale: CGFloat = 1
+#endif
+
 struct VDrag: ViewModifier {
     let get: () -> Float
     let set: (Float) -> Void
@@ -351,7 +357,9 @@ struct VDrag: ViewModifier {
     func body(content: Content) -> some View {
         content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).updating($live) { _, s, _ in s = true }.onChanged { g in
             if start == nil { start = get(); active = true }
-            var v = start! + Float(-g.translation.height / points) * (range.upperBound - range.lowerBound)
+            // up or right raises the value (the rows look like sliders); on the Mac a mouse moves farther, so it is slower there
+            let d = abs(g.translation.width) > abs(g.translation.height) ? g.translation.width : -g.translation.height
+            var v = start! + Float(d / (points * kSliderScale)) * (range.upperBound - range.lowerBound)
             v = min(range.upperBound, max(range.lowerBound, v))
             if step > 0 { v = (v / step).rounded() * step }
             set(v)

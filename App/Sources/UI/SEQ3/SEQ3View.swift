@@ -19,16 +19,29 @@ struct SEQ3View: View {
                 VStack(spacing: 0) {
                     SEQ3Header()
                     GeometryReader { geo in
-                        let wide = geo.size.width >= 1100
-                        let unit = (geo.size.width - 26) / (wide ? 2.0 : 2.1)
-                        HStack(alignment: .top, spacing: 0) {
-                            column(width: unit * (wide ? 0.8 : 1.0), cards: [
-                                AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard()), AnyView(SynthCard()),
-                            ], base: 0)
-                            Hinge().frame(width: 26)
-                            column(width: unit * (wide ? 1.2 : 1.1), cards: [
-                                AnyView(GridCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(PluginsCard()),
-                            ], base: 1)
+                        let w = geo.size.width
+                        if w >= 1640 || Self.forceThree {
+                            // big Mac window / full screen: three columns, so everything is in view with little scrolling
+                            let unit = (w - 52) / 3.0
+                            HStack(alignment: .top, spacing: 0) {
+                                column(width: unit * 0.92, cards: [AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard())], base: 0)
+                                Hinge().frame(width: 26)
+                                column(width: unit * 1.2, cards: [AnyView(GridCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(SongCard())], base: 1)
+                                Hinge().frame(width: 26)
+                                column(width: unit * 0.88, cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(PluginsCard())], base: 2)
+                            }
+                        } else {
+                            let wide = w >= 1100
+                            let unit = (w - 26) / (wide ? 2.0 : 2.1)
+                            HStack(alignment: .top, spacing: 0) {
+                                column(width: unit * (wide ? 0.8 : 1.0), cards: [
+                                    AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard()), AnyView(SynthCard()),
+                                ], base: 0)
+                                Hinge().frame(width: 26)
+                                column(width: unit * (wide ? 1.2 : 1.1), cards: [
+                                    AnyView(GridCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(PluginsCard()),
+                                ], base: 1)
+                            }
                         }
                     }
                     .padding(.horizontal, 22)
@@ -139,6 +152,7 @@ struct SEQ3View: View {
         }
     }
 
+    private static let forceThree = ProcessInfo.processInfo.arguments.contains("-three")   // CI screenshot of the wide layout
     private static let keyMap: [Character] = Array("awsedftgyhujkolp;'")
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
@@ -211,8 +225,6 @@ struct Hinge: View {
     }
 }
 
-/// On the Mac a mouse drag inside the card columns should turn knobs and faders, not scroll the column:
-/// the columns scroll with the wheel / trackpad only (iPad keeps finger scrolling).
 /// While a knob or slider is being dragged on a touch screen, the page must not scroll with it.
 final class ScrollLock: ObservableObject {
     static let shared = ScrollLock()
@@ -230,6 +242,8 @@ private struct LockedScroll: ViewModifier {
 }
 extension View { func lockedWhileDragging() -> some View { modifier(LockedScroll()) } }
 
+/// On the Mac a mouse drag inside the card columns should turn knobs and faders, not scroll the column:
+/// the columns scroll with the wheel / trackpad only (iPad keeps finger scrolling).
 struct ScrollTuner: UIViewRepresentable {
     func makeUIView(context: Context) -> UIView {
         let v = UIView(); v.isUserInteractionEnabled = false

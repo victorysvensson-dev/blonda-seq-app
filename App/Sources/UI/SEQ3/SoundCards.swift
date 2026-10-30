@@ -25,15 +25,19 @@ struct ParamDrag: ViewModifier {
     let track: Int
     var horizontal = true
     var points: CGFloat = 220        // drag distance for the full range
+    var fit: CGFloat? = nil          // sliders: the full range is this share of the control's own width (follows the mouse 1:1)
     @State private var start: Float?
+    @State private var width: CGFloat = 0
     @GestureState private var live = false
     func body(content: Content) -> some View {
         content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).updating($live) { _, s, _ in s = true }.onChanged { g in
             if start == nil { start = model.param(def, track) }
             let d = horizontal ? g.translation.width : -g.translation.height
-            model.setParam(def, track, start! + Float(d / points) * (def.hi - def.lo))
+            let span = fit.map { max(60, width * $0) } ?? points
+            model.setParam(def, track, start! + Float(d / span) * (def.hi - def.lo))
         }.onEnded { _ in start = nil })
         .onChange(of: live) { _, v in if !v { start = nil }; ScrollLock.shared.set(v) }
+        .background(GeometryReader { g in Color.clear.onAppear { width = g.size.width }.onChange(of: g.size.width) { _, w in width = w } })
     }
 }
 
@@ -193,7 +197,7 @@ struct LevelTile: View {
                     .frame(height: 58)
                     HStack { Text("0"); Spacer(); Text("50"); Spacer(); Text("100") }.font(BFont.mono(9)).foregroundColor(kInk.opacity(0.6))
                 }
-                .modifier(ParamDrag(def: def, track: track, points: 300))
+                .modifier(ParamDrag(def: def, track: track, fit: 1))
             }
         }
     }
@@ -224,7 +228,7 @@ struct FxTile: View {
             }
         }
         .frame(height: 26)
-        .modifier(ParamDrag(def: def, track: track, points: 200))
+        .modifier(ParamDrag(def: def, track: track, fit: 1))
     }
 }
 
@@ -246,7 +250,7 @@ struct TuneTile: View {
                 .frame(maxHeight: .infinity)
             }
             .frame(height: 60)
-            .modifier(ParamDrag(def: def, track: track, points: 200))
+            .modifier(ParamDrag(def: def, track: track, fit: 1))
         }
     }
 }
@@ -275,7 +279,7 @@ struct PanTile: View {
                     .frame(height: 26)
                     HStack { Text("L"); Spacer(); Text("R") }.font(BFont.mono(9)).foregroundColor(kInk.opacity(0.6))
                 }
-                .modifier(ParamDrag(def: def, track: track, points: 260))
+                .modifier(ParamDrag(def: def, track: track, fit: 1))
             }
         }
     }
@@ -301,7 +305,7 @@ struct FXCard: View {
                 DotMatrixText(text: fxText(active, v), height: 50, color: Color(rgb: 214, 214, 210))
                 Text(kFxName[active]).font(BFont.mono(12)).tracking(0.72).foregroundColor(Color(rgb: 242, 242, 239))
                 Text(kFxDesc[active]).font(BFont.sans(11)).foregroundColor(T.fg.opacity(0.45))
-                FxRuler(def: def, value: v).frame(height: 46).modifier(ParamDrag(def: def, track: t, points: 260))
+                FxRuler(def: def, value: v).frame(height: 46).modifier(ParamDrag(def: def, track: t, fit: 0.7))
                 HStack(spacing: 8) {
                     ForEach(0..<6, id: \.self) { k in Circle().fill(k == active ? .white : Color.white.opacity(0.22)).frame(width: k == active ? 7 : 6, height: k == active ? 7 : 6).onTapGesture { active = k } }
                 }
