@@ -1,0 +1,31 @@
+2026-10-30 14:46:19.320 Df BLONDA SEQ[2463:286d] [com.apple.launchservices:default] LaunchServices: _LSOpenExtractBackgroundLaunchReasonFromAppleEvent() => false - <private>, err=Error Domain=NSOSStatusErrorDomain Code=-1701 UserInfo={_LSLine=1372, _LSFunction=<private>}
+2026-10-30 14:46:21.041 E  BLONDA SEQ[2463:286d] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-30 14:46:21.161 E  BLONDA SEQ[2463:286d] (libCoreFSCache.dylib) Errors found! Invalidating cache...
+2026-10-30 14:46:22.550 Df BLONDA SEQ[2463:286d] [com.apple.renderbox:error] RBLayer: full image queue, 0x10dfd0910
+2026-10-30 14:46:22.550 Df BLONDA SEQ[2463:286d] [com.apple.renderbox:error] RBDrawable: no surface, dropping frame
+2026-10-30 14:46:27.660 Df BLONDA SEQ[2463:286d] [com.apple.renderbox:error] RBLayer: full image queue, 0x10dd4df10
+2026-10-30 14:46:27.660 Df BLONDA SEQ[2463:286d] [com.apple.renderbox:error] RBDrawable: no surface, dropping frame
+2026-10-30 14:46:27.763 Df BLONDA SEQ[2463:286d] [com.apple.renderbox:error] RBLayer: full image queue, 0x10df6b3f0
+2026-10-30 14:46:27.763 Df BLONDA SEQ[2463:286d] [com.apple.renderbox:error] RBDrawable: no surface, dropping frame
+2026-10-30 14:46:30.590 Df BLONDA SEQ[2541:2ae9] [com.apple.launchservices:default] LaunchServices: _LSOpenExtractBackgroundLaunchReasonFromAppleEvent() => false - <private>, err=Error Domain=NSOSStatusErrorDomain Code=-1701 UserInfo={_LSLine=1372, _LSFunction=<private>}
+2026-10-30 14:46:31.785 Df BLONDA SEQ[2541:2ae9] [com.apple.BaseBoard:BSAction] Reply (error: response-not-possible) <UIDestroySceneAction: 0x01fb0000>
+2026-10-30 14:46:31.812 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=5 playing=1
+2026-10-30 14:46:32.091 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-10-30 14:46:32.593 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-10-30 14:46:33.062 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-10-30 14:46:33.594 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=3 playing=1
+2026-10-30 14:46:34.091 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=7 playing=1
+2026-10-30 14:46:34.595 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-10-30 14:46:35.094 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-10-30 14:46:35.592 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=3 playing=1
+2026-10-30 14:46:36.096 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=7 playing=1
+2026-10-30 14:46:36.604 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-10-30 14:46:37.108 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-10-30 14:46:37.624 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=3 playing=1
+2026-10-30 14:46:38.018 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=6 playing=1
+2026-10-30 14:46:38.528 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=10 playing=1
+2026-10-30 14:46:39.079 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-10-30 14:46:39.594 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=3 playing=1
+2026-10-30 14:46:40.096 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=6 playing=1
+2026-10-30 14:46:40.560 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=10 playing=1
+2026-10-30 14:46:41.094 Df BLONDA SEQ[2541:2ae9] (Foundation) BLONDA-DIAG step=14 playing=1
