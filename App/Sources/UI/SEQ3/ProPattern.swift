@@ -8,6 +8,8 @@ struct ProPattern: View {
     static let gap: CGFloat = 5.4
     static let label: CGFloat = 104
     static let extras: CGFloat = 300
+    static let sends: CGFloat = 400       // wide screens: sound name, pan and echo / space per row too
+    static func wide(_ width: CGFloat) -> Bool { width >= label + 16 * 56 + 15 * gap + 14 + extras + sends }
     static let side: CGFloat = 340
 
     var body: some View {
@@ -17,8 +19,8 @@ struct ProPattern: View {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 6) {
                         ProHeader()
-                        ProRule(cell: cell)
-                        ForEach(0..<10, id: \.self) { i in ProRow(track: i, cell: cell) }
+                        ProRule(cell: cell, wide: Self.wide(g.size.width))
+                        ForEach(0..<10, id: \.self) { i in ProRow(track: i, cell: cell, wide: Self.wide(g.size.width)) }
                         ProLanes(cell: cell).padding(.top, 10)
                         GridActions().padding(.top, 10)
                         ProOverview().padding(.top, 18)
@@ -45,7 +47,7 @@ struct ProPattern: View {
 
     /// Steps follow the width of the page, 24…72 pt (big enough; the room left over shows more instead).
     static func cellSize(_ width: CGFloat) -> CGFloat {
-        let w: CGFloat = width - label - extras - 15 * gap - 14
+        let w: CGFloat = width - label - extras - (wide(width) ? sends : 0) - 15 * gap - 14
         return max(24, min(72, (w / 16).rounded(.down)))
     }
 }
@@ -111,6 +113,7 @@ private struct ProStat: View {
 /// Step numbers, with headings over the row controls.
 private struct ProRule: View {
     let cell: CGFloat
+    let wide: Bool
     var body: some View {
         HStack(spacing: 14) {
             StepRule(cell: cell).frame(width: ProPattern.label + 16 * cell + 15 * ProPattern.gap, alignment: .leading)
@@ -118,7 +121,13 @@ private struct ProRule: View {
                 Text("m · s").frame(width: 58, alignment: .leading)
                 Text("längd").frame(width: 78, alignment: .leading)
                 Text("slag").frame(width: 30, alignment: .leading)
-                Text("nivå")
+                Text("nivå").frame(width: 110, alignment: .leading)
+                if wide {
+                    Text("ljud").frame(width: 92, alignment: .leading)
+                    Text("pan").frame(width: 88, alignment: .leading)
+                    Text("eko").frame(width: 88, alignment: .leading)
+                    Text("rymd").frame(width: 88, alignment: .leading)
+                }
             }
             .font(BFont.mono(8.5)).foregroundColor(T.dmInk.opacity(0.4))
             .frame(height: 17, alignment: .top)
@@ -130,11 +139,13 @@ private struct ProRow: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
     let cell: CGFloat
+    let wide: Bool
     var body: some View {
         HStack(spacing: 14) {
             GridRow(track: track, cell: cell)
                 .frame(width: ProPattern.label + 16 * cell + 15 * ProPattern.gap, alignment: .leading)
             ProRowExtras(track: track, cell: cell)
+            if wide { ProRowSends(track: track) }
         }
         .frame(height: cell)
     }
@@ -162,7 +173,7 @@ private struct ProRowExtras: View {
             }
             .frame(width: 78, alignment: .leading)
             Text("\(model.hits(track))").font(BFont.mono(11)).foregroundColor(T.dmInk.opacity(0.7)).frame(width: 30, alignment: .leading).monospacedDigit()
-            ProLevel(track: track, tint: tc)
+            ProLevel(track: track, def: kTrackParams[0], tint: tc).frame(width: 110)
         }
         .frame(width: ProPattern.extras, alignment: .leading)
     }
@@ -186,9 +197,11 @@ private struct ProSquare: View {
 private struct ProLevel: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
+    let def: ParamDef
     let tint: Color
     var body: some View {
-        let v: CGFloat = CGFloat(model.param(kTrackParams[0], track))
+        let raw: Float = model.param(def, track)
+        let v: CGFloat = CGFloat((raw - def.lo) / (def.hi - def.lo))
         HStack(spacing: 8) {
             GeometryReader { g in
                 ZStack(alignment: .leading) {
@@ -198,10 +211,27 @@ private struct ProLevel: View {
                 }
                 .frame(maxHeight: .infinity)
             }
-            .modifier(ParamDrag(def: kTrackParams[0], track: track, fit: 1))
-            Text("\(Int((v * 100).rounded()))").font(BFont.mono(10)).foregroundColor(T.dmInk.opacity(0.6)).frame(width: 24, alignment: .trailing).monospacedDigit()
+            .modifier(ParamDrag(def: def, track: track, fit: 1))
+            Text(def.text(raw)).font(BFont.mono(10)).foregroundColor(T.dmInk.opacity(0.6)).frame(width: 30, alignment: .trailing).monospacedDigit()
         }
         .frame(height: 24)
+    }
+}
+
+/// Wide screens: the sound's name and its pan / echo / space, mixer style.
+private struct ProRowSends: View {
+    @EnvironmentObject var model: EngineModel
+    let track: Int
+    var body: some View {
+        let tc: Color = Color(hex: model.trackHex(track))
+        HStack(spacing: 8) {
+            Text(model.trackSub(track).lowercased()).font(BFont.mono(9.5)).foregroundColor(T.dmInk.opacity(0.55)).lineLimit(1)
+                .frame(width: 92, alignment: .leading)
+            ProLevel(track: track, def: kTrackParams[4], tint: tc.opacity(0.7)).frame(width: 88)
+            ProLevel(track: track, def: kTrackParams[5], tint: tc.opacity(0.7)).frame(width: 88)
+            ProLevel(track: track, def: kTrackParams[6], tint: tc.opacity(0.7)).frame(width: 88)
+        }
+        .frame(width: ProPattern.sends - 14, alignment: .leading)
     }
 }
 
