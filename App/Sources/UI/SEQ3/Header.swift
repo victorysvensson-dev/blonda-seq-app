@@ -68,7 +68,7 @@ struct Dock: View {
             RoundedRectangle(cornerRadius: 2).fill(.white.opacity(0.35)).frame(width: 38, height: 4).padding(.top, 8).padding(.bottom, 4)
         }
         .padding(.horizontal, 14)
-        .frame(width: 568, height: 70, alignment: .top)
+        .frame(width: 640, height: 70, alignment: .top)
         .background(
             UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 24, bottomTrailing: 24))
                 .fill(.clear)

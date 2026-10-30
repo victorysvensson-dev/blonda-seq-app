@@ -7,8 +7,8 @@ enum T {
     static let fg = Color(hex: 0xF5F5F2)
     static let mute = Color(hex: 0xF5F5F2).opacity(0.56)
     /// text straight on the background (header): dark in the light world (web body.bg-light .top)
-    static var hfg: Color { Palette.current.light ? Color(hex: 0x111211) : fg }
-    static var hmute: Color { Palette.current.light ? Color(hex: 0x111211).opacity(0.55) : mute }
+    static var hfg: Color { Palette.current.light && LookStore.shared.look == .glass ? Color(hex: 0x111211) : fg }
+    static var hmute: Color { Palette.current.light && LookStore.shared.look == .glass ? Color(hex: 0x111211).opacity(0.55) : mute }
     static let yellow = Color(hex: 0xF2C318)
     static let ink = Color(hex: 0x111211)            // text on yellow
     // dark "dot matrix" cards

@@ -35,6 +35,9 @@ struct Backdrop: View {
     @EnvironmentObject var model: EngineModel
     var saturation: Double = 1.8
     var body: some View {
+        if LookStore.shared.look != .glass { BS.panel } else { glass }
+    }
+    private var glass: some View {
         GeometryReader { geo in
             let f = geo.frame(in: .global)
             TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { tl in
@@ -96,7 +99,7 @@ struct Card<Content: View>: View {
         switch LookStore.shared.look {
         case .glass: background
         case .studio: Rectangle().fill(dark ? T.dmBg : BS.panel)
-        case .dots: Rectangle().fill(BS.ground.opacity(dark ? 0.85 : 0.55))
+        case .dots: Rectangle().fill(BS.ground.opacity(dark ? 0.7 : 0.25))
         }
     }
     @ViewBuilder private var lookBorder: some View {

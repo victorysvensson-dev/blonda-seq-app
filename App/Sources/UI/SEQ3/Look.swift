@@ -49,7 +49,7 @@ struct LookBackground: View {
         case .glass: LivingBackground()
         case .studio: BS.ground.ignoresSafeArea()
         case .dots:
-            BS.ground.overlay(DotGrid(spacing: 14, radius: 1.1, color: BS.accent.opacity(0.13))).ignoresSafeArea()
+            BS.ground.overlay(DotGrid(spacing: 12, radius: 1.2, color: BS.accent.opacity(0.22))).ignoresSafeArea()
         }
     }
 }
