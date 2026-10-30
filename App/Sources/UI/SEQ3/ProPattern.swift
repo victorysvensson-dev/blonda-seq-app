@@ -123,10 +123,13 @@ private struct ProRule: View {
                 Text("slag").frame(width: 30, alignment: .leading)
                 Text("nivå").frame(width: 110, alignment: .leading)
                 if wide {
-                    Text("ljud").frame(width: 92, alignment: .leading)
-                    Text("pan").frame(width: 88, alignment: .leading)
-                    Text("eko").frame(width: 88, alignment: .leading)
-                    Text("rymd").frame(width: 88, alignment: .leading)
+                    HStack(spacing: 20) {
+                        Text("ljud").frame(width: 84, alignment: .leading)
+                        Text("pan").frame(width: 82, alignment: .leading)
+                        Text("eko").frame(width: 82, alignment: .leading)
+                        Text("rymd").frame(width: 82, alignment: .leading)
+                    }
+                    .padding(.leading, 14)
                 }
             }
             .font(BFont.mono(8.5)).foregroundColor(T.dmInk.opacity(0.4))
@@ -202,7 +205,7 @@ private struct ProLevel: View {
     var body: some View {
         let raw: Float = model.param(def, track)
         let v: CGFloat = CGFloat((raw - def.lo) / (def.hi - def.lo))
-        HStack(spacing: 8) {
+        HStack(spacing: 5) {
             GeometryReader { g in
                 ZStack(alignment: .leading) {
                     Capsule().fill(Color.white.opacity(0.08)).frame(height: 4)
@@ -224,12 +227,12 @@ private struct ProRowSends: View {
     let track: Int
     var body: some View {
         let tc: Color = Color(hex: model.trackHex(track))
-        HStack(spacing: 8) {
+        HStack(spacing: 20) {
             Text(model.trackSub(track).lowercased()).font(BFont.mono(9.5)).foregroundColor(T.dmInk.opacity(0.55)).lineLimit(1)
-                .frame(width: 92, alignment: .leading)
-            ProLevel(track: track, def: kTrackParams[4], tint: tc.opacity(0.7)).frame(width: 88)
-            ProLevel(track: track, def: kTrackParams[5], tint: tc.opacity(0.7)).frame(width: 88)
-            ProLevel(track: track, def: kTrackParams[6], tint: tc.opacity(0.7)).frame(width: 88)
+                .frame(width: 84, alignment: .leading)
+            ProLevel(track: track, def: kTrackParams[4], tint: tc.opacity(0.7)).frame(width: 82)
+            ProLevel(track: track, def: kTrackParams[5], tint: tc.opacity(0.7)).frame(width: 82)
+            ProLevel(track: track, def: kTrackParams[6], tint: tc.opacity(0.7)).frame(width: 82)
         }
         .frame(width: ProPattern.sends - 14, alignment: .leading)
     }
