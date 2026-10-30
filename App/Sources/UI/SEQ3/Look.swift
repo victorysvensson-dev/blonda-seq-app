@@ -49,23 +49,8 @@ struct LookBackground: View {
         case .glass: LivingBackground()
         case .studio: BS.ground.ignoresSafeArea()
         case .dots:
-            BS.ground.overlay(DotGrid(color: BS.accent.opacity(0.13), step: 14, r: 1.1)).ignoresSafeArea()
+            BS.ground.overlay(DotGrid(spacing: 14, radius: 1.1, color: BS.accent.opacity(0.13))).ignoresSafeArea()
         }
-    }
-}
-
-struct DotGrid: View {
-    var color: Color
-    var step: CGFloat = 12
-    var r: CGFloat = 1
-    var body: some View {
-        Canvas { c, size in
-            var p = Path()
-            var y = step / 2
-            while y < size.height { var x = step / 2; while x < size.width { p.addEllipse(in: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r)); x += step }; y += step }
-            c.fill(p, with: .color(color))
-        }
-        .allowsHitTesting(false)
     }
 }
 
