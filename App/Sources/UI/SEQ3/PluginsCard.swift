@@ -128,13 +128,13 @@ struct PluginsCard: View {
             .buttonStyle(PressScale())
             .padding(12)
         }
-        .contentShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .contentShape(RoundedRectangle(cornerRadius: T.cardR, style: .continuous))
         .simultaneousGesture(TapGesture().onEnded { sel = pl.id })
         .animation(.easeOut(duration: 0.25), value: selected)
     }
 
     @ViewBuilder private func tileBackground(_ selected: Bool, _ hex: UInt32) -> some View {
-        let shape = RoundedRectangle(cornerRadius: 22, style: .continuous)
+        let shape = RoundedRectangle(cornerRadius: T.cardR, style: .continuous)
         ZStack {
             if selected {
                 shape.fill(LinearGradient(colors: [mixColor(hex, 0xFFFFFF, 0.92), Color(hex: hex).opacity(0.62)], startPoint: UnitPoint(x: 0.33, y: 0.03), endPoint: UnitPoint(x: 0.67, y: 0.97)))

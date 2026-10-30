@@ -250,9 +250,10 @@ struct LiveDevice: View {
             ruler
         }
         .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 12)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xFDFCF5), Color(hex: 0xF2EFC9)], startPoint: UnitPoint(x: 0.41, y: 0), endPoint: UnitPoint(x: 0.59, y: 1))))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.06)), lineWidth: 1).allowsHitTesting(false))
-        .shadow(color: .black.opacity(0.3), radius: 12, y: 12 - 6)
+        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xFDFCF5), Color(hex: 0xF2EFC9)], startPoint: UnitPoint(x: 0.41, y: 0), endPoint: UnitPoint(x: 0.59, y: 1))))
+        .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).strokeBorder(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.06)), lineWidth: 1).allowsHitTesting(false))
+        .modifier(LookInvert())
+        .shadow(color: .black.opacity(LookStore.shared.look == .glass ? 0.3 : 0), radius: 12, y: 12 - 6)
     }
 
     private func num(_ label: String, _ v: String, _ unit: String) -> some View {

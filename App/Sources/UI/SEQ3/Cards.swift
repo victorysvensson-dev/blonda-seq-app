@@ -86,10 +86,25 @@ struct Card<Content: View>: View {
             if !store.isFolded(key) || FullStore.shared.key == key { content().transition(.opacity.combined(with: .move(edge: .top))) }
         }
         .padding(16)
-        .background(background)
-        .overlay(border)
+        .background(lookBackground)
+        .overlay(lookBorder)
         .compositingGroup()
-        .shadow(color: .black.opacity(dark ? 0.7 : 0.65), radius: 25, x: 0, y: 26 - 13)
+        .shadow(color: .black.opacity(LookStore.shared.look == .glass ? (dark ? 0.7 : 0.65) : 0), radius: 25, x: 0, y: 26 - 13)
+    }
+
+    @ViewBuilder private var lookBackground: some View {
+        switch LookStore.shared.look {
+        case .glass: background
+        case .studio: Rectangle().fill(dark ? T.dmBg : BS.panel)
+        case .dots: Rectangle().fill(BS.ground.opacity(dark ? 0.85 : 0.55))
+        }
+    }
+    @ViewBuilder private var lookBorder: some View {
+        switch LookStore.shared.look {
+        case .glass: border
+        case .studio: Rectangle().strokeBorder(BS.line, lineWidth: 1).allowsHitTesting(false)
+        case .dots: DotBorder()
+        }
     }
 
     @ViewBuilder private var background: some View {
@@ -97,19 +112,19 @@ struct Card<Content: View>: View {
         case .dark:
             Rectangle().fill(T.dmBg)
         case .glass:
-            RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.clear)
-                .background(Backdrop().clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous)))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(LinearGradient(stops: [
+            RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(.clear)
+                .background(Backdrop().clipShape(RoundedRectangle(cornerRadius: T.cardR, style: .continuous)))
+                .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(stops: [
                     .init(color: Color.white.opacity(0.1), location: 0), .init(color: Color.white.opacity(0.043), location: 0.4), .init(color: Color.white.opacity(0.03), location: 1),
                 ], startPoint: UnitPoint(x: 0.25, y: 0.07), endPoint: UnitPoint(x: 0.75, y: 0.93))))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(RadialGradient(colors: [.white.opacity(0.06), .clear], center: UnitPoint(x: 0.2, y: -0.1), startRadius: 0, endRadius: 156)))
+                .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(RadialGradient(colors: [.white.opacity(0.06), .clear], center: UnitPoint(x: 0.2, y: -0.1), startRadius: 0, endRadius: 156)))
         case .solid(let c):
-            RoundedRectangle(cornerRadius: 22, style: .continuous).fill(c)
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(LinearGradient(colors: [.white.opacity(0.14), .white.opacity(0.02)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
+            RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(c)
+                .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).strokeBorder(LinearGradient(colors: [.white.opacity(0.14), .white.opacity(0.02)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
         case .tinted(let c):
-            RoundedRectangle(cornerRadius: 22, style: .continuous).fill(.clear)
-                .background(Backdrop().clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous)))
-                .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(LinearGradient(stops: [
+            RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(.clear)
+                .background(Backdrop().clipShape(RoundedRectangle(cornerRadius: T.cardR, style: .continuous)))
+                .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(stops: [
                     .init(color: c.opacity(0.16), location: 0), .init(color: Color.white.opacity(0.04), location: 0.45), .init(color: Color.white.opacity(0.03), location: 1),
                 ], startPoint: UnitPoint(x: 0.33, y: 0.03), endPoint: UnitPoint(x: 0.67, y: 0.97))))
         }
@@ -121,7 +136,7 @@ struct Card<Content: View>: View {
         } else {
             // inset top highlight + the gradient rim (.card::after)
             ZStack {
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                RoundedRectangle(cornerRadius: T.cardR, style: .continuous)
                     .strokeBorder(LinearGradient(stops: [
                         .init(color: Color.white.opacity(0.5), location: 0), .init(color: Color.white.opacity(0.05), location: 0.35),
                         .init(color: Color.white.opacity(0.02), location: 0.65), .init(color: Color.white.opacity(0.22), location: 1),

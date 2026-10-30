@@ -207,8 +207,8 @@ struct SynthCard: View {
         .padding(16)
         .foregroundColor(th.fg)
         .background(EngBackground(e: inst))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-        .overlay(RoundedRectangle(cornerRadius: 22, style: .continuous).strokeBorder(LinearGradient(stops: [
+        .clipShape(RoundedRectangle(cornerRadius: T.cardR, style: .continuous))
+        .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).strokeBorder(LinearGradient(stops: [
             .init(color: Color.white.opacity(0.35), location: 0), .init(color: Color.white.opacity(0.04), location: 0.4), .init(color: Color.white.opacity(0.12), location: 1),
         ], startPoint: .top, endPoint: .bottom), lineWidth: 1).allowsHitTesting(false))
         .compositingGroup()

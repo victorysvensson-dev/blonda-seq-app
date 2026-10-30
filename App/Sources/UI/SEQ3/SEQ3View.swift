@@ -5,6 +5,7 @@ import SwiftUI
 struct SEQ3View: View {
     @EnvironmentObject var model: EngineModel
     @ObservedObject private var full = FullStore.shared
+    @ObservedObject private var lookStore = LookStore.shared
     @State private var started = false
     @State private var entered = true
     @State private var showKeys = false
@@ -15,7 +16,7 @@ struct SEQ3View: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ZStack(alignment: .bottom) {
-                LivingBackground()
+                LookBackground()
                 VStack(spacing: 0) {
                     SEQ3Header()
                     GeometryReader { geo in
@@ -52,6 +53,7 @@ struct SEQ3View: View {
                     .padding(.horizontal, 22)
                     .modifier(Enter(index: 7, on: entered))
             }
+            .id(lookStore.look)   // a new look rebuilds the cards
             .blur(radius: started ? 0 : 36)
             .saturation(started ? 1 : 1.6)
 

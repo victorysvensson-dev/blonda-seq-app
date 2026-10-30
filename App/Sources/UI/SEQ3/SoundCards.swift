@@ -71,10 +71,12 @@ struct SoundCard: View {
                     PanTile(track: t)
                 }
                 .padding(10)
+                .background(Color(rgb: 229, 228, 224))
+                .modifier(LookInvert())
             }
         }
         .background(Color(rgb: 229, 228, 224))
-        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: T.cardR, style: .continuous))
         .shadow(color: .black.opacity(0.45), radius: 22, y: 13)
     }
 }
@@ -419,8 +421,9 @@ struct MasterCard: View {
             }
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))))
-        .shadow(color: .black.opacity(0.45), radius: 22, y: 13)
+        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))))
+        .modifier(LookInvert())
+        .shadow(color: .black.opacity(LookStore.shared.look == .glass ? 0.45 : 0), radius: 22, y: 13)
     }
 }
 

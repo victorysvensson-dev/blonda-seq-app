@@ -54,6 +54,12 @@ struct Dock: View {
                         Text(kWorlds[model.world].short.lowercased())
                     }
                 }
+                GButton(width: 72, action: { LookStore.shared.next() }) {   // look: glas → studio → dots
+                    HStack(spacing: 6) {
+                        HStack(spacing: 2) { ForEach(0..<3, id: \.self) { k in Circle().fill(k == LookStore.shared.look.rawValue ? BS.accent : Color.white.opacity(0.35)).frame(width: 4, height: 4) } }
+                        Text(LookStore.shared.look.name)
+                    }
+                }
                 GButton(width: 64) { HStack(spacing: 6) { Circle().fill(.white.opacity(0.35)).frame(width: 7, height: 7); Text("midi") } }
                 GButton(width: 90, action: { model.openProjects() }) { HStack(spacing: 6) { SVGIcon(d: "M2 4.5a1 1 0 0 1 1-1h3.2l1.5 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z", size: 14); Text("projekt") } }
                 GButton(width: 65, action: { model.openLibrary() }) { HStack(spacing: 6) { SVGIcon(d: "M3 2.5v11M6.5 2.5v11M10 3l3 10.2", size: 14); Text("lib") } }
