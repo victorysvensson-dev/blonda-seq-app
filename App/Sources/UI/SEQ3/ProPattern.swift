@@ -11,21 +11,27 @@ struct ProPattern: View {
     static let side: CGFloat = 340
 
     var body: some View {
-        GeometryReader { g in
-            let cell: CGFloat = Self.cellSize(g.size)
-            HStack(alignment: .top, spacing: 22) {
-                VStack(alignment: .leading, spacing: 6) {
-                    ProHeader()
-                    ProRule(cell: cell)
-                    ForEach(0..<10, id: \.self) { i in ProRow(track: i, cell: cell) }
-                    ProLanes(cell: cell).padding(.top, 10)
-                    GridActions().padding(.top, 10)
+        HStack(alignment: .top, spacing: 22) {
+            GeometryReader { g in
+                let cell: CGFloat = Self.cellSize(g.size.width)
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        ProHeader()
+                        ProRule(cell: cell)
+                        ForEach(0..<10, id: \.self) { i in ProRow(track: i, cell: cell) }
+                        ProLanes(cell: cell).padding(.top, 10)
+                        GridActions().padding(.top, 10)
+                        ProOverview().padding(.top, 18)
+                    }
+                    .frame(width: g.size.width, alignment: .topLeading)
+                    .padding(.bottom, 30)
+                    .background(ScrollTuner())
                 }
-                .frame(maxWidth: .infinity, alignment: .topLeading)
-                ProSide(track: model.selectedTrack)
-                    .frame(width: Self.side)
-                    .frame(maxHeight: .infinity, alignment: .top)
+                .lockedWhileDragging()
             }
+            ProSide(track: model.selectedTrack)
+                .frame(width: Self.side)
+                .frame(maxHeight: .infinity, alignment: .top)
         }
         .padding(.horizontal, 24).padding(.bottom, 20).padding(.top, Self.topInset)
         .background(T.dmBg.ignoresSafeArea())
@@ -37,12 +43,24 @@ struct ProPattern: View {
     static let topInset: CGFloat = 20
     #endif
 
-    /// As big as both the width and the height allow (10 rows + 3 lanes + header + tools), 24…64 pt.
-    static func cellSize(_ s: CGSize) -> CGFloat {
-        let w: CGFloat = s.width - side - 22 - label - extras - 15 * gap - 14
-        let h: CGFloat = s.height - 52 - 17 - 10 * 6 - 3 * 44 - 26 - 60
-        let c: CGFloat = min(w / 16, h / 10)
-        return max(24, min(64, c.rounded(.down)))
+    /// Steps follow the width of the page, 24…52 pt (big enough; the room left over shows more instead).
+    static func cellSize(_ width: CGFloat) -> CGFloat {
+        let w: CGFloat = width - label - extras - 15 * gap - 14
+        return max(24, min(52, (w / 16).rounded(.down)))
+    }
+}
+
+/// Under the grid: the selected track's orbit, the master and the song chain — the whole groove on one page.
+private struct ProOverview: View {
+    var body: some View {
+        HStack(alignment: .top, spacing: 14) {
+            OrbitCard().frame(maxWidth: .infinity)
+            VStack(spacing: 14) {
+                MasterCard()
+                SongCard()
+            }
+            .frame(maxWidth: .infinity)
+        }
     }
 }
 
@@ -146,7 +164,7 @@ private struct ProRowExtras: View {
             Text("\(model.hits(track))").font(BFont.mono(11)).foregroundColor(T.dmInk.opacity(0.7)).frame(width: 30, alignment: .leading).monospacedDigit()
             ProLevel(track: track, tint: tc)
         }
-        .frame(width: ProPattern.extras, alignment: .leading)
+        .frame(minWidth: ProPattern.extras, maxWidth: ProPattern.extras + 220, alignment: .leading)
     }
 }
 
