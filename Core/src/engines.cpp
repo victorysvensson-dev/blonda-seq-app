@@ -28,17 +28,52 @@ void MelodicTrack::trigger(float velocity, int note, float lenSec, const int* iv
     for (int i = 0; i < p.n; ++i) p.iv[i] = iv[i];
     if (p.n == 0) { p.iv[0] = 0; p.n = 1; }
     if (glide) p.gl = *glide; else p.gl.n = 0;
-    p.live = live;
+    p.live = live; p.leg = false;
+    if (live) {   // legato: another live note is still held (sounding, or queued in this block)
+        for (int i = 0; i < kGraphs && !p.leg; ++i) p.leg = liveNote_[i] >= 0 && liveNote_[i] != note && g_[i].active();
+        for (int k = 0; k < nPend_ - 1 && !p.leg; ++k) p.leg = pend_[k].live && pend_[k].note != note;
+    }
 }
 
-void MelodicTrack::releaseLive(int note) {
+void MelodicTrack::releaseLive(int note, bool force) {
     // web relTime(): super .35, pluck / chip .05, others .12 (setTargetAtTime(0, at, rel/3), freed after rel*4+.4)
     const float rel = engine == Eng::Super ? .35f : (engine == Eng::Pluck || engine == Eng::Chip) ? .05f : .12f;
+    float tau = rel / 3.f; double hold = rel * 4.f + .4f; bool oneShot = false;
+    if (liveRelease && params) {   // the engine's own release (same time constants as its sequenced envelope)
+        const EngineParams& E = *params;
+        switch (engine) {
+        case Eng::Analog: tau = std::max(.01f, (analog ? analog->r : .12f) / 4); break;
+        case Eng::FM: tau = (.05f + E.fm.rel * 1.5f) / 4; break;
+        case Eng::Super: tau = (.1f + E.super_.release * 3) / 4; break;
+        case Eng::SH101: tau = E.sh101.vcaMode == 1 ? .002f : std::max(.002f, shT(E.sh101.R, 10) / 3); break;
+        case Eng::Mini: tau = E.mini.decSw ? std::max(.004f, shT(E.mini.aD, 10) / 3) : .004f; break;
+        case Eng::Sub: case Eng::Pluck: oneShot = true; break;
+        default: break;
+        }
+        if (force) { oneShot = false; tau = std::min(tau, .02f); }
+        hold = tau * 6.5f + .05f;   // to about -56 dB
+    }
     const double at = now_;
     for (int i = 0; i < kGraphs; ++i)
-        if (liveNote_[i] == note && g_[i].active()) { g_[i].release(at, rel / 3.f, at + rel * 4.f + .4f); liveNote_[i] = -1; }
+        if (liveNote_[i] == note && g_[i].active()) { if (!oneShot) g_[i].release(at, tau, at + hold); liveNote_[i] = -1; }
     // a note-on queued in this same block that has not started yet: drop it
     for (int k = 0; k < nPend_; ++k) if (pend_[k].live && pend_[k].note == note) { pend_[k].live = false; pend_[k].len = std::min(pend_[k].len, .03f); }
+}
+
+void MelodicTrack::trimTails(int maxActive) {
+    int active = nPend_; for (int i = 0; i < kGraphs; ++i) active += g_[i].active() && !fading_[i] ? 1 : 0;   // + notes queued this block
+    while (active > maxActive) {
+        int o = -1;
+        for (int i = 0; i < kGraphs; ++i) if (g_[i].active() && !fading_[i] && liveNote_[i] < 0 && (o < 0 || age_[i] < age_[o])) o = i;
+        if (o < 0) break;   // only held notes left
+        g_[o].fastRelease(now_, .03f, now_ + .3); fading_[o] = true; --active;
+    }
+}
+
+void MelodicTrack::stopAll(float tau) {
+    const double at = now_;
+    for (int i = 0; i < kGraphs; ++i) { if (g_[i].active()) g_[i].fastRelease(at, tau, at + tau * 9.f + .02f); liveNote_[i] = -1; }
+    for (int k = 0; k < nPend_; ++k) if (pend_[k].live) { pend_[k].live = false; pend_[k].len = std::min(pend_[k].len, .03f); }
 }
 
 // glideOsc(): slide the parameter through the chain of tied notes
@@ -51,7 +86,7 @@ void MelodicTrack::glide(Param& prm, float f0, double t) {
 int MelodicTrack::newGraph(double t) {
     int slot = -1; uint32_t oa = UINT32_MAX;
     for (int i = 0; i < kGraphs; ++i) { if (!g_[i].active()) { slot = i; break; } if (age_[i] < oa) { oa = age_[i]; slot = i; } }
-    g_[slot].reset(sr_); age_[slot] = ++ages_; live_[slot] = Live{}; liveNote_[slot] = -1; lastGraph_ = slot; (void)t;
+    g_[slot].reset(sr_); age_[slot] = ++ages_; live_[slot] = Live{}; liveNote_[slot] = -1; fading_[slot] = false; lastGraph_ = slot; (void)t;
     return slot;
 }
 
@@ -98,7 +133,7 @@ void MelodicTrack::process(float* L, float* R, int frames) {
     float accL[wg::Graph::kBlock], accR[wg::Graph::kBlock];
     for (int i = 0; i < frames;) {
         const double t = now_ + i * dt;
-        for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) { gl_ = pend_[k].gl.n ? &pend_[k].gl : nullptr; build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t); gl_ = nullptr; if (pend_[k].live && lastGraph_ >= 0) liveNote_[lastGraph_] = pend_[k].note; }
+        for (int k = 0; k < nPend_; ++k) if (pend_[k].off == i) { gl_ = pend_[k].gl.n ? &pend_[k].gl : nullptr; curLeg_ = pend_[k].leg; build(pend_[k].vel, pend_[k].note, pend_[k].len, pend_[k].iv, pend_[k].n, t); gl_ = nullptr; if (pend_[k].live && lastGraph_ >= 0) liveNote_[lastGraph_] = pend_[k].note; }
         int e = std::min(frames, i + wg::Graph::kBlock);
         for (int k = 0; k < nPend_; ++k) if (pend_[k].off > i && pend_[k].off < e) e = pend_[k].off;
         const int n = e - i;
@@ -145,7 +180,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         const AcidP& E = EP.acid; const float fr = hz(note + p.tune); const bool acc = v >= .95f;
         const int o = G.osc(E.wave == 1 ? W_SQUARE : W_SAW, fr, t, 0);
         Param& of = G.param(o, P0); of.setDefault(440.f);
-        if (E.slide && acidLast_.has && t > acidLast_.t && t - acidLast_.t < len * 1.6) { of.setValueAtTime(acidLast_.f, t); of.exponentialRampToValueAtTime(fr, t + .02 + E.st * .28); }
+        if (E.slide && acidLast_.has && t > acidLast_.t && (liveRelease ? curLeg_ : t - acidLast_.t < len * 1.6)) { of.setValueAtTime(acidLast_.f, t); of.exponentialRampToValueAtTime(fr, t + .02 + E.st * .28); }
         else of.setValueAtTime(fr, t);
         acidLast_.has = true; acidLast_.t = t; acidLast_.f = fr; glide(of, fr, t);
         const float ny = sr_ * .45f; const bool open = E.cut > .97f; const float rs = std::pow(E.res, 1.15f);
@@ -169,7 +204,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
     // ------------------------------------------------------------------ Sub 808 (subVoice)
     case Eng::Sub: {
         const SubP& E = EP.sub; const float fr = hz(note - 12 + p.tune);
-        const bool gl = E.glide > 0 && subLast_.has && t > subLast_.t && t - subLast_.t < len * 3;
+        const bool gl = E.glide > 0 && subLast_.has && t > subLast_.t && (liveRelease ? curLeg_ : t - subLast_.t < len * 3);
         killLast(subLast_, t, .012f);
         const int o = G.osc(W_SINE, fr, t, 0); Param& of = G.param(o, P0); of.setDefault(440.f);
         of.setValueAtTime(gl ? subLast_.f : fr * std::exp2(E.punch * 2), t); of.exponentialRampToValueAtTime(fr, t + (gl ? .02 + E.glide * .25 : .03 + E.punch * .06)); glide(of, fr, t);
@@ -261,7 +296,9 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
                          G.connect(l, lg); G.connectParam(lg, o, P1); }
         const int q = G.shaper(C_CRUSH, (float)std::lround(8 - E.crush * 5), 1), g = G.gain(1);
         const float lvl = v * .42f; Param& pg = G.param(g, P0); pg.setValueAtTime(lvl, t);
-        for (int i = 1; i <= 8; ++i) pg.setValueAtTime(lvl * std::max(.25f, 1 - i / 8.f * (1 - std::exp(-gate / dec))), t + gate * i / 8.0);
+        // instrument mode: the 8-step volume envelope runs over the DECAY time, not over the (open-ended) held note
+        const float eg = liveRelease && len > 60.f ? std::min(gate, dec * 1.5f) : gate;
+        for (int i = 1; i <= 8; ++i) pg.setValueAtTime(lvl * std::max(.25f, 1 - i / 8.f * (1 - std::exp(-eg / dec))), t + eg * i / 8.0);
         pg.setValueAtTime(lvl * .25f, t + gate); pg.linearRampToValueAtTime(0, t + gate + .03);
         G.connect(o, q); G.connect(q, g); G.toOut(g); G.finalize(end + .02);
         break; }
@@ -272,7 +309,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         const float fr = hz(note + p.tune + 12 * oct), gate = std::max(.04f, len * (.55f + p.decay * 2.4f));
         const float aA = shT(E.A, 4), aD = shT(E.D, 10), aR = shT(E.R, 10); const double end = t + gate + aR * 5 + .15; const bool acc = v >= .95f;
         const Last& last = shLast_;
-        const bool legato = last.has && t > last.t && t - last.t < (last.gate > 0 ? last.gate : len) + .01;
+        const bool legato = last.has && t > last.t && (liveRelease ? curLeg_ : t - last.t < (last.gate > 0 ? last.gate : len) + .01);
         const bool glOn = E.portaMode == 1 || (E.portaMode == 2 && legato); const float gt = .004f + E.porta * E.porta * 1.6f;
         killLast(shLast_, t, .006f);
         auto setF = [&](Param& prm, float m) { if (glOn && last.has && E.porta > .01f) { prm.setValueAtTime(last.f * m, t); prm.exponentialRampToValueAtTime(fr * m, t + gt); } else prm.setValueAtTime(fr * m, t); glide(prm, fr * m, t); };

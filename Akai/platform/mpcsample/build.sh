@@ -10,6 +10,6 @@ mkdir -p "$(dirname "$OUT")"
 $ZIG c++ -target aarch64-linux-musl -mcpu=cortex_a55 -static -O3 -s -std=c++17 -Wall -Wextra \
   -Iinclude -I../Core/include -Ithird_party/blonda-motor/include -Ithird_party/blonda-motor/motorer \
   ../Core/src/bris.cpp ../Core/src/drums.cpp ../Core/src/wg.cpp ../Core/src/engines.cpp ../Core/src/seq3.cpp \
-  src/motor_instrument.cpp src/repeat.cpp src/fx.cpp src/padfx.cpp src/bris_instrument.cpp src/engine_instrument.cpp src/surface.cpp src/app.cpp src/gfx.cpp src/font5x7.cpp src/screen.cpp \
+  src/motor_instrument.cpp src/repeat.cpp src/fx.cpp src/padfx.cpp src/bris_instrument.cpp src/engine_instrument.cpp src/engine_presets.cpp src/surface.cpp src/app.cpp src/gfx.cpp src/font5x7.cpp src/screen.cpp \
   platform/mpcsample/main.cpp -o "$OUT"
 ls -l "$OUT"

@@ -1,5 +1,7 @@
 #include "akai/engine_instrument.hpp"
+#include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <cstring>
 
 namespace akai {
@@ -7,7 +9,7 @@ namespace akai {
 using namespace blonda;
 
 namespace {
-enum Grp : unsigned char { G_ANALOG, G_ACID, G_SUB, G_FM, G_PLUCK, G_SUPER, G_CHIP, G_SH, G_MINI, G_SOUND };
+enum Grp : unsigned char { G_ANALOG, G_ACID, G_SUB, G_FM, G_PLUCK, G_SUPER, G_CHIP, G_SH, G_MINI, G_SOUND, G_INST };
 enum Kind : unsigned char { F, I };
 
 const char* const kAnaWave[] = {"SINE", "SQUARE", "SAW", "TRI"};
@@ -30,7 +32,7 @@ const char* const kNoise[] = {"WHITE", "PINK"};
 } // namespace
 
 struct EngineInstrument::Def { ParamInfo info; Grp grp; Kind kind; size_t off; };
-struct EngineInstrument::Table { const char* name; const char* desc; const Def* defs; int n; const Page* pages; int nPages; int fader; float gain; int maxNotes; };
+struct EngineInstrument::Table { const char* name; const char* desc; const Def* defs; int n; const Page* pages; int nPages; int fader; float gain; int maxNotes; int maxSounding; };
 
 namespace {
 using Def = EngineInstrument::Def;
@@ -40,52 +42,53 @@ using Table = EngineInstrument::Table;
 #define IN(g, S, m, id, nm, lo, hi, labels) Def{{id, nm, lo, hi, 0, (hi) - (lo) + 1, labels}, g, I, offsetof(S, m)}
 #define FS(g, S, m, id, nm, lo, hi, labels) Def{{id, nm, lo, hi, 0, (hi) - (lo) + 1, labels}, g, F, offsetof(S, m)}
 #define TONE FL(G_SOUND, TrackSound, tone, "tone", "TONE", 0, 1)
+#define OCT IN(G_INST, EngineInstrument::InstP, oct, "oct", "OCTAVE", -2, 2, kOct5)
 
 // ---------------------------------------------------------------- Analog
 const Def kAnalog[] = {
     IN(G_ANALOG, AnalogP, wave, "wave", "WAVE", 0, 3, kAnaWave),
     FL(G_ANALOG, AnalogP, cut, "cut", "CUTOFF", 0, 1), FL(G_ANALOG, AnalogP, res, "res", "RESO", 0, 1), FL(G_ANALOG, AnalogP, env, "env", "ENV AMT", 0, 1),
     FL(G_ANALOG, AnalogP, a, "a", "ATTACK", .001f, 2), FL(G_ANALOG, AnalogP, d, "d", "DECAY", .01f, 2),
-    FL(G_ANALOG, AnalogP, s, "s", "SUSTAIN", 0, 1), FL(G_ANALOG, AnalogP, r, "r", "RELEASE", .01f, 3), TONE,
+    FL(G_ANALOG, AnalogP, s, "s", "SUSTAIN", 0, 1), FL(G_ANALOG, AnalogP, r, "r", "RELEASE", .01f, 3), TONE, OCT,
 };
-const Page kAnalogPages[] = {{"OSC", {0, 8, -1}}, {"FILTER", {1, 2, 3}}, {"ENV", {4, 5, 6}}, {"RELEASE", {7, -1, -1}}};
+const Page kAnalogPages[] = {{"OSC", {0, 8, 9}}, {"FILTER", {1, 2, 3}}, {"ENV", {4, 5, 6}}, {"RELEASE", {7, -1, -1}}};
 
 // ---------------------------------------------------------------- Acid (303)
 const Def kAcid[] = {
     IN(G_ACID, AcidP, wave, "wave", "WAVE", 0, 1, kSawSqr),
     FL(G_ACID, AcidP, cut, "cut", "CUTOFF", 0, 1), FL(G_ACID, AcidP, res, "res", "RESO", 0, 1), FL(G_ACID, AcidP, env, "env", "ENV MOD", 0, 1),
     FL(G_ACID, AcidP, dec, "dec", "DECAY", 0, 1), FL(G_ACID, AcidP, acc, "acc", "ACCENT", 0, 1), FL(G_ACID, AcidP, drive, "drive", "DRIVE", 0, 1),
-    FL(G_ACID, AcidP, dtone, "dtone", "D.TONE", 0, 1), IN(G_ACID, AcidP, slide, "slide", "SLIDE", 0, 1, kOffOn), FL(G_ACID, AcidP, st, "st", "TIME", 0, 1), TONE,
+    FL(G_ACID, AcidP, dtone, "dtone", "D.TONE", 0, 1), IN(G_ACID, AcidP, slide, "slide", "SLIDE", 0, 1, kOffOn), FL(G_ACID, AcidP, st, "st", "TIME", 0, 1), TONE, OCT,
 };
-const Page kAcidPages[] = {{"FILTER", {1, 2, 3}}, {"ENV", {4, 5, 0}}, {"DRIVE", {6, 7, 10}}, {"SLIDE", {8, 9, -1}}};
+const Page kAcidPages[] = {{"FILTER", {1, 2, 3}}, {"ENV", {4, 5, 0}}, {"DRIVE", {6, 7, 10}}, {"SLIDE", {8, 9, 11}}};
 
 // ---------------------------------------------------------------- Sub 808
 const Def kSub[] = {
     FL(G_SUB, SubP, decay, "decay", "DECAY", 0, 1), FL(G_SUB, SubP, punch, "punch", "PUNCH", 0, 1), FL(G_SUB, SubP, drive, "drive", "DRIVE", 0, 1),
-    FL(G_SUB, SubP, tone, "tone", "TONE", 0, 1), FL(G_SUB, SubP, glide, "glide", "GLIDE", 0, 1), FL(G_SUB, SubP, click, "click", "CLICK", 0, 1),
+    FL(G_SUB, SubP, tone, "tone", "TONE", 0, 1), FL(G_SUB, SubP, glide, "glide", "GLIDE", 0, 1), FL(G_SUB, SubP, click, "click", "CLICK", 0, 1), OCT,
 };
-const Page kSubPages[] = {{"808", {0, 1, 2}}, {"TONE", {3, 4, 5}}};
+const Page kSubPages[] = {{"808", {0, 1, 2}}, {"TONE", {3, 4, 5}}, {"TUNE", {6, -1, -1}}};
 
 // ---------------------------------------------------------------- FM Glass
 const Def kFM[] = {
     FS(G_FM, FMP, ratio, "ratio", "RATIO", 0, 6, kFmRatio), FL(G_FM, FMP, index, "index", "INDEX", 0, 1), FL(G_FM, FMP, decay, "decay", "DECAY", 0, 1),
-    FL(G_FM, FMP, bell, "bell", "BELL", 0, 1), FL(G_FM, FMP, rel, "rel", "RELEASE", 0, 1), FL(G_FM, FMP, bright, "bright", "BRIGHT", 0, 1), TONE,
+    FL(G_FM, FMP, bell, "bell", "BELL", 0, 1), FL(G_FM, FMP, rel, "rel", "RELEASE", 0, 1), FL(G_FM, FMP, bright, "bright", "BRIGHT", 0, 1), TONE, OCT,
 };
-const Page kFMPages[] = {{"FM", {0, 1, 2}}, {"TONE", {3, 4, 5}}, {"TRACK", {6, -1, -1}}};
+const Page kFMPages[] = {{"FM", {0, 1, 2}}, {"TONE", {3, 4, 5}}, {"TRACK", {6, 7, -1}}};
 
 // ---------------------------------------------------------------- Pluck
 const Def kPluck[] = {
     FL(G_PLUCK, PluckP, damp, "damp", "DAMP", 0, 1), FL(G_PLUCK, PluckP, bright, "bright", "BRIGHT", 0, 1), FL(G_PLUCK, PluckP, body, "body", "BODY", 0, 1),
-    FL(G_PLUCK, PluckP, len, "len", "LENGTH", 0, 1), FL(G_PLUCK, PluckP, width, "width", "WIDTH", 0, 1), FL(G_PLUCK, PluckP, drive, "drive", "DRIVE", 0, 1), TONE,
+    FL(G_PLUCK, PluckP, len, "len", "LENGTH", 0, 1), FL(G_PLUCK, PluckP, width, "width", "WIDTH", 0, 1), FL(G_PLUCK, PluckP, drive, "drive", "DRIVE", 0, 1), TONE, OCT,
 };
-const Page kPluckPages[] = {{"STRING", {0, 1, 2}}, {"SPACE", {3, 4, 5}}, {"TRACK", {6, -1, -1}}};
+const Page kPluckPages[] = {{"STRING", {0, 1, 2}}, {"SPACE", {3, 4, 5}}, {"TRACK", {6, 7, -1}}};
 
 // ---------------------------------------------------------------- Super Pad
 const Def kSuper[] = {
     FL(G_SUPER, SuperP, detune, "detune", "DETUNE", 0, 1), FL(G_SUPER, SuperP, attack, "attack", "ATTACK", 0, 1), FL(G_SUPER, SuperP, release, "release", "RELEASE", 0, 1),
-    FL(G_SUPER, SuperP, bright, "bright", "BRIGHT", 0, 1), FL(G_SUPER, SuperP, width, "width", "WIDTH", 0, 1), FL(G_SUPER, SuperP, air, "air", "AIR", 0, 1), TONE,
+    FL(G_SUPER, SuperP, bright, "bright", "BRIGHT", 0, 1), FL(G_SUPER, SuperP, width, "width", "WIDTH", 0, 1), FL(G_SUPER, SuperP, air, "air", "AIR", 0, 1), TONE, OCT,
 };
-const Page kSuperPages[] = {{"SUPER", {0, 1, 2}}, {"COLOUR", {3, 4, 5}}, {"TRACK", {6, -1, -1}}};
+const Page kSuperPages[] = {{"SUPER", {0, 1, 2}}, {"COLOUR", {3, 4, 5}}, {"TRACK", {6, 7, -1}}};
 
 // ---------------------------------------------------------------- Chip
 const Def kChip[] = {
@@ -141,24 +144,26 @@ const Page kMiniPages[] = {
 #undef IN
 #undef FS
 #undef TONE
+#undef OCT
 #define N(a) (int)(sizeof(a) / sizeof(a[0]))
 
 // maxNotes: held notes at once on the MPC (oldest is released first). Measured on an MPC Sample (fw 1.3.0.12) after
 // the node-by-node block rendering in Core/src/wg.cpp, worst 128-frame block in % of one core, 6 held notes /
 // 6 held + 6 ringing out: Mini D 31/34, SH-101 36/71, Acid 49/92, Analog 17/33, Super 24/51, FM 22/48, Pluck 14/12,
-// Chip 11/22, Sub 22/21 (before it: Super 181 % with 4 notes). Acid and SH-101 stay lower: their graphs are the
-// heaviest and keep ringing after each note.
+// Chip 11/22, Sub 22/21 (before it: Super 181 % with 4 notes). SH-101 stays lower: its graph is the heaviest and
+// keeps ringing after each note. Acid is mono like a 303 (overlapping notes slide when SLIDE is on).
+// maxSounding: notes sounding at once including release tails (long pad releases); the oldest tail fades first.
 // gain: output trim measured with `akai_test levels` (single note C3 ~ -18 dBFS RMS), like SEQ.3's track levels.
 const Table kTables[] = {
-    {"ANALOG", "2-osc analog", kAnalog, N(kAnalog), kAnalogPages, N(kAnalogPages), 1, 1.0f, 6},
-    {"ACID", "303-style bass", kAcid, N(kAcid), kAcidPages, N(kAcidPages), 1, 0.62f, 3},
-    {"SUB 808", "808 sub bass", kSub, N(kSub), kSubPages, N(kSubPages), 3, 1.0f, 6},
-    {"FM GLASS", "2-op FM bell", kFM, N(kFM), kFMPages, N(kFMPages), 5, 0.77f, 6},
-    {"PLUCK", "Karplus-Strong string", kPluck, N(kPluck), kPluckPages, N(kPluckPages), 1, 1.4f, 6},
-    {"CHIP", "8-bit chip", kChip, N(kChip), kChipPages, N(kChipPages), 5, 0.69f, 6},
-    {"SUPER", "7-saw super pad", kSuper, N(kSuper), kSuperPages, N(kSuperPages), 3, 3.16f, 6},
-    {"SH-101", "SH-101-style mono", kSH, N(kSH), kSHPages, N(kSHPages), 9, 1.25f, 4},
-    {"MINI D", "Model D-style mono", kMini, N(kMini), kMiniPages, N(kMiniPages), 15, 0.72f, 6},
+    {"ANALOG", "2-osc analog", kAnalog, N(kAnalog), kAnalogPages, N(kAnalogPages), 1, 1.0f, 6, 12},
+    {"ACID", "303-style bass", kAcid, N(kAcid), kAcidPages, N(kAcidPages), 1, 0.62f, 1, 4},
+    {"SUB 808", "808 sub bass", kSub, N(kSub), kSubPages, N(kSubPages), 3, 1.0f, 6, 6},
+    {"FM GLASS", "2-op FM bell", kFM, N(kFM), kFMPages, N(kFMPages), 5, 0.77f, 6, 10},
+    {"PLUCK", "Karplus-Strong string", kPluck, N(kPluck), kPluckPages, N(kPluckPages), 1, 1.4f, 6, 12},
+    {"CHIP", "8-bit chip", kChip, N(kChip), kChipPages, N(kChipPages), 5, 0.69f, 6, 10},
+    {"SUPER", "7-saw super pad", kSuper, N(kSuper), kSuperPages, N(kSuperPages), 3, 3.16f, 6, 9},
+    {"SH-101", "SH-101-style mono", kSH, N(kSH), kSHPages, N(kSHPages), 9, 1.25f, 4, 4},
+    {"MINI D", "Model D-style mono", kMini, N(kMini), kMiniPages, N(kMiniPages), 15, 0.72f, 6, 6},
 };
 // Table order follows blonda::Eng.
 static_assert((int)Eng::Analog == 0 && (int)Eng::Acid == 1 && (int)Eng::Sub == 2 && (int)Eng::FM == 3 && (int)Eng::Pluck == 4 &&
@@ -175,7 +180,9 @@ const char* EngineInstrument::description() const { return tab_->desc; }
 
 void EngineInstrument::prepare(float sampleRate) {
     track_.prepare(sampleRate, false);
+    track_.liveRelease = true;   // the engine's own release, one-shot 808 / pluck, legato slides
     track_.engine = eng_;
+    parsePresets();
     track_.params = &live_;
     track_.analog = &liveA_;
     loadPreset(0);
@@ -190,9 +197,12 @@ void EngineInstrument::noteOn(int note, float velocity, int offset) {
     if (held_[note]) noteOff(note, offset);
     // voice budget: release the oldest held note when the limit is reached
     int n = 0; for (int i = 0; i < nOrder_; ++i) n += held_[order_[i]] ? 1 : 0;
-    if (n >= tab_->maxNotes && !noteLimitOff) for (int i = 0; i < nOrder_; ++i) if (held_[order_[i]]) { noteOff(order_[i], offset); break; }
+    int steal = -1;
+    if (n >= tab_->maxNotes && !noteLimitOff) for (int i = 0; i < nOrder_; ++i) if (held_[order_[i]]) { steal = order_[i]; break; }
     const int iv[1] = {0};
-    track_.trigger(velocity, note, kLiveHoldSec, iv, 1, offset, nullptr, true);
+    if (!noteLimitOff) track_.trimTails(tab_->maxSounding - 1);
+    track_.trigger(velocity, note, kLiveHoldSec, iv, 1, offset, nullptr, true);   // before the steal: it sees the legato
+    if (steal >= 0) noteOff(steal, offset);
     held_[note] = true;
     // remember the order notes started in (compact the list of notes still held, then append)
     int w = 0; for (int i = 0; i < nOrder_; ++i) if (held_[order_[i]] && order_[i] != note) order_[w++] = order_[i];
@@ -203,7 +213,11 @@ void EngineInstrument::noteOff(int note, int) {
     track_.releaseLive(note);
     held_[note] = false;
 }
-void EngineInstrument::allNotesOff() { for (int n = 0; n < 128; ++n) if (held_[n]) noteOff(n, 0); }
+void EngineInstrument::allNotesOff() {   // everything stops (STOP, instrument change): also release tails and one-shots
+    track_.stopAll(.02f);
+    for (bool& h : held_) h = false;
+    nOrder_ = 0;
+}
 
 void EngineInstrument::process(float* L, float* R, int frames) { track_.process(L, R, frames); }
 
@@ -224,6 +238,7 @@ void* EngineInstrument::field(const Def& d, bool live) {
     case G_SH: b = (char*)&P.sh101; break;
     case G_MINI: b = (char*)&P.mini; break;
     case G_SOUND: b = (char*)(live ? &track_.sound : &baseSound_); break;
+    case G_INST: b = (char*)(live ? &liveI_ : &baseI_); break;
     }
     return b + d.off;
 }
@@ -244,7 +259,8 @@ void EngineInstrument::set(int i, float value) {
 
 // live = base + pad pressure on the fader parameter (opens the filter by up to 30 % of its range)
 void EngineInstrument::apply() {
-    live_ = base_; liveA_ = baseA_; track_.sound = baseSound_;
+    live_ = base_; liveA_ = baseA_; track_.sound = baseSound_; liveI_ = baseI_;
+    track_.sound.tune = baseSound_.tune + 12.f * (float)baseI_.oct;
     if (pressure_ > 0.f && tab_->fader >= 0) {
         const Def& d = tab_->defs[tab_->fader];
         if (d.kind == F) { float& v = *(float*)field(d, true); v += pressure_ * 0.3f * (d.info.max - d.info.min); if (v > d.info.max) v = d.info.max; }
@@ -257,14 +273,47 @@ void EngineInstrument::pressure(float amount) {
     pressure_ = amount; apply();
 }
 
-void EngineInstrument::loadPreset(int) {
-    base_ = EngineParams{}; baseA_ = AnalogP{}; baseSound_ = TrackSound{};
+// Presets (engine_presets.cpp): engine defaults, then the preset's values. Index numPresets()-1 is INIT.
+void EngineInstrument::parsePresets() {
+    int n = 0; const EnginePreset* P = enginePresets(eng_, n);
+    nPresets_ = n + 1 < kMaxPresets ? n + 1 : kMaxPresets;
+    for (int k = 0; k < nPresets_; ++k) {
+        Parsed& q = parsed_[k]; q.n = 0; q.trim = 1.f;
+        if (k == nPresets_ - 1) { q.name = "INIT"; q.cat = "INIT"; q.trim = std::pow(10.f, engineInitTrimDb(eng_) / 20.f); continue; }
+        q.name = P[k].name; q.cat = P[k].cat; q.trim = std::pow(10.f, P[k].trimDb / 20.f);
+        for (const char* c = P[k].vals; *c;) {
+            while (*c == ' ') ++c;
+            if (!*c) break;
+            const char* eq = std::strchr(c, '='); if (!eq) break;
+            int idx = -1;
+            for (int i = 0; i < tab_->n; ++i) { const char* id = tab_->defs[i].info.id; const size_t len = std::strlen(id);
+                if ((size_t)(eq - c) == len && !std::strncmp(c, id, len)) { idx = i; break; } }
+            char* end = nullptr; const float v = std::strtof(eq + 1, &end);
+            if (idx >= 0 && q.n < kMaxVals) { q.idx[q.n] = (uint8_t)idx; q.val[q.n] = v; ++q.n; } else ++badValues_;
+            c = end && end > eq + 1 ? end : eq + 1;
+        }
+    }
+}
+
+void EngineInstrument::loadPreset(int k) {
+    base_ = EngineParams{}; baseA_ = AnalogP{}; baseSound_ = TrackSound{}; baseI_ = InstP{};
+    if (base_.acid.wave > 1) base_.acid.wave = 0;   // the web default ("sawtooth" = 2) is SAW = 0 on the knob
+    preset_ = k < 0 || k >= nPresets_ ? nPresets_ - 1 : k;
+    const Parsed& q = parsed_[preset_];
+    for (int j = 0; j < q.n; ++j) {   // set() clamps to the range and rounds discrete values
+        const Def& d = tab_->defs[q.idx[j]]; float value = q.val[j];
+        value = value < d.info.min ? d.info.min : (value > d.info.max ? d.info.max : value);
+        if (d.kind == F) *(float*)field(d, false) = value; else *(int*)field(d, false) = (int)(value + (value < 0 ? -0.5f : 0.5f));
+    }
     apply();
 }
+
+const char* EngineInstrument::presetName(int i) const { return i >= 0 && i < nPresets_ ? parsed_[i].name : ""; }
+const char* EngineInstrument::presetCategory(int i) const { return i >= 0 && i < nPresets_ ? parsed_[i].cat : ""; }
 
 int EngineInstrument::numPages() const { return tab_->nPages; }
 const Page& EngineInstrument::page(int p) const { return tab_->pages[p]; }
 int EngineInstrument::faderParam() const { return tab_->fader; }
-float EngineInstrument::outputGain() const { return tab_->gain; }
+float EngineInstrument::outputGain() const { return tab_->gain * parsed_[preset_].trim; }
 
 } // namespace akai

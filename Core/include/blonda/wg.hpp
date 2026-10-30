@@ -105,6 +105,11 @@ public:
         master_.cancelScheduledValues(at); master_.setValueAtTime(1.f, at); master_.setTargetAtTime(0.f, at, tau);
         if (freeAt < end_) end_ = freeAt;
     }
+    // stop now: fade from wherever the note is (also mid-release) to silence with `tau`, freed at `freeAt`
+    void fastRelease(double at, float tau, double freeAt) {
+        master_.cancelAndHold(at); master_.setTargetAtTime(0.f, at, tau);
+        if (freeAt < end_) end_ = freeAt;
+    }
     // Render frames i0..i1-1 of a block (frame i at time now + i * dt, i1 - i0 <= kBlock) and add them into
     // acc[0 .. i1-i0). scratch: kNodes * 2 * kBlock floats, shared by all graphs of a track (used one at a time).
     static constexpr int kBlock = 128;

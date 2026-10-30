@@ -39,9 +39,10 @@ const Def kDefs[PadFx::kPads] = {
     {"BAND", 14, false, {{"glue", 50}, {"wobble", 20}, {"tape", 60}}, {}, {}, "tape", 60, 100, kCyan},
 };
 constexpr int kFrysEngine = 8;
-// Share of one Cortex-A55 core per effect at 44.1 kHz: desktop measurement x 4.6 (the ratio the device self test
-// shows for the three heaviest together); FRYS is listening anyway while PAD FX is on, so pressing it adds nothing.
-const float kCost[PadFx::kPads] = {.04f, .04f, .04f, .04f, .075f, .14f, .14f, .14f, 0.f, 0.f, .09f, .09f, .055f, .16f, .27f, .14f};
+// Share of one Cortex-A55 core per effect at 44.1 kHz: desktop measurement x 4.9, the ratio the MPC Sample showed
+// (fw 1.3.0.12: SVÄV + RUM + BAND held with FRYS listening = 70 % of a core). FRYS listens all the time while PAD FX
+// is on, so its cost is already in the measured load and pressing it adds nothing.
+const float kCost[PadFx::kPads] = {.043f, .043f, .043f, .043f, .08f, .149f, .149f, .149f, 0.f, 0.f, .096f, .096f, .059f, .17f, .288f, .149f};
 } // namespace
 
 struct PadFx::Engine { std::unique_ptr<blonda::Effect> fx; int pressIdx = -1; float lastP = -1.f; };

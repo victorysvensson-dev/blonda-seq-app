@@ -41,8 +41,18 @@ public:
     float bpm = 120.f;
     // intervals = chord voicing (semitones from note), len = note length in seconds (sequencer step length * steps)
     void trigger(float velocity, int note, float lenSec, const int* intervals, int nIntervals, int offset = 0, const Glide* glide = nullptr, bool live = false);
-    // release a held live note (keyboard / MIDI): fades with the engine's release time, like the web keyboard
-    void releaseLive(int note);
+    // release a held live note (keyboard / MIDI): fades with the engine's release time, like the web keyboard.
+    // force: also stop one-shot notes (see liveRelease)
+    void releaseLive(int note, bool force = false);
+    // Instrument mode (the MPC host; SEQ.3 keeps the web keyboard's behaviour, false):
+    //  - a released note fades with the engine's own release (Analog R, FM release, Super release, SH-101 R,
+    //    Model D decay switch) instead of the web keyboard's fixed time; Sub 808 and Pluck ring out (one-shot)
+    //  - Acid slide, Sub 808 glide and SH-101 auto-portamento glide only between overlapping (legato) notes
+    //  - Chip's stepped volume envelope runs over its DECAY time (a held note would stretch it to hours)
+    bool liveRelease = false;
+    void stopAll(float tau = .02f);   // every sounding note, released or not, fades out now (all notes off)
+    // keep at most maxActive notes sounding: the oldest released tails fade out fast (CPU budget for long releases)
+    void trimTails(int maxActive);
     void process(float* L, float* R, int frames);   // adds
     double now() const { return now_; }
     int activeGraphs() const { int c = 0; for (auto& g : g_) c += g.active() ? 1 : 0; return c; }   // sounding notes incl. release tails
@@ -50,7 +60,8 @@ public:
 
 private:
     struct Live { int kind = -1; int nf = 0; int16_t f[3]{}; int16_t q = -1; float c0 = 0, q0 = 0, lc = 0, lq = 0; bool acc = false; };
-    struct Pending { int off; float vel; int note; float len; int iv[6]; int n; Glide gl; bool live; };
+    struct Pending { int off; float vel; int note; float len; int iv[6]; int n; Glide gl; bool live, leg; };
+    bool curLeg_ = false;   // the note being built started while another live note was held
     const Glide* gl_ = nullptr;
     void glide(wg::Param& prm, float f0, double t);
     int newGraph(double t);
@@ -59,7 +70,7 @@ private:
     float liveCents(const Live& L) const;
     float liveQ(const Live& L) const;
 
-    std::array<wg::Graph, kGraphs> g_; std::array<Live, kGraphs> live_{}; std::array<int, kGraphs> liveNote_{}; int lastGraph_ = -1; std::array<uint32_t, kGraphs> age_{}; uint32_t ages_ = 0;
+    std::array<wg::Graph, kGraphs> g_; std::array<Live, kGraphs> live_{}; std::array<int, kGraphs> liveNote_{}; int lastGraph_ = -1; std::array<uint32_t, kGraphs> age_{}; uint32_t ages_ = 0; std::array<bool, kGraphs> fading_{};
     float sr_ = 48000; double now_ = 0; bool bass_ = false; Noise rng_;
     std::array<Pending, 16> pend_{}; int nPend_ = 0;
     std::array<float, wg::Graph::kScratch> scratch_{};   // node outputs while one graph renders a block

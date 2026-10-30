@@ -60,6 +60,11 @@ void drawScreen(Canvas& c, const UiState& s, const Theme& t) {
     if (s.shift) std::snprintf(buf, sizeof buf, "CPU %d%% V%d", (int)(s.cpu * 100.f + 0.5f), s.voices);
     else std::snprintf(buf, sizeof buf, "%02d/%02d", s.presetIndex + 1, s.presetCount);
     rightText(c, t, kScreenW - 6, 32, buf, 2, s.shift ? t.label : t.text);
+    // the sound's category (BASS, PAD ...) left of the counter, when it says more than the instrument name
+    if (!s.shift && s.category[0] && std::strcmp(s.category, s.instrument) != 0 && !s.latch) {
+        const int cw = Canvas::textWidth(s.category, 2), right = kScreenW - 6 - Canvas::textWidth(buf, 2) - 10;
+        if (right - cw > x + 8) text(c, t, right - cw, 32, s.category, 2, t.dim == t.bg ? t.label : t.line);
+    }
 
     // ---- preset name: large yellow dot matrix in every theme
     const int pitch = Canvas::length(s.preset) <= 16 ? 3 : 2;

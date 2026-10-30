@@ -20,7 +20,16 @@ instrument every 10 s) and optimising the heavier SEQ.3 engines for ARM (see *CP
 | ACID | 〃 | 303-style |
 | ANALOG, SUPER, FM GLASS, PLUCK, CHIP, SUB 808 | 〃 | |
 
-The engine instruments start from the SEQ.3 defaults ("INIT"); their web presets are not ported yet.
+Every engine instrument has a set of factory sounds (`src/engine_presets.cpp`, 118 in all, INIT last), grouped by
+category (BASS, LEAD, KEYS, PAD, PLUCK, BELL, ARP, FX; SUB for the 808) and levelled to the same loudness; the
+category shows next to the preset counter. Bass sounds use OCTAVE / RANGE so the pads' C3 start already sits in
+the bass register. `tools/preset_lab` plays and measures them (`preset_lab measure all`, `preset_lab render all
+<dir>` for WAV demos), and the tests check that every sound loads, plays cleanly and is levelled.
+
+On the MPC the engines play as instruments (`MelodicTrack::liveRelease`; SEQ.3 is unchanged): a released pad fades
+with the engine's own RELEASE (Analog, FM, Super, SH-101, Model D decay switch), Sub 808 and Pluck ring out like
+one-shots, Acid is mono and slides / SH-101 and the 808 glide only between overlapping notes, Chip's DECAY shapes
+held notes, and long release tails are capped per engine so pads stay inside the CPU budget.
 
 ### The shared engine library
 
@@ -48,6 +57,7 @@ then get a skin here.
 | `platform/mpcsample/build.sh` | Cross-build a static aarch64 binary with Zig |
 | `platform/mpcsample/mpc.sh` | Copy to the MPC's RAM and run / self-test / stop / follow the log |
 | `tools/akai_test.cpp` | Desktop tests, level survey, CPU bench, WAV and screenshot renders |
+| `src/engine_presets.cpp`, `tools/preset_lab.cpp` | Factory sounds of the nine engines, and the tool that plays and measures them |
 
 ## Controls
 

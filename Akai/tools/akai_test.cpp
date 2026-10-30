@@ -307,7 +307,7 @@ static void testRepeater() {
     A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_NOTE_REPEAT)); runA(0.05); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_NOTE_REPEAT));
     runA(0.5);
     CHECK(!A.repeatOn() && A.instrument().activeVoices() >= 1, "switching repeat off hands the held note back (%d)", A.instrument().activeVoices());
-    A.handle(ev(mpcs::Event::PadUp, 5)); runA(4.0);
+    A.handle(ev(mpcs::Event::PadUp, 5)); runA(7.0);   // ANALOG's first sound is a pad with a 2.2 s release
     CHECK(A.instrument().activeVoices() == 0, "and it stops on release (%d)", A.instrument().activeVoices());
     // latch + arp, then STOP
     A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PLAY)); A.handle(ev(mpcs::Event::ButtonUp, mpcs::BTN_PLAY));
@@ -459,6 +459,75 @@ static void testPadFx() {
       A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PAD_FX));
       CHECK(!A.padFxMode(), "PAD FX again: back to notes");
       A.handle(ev(mpcs::Event::ButtonDown, mpcs::BTN_PLAY)); runA(4.0); }
+}
+
+// ---------------------------------------------------------------- factory sounds of the nine engines
+static void testEnginePresets() {
+    std::puts("engine presets: every sound loads, plays, is levelled; live release, one-shots, legato slides");
+    const blonda::Eng engs[] = {blonda::Eng::Mini, blonda::Eng::SH101, blonda::Eng::Acid, blonda::Eng::Analog, blonda::Eng::Super,
+                                blonda::Eng::FM, blonda::Eng::Pluck, blonda::Eng::Chip, blonda::Eng::Sub};
+    auto target = [](const std::string& c) { return c == "BASS" ? -16.f : c == "SUB" ? -15.f : (c == "PAD" || c == "KEYS") ? -19.f : (c == "BELL" || c == "FX") ? -18.f : -17.f; };
+    int total = 0;
+    for (blonda::Eng e : engs) {
+        auto Ip = std::make_unique<EngineInstrument>(e); EngineInstrument& I = *Ip; I.prepare(kSR);
+        CHECK(I.badPresetValues() == 0, "%s: %d unknown ids in the preset table", I.name(), I.badPresetValues());
+        CHECK(I.numPresets() >= 11, "%s has a full set of sounds (%d)", I.name(), I.numPresets());
+        CHECK(std::string(I.presetName(I.numPresets() - 1)) == "INIT", "%s: INIT is last", I.name());
+        for (int k = 0; k < I.numPresets(); ++k) {
+            const std::string nm = I.presetName(k), cat = I.presetCategory(k);
+            CHECK(!nm.empty() && nm.size() <= 16, "%s preset %d has a screen-sized name (%s)", I.name(), k, nm.c_str());
+            for (int j = 0; j < k; ++j) CHECK(nm != I.presetName(j), "%s: preset name %s twice", I.name(), nm.c_str());
+            I.reset(); I.loadPreset(k);
+            for (int i = 0; i < I.numParams(); ++i) { const ParamInfo& p = I.param(i); const float v = I.get(i); CHECK(v >= p.min && v <= p.max, "%s/%s: %s out of range", I.name(), nm.c_str(), p.id); }
+            const int note = (cat == "BASS" || cat == "SUB") ? 48 : (cat == "BELL" ? 72 : 60);
+            std::vector<float> L, R; const float g = I.outputGain();
+            renderInst(I, L, R, 2.2, [&](int f) { if (f == 0) I.noteOn(note, .85f, 0); });
+            double mq = 0; const int W = 4410; float pk = 0; bool fin = true;
+            for (size_t i = 0; i < L.size(); ++i) { fin &= std::isfinite(L[i]) && std::isfinite(R[i]); pk = std::max(pk, std::max(std::fabs(L[i]), std::fabs(R[i])) * g); }
+            for (size_t a = 0; a + W <= L.size(); a += W / 4) { double w = 0; for (size_t i = a; i < a + W; ++i) w += (double)L[i] * L[i] + (double)R[i] * R[i]; mq = std::max(mq, w * g * g / (2.0 * W)); }
+            const float mom = (float)(10 * std::log10(mq + 1e-20));
+            CHECK(fin && pk < 1.2f, "%s/%s plays cleanly (peak %.2f)", I.name(), nm.c_str(), pk);
+            if (cat != "INIT" && cat != "FX") CHECK(std::fabs(mom - target(cat)) < 3.5f, "%s/%s is levelled: %.1f dB (target %.0f)", I.name(), nm.c_str(), mom, target(cat));
+            ++total;
+            I.allNotesOff(); std::vector<float> z, zr; renderInst(I, z, zr, 0.3, [](int) {});   // let it stop before the next one
+        }
+    }
+    std::printf("  %d sounds checked\n", total);
+
+    // live release follows the engine's RELEASE knob (Analog): a long release still rings 1 s after note-off
+    auto tailAfter = [&](EngineInstrument& I, int note, double hold, double after) {
+        std::vector<float> L, R;
+        renderInst(I, L, R, hold + after + 0.2, [&](int f) { if (f == 0) I.noteOn(note, .85f, 0); if (f == (int)(hold * kSR) / kBlock * kBlock) I.noteOff(note, 0); });
+        const int a = (int)((hold + after) * kSR); float m = 0; for (int i = a; i < a + 2205 && i < (int)L.size(); ++i) m = std::max(m, std::fabs(L[i])); return m; };
+    { auto Ap = std::make_unique<EngineInstrument>(blonda::Eng::Analog); EngineInstrument& A = *Ap; A.prepare(kSR); A.loadPreset(0);   // Velvet Pad, r = 2.2 s
+      const float t1 = tailAfter(A, 60, 1.5, 1.0);
+      auto Bp = std::make_unique<EngineInstrument>(blonda::Eng::Analog); EngineInstrument& B = *Bp; B.prepare(kSR); B.loadPreset(0);
+      for (int i = 0; i < B.numParams(); ++i) if (std::string(B.param(i).id) == "r") B.set(i, .05f);
+      const float t2 = tailAfter(B, 60, 1.5, 1.0);
+      CHECK(t1 > 0.01f && t2 < 1e-4f, "Analog RELEASE works when a pad is let go (tail %.3f with 2.2 s, %.5f with 0.05 s)", t1, t2); }
+    // Sub 808 and Pluck ring out after a short tap (one-shot); STOP still silences them
+    for (blonda::Eng e : {blonda::Eng::Sub, blonda::Eng::Pluck}) {
+        auto Sp = std::make_unique<EngineInstrument>(e); EngineInstrument& S = *Sp; S.prepare(kSR); S.loadPreset(0);
+        const float t = tailAfter(S, 48, 0.05, 0.25);
+        CHECK(t > 0.01f, "%s rings out after a short tap (%.3f)", S.name(), t);
+        S.reset(); S.loadPreset(0); std::vector<float> L, R;
+        renderInst(S, L, R, 0.6, [&](int f) { if (f == 0) S.noteOn(48, .85f, 0); if (f == 4410 / kBlock * kBlock) S.allNotesOff(); });
+        float m = 0; for (size_t i = (size_t)(0.3 * kSR); i < L.size(); ++i) m = std::max(m, std::fabs(L[i]));
+        CHECK(m < 1e-3f, "%s: all notes off silences it (%.4f)", S.name(), m);
+    }
+    // Acid is mono and slides only between overlapping notes
+    { auto Ap = std::make_unique<EngineInstrument>(blonda::Eng::Acid); EngineInstrument& A = *Ap; A.prepare(kSR); A.loadPreset(0);   // Classic 303, slide on
+      std::vector<float> L, R;
+      renderInst(A, L, R, 1.2, [&](int f) { if (f == 0) A.noteOn(48, .8f, 0); if (f == 0.3 * kSR / kBlock * kBlock) A.noteOn(55, .8f, 0);
+                                            if (f == 0.6 * kSR / kBlock * kBlock) { A.noteOff(48, 0); A.noteOff(55, 0); } });
+      CHECK(A.activeVoices() <= 2, "Acid plays one note at a time (%d graphs)", A.activeVoices()); }
+    // Chip: DECAY shapes a held note (the stepped envelope runs over the decay time)
+    { auto Cp = std::make_unique<EngineInstrument>(blonda::Eng::Chip); EngineInstrument& C = *Cp; C.prepare(kSR);
+      auto levelAt = [&](float dec, double t) { C.reset(); C.loadPreset(C.numPresets() - 1); for (int i = 0; i < C.numParams(); ++i) if (std::string(C.param(i).id) == "dec") C.set(i, dec);
+          std::vector<float> L, R; renderInst(C, L, R, t + 0.1, [&](int f) { if (f == 0) C.noteOn(60, .85f, 0); });
+          float m = 0; const int a = (int)(t * kSR); for (int i = a; i < a + 2205; ++i) m = std::max(m, std::fabs(L[i])); return m; };
+      const float early = levelAt(.1f, 0.01), late = levelAt(.1f, 1.0);
+      CHECK(late < early * 0.4f, "Chip DECAY steps a held note down (%.3f -> %.3f)", early, late); }
 }
 
 // BRIS (blonda-motor) voice modes (bris_voices.js): poly steals the oldest, mono = one voice, unison = all six, sustain pedal
@@ -733,6 +802,7 @@ int main(int argc, char** argv) {
     testRepeater();
     testFx();
     testPadFx();
+    testEnginePresets();
     testApp(outDir);
     renderPresets(outDir);
     bench();

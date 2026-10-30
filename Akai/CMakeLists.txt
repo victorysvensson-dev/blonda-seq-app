@@ -10,7 +10,7 @@ endif()
 set(CORE ${CMAKE_CURRENT_SOURCE_DIR}/../Core)
 add_library(akai_core STATIC
   ${CORE}/src/bris.cpp ${CORE}/src/drums.cpp ${CORE}/src/wg.cpp ${CORE}/src/engines.cpp ${CORE}/src/seq3.cpp
-  src/motor_instrument.cpp src/repeat.cpp src/fx.cpp src/padfx.cpp src/bris_instrument.cpp src/engine_instrument.cpp src/surface.cpp src/app.cpp src/gfx.cpp src/font5x7.cpp src/screen.cpp)
+  src/motor_instrument.cpp src/repeat.cpp src/fx.cpp src/padfx.cpp src/bris_instrument.cpp src/engine_instrument.cpp src/engine_presets.cpp src/surface.cpp src/app.cpp src/gfx.cpp src/font5x7.cpp src/screen.cpp)
 target_include_directories(akai_core PUBLIC include ${CORE}/include)
 
 # BLONDA engine library (victorysvensson-dev/blonda-motor), a submodule pinned to a tag. Same sound as the
@@ -25,3 +25,8 @@ target_compile_options(akai_core PRIVATE -O3 -Wall -Wextra)
 add_executable(akai_test tools/akai_test.cpp)
 target_link_libraries(akai_test akai_core)
 target_compile_options(akai_test PRIVATE -O2 -Wall -Wextra -Wno-mismatched-new-delete)
+
+# Preset lab: plays and measures the factory sounds (preset_lab measure all / render all <dir>).
+add_executable(preset_lab tools/preset_lab.cpp)
+target_link_libraries(preset_lab akai_core)
+target_compile_options(preset_lab PRIVATE -O2 -Wall -Wextra)

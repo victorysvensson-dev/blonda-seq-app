@@ -352,7 +352,7 @@ int selftest() {
         A.padFx().setActive(true);
         for (int p : {14, 13, 15}) A.padFx().press(p);
         pads(0, true); run(4, a, w, peak, finite); pads(0, false);
-        std::printf("  BRIS + KNOB FX + PAD FX (SVÄV, RUM, BAND, FRYS): avg %5.1f%% worst %5.1f%% | peak %.2f %s\n", a, w, peak, finite ? "" : "NaN!");
+        std::printf("  BRIS + KNOB FX + PAD FX forced past the CPU guard (SVÄV, RUM, BAND, FRYS): avg %5.1f%% worst %5.1f%% | peak %.2f %s\n", a, w, peak, finite ? "" : "NaN!");
         A.padFx().setActive(false);
         A.fx().set(akai::FxBus::P_ECHO, 0.f); A.fx().set(akai::FxBus::P_SPACE, 0.f); A.fx().set(akai::FxBus::P_FILTER, 0.f);
         ok &= finite;
