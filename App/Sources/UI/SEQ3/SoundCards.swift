@@ -72,7 +72,6 @@ struct SoundCard: View {
         .background(Color(rgb: 229, 228, 224))
         .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
         .shadow(color: .black.opacity(0.45), radius: 22, y: 13)
-        .id(model.paramRevision)
     }
 }
 
@@ -327,7 +326,6 @@ struct FXCard: View {
                 }
             }
         }
-        .id(model.paramRevision)
     }
 }
 
@@ -419,7 +417,6 @@ struct MasterCard: View {
         .padding(16)
         .background(RoundedRectangle(cornerRadius: 22, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))))
         .shadow(color: .black.opacity(0.45), radius: 22, y: 13)
-        .id(model.paramRevision)
     }
 }
 

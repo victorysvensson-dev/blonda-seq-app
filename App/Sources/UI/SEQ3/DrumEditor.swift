@@ -15,7 +15,6 @@ struct DrumEditor: View {
                 .background(DedBackground())
                 .shadow(color: .black.opacity(0.55), radius: 30, y: 16)
                 .padding(16)
-                .id(model.paramRevision)
         }
     }
 }
