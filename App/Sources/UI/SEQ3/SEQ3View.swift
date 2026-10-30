@@ -78,11 +78,15 @@ struct SEQ3View: View {
                 ZStack {
                     Rectangle().fill(.ultraThinMaterial).overlay(Color(rgb: 6, 7, 9, 0.55)).ignoresSafeArea()
                         .onTapGesture { full.toggle(k) }
-                    ScrollView(.vertical, showsIndicators: false) {
-                        Self.card(k).frame(maxWidth: 1200).padding(14).padding(.bottom, 90)
-                            .background(ScrollTuner())
+                    if k == "mönster" {
+                        ProPattern()   // the pattern in full screen: a whole "pro" page, not just a bigger card
+                    } else {
+                        ScrollView(.vertical, showsIndicators: false) {
+                            Self.card(k).frame(maxWidth: 1200).padding(14).padding(.bottom, 90)
+                                .background(ScrollTuner())
+                        }
+                        .lockedWhileDragging()
                     }
-                    .lockedWhileDragging()
                     Button("") { full.toggle(k) }.keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
                 }
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))

@@ -50,7 +50,7 @@ private struct DedPanel: View {
     }
 }
 
-private struct DedLabel: View {
+struct DedLabel: View {
     let text: String
     var body: some View { Text(text).font(BFont.mono(8.5)).tracking(0.6).foregroundColor(Color.white.opacity(0.4)) }
 }
@@ -77,7 +77,7 @@ private struct DedHeader: View {
     }
 }
 
-private struct DedKits: View {
+struct DedKits: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
     let tc: Color
@@ -98,7 +98,7 @@ private struct DedKits: View {
     }
 }
 
-private struct DedTile: View {
+struct DedTile: View {
     let title: String
     let tag: String
     let on: Bool
@@ -119,18 +119,23 @@ private struct DedTile: View {
     }
 }
 
-private struct DedKnob: View {
+struct DedKnob: View {
     @EnvironmentObject var model: EngineModel
     let def: ParamDef
     let track: Int
     let tint: Color
+    /// double-click value: the web defaults for the drum sound, 0 / centre for the rest
+    static func defaultValue(_ def: ParamDef, _ track: Int) -> Float {
+        if def.group == 0, track >= 0, track < 6, let i = kTrackParams.firstIndex(where: { $0.id == def.id }) { return kDrumDefaults[track][i] }
+        if def.group == 0 && def.field == 0 { return 0.5 }
+        return max(def.lo, min(def.hi, 0))
+    }
     var body: some View {
         let v: Float = model.param(def, track)
         let f: CGFloat = CGFloat((v - def.lo) / (def.hi - def.lo)) * 0.75
         let a: CGFloat = def.lo < 0 ? min(0.375, f) : 0
         let b: CGFloat = def.lo < 0 ? max(0.375, f) : f
-        let di: Int = kTrackParams.firstIndex(where: { $0.id == def.id }) ?? 0
-        let dv: Float = kDrumDefaults[track][di]
+        let dv: Float = DedKnob.defaultValue(def, track)
         VStack(spacing: 6) {
             ZStack {
                 Circle().trim(from: 0, to: 0.75).stroke(Color.white.opacity(0.1), style: StrokeStyle(lineWidth: 3, lineCap: .round)).rotationEffect(.degrees(135))
@@ -147,7 +152,7 @@ private struct DedKnob: View {
     }
 }
 
-private struct DedButton: View {
+struct DedButton: View {
     let title: String
     let on: Bool
     let tint: Color
