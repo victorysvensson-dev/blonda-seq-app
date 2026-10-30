@@ -43,10 +43,10 @@ struct ProPattern: View {
     static let topInset: CGFloat = 20
     #endif
 
-    /// Steps follow the width of the page, 24…52 pt (big enough; the room left over shows more instead).
+    /// Steps follow the width of the page, 24…72 pt (big enough; the room left over shows more instead).
     static func cellSize(_ width: CGFloat) -> CGFloat {
         let w: CGFloat = width - label - extras - 15 * gap - 14
-        return max(24, min(52, (w / 16).rounded(.down)))
+        return max(24, min(72, (w / 16).rounded(.down)))
     }
 }
 
@@ -164,7 +164,7 @@ private struct ProRowExtras: View {
             Text("\(model.hits(track))").font(BFont.mono(11)).foregroundColor(T.dmInk.opacity(0.7)).frame(width: 30, alignment: .leading).monospacedDigit()
             ProLevel(track: track, tint: tc)
         }
-        .frame(minWidth: ProPattern.extras, maxWidth: ProPattern.extras + 220, alignment: .leading)
+        .frame(width: ProPattern.extras, alignment: .leading)
     }
 }
 
