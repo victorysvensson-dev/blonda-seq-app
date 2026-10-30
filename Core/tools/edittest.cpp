@@ -116,6 +116,18 @@ int main(int argc, char** argv) {
       expect(a.first > .1 && b.first > .1 && c.first > .1 && (std::abs(a.first - b.first) > .05 * a.first || a.second != b.second), "kits sound");
       blonda::Project q; expect(q.loadJSON(h->toJSON(), &err) && q.kit[0] == "909", "kit saved");
       for (int t = 1; t < 10; ++t) h->setMute(t, false); }
+    // nudge: a step nudged a quarter step late sounds a quarter step later, and is saved
+    { for (int t = 1; t < 10; ++t) h->setMute(t, true); h->setMute(0, false);
+      auto onset = [&](float o) { h->clearTrack(0); pump(); h->cycleStep(0, 4); h->setStepNudge(0, 4, o); pump();
+          for (int i = 0; i < 1500; ++i) h->render(L, R, 128);   // let echo and space die out
+          h->togglePlay(); long long n = 0, at = -1; for (int i = 0; i < 400 && at < 0; ++i) { h->render(L, R, 128); for (int j = 0; j < 128; ++j) if (at < 0 && std::fabs(L[j]) > 2e-2f) at = n + j; n += 128; }
+          h->togglePlay(); for (int i = 0; i < 200; ++i) h->render(L, R, 128); return at; };
+      const long long a0 = onset(0), a1 = onset(.25f), a2 = onset(-.25f);
+      const double sd = 60.0 / h->ui.bpm / 4 * 48000;
+      std::printf("     onset step5: %lld · +0.25 → %lld (Δ %.0f, want %.0f) · -0.25 → %lld\n", a0, a1, double(a1 - a0), .25 * sd, a2);
+      expect(a0 > 0 && std::fabs(double(a1 - a0) - .25 * sd) < 64 && std::fabs(double(a0 - a2) - .25 * sd) < 64, "nudge moves the hit");
+      blonda::Project q; h->setStepNudge(0, 4, .3f); expect(q.loadJSON(h->toJSON(), &err) && std::fabs(q.cells[q.pat][0][4].o - .3f) < 1e-4f, "nudge saved");
+      for (int t = 1; t < 10; ++t) h->setMute(t, false); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }

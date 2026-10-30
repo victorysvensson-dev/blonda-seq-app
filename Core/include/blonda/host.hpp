@@ -139,6 +139,9 @@ public:
         Cell& c = ui.cells[ui.pat][t][s]; if (!c.v) return; c.vel = v; c.v = v >= .95f ? 2 : 1; sendCell(t, s);
     }
     void setStepRatchet(int t, int s, int r) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].r = std::max(1, std::min(4, r)); sendCell(t, s); }
+    // nudge: move one step early or late (share of a step, -0.5 … +0.5); 0 = on the grid
+    float stepNudge(int t, int s) const { return (t >= 0 && t < kTracks && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].o : 0.f; }
+    void setStepNudge(int t, int s, float o) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].o = std::round(std::max(-.5f, std::min(.5f, o)) * 100.f) / 100.f; sendCell(t, s); }
     void setStepProb(int t, int s, float p) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].p = std::max(0.f, std::min(1.f, p)); sendCell(t, s); }
     void toggleAccent(int t, int s) {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return;
@@ -235,6 +238,12 @@ public:
         for (int k = 0; k < 4; ++k) if (ui.inst[k] != before.inst[k]) setInstrument(k, ui.inst[k]);
         for (int t = 0; t < kTracks; ++t) if (ui.len[t] != before.len[t]) { Cmd c; c.type = Len; c.a = t; c.b = trackLen(t); send(c); }
         return d.message;
+    }
+    bool patternHasSteps(int p) const {
+        if (p < 0 || p >= kPatterns) return false;
+        for (int t = 0; t < kTracks; ++t) for (int s = 0; s < kSteps; ++s) if (ui.cells[p][t][s].v) return true;
+        for (int k = 0; k < 4; ++k) if (!ui.roll[p][k].empty()) return true;
+        return false;
     }
     // dock "copy": this pattern into the next one
     void copyPatternToNext() {

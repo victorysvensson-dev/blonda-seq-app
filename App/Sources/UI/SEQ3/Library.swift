@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import QuartzCore
 
 // The sound library (web: #lib) and the loops card (web: .card.loops). Drop audio files anywhere on the app,
 // or press "lägg till ljud". Short sounds become one-shots for the drum tracks, longer ones tempo-synced loops.
@@ -204,6 +205,30 @@ struct LibraryView: View {
     }
 }
 
+/// While a library sound plays: a white playhead runs over its waveform, with beat lines for loops.
+struct PreviewHead: View {
+    @EnvironmentObject var model: EngineModel
+    let m: SampleMeta
+    var body: some View {
+        if let p = model.previewing, p.id == m.id {
+            TimelineView(.animation) { tl in
+                Canvas { c, size in
+                    let _ = tl.date; let f = CGFloat(min(1, max(0, (CACurrentMediaTime() - p.start) / p.len)))
+                    if m.kind == "loop" {
+                        let beats = max(1, m.bars * 4)
+                        for k in 1..<beats {
+                            let x = (CGFloat(k) / CGFloat(beats) * size.width).rounded() - 0.5, bar = k % 4 == 0
+                            c.fill(Path(CGRect(x: x, y: bar ? 0 : size.height * 0.3, width: 1, height: bar ? size.height : size.height * 0.4)), with: .color(.white.opacity(bar ? 0.28 : 0.1)))
+                        }
+                    }
+                    c.fill(Path(CGRect(x: f * size.width - 0.75, y: 0, width: 1.5, height: size.height)), with: .color(.white))
+                }
+            }
+            .allowsHitTesting(false)
+        }
+    }
+}
+
 struct LibTile: View {
     @EnvironmentObject var model: EngineModel
     let m: SampleMeta
@@ -215,8 +240,9 @@ struct LibTile: View {
             Button { model.previewSample(m) } label: {
                 ZStack(alignment: .trailing) {
                     WaveBars(pk: m.pk, color: isLoop ? T.loopGreen : T.yellow)
+                        .overlay(PreviewHead(m: m))
                     Circle().fill(.white).frame(width: 24, height: 24)
-                        .overlay(SVGIcon(d: "M5 3.5v9l7-4.5z", box: 16, size: 10, stroke: nil, fill: true).frame(width: 10, height: 10).foregroundColor(T.ink).offset(x: 1))
+                        .overlay(SVGIcon(d: model.previewing?.id == m.id ? "M4.5 4.5h7v7h-7z" : "M5 3.5v9l7-4.5z", box: 16, size: 10, stroke: nil, fill: true).frame(width: 10, height: 10).foregroundColor(T.ink).offset(x: 1))
                         .padding(.trailing, 6)
                 }
                 .frame(height: 52)

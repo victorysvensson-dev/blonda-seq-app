@@ -61,6 +61,7 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (void)toggleSoloTrack:(NSInteger)track NS_SWIFT_NAME(toggleSolo(track:));
 @property (nonatomic, readonly) NSInteger soloTrack;
 - (void)copyPatternToNext;
+- (BOOL)patternHasSteps:(NSInteger)p NS_SWIFT_NAME(patternHasSteps(_:));
 /// The musical dice (1–6). Returns what it did, e.g. "nytt groove · ny bas och melodi · Am – F".
 - (NSString *)rollDice:(NSInteger)n NS_SWIFT_NAME(rollDice(_:));
 - (void)setInstrument:(NSString *)name track:(NSInteger)track NS_SWIFT_NAME(setInstrument(_:track:));
@@ -113,6 +114,9 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (float)stepProbability:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepProbability(_:step:));
 - (void)setStepVelocity:(float)v track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepVelocity(_:track:step:));
 - (void)setStepRatchet:(NSInteger)r track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepRatchet(_:track:step:));
+/// Nudge of one step: share of a step, -0.5 (early) … +0.5 (late).
+- (float)stepNudge:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepNudge(_:step:));
+- (void)setStepNudge:(float)o track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepNudge(_:track:step:));
 - (void)setStepProbability:(float)p track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepProbability(_:track:step:));
 - (void)toggleAccent:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(toggleAccent(_:step:));
 - (void)clearStep:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(clearStep(_:step:));

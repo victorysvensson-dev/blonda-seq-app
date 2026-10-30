@@ -140,6 +140,7 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)toggleSoloTrack:(NSInteger)track { _host->setSolo((int)track); }
 - (NSInteger)soloTrack { return _host->solo(); }
 - (void)copyPatternToNext { _host->copyPatternToNext(); }
+- (BOOL)patternHasSteps:(NSInteger)p { return _host->patternHasSteps((int)p); }
 - (NSString *)rollDice:(NSInteger)n { return [NSString stringWithUTF8String:_host->dice((int)n, arc4random()).c_str()]; }
 - (void)setInstrument:(NSString *)name track:(NSInteger)track { if (track >= 6 && track <= 9) _host->setInstrument((int)track - 6, name.UTF8String); }
 - (float)engineParam:(NSInteger)f engine:(NSInteger)e track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->engParam((int)t - 6, (int)e, (int)f) : 0.f; }
@@ -184,6 +185,8 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (float)stepProbability:(NSInteger)t step:(NSInteger)s { return _host->stepProb((int)t, (int)s); }
 - (void)setStepVelocity:(float)v track:(NSInteger)t step:(NSInteger)s { _host->setStepVel((int)t, (int)s, v); }
 - (void)setStepRatchet:(NSInteger)r track:(NSInteger)t step:(NSInteger)s { _host->setStepRatchet((int)t, (int)s, (int)r); }
+- (float)stepNudge:(NSInteger)t step:(NSInteger)s { return _host->stepNudge((int)t, (int)s); }
+- (void)setStepNudge:(float)o track:(NSInteger)t step:(NSInteger)s { _host->setStepNudge((int)t, (int)s, o); }
 - (void)setStepProbability:(float)p track:(NSInteger)t step:(NSInteger)s { _host->setStepProb((int)t, (int)s, p); }
 - (void)toggleAccent:(NSInteger)t step:(NSInteger)s { _host->toggleAccent((int)t, (int)s); }
 - (void)clearStep:(NSInteger)t step:(NSInteger)s { _host->clearStep((int)t, (int)s); }

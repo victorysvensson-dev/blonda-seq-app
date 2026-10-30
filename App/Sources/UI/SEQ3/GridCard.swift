@@ -5,7 +5,7 @@ struct GridCard: View {
     @EnvironmentObject var model: EngineModel
     @State private var width: CGFloat = 0
     var body: some View {
-        Card(style: .dark, title: [("Mönster ", false), (["A", "B", "C", "D"][model.pattern].lowercased(), true), (" · takt ", false), ("\(model.bar % 4 + 1)", true)]) {
+        Card(style: .dark, title: [("Mönster ", false), (["A", "B", "C", "D"][model.pattern].lowercased(), true), (" · takt ", false), ("\(model.bar % 4 + 1)", true)], extra: AnyView(PatternSwitch())) {
             VStack(alignment: .leading, spacing: 6) {
                 StepRule(cell: cell)
                 ForEach(0..<10, id: \.self) { i in GridRow(track: i, cell: cell) }
@@ -85,7 +85,8 @@ struct GridRow: View {
                 let ph = model.playing && model.step >= 0 ? (L < 16 ? model.globalStep % L : model.step) : -1
                 ForEach(0..<16, id: \.self) { s in
                     let ref = EngineModel.StepRef(track: track, step: s)
-                    DotCell(value: model.value(track, s), colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L)
+                    let v = model.value(track, s)
+                    DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0)
                         .frame(width: cell, height: cell)
                         .onTapGesture { model.cycle(track, s) }
                         .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
@@ -105,17 +106,21 @@ struct DotCell: View {
     let playhead: Bool
     let dimGroup: Bool
     var out = false          // beyond the track's length
+    var shift = 0            // timing: the lit dots slide this many dot columns (swing / nudge, a quarter step each)
     var body: some View {
         let on = value > 0, acc = value == 2
         let bg: Color = on ? (playhead ? Color(hex: 0x201E16) : Color(hex: 0x18191C)) : (playhead ? Color(hex: 0x29282A) : (dimGroup ? T.dmCell2 : T.dmCell))
         let line: Color = on && playhead ? T.dmY : (acc ? mixColor(colorHex, 0xFFFFFF, 0.85).opacity(0.8) : (on ? Color(hex: 0x3A3B40) : T.dmLine))
         Canvas { ctx, size in
             let inset = size.width * 0.1414, inner = size.width - 2 * inset, tile = inner / 4
-            var path = Path()
+            var path = Path(), lit = Path()
             for r in 0..<4 { for c in 0..<4 {
                 let cx = inset + (CGFloat(c) + 0.5) * tile, cy = inset + (CGFloat(r) + 0.5) * tile, rad = tile * 0.345
-                path.addEllipse(in: CGRect(x: cx - rad, y: cy - rad, width: 2 * rad, height: 2 * rad))
+                let e = CGRect(x: cx - rad, y: cy - rad, width: 2 * rad, height: 2 * rad)
+                path.addEllipse(in: e)
+                if c - shift >= 0 && c - shift < 4 { lit.addEllipse(in: e) }   // the block of lit dots slides sideways
             } }
+            if on && shift != 0 { ctx.fill(path, with: .color(T.dmInk.opacity(0.09))); path = lit }
             if on {
                 let dc = playhead ? mixColor(colorHex, 0xFFFFFF, 0.45) : mixColor(colorHex, 0xFFFFFF, 0.78)
                 var g = ctx
@@ -134,6 +139,56 @@ struct DotCell: View {
     }
 }
 
+/// A B C D right in the pattern card, and "copy to the next one" (which then goes there).
+struct PatternSwitch: View {
+    @EnvironmentObject var model: EngineModel
+    var body: some View {
+        HStack(spacing: 3) {
+            ForEach(0..<4, id: \.self) { p in
+                let on: Bool = p == model.pattern
+                let used: Bool = model.patternHasSteps(p)
+                Button { model.selectPattern(p) } label: {
+                    Text(["A", "B", "C", "D"][p]).font(BFont.mono(10.5, 500))
+                        .foregroundColor(on ? Color(hex: 0x17181A) : T.dmInk.opacity(used ? 0.85 : 0.35))
+                        .frame(width: 26, height: 24)
+                        .background(Rectangle().fill(on ? T.dmY : Color.white.opacity(0.05)))
+                        .overlay(alignment: .bottom) { if used && !on { Rectangle().fill(T.dmY.opacity(0.6)).frame(width: 8, height: 2).padding(.bottom, 3) } }
+                }
+                .buttonStyle(PressScale())
+            }
+            Button { model.copyPattern() } label: {
+                Text("kopiera → \(["A", "B", "C", "D"][(model.pattern + 1) % 4])").font(BFont.mono(9.5, 500)).foregroundColor(T.dmInk.opacity(0.85))
+                    .padding(.horizontal, 8).frame(height: 24)
+                    .overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+            }
+            .buttonStyle(PressScale())
+            .padding(.leading, 4)
+        }
+    }
+}
+
+/// Master swing straight from the pattern: drag sideways (or tap to step 0 → 25 → 50 → 75 %). The off-beat dots move with it.
+struct SwingChip: View {
+    @EnvironmentObject var model: EngineModel
+    private var def: ParamDef { kMasterParams.first { $0.group == 2 && $0.field == 5 }! }
+    var body: some View {
+        let v: Float = model.param(def, 0)
+        HStack(spacing: 6) {
+            Text("swing").foregroundColor(T.dmInk.opacity(0.6))
+            Text("\(50 + Int((v * 41.7).rounded()))%")
+            ZStack(alignment: .leading) {
+                Rectangle().fill(T.dmInk.opacity(0.12)).frame(width: 34, height: 3)
+                Rectangle().fill(T.dmY).frame(width: max(2, 34 * CGFloat(v)), height: 3)
+            }
+        }
+        .font(BFont.mono(10, 500)).foregroundColor(T.dmInk)
+        .padding(.horizontal, 12).frame(height: 30)
+        .overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
+        .modifier(ParamDrag(def: def, track: 0, points: 180))
+        .onTapGesture { let steps: [Float] = [0, 0.25, 0.5, 0.75]; let i = steps.firstIndex { $0 > v + 0.01 } ?? 0; model.setParam(def, 0, steps[i]) }
+    }
+}
+
 struct GridActions: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
@@ -145,6 +200,7 @@ struct GridActions: View {
                     Text("tärning")
                 }.padding(.leading, -7)
             }
+            SwingChip()
             DMChip(action: { model.variation(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 12c3 0 4-8 7-8s3 5 5 5", size: 14, stroke: 1.6); Text("variation") } }
             DMChip(action: { model.shift(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 8h11M10 5l3 3-3 3", size: 14, stroke: 1.6); Text("flytta") } }
             DMChip(action: { model.clear(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M3 3l10 10M13 3L3 13", size: 14, stroke: 1.6); Text("rensa spår") } }

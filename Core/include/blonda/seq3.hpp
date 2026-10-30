@@ -19,7 +19,7 @@ namespace blonda {
 constexpr int kTracks = 10, kSteps = 16, kPatterns = 4;
 enum TrackId { T_KICK, T_SNARE, T_CLAP, T_HAT, T_OHAT, T_PERC, T_BASS, T_KEYS, T_LEAD, T_PAD };
 
-struct Cell { int v = 0, n = 0, r = 1; float p = 1.f, vel = -1.f; };
+struct Cell { int v = 0, n = 0, r = 1; float p = 1.f, vel = -1.f, o = 0.f; };   // o: nudge, share of a step (-0.5 early … +0.5 late)
 struct RollNote { float s = 0, l = 1; int n = 60; float v = .72f; int id = -1, g = -1; };
 struct TrackParams { float level = .5f, tune = 0, decay = .4f, tone = .5f, pan = 0, echo = 0, space = 0; };
 struct TrackFX { float drive = 0, filt = 0, reso = 0, crush = 0, comp = 0, pump = 0; };
@@ -183,6 +183,7 @@ public:
     void bypassMasterDynamics() { comp_.threshold = 0; comp_.ratio = 1; comp_.knee = 0; }   // tests
 
 private:
+    double nowT_ = 0;   // start of the block being scheduled (nudged steps never land before it)
     struct Ev { long long f; int track; float vel; int note; float ls; int glide; };   // f = absolute frame
     struct Strip {
         WebParam pg{1.f};                 // pump duck

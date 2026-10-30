@@ -67,10 +67,10 @@ jobs:
           sleep 1
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/ipad2.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
-          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -inspect || true; sleep 7
+          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -inspect -swing || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/inspect.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
-          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -full || true; sleep 6
+          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -full -swing || true; sleep 6
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/full.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -drumedit 0 -world 3 || true; sleep 7

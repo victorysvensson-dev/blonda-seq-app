@@ -48,6 +48,8 @@ struct StepInspector: View {
             seg([("1×", 1), ("2×", 2), ("3×", 3), ("4×", 4)].map { ($0.0, Double($0.1)) }, Double(r)) { model.setStepRatchet(ref, Int($0)) }
             row("chans att spelas", nil)
             seg([("100%", 1), ("75%", 0.75), ("50%", 0.5), ("25%", 0.25)], Double(p)) { model.setStepProb(ref, Float($0)) }
+            row("timing · tidigt ← → sent", nudgeText(model.stepNudge(ref)))
+            NudgeBar(ref: ref, tint: tc)
             HStack(spacing: 6) {
                 pill("accent", on: acc) { model.toggleAccent(ref) }
                 if ref.track >= 6 { pill("piano roll", on: false) { model.openRoll(ref.track) } }
@@ -60,6 +62,11 @@ struct StepInspector: View {
         .frame(width: 272)
         .fixedSize(horizontal: false, vertical: true)
         .background(Color(rgb: 250, 249, 245))
+    }
+
+    private func nudgeText(_ o: Float) -> String {
+        let pct = Int((o * 100).rounded())
+        return pct == 0 ? "på slaget" : (pct > 0 ? "+\(pct) %" : "\(pct) %")
     }
 
     private func row(_ l: String, _ value: String?) -> some View {
@@ -96,3 +103,38 @@ struct StepInspector: View {
         .buttonStyle(PressScale())
     }
 }
+
+
+/// Nudge of one step: drag left (early) or right (late), up to half a step; ◀ ▶ move 5 %, the middle snaps back to the grid.
+struct NudgeBar: View {
+    @EnvironmentObject var model: EngineModel
+    let ref: EngineModel.StepRef
+    let tint: Color
+    var body: some View {
+        let o = CGFloat(model.stepNudge(ref))
+        HStack(spacing: 6) {
+            Button { model.setStepNudge(ref, Float(o) - 0.05) } label: { Text("\u{25C0}\u{FE0E}").font(BFont.sans(11)).frame(width: 30, height: 30).background(Circle().fill(kInkN.opacity(0.07))) }.buttonStyle(PressScale())
+            GeometryReader { g in
+                let w = g.size.width, mid = w / 2, x = mid + o * w
+                ZStack(alignment: .leading) {
+                    Rectangle().fill(kInkN.opacity(0.07))
+                    Rectangle().fill(kInkN.opacity(0.35)).frame(width: 1).offset(x: mid)
+                    Rectangle().fill(tint.opacity(0.9)).frame(width: abs(x - mid)).offset(x: min(x, mid))
+                    Rectangle().fill(kInkN).frame(width: 2).offset(x: x - 1)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                .contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 0).onChanged { d in
+                    var v = (d.location.x - mid) / w
+                    if abs(v) < 0.025 { v = 0 }   // snaps to the grid
+                    model.setStepNudge(ref, Float(v))
+                }.onEnded { _ in model.auditionStep(ref) })
+                .onTapGesture(count: 2) { model.setStepNudge(ref, 0) }
+            }
+            .frame(height: 30)
+            Button { model.setStepNudge(ref, Float(o) + 0.05) } label: { Text("\u{25B6}\u{FE0E}").font(BFont.sans(11)).frame(width: 30, height: 30).background(Circle().fill(kInkN.opacity(0.07))) }.buttonStyle(PressScale())
+        }
+        .foregroundColor(kInkN)
+    }
+}
+private let kInkN = Color(rgb: 29, 29, 27)

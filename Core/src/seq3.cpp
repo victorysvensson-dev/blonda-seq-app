@@ -96,7 +96,7 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
     for (int pi = 0; pi < kPatterns; ++pi) {
         for (int ti = 0; ti < kTracks; ++ti) for (int s = 0; s < kSteps; ++s) {
             const json::Value& c = S["pats"][pi][ti][s]; Cell& x = cells[pi][ti][s];
-            x.v = (int)c["v"].numOr(0); x.n = (int)c["n"].numOr(0); x.r = (int)c["r"].numOr(1); x.p = (float)c["p"].numOr(1); x.vel = (float)c["vel"].numOr(-1);
+            x.v = (int)c["v"].numOr(0); x.n = (int)c["n"].numOr(0); x.r = (int)c["r"].numOr(1); x.p = (float)c["p"].numOr(1); x.vel = (float)c["vel"].numOr(-1); x.o = std::max(-.5f, std::min(.5f, (float)c["o"].numOr(0)));
         }
         for (int k = 0; k < 4; ++k) {
             const json::Value& R = S["roll"][pi][kMelIds[k]]; roll[pi][k].clear(); std::map<std::string, int> ids;
@@ -173,6 +173,7 @@ std::string Project::toJSON(const std::string& base) const {
             if (x.r > 1) c.at("r") = V::number(x.r); else c.erase("r");
             if (x.p < 1) c.at("p") = V::number(x.p); else c.erase("p");
             if (x.vel >= 0) c.at("vel") = V::number(x.vel); else c.erase("vel");
+            if (x.o != 0) c.at("o") = V::number(x.o); else c.erase("o");
         }
         for (int k = 0; k < 4; ++k) {
             const auto& R = roll[pi][k]; V arr = V::array();
@@ -477,7 +478,7 @@ void Seq3::scheduleStep(long long) {
             for (size_t ni = 0; ni < RR.size(); ++ni) {
                 const RollNote& nt = RR[ni];
                 if (!pass || (int)std::floor(nt.s + 1e-6) != q || (ni < 256 && tg[ni])) continue;
-                const double tt = t + (nt.s - q) * sd;
+                const double tt = std::max(nowT_, t + (nt.s - q) * sd + cl.o * sd);   // nudge moves the whole step
                 Glide G; G.n = 0; float end = nt.s + nt.l; const RollNote* cur = &nt; int guard = 0;
                 while (cur->g >= 0 && guard++ < 16) { const RollNote& nx = RR[cur->g]; if (nx.s <= cur->s) break; if (G.n < 16) { G.at[G.n] = nx.s - nt.s; G.note[G.n] = nx.n; ++G.n; } end = nx.s + nx.l; cur = &nx; }
                 if (rr > 1 && G.n == 0) {
@@ -493,7 +494,8 @@ void Seq3::scheduleStep(long long) {
         const Cell& st = P_.cells[pat][i][q];
         if (st.v && prob.uni() < st.p) {
             const float vel = st.vel >= 0 ? st.vel : (st.v == 2 ? 1.f : .72f); const int rr = st.r > 0 ? st.r : 1;
-            for (int r = 0; r < rr; ++r) trigger(i, (long long)std::llround((t + r * sd / rr) * sr_), vel * (r ? .8f : 1.f), st.n, 1, -1);
+            const double tn = std::max(nowT_, t + st.o * sd);   // nudged steps: early or late by a share of a step
+            for (int r = 0; r < rr; ++r) trigger(i, (long long)std::llround((tn + r * sd / rr) * sr_), vel * (r ? .8f : 1.f), st.n, 1, -1);
         }
     }
     curStep_ = ps; marks_[markW_++ & 31] = {(long long)std::llround(nextT_ * sr_), ps}; nextT_ += sd; step_ = (step_ + 1) % 16; ++gstep_; if (step_ == 0) ++bar_;
@@ -501,7 +503,7 @@ void Seq3::scheduleStep(long long) {
 
 void Seq3::schedule(long long blockStart) {
     // like the web scheduler: everything that starts within the next 120 ms is scheduled now
-    const double now = (double)blockStart / sr_;
+    const double now = (double)blockStart / sr_; nowT_ = now;
     while (playing_ && nextT_ < now + .12) scheduleStep(blockStart);
 }
 

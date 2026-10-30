@@ -250,6 +250,7 @@ private struct ProLanes: View {
             ProLane(title: "velocity", track: t, cell: cell, tint: tc, kind: 0)
             ProLane(title: "chans", track: t, cell: cell, tint: tc, kind: 1)
             ProLane(title: "ratchet", track: t, cell: cell, tint: tc, kind: 2)
+            ProLane(title: "timing", track: t, cell: cell, tint: tc, kind: 3)
         }
     }
 }
@@ -260,7 +261,7 @@ private struct ProLane: View {
     let track: Int
     let cell: CGFloat
     let tint: Color
-    let kind: Int          // 0 velocity (drag), 1 chance (tap cycles), 2 ratchet (tap cycles)
+    let kind: Int          // 0 velocity (drag), 1 chance (tap cycles), 2 ratchet (tap cycles), 3 timing (drag, early ← → late)
     private let h: CGFloat = 38
     var body: some View {
         HStack(spacing: 0) {
@@ -272,7 +273,7 @@ private struct ProLane: View {
             HStack(spacing: ProPattern.gap) {
                 ForEach(0..<16, id: \.self) { s in ProLaneCell(track: track, step: s, cell: cell, h: h, tint: tint, kind: kind) }
             }
-            .modifier(LaneDrag(track: track, cell: cell, h: h, enabled: kind == 0))
+            .modifier(LaneDrag(track: track, cell: cell, h: h, kind: kind))
         }
         .frame(height: h)
     }
@@ -300,6 +301,14 @@ private struct ProLaneCell: View {
                     let p: Float = model.stepProb(ref)
                     Text(p >= 0.999 ? "100" : "\(Int((p * 100).rounded()))").font(BFont.mono(9.5, 500))
                         .foregroundColor(p >= 0.999 ? T.dmInk.opacity(0.45) : T.dmY).frame(maxHeight: .infinity)
+                case 3:
+                    let o: CGFloat = CGFloat(model.stepNudge(ref))
+                    ZStack {
+                        Rectangle().fill(T.dmInk.opacity(0.25)).frame(width: 1)
+                        Rectangle().fill(tint.opacity(0.85)).frame(width: max(2, abs(o) * cell), height: 10).offset(x: o * cell / 2)
+                        Text(abs(o) < 0.005 ? "" : (o > 0 ? "+" : "") + "\(Int((o * 100).rounded()))").font(BFont.mono(8)).foregroundColor(T.dmInk.opacity(0.7)).offset(y: 12)
+                    }
+                    .frame(maxHeight: .infinity)
                 default:
                     let r: Int = model.stepRatchet(ref)
                     Text("\(r)×").font(BFont.mono(9.5, 500)).foregroundColor(r > 1 ? T.dmY : T.dmInk.opacity(0.45)).frame(maxHeight: .infinity)
@@ -309,7 +318,7 @@ private struct ProLaneCell: View {
         .frame(width: cell, height: h)
         .contentShape(Rectangle())
         .onTapGesture {
-            guard on, kind != 0 else { return }
+            guard on, kind == 1 || kind == 2 else { return }
             if kind == 1 {
                 let order: [Float] = [1, 0.75, 0.5, 0.25]
                 let cur = model.stepProb(ref), i = order.firstIndex(where: { abs($0 - cur) < 0.01 }) ?? 0
@@ -327,9 +336,23 @@ private struct LaneDrag: ViewModifier {
     let track: Int
     let cell: CGFloat
     let h: CGFloat
-    let enabled: Bool
+    let kind: Int
+    @State private var nudgeStep: Int?
+    @State private var nudge0: Float = 0
     func body(content: Content) -> some View {
-        if enabled {
+        if kind == 3 {
+            // timing: grab a step and drag it sideways (a whole cell = half a step)
+            content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).onChanged { d in
+                if nudgeStep == nil {
+                    let s = Int(d.startLocation.x / (cell + ProPattern.gap)); guard s >= 0, s < 16, model.value(track, s) > 0 else { return }
+                    nudgeStep = s; nudge0 = model.stepNudge(EngineModel.StepRef(track: track, step: s))
+                }
+                guard let s = nudgeStep else { return }
+                var v = nudge0 + Float(d.translation.width / (cell * 2))
+                if abs(v) < 0.02 { v = 0 }
+                model.setStepNudge(EngineModel.StepRef(track: track, step: s), v)
+            }.onEnded { _ in nudgeStep = nil })
+        } else if kind == 0 {
             content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 0).onChanged { d in
                 let s = Int(d.location.x / (cell + ProPattern.gap))
                 guard s >= 0, s < 16, model.value(track, s) > 0 else { return }

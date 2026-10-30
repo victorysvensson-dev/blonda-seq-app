@@ -221,7 +221,13 @@ final class EngineModel: NSObject, ObservableObject {
     func variation(_ t: Int) { edit { engine.variation(track: t) } }
     func toggleSolo(_ t: Int) { edit { engine.toggleSolo(track: t) } }
     var soloTrack: Int { _ = revision; return engine.soloTrack }
-    func copyPattern() { edit { engine.copyPatternToNext() }; showToast("Mönster \(["A", "B", "C", "D"][pattern]) kopierat till \(["A", "B", "C", "D"][(pattern + 1) % 4])") }
+    /// Copies this pattern into the next one and goes there, so you can build a variation right away.
+    func copyPattern() {
+        let a = pattern, b = (a + 1) % 4, L = ["A", "B", "C", "D"]
+        edit { engine.copyPatternToNext() }; selectPattern(b)
+        showToast("Mönster \(L[a]) kopierat till \(L[b]) · du är nu i \(L[b])")
+    }
+    func patternHasSteps(_ p: Int) -> Bool { _ = revision; return engine.patternHasSteps(p) }
     // ---- dice + toasts
     // plugins
     func fx(_ f: Int) -> Float { _ = paramRevision; return engine.fxValue(f) }
@@ -338,10 +344,18 @@ final class EngineModel: NSObject, ObservableObject {
     func deleteSample(_ m: SampleMeta) {
         engine.removeSample(m.id); inEngine.remove(m.id); library.remove(m.id); revision += 1; scheduleSave()
     }
+    /// The sound being listened to in the library (its tile shows a moving playhead); tap it again to stop.
+    struct Preview: Equatable { let id: String; let start: CFTimeInterval; let len: Double; let rate: Double }
+    @Published var previewing: Preview?
     func previewSample(_ m: SampleMeta) {
+        if previewing?.id == m.id { engine.previewSample("", rate: 1, gain: 0); previewing = nil; return }
         ensureLoaded([m.id]) { [weak self] in
             guard let self = self else { return }
-            self.engine.previewSample(m.id, rate: m.kind == "loop" && self.playing ? self.engine.bpm / Float(m.bpm) : 1, gain: m.norm * 0.8)
+            let rate = m.kind == "loop" && self.playing ? Double(self.engine.bpm) / m.bpm : 1
+            self.engine.previewSample(m.id, rate: Float(rate), gain: m.norm * 0.8)
+            let p = Preview(id: m.id, start: CACurrentMediaTime(), len: m.dur / max(0.05, rate), rate: rate)
+            self.previewing = p
+            DispatchQueue.main.asyncAfter(deadline: .now() + p.len + 0.05) { [weak self] in if self?.previewing == p { self?.previewing = nil } }
         }
     }
     // MARK: step inspector (web: long-press a step)
@@ -357,6 +371,15 @@ final class EngineModel: NSObject, ObservableObject {
     func stepProb(_ r: StepRef) -> Float { _ = revision; return engine.stepProbability(r.track, step: r.step) }
     func setStepVel(_ r: StepRef, _ v: Float) { engine.setStepVelocity(v, track: r.track, step: r.step); revision += 1; scheduleSave() }
     func setStepRatchet(_ r: StepRef, _ n: Int) { engine.setStepRatchet(n, track: r.track, step: r.step); revision += 1; scheduleSave(); auditionStep(r) }
+    func stepNudge(_ r: StepRef) -> Float { _ = revision; return engine.stepNudge(r.track, step: r.step) }
+    func setStepNudge(_ r: StepRef, _ o: Float) { engine.setStepNudge(o, track: r.track, step: r.step); revision += 1; scheduleSave() }
+    /// master swing (0…1): every other step is played later by swing × 0.66 of a step (web schedule())
+    var swing: Float { param(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0) }
+    /// How many dot columns (quarter steps) a step's dots move to show its timing: swing on the off-beats plus its own nudge.
+    func dotShift(_ t: Int, _ s: Int) -> Int {
+        let share = Double(engine.stepNudge(t, step: s)) + (s % 2 == 1 ? Double(swing) * 0.66 : 0)
+        return max(-2, min(2, Int((share * 4).rounded())))
+    }
     func setStepProb(_ r: StepRef, _ p: Float) { engine.setStepProbability(p, track: r.track, step: r.step); revision += 1; scheduleSave() }
     func toggleAccent(_ r: StepRef) { engine.toggleAccent(r.track, step: r.step); revision += 1; scheduleSave(); auditionStep(r) }
     func clearStep(_ r: StepRef) { engine.clearStep(r.track, step: r.step); revision += 1; scheduleSave(); inspect = nil }
