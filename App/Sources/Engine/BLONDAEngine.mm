@@ -187,6 +187,7 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)setStepRatchet:(NSInteger)r track:(NSInteger)t step:(NSInteger)s { _host->setStepRatchet((int)t, (int)s, (int)r); }
 - (float)stepNudge:(NSInteger)t step:(NSInteger)s { return _host->stepNudge((int)t, (int)s); }
 - (void)setStepNudge:(float)o track:(NSInteger)t step:(NSInteger)s { _host->setStepNudge((int)t, (int)s, o); }
+- (NSInteger)nudgeStep:(NSInteger)t step:(NSInteger)s by:(float)o { return _host->nudgeStep((int)t, (int)s, o); }
 - (void)setStepProbability:(float)p track:(NSInteger)t step:(NSInteger)s { _host->setStepProb((int)t, (int)s, p); }
 - (void)toggleAccent:(NSInteger)t step:(NSInteger)s { _host->toggleAccent((int)t, (int)s); }
 - (void)clearStep:(NSInteger)t step:(NSInteger)s { _host->clearStep((int)t, (int)s); }

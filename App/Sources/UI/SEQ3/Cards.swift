@@ -99,14 +99,14 @@ struct Card<Content: View>: View {
         switch LookStore.shared.look {
         case .glass: background
         case .studio: Rectangle().fill(dark ? T.dmBg : BS.panel)
-        case .dots: Rectangle().fill(BS.ground.opacity(dark ? 0.7 : 0.25))
+        case .dots: Color.clear   // no windows: everything sits on the one yellow surface
         }
     }
     @ViewBuilder private var lookBorder: some View {
         switch LookStore.shared.look {
         case .glass: border
         case .studio: Rectangle().strokeBorder(BS.line, lineWidth: 1).allowsHitTesting(false)
-        case .dots: DotBorder()
+        case .dots: EmptyView()
         }
     }
 

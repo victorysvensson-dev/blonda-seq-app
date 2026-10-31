@@ -373,6 +373,9 @@ final class EngineModel: NSObject, ObservableObject {
     func setStepRatchet(_ r: StepRef, _ n: Int) { engine.setStepRatchet(n, track: r.track, step: r.step); revision += 1; scheduleSave(); auditionStep(r) }
     func stepNudge(_ r: StepRef) -> Float { _ = revision; return engine.stepNudge(r.track, step: r.step) }
     func setStepNudge(_ r: StepRef, _ o: Float) { engine.setStepNudge(o, track: r.track, step: r.step); revision += 1; scheduleSave() }
+    /// Nudge that may carry the step over to its neighbour; returns the step it is on now.
+    @discardableResult
+    func nudgeStep(_ t: Int, _ s: Int, _ o: Float) -> Int { let n = engine.nudgeStep(t, step: s, by: o); revision += 1; scheduleSave(); return n }
     /// master swing (0…1): every other step is played later by swing × 0.66 of a step (web schedule())
     var swing: Float { param(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0) }
     /// How many dot columns (quarter steps) a step's dots move to show its timing: swing on the off-beats plus its own nudge.

@@ -339,18 +339,20 @@ private struct LaneDrag: ViewModifier {
     let kind: Int
     @State private var nudgeStep: Int?
     @State private var nudge0: Float = 0
+    @State private var laneMoved = 0
     func body(content: Content) -> some View {
         if kind == 3 {
             // timing: grab a step and drag it sideways (a whole cell = half a step)
             content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 1).onChanged { d in
                 if nudgeStep == nil {
                     let s = Int(d.startLocation.x / (cell + ProPattern.gap)); guard s >= 0, s < 16, model.value(track, s) > 0 else { return }
-                    nudgeStep = s; nudge0 = model.stepNudge(EngineModel.StepRef(track: track, step: s))
+                    nudgeStep = s; laneMoved = 0; nudge0 = model.stepNudge(EngineModel.StepRef(track: track, step: s)); model.engine.pushUndo()
                 }
                 guard let s = nudgeStep else { return }
-                var v = nudge0 + Float(d.translation.width / (cell * 2))
-                if abs(v) < 0.02 { v = 0 }
-                model.setStepNudge(EngineModel.StepRef(track: track, step: s), v)
+                var v = nudge0 + Float(d.translation.width / (cell + ProPattern.gap)) - Float(laneMoved)
+                if abs(v) < 0.03 { v = 0 }
+                let n = model.nudgeStep(track, s, v)
+                if n != s { laneMoved += (n == (s + 1) % 16) ? 1 : -1; nudgeStep = n }
             }.onEnded { _ in nudgeStep = nil })
         } else if kind == 0 {
             content.contentShape(Rectangle()).gesture(DragGesture(minimumDistance: 0).onChanged { d in

@@ -63,6 +63,7 @@ public:
         const int pat = ui.pat;
         if (t < 6) {
             Cell& cell = ui.cells[pat][t][s]; cell.v = (cell.v + 1) % 3; cell.vel = -1;
+            if (cell.v != 2) cell.o = 0;   // a removed or new step is back on the grid (accenting keeps its nudge)
             Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); return;
         }
         auto& roll = ui.roll[pat][t - 6];
@@ -71,8 +72,10 @@ public:
             int note = t == 6 ? 45 : 57; float best = 1e9f;
             for (const auto& n : roll) { const float d = std::fabs(n.s - s); if (d < best) { best = d; note = n.n; } }
             RollNote n; n.s = (float)s; n.l = 1; n.n = note; n.v = .72f; roll.push_back(n);
+            ui.cells[pat][t][s].o = 0;
         } else if (roll[found].v < .95f) roll[found].v = 1.f;
         else {
+            ui.cells[pat][t][s].o = 0;
             roll.erase(roll.begin() + found);
             for (auto& n : roll) { if (n.g == found) n.g = -1; else if (n.g > found) --n.g; }   // glide links are indices
         }
@@ -139,6 +142,22 @@ public:
         Cell& c = ui.cells[ui.pat][t][s]; if (!c.v) return; c.vel = v; c.v = v >= .95f ? 2 : 1; sendCell(t, s);
     }
     void setStepRatchet(int t, int s, int r) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].r = std::max(1, std::min(4, r)); sendCell(t, s); }
+    // nudge past half a step: the step moves into the free neighbour and keeps the rest as nudge; returns where it is now
+    int nudgeStep(int t, int s, float o) {
+        if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return s;
+        const int d = o > .5f ? 1 : (o < -.5f ? -1 : 0);
+        if (!d) { setStepNudge(t, s, o); return s; }
+        const int s2 = (s + d + kSteps) % kSteps, pat = ui.pat;
+        if (stepValue(t, s2) != 0) { setStepNudge(t, s, d * .5f); return s; }   // the neighbour is taken: stop at the edge
+        Cell c = ui.cells[pat][t][s]; c.o = std::max(-.5f, std::min(.5f, o - d));
+        ui.cells[pat][t][s] = Cell{}; ui.cells[pat][t][s2] = c;
+        if (t >= 6) {
+            for (auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { n.s += d; if (n.s >= kSteps) n.s -= kSteps; if (n.s < 0) n.s += kSteps; }
+            commitTrack(t);
+        }
+        sendCell(t, s); sendCell(t, s2);
+        return s2;
+    }
     // nudge: move one step early or late (share of a step, -0.5 … +0.5); 0 = on the grid
     float stepNudge(int t, int s) const { return (t >= 0 && t < kTracks && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].o : 0.f; }
     void setStepNudge(int t, int s, float o) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].o = std::round(std::max(-.5f, std::min(.5f, o)) * 100.f) / 100.f; sendCell(t, s); }

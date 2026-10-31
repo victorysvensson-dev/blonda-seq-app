@@ -90,12 +90,38 @@ struct GridRow: View {
                         .frame(width: cell, height: cell)
                         .onTapGesture { model.cycle(track, s) }
                         .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
+                        .modifier(StepNudgeDrag(track: track, step: s, pitch: cell + kGap))
                         .modifier(InspectorPopover(ref: ref))
                 }
             }
             Spacer(minLength: 0)
         }
         .frame(height: cell)
+    }
+}
+
+/// Drag a lit step sideways to nudge it (a whole step width = one step); past half a step it moves on to the
+/// next step if that one is free. The dots slide as you drag.
+struct StepNudgeDrag: ViewModifier {
+    @EnvironmentObject var model: EngineModel
+    let track: Int
+    let step: Int
+    let pitch: CGFloat
+    @State private var cur: Int?
+    @State private var moved = 0
+    @State private var o0: Float = 0
+    func body(content: Content) -> some View {
+        content.simultaneousGesture(DragGesture(minimumDistance: 8).onChanged { d in
+            if cur == nil {
+                guard abs(d.translation.width) > abs(d.translation.height), model.value(track, step) > 0 else { return }
+                model.engine.pushUndo(); cur = step; moved = 0; o0 = model.stepNudge(EngineModel.StepRef(track: track, step: step))
+            }
+            guard let c = cur else { return }
+            var total = o0 + Float(d.translation.width / pitch)
+            if abs(total - Float(moved)) < 0.03 { total = Float(moved) }   // snaps onto the grid
+            let n = model.nudgeStep(track, c, total - Float(moved))
+            if n != c { moved += (n == (c + 1) % 16) ? 1 : -1; cur = n }
+        }.onEnded { _ in if let c = cur { model.auditionStep(EngineModel.StepRef(track: track, step: c)) }; cur = nil })
     }
 }
 

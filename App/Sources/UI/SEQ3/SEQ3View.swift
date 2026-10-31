@@ -16,20 +16,20 @@ struct SEQ3View: View {
     var body: some View {
         ZStack(alignment: .bottom) {
             ZStack(alignment: .bottom) {
-                LookBackground()
+                LookBackground().modifier(DotsFilter())
                 VStack(spacing: 0) {
                     SEQ3Header()
                     GeometryReader { geo in
                         let w = geo.size.width
-                        if w >= 1640 || Self.forceThree {
+                        if w >= 1780 || Self.forceThree {   // only when every column has room for its cards (grid ≥ ~690 pt)
                             // big Mac window / full screen: three columns, so everything is in view with little scrolling
                             let unit = (w - 52) / 3.0
                             HStack(alignment: .top, spacing: 0) {
-                                column(width: unit * 0.92, cards: [AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard())], base: 0)
+                                column(width: unit * 0.92, cards: [AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard())], base: 0, clip: true)
                                 Hinge().frame(width: 26)
-                                column(width: unit * 1.2, cards: [AnyView(GridCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(SongCard())], base: 1)
+                                column(width: unit * 1.2, cards: [AnyView(GridCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(SongCard())], base: 1, clip: true)
                                 Hinge().frame(width: 26)
-                                column(width: unit * 0.88, cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(PluginsCard())], base: 2)
+                                column(width: unit * 0.88, cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(PluginsCard())], base: 2, clip: true)
                             }
                         } else {
                             let wide = w >= 1100
@@ -49,6 +49,7 @@ struct SEQ3View: View {
                     .padding(.top, 8)
                 }
                 .padding(.bottom, 82)
+                .modifier(DotsFilter())
                 TransportBar(showKeys: $showKeys)
                     .padding(.horizontal, 22)
                     .modifier(Enter(index: 7, on: entered))
@@ -91,20 +92,21 @@ struct SEQ3View: View {
                     }
                     Button("") { full.toggle(k) }.keyboardShortcut(.cancelAction).opacity(0).frame(width: 0, height: 0)
                 }
+                .modifier(DotsFilter())
                 .transition(.opacity.combined(with: .scale(scale: 0.97)))
                 .zIndex(3)
             }
             if let t = model.drumEdit {
-                DrumEditor(track: t).transition(.opacity.combined(with: .scale(scale: 0.96))).zIndex(3.5)
+                DrumEditor(track: t).modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.96))).zIndex(3.5)
             }
             if let t = model.rollTrack {
-                PianoRoll(track: t).transition(.move(edge: .bottom)).zIndex(4)
+                PianoRoll(track: t).modifier(DotsFilter()).transition(.move(edge: .bottom)).zIndex(4)
             }
             if model.projOpen {
-                ProjectsView().transition(.opacity.combined(with: .scale(scale: 0.985))).zIndex(6)
+                ProjectsView().modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.985))).zIndex(6)
             }
             if model.libOpen {
-                LibraryView().transition(.opacity.combined(with: .scale(scale: 0.985)))
+                LibraryView().modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.985)))
                     .zIndex(5)
             }
             if showKeys {
@@ -190,7 +192,7 @@ struct SEQ3View: View {
         return .handled
     }
 
-    private func column(width: CGFloat, cards: [AnyView], base: Int) -> some View {
+    private func column(width: CGFloat, cards: [AnyView], base: Int, clip: Bool = false) -> some View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 14) {
                 ForEach(cards.indices, id: \.self) { k in
@@ -202,6 +204,7 @@ struct SEQ3View: View {
         }
         .lockedWhileDragging()
         .frame(width: width)
+        .modifier(ClipIf(on: clip))   // three columns: a card wider than its column never draws over the next one
     }
 }
 
@@ -269,4 +272,9 @@ struct ScrollTuner: UIViewRepresentable {
         sv.panGestureRecognizer.allowedScrollTypesMask = .all          // wheel and trackpad still scroll
         #endif
     }
+}
+
+struct ClipIf: ViewModifier {
+    let on: Bool
+    func body(content: Content) -> some View { if on { content.clipped() } else { content } }
 }

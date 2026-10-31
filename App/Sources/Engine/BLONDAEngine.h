@@ -117,6 +117,8 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 /// Nudge of one step: share of a step, -0.5 (early) … +0.5 (late).
 - (float)stepNudge:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepNudge(_:step:));
 - (void)setStepNudge:(float)o track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepNudge(_:track:step:));
+/// Like setStepNudge, but past half a step the step moves into the free neighbour; returns the step it is on now.
+- (NSInteger)nudgeStep:(NSInteger)track step:(NSInteger)s by:(float)o NS_SWIFT_NAME(nudgeStep(_:step:by:));
 - (void)setStepProbability:(float)p track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepProbability(_:track:step:));
 - (void)toggleAccent:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(toggleAccent(_:step:));
 - (void)clearStep:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(clearStep(_:step:));

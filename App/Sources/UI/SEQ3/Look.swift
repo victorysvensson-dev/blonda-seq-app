@@ -41,6 +41,18 @@ struct LookInvert: ViewModifier {
     }
 }
 
+/// BLONDA dots: the whole page in the style of the yellow transport — one yellow surface with dark
+/// dot-matrix ink, no windows. Done as one filter over the views (light → dark ink, dark → yellow), so every card
+/// follows without its own yellow version.
+struct DotsFilter: ViewModifier {
+    @ObservedObject private var store = LookStore.shared
+    func body(content: Content) -> some View {
+        if store.look == .dots {
+            content.grayscale(1).contrast(1.12).colorInvert().brightness(0.05).colorMultiply(Color(hex: 0xF2C318))
+        } else { content }
+    }
+}
+
 /// Background of the whole page per look.
 struct LookBackground: View {
     @ObservedObject private var store = LookStore.shared

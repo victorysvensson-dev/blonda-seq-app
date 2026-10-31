@@ -126,6 +126,11 @@ int main(int argc, char** argv) {
       const double sd = 60.0 / h->ui.bpm / 4 * 48000;
       std::printf("     onset step5: %lld · +0.25 → %lld (Δ %.0f, want %.0f) · -0.25 → %lld\n", a0, a1, double(a1 - a0), .25 * sd, a2);
       expect(a0 > 0 && std::fabs(double(a1 - a0) - .25 * sd) < 64 && std::fabs(double(a0 - a2) - .25 * sd) < 64, "nudge moves the hit");
+      // a removed and re-added step is back on the grid; nudging past half a step moves it to the next step
+      h->setStepNudge(0, 4, .3f); h->cycleStep(0, 4); h->cycleStep(0, 4); h->cycleStep(0, 4); expect(h->stepValue(0, 4) == 1 && h->stepNudge(0, 4) == 0, "re-added step is on the grid");
+      h->clearTrack(0); h->cycleStep(0, 4); { const int s2 = h->nudgeStep(0, 4, .7f); expect(s2 == 5 && h->stepValue(0, 4) == 0 && h->stepValue(0, 5) == 1 && std::fabs(h->stepNudge(0, 5) + .3f) < .011f, "nudge carries over to the next step"); }
+      h->cycleStep(0, 6); { const int s3 = h->nudgeStep(0, 5, .8f); expect(s3 == 5 && std::fabs(h->stepNudge(0, 5) - .5f) < .011f, "nudge stops at a taken step"); }
+      h->clearTrack(0); h->cycleStep(0, 4);
       blonda::Project q; h->setStepNudge(0, 4, .3f); expect(q.loadJSON(h->toJSON(), &err) && std::fabs(q.cells[q.pat][0][4].o - .3f) < 1e-4f, "nudge saved");
       for (int t = 1; t < 10; ++t) h->setMute(t, false); }
     h->shutdown();
