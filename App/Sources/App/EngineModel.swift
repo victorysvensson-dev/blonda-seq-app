@@ -321,6 +321,7 @@ final class EngineModel: NSObject, ObservableObject {
     }
 
     func assignLoop(_ m: SampleMeta, _ k: Int) {
+        if previewing != nil { engine.previewSample("", rate: 1, gain: 0); previewing = nil }   // the preview stops once the loop is in its slot
         engine.assignLoop(k, sample: m.id); scheduleSave(); rebindSamples()
         showToast("\(m.name) → loop \(k + 1)" + (playing ? " · startar nästa varv" : " · tryck play"))
         if libTarget != nil { closeLibrary() }
