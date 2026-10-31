@@ -79,7 +79,7 @@ struct LiveCard: View {
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0).onChanged { v in move(v.location, g.size) }.onEnded { _ in end() })
         }
-        .aspectRatio(1.12, contentMode: .fit)
+        .aspectRatio(2, contentMode: .fit).frame(maxHeight: 250)
         .background(DotGrid(spacing: 12, radius: 0.8, color: kLk.opacity(0.12)).clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous)))
     }
 
