@@ -222,6 +222,12 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (double)motorParam:(NSInteger)p track:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorParam((int)t - 6, (int)p) : 0; }
 - (void)setMotorParam:(NSInteger)p track:(NSInteger)t value:(double)v { if (t >= 6 && t <= 9) _host->setMotorParam((int)t - 6, (int)p, v); }
 - (float)motorMeter:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorMeter((int)t - 6) : 0; }
+- (void)glitchHold:(NSInteger)fx { _host->glitchHold((int)fx); }
+- (float)glitchAmount { return _host->glitchAmt(); }
+- (void)setGlitchAmount:(float)a { _host->setGlitchAmt(a); }
+- (NSInteger)glitchMask { return _host->glitchMask(); }
+- (void)setGlitchMask:(NSInteger)m { _host->setGlitchMask((int)m); }
+- (NSInteger)glitchActive { return _host->glitchActive(); }
 - (NSInteger)world { return _host->world(); }
 - (void)setWorld:(NSInteger)w { _host->setWorld((int)w); }
 - (BOOL)undo { return _host->undo(); }

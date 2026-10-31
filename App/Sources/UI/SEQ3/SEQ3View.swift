@@ -29,7 +29,7 @@ struct SEQ3View: View {
                                 Hinge().frame(width: 26)
                                 column(width: unit * 1.2, cards: [AnyView(GridCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(SongCard())], base: 1, clip: true)
                                 Hinge().frame(width: 26)
-                                column(width: unit * 0.88, cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(PluginsCard())], base: 2, clip: true)
+                                column(width: unit * 0.88, cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(GlitchCard()), AnyView(PluginsCard())], base: 2, clip: true)
                             }
                         } else {
                             let wide = w >= 1100
@@ -40,7 +40,7 @@ struct SEQ3View: View {
                                 ], base: 0)
                                 Hinge().frame(width: 26)
                                 column(width: unit * (wide ? 1.2 : 1.1), cards: [
-                                    AnyView(GridCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(PluginsCard()),
+                                    AnyView(GridCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(GlitchCard()), AnyView(MixerCard()), AnyView(PluginsCard()),
                                 ], base: 1)
                             }
                         }
@@ -135,6 +135,7 @@ struct SEQ3View: View {
             if let i = args.firstIndex(of: "-world"), i + 1 < args.count, let w = Int(args[i + 1]) { for _ in 0..<kWorlds.count where model.world != w % kWorlds.count { model.nextWorld() } }
             if let i = args.firstIndex(of: "-drumedit"), i + 1 < args.count, let t = Int(args[i + 1]) {   // CI screenshot
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.setKit(t, "808"); model.openDrumEditor(t) } }
+            if args.contains("-glitch") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { model.engine.glitchAmount = 1; model.revision += 1 } }   // CI
             if args.contains("-swing") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: swing and nudged steps show in the dots
                 model.setParam(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0, 0.5)
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }
@@ -159,6 +160,7 @@ struct SEQ3View: View {
         case "master": return AnyView(MasterCard())
         case "mixer": return AnyView(MixerCard())
         case "plugins": return AnyView(PluginsCard())
+        case "glitch": return AnyView(GlitchCard())
         default: return AnyView(EmptyView())
         }
     }

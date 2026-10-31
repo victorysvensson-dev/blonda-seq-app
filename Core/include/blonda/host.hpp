@@ -22,7 +22,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; };
 
     ~Host() { shutdown(); }
@@ -112,6 +112,13 @@ public:
         if (i < 0 || i >= 6) return; int idx = -1; for (int k = 0; k < kNumKits; ++k) if (name == kKitNames[k]) idx = k; if (idx < 0) return;
         ui.kit[i] = kKitNames[idx]; Cmd c; c.type = Kit; c.a = i; c.b = idx; send(c);
     }
+    // BLONDA GLITCH
+    void glitchHold(int fx) { Cmd c; c.type = GlitchHold; c.a = fx; send(c); }
+    float glitchAmt() const { return ui.glitchAmt; }
+    void setGlitchAmt(float a) { ui.glitchAmt = std::max(0.f, std::min(1.f, a)); Cmd c; c.type = GlitchAmt; c.f = ui.glitchAmt; send(c); }
+    int glitchMask() const { return ui.glitchMask; }
+    void setGlitchMask(int m) { ui.glitchMask = m & 0x7F; Cmd c; c.type = GlitchMask; c.a = ui.glitchMask; send(c); }
+    int glitchActive() const { return glitchShown_.load(std::memory_order_relaxed); }   // which effect sounds now (0 none)
     int world() const { return ui.world; }
     void setWorld(int w) { ui.world = w; }   // colour only: nothing for the audio thread
     // ---- piano roll: the whole note list of a melodic track (current pattern); g = index of the glide target or -1
@@ -388,6 +395,9 @@ public:
                 case Preview: if (e) e->previewSample(c.smp, c.f, c.g); break;
                 case Drop: { if (e) e->dropSample(c.smp); Cmd r; r.type = Drop; r.smp = c.smp; retire_.push(r); break; }
                 case Kit: if (e) e->setKit(c.a, c.b); break;
+                case GlitchHold: if (e) e->glitchHold(c.a); break;
+                case GlitchAmt: if (e) e->setGlitchAmt(c.f); break;
+                case GlitchMask: if (e) e->setGlitchMask(c.a); break;
                 case MotPreset: if (e) e->setMotorPreset(c.a, c.b); break;
                 case MotParam: if (e) e->setMotorParam(c.a, c.b, c.f); break;
                 case GlideT: if (e) e->setGlideT(c.f); break;
@@ -405,6 +415,7 @@ public:
         engine_->render(L, R, frames);
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
         for (int k = 0; k < 4; ++k) motMeter_[k].store((float)engine_->motorMeter(k), std::memory_order_relaxed);
+        glitchShown_.store(engine_->glitchActive(), std::memory_order_relaxed);
         audioPat_.store(engine_->pattern(), std::memory_order_relaxed); chainIdx_.store(engine_->chainIndex(), std::memory_order_relaxed);
     }
 
@@ -474,7 +485,7 @@ private:
     std::unordered_map<std::string, SampleData*> bank_;
     void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
     SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_;
-    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {};
+    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {}; std::atomic<int> glitchShown_{0};
 };
 
 } // namespace blonda

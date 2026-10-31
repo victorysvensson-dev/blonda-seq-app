@@ -81,6 +81,7 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
 #undef NF
 #undef NI
     world = (int)S["world"].numOr(0);
+    glitchAmt = (float)S["glitch"]["amt"].numOr(0); glitchMask = (int)S["glitch"]["mask"].numOr(0x7F) & 0x7F;
     chordKeys = (int)S["chord"]["keys"].numOr(1); chordPad = (int)S["chord"]["pad"].numOr(1);
     for (int i = 0; i < 6; ++i) kit[i] = S["dk"][kTrackIds[i]].strOr("");
     for (int k = 0; k < 4; ++k) {   // BLONDA motor (app field; the web version keeps it untouched)
@@ -127,6 +128,7 @@ std::string Project::toJSON(const std::string& base) const {
         L.at("sid") = o.sid.empty() ? V() : V::string_(o.sid); L.at("on") = V::number(o.on ? 1 : 0); L.at("vol") = V::number(o.vol); L.at("bars") = V::number(o.bars); }
     S.at("glideT") = V::number(glideT); S.at("chord").at("keys") = V::number(chordKeys); S.at("chord").at("pad") = V::number(chordPad);
     S.at("world") = V::number(world);
+    S.at("glitch").at("amt") = V::number(glitchAmt); S.at("glitch").at("mask") = V::number(glitchMask);
     S.at("song") = V::number(song ? 1 : 0); for (int k = 0; k < 8; ++k) S.at("chain").at((size_t)k) = V::number(chain[k]);
     for (int i = 0; i < kTracks; ++i) {
         S.at("mute").at((size_t)i) = V::number(mute[i]);
@@ -194,6 +196,7 @@ std::string Project::toJSON(const std::string& base) const {
 // ---------------------------------------------------------------- engine setup
 void Seq3::prepare(float sampleRate) {
     sr_ = sampleRate; frame_ = 0;
+    glitch_.prepare(sr_);
     for (int i = 0; i < 6; ++i) drums_[i].prepare(sr_, (DrumKind)i);
     drums_[T_HAT].chokeTarget = &drums_[T_OHAT];
     for (auto& m : mot_) m.prepare(sr_);
@@ -467,6 +470,17 @@ void Seq3::scheduleStep(long long) {
     Noise& prob = prob_;
     const int ps = step_; const double sd = stepDur();
     const double t = nextT_ + ((ps % 2) ? P_.master.swing * sd * .66 : 0.0);
+    // BLONDA GLITCH auto: on the 8ths, a random effect from the chosen ones, 1–4 steps long, now and then
+    if (P_.glitchAmt > 0 && P_.glitchMask && ps % 2 == 0) {
+        const long long fs = (long long)std::llround(nextT_ * sr_);
+        if (!glitch_.busy(fs) && prob_.uni() < P_.glitchAmt * .4f) {
+            int pick[7], np = 0; for (int b = 0; b < 7; ++b) if (P_.glitchMask & (1 << b)) pick[np++] = b + 1;
+            const int fx = pick[std::min(np - 1, (int)(prob_.uni() * np))];
+            static const int kLen[4] = {1, 2, 2, 4}; static const double kSl[3] = {1, .5, .25};
+            const int ls = kLen[std::min(3, (int)(prob_.uni() * 4))]; const double sl = kSl[std::min(2, (int)(prob_.uni() * 3))];
+            glitch_.queue(fx, fs, (long long)std::llround(ls * sd * sr_), (int)std::lround(sl * sd * sr_));
+        }
+    }
     const int pat = std::min(3, std::max(0, P_.pat));
     for (int i = 0; i < kTracks; ++i) {
         const int L = trkLen(i), q = L < 16 ? gstep_ % L : ps;
@@ -637,6 +651,7 @@ void Seq3::render(float* L, float* R, int frames) {
                 busL_[x] = inL * d + lL * w; busR_[x] = inR * d + lR * w;
             }
         }
+        glitch_.process(busL_.data(), busR_.data(), n, (long long)b0);   // BLONDA GLITCH (hold pads / auto)
         // master: pre -> tape drive (2x shaper, 128 latency) -> post -> tape LP -> crush -> filter -> comp -> limiter -> out
         const float dr = P_.fx.tapeOn ? P_.master.drive : 0.f, k = 1 + dr * 6, kn = 1.f / std::tanh(k);
         for (int x = 0; x < n; ++x) {

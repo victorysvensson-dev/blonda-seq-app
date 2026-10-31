@@ -133,6 +133,17 @@ int main(int argc, char** argv) {
       h->clearTrack(0); h->cycleStep(0, 4);
       blonda::Project q; h->setStepNudge(0, 4, .3f); expect(q.loadJSON(h->toJSON(), &err) && std::fabs(q.cells[q.pat][0][4].o - .3f) < 1e-4f, "nudge saved");
       for (int t = 1; t < 10; ++t) h->setMute(t, false); }
+    // BLONDA GLITCH: auto throws effects while playing, hold changes the sound, all of it is saved
+    { h->setGlitchAmt(1.f); pump(); h->togglePlay(); int seen = 0, kinds = 0; bool kind[8] = {};
+      for (int i = 0; i < 3000; ++i) { h->render(L, R, 128); const int a = h->glitchActive(); if (a) { ++seen; if (!kind[a]) { kind[a] = true; ++kinds; } }
+          for (int j = 0; j < 128; ++j) if (!std::isfinite(L[j]) || std::fabs(L[j]) > 4) { seen = -100000; } }
+      std::printf("     glitch auto: active in %d blocks, %d kinds\n", seen, kinds);
+      expect(seen > 50 && kinds >= 3, "glitch auto plays several effects, output stays finite");
+      h->setGlitchAmt(0); pump(); for (int i = 0; i < 400; ++i) h->render(L, R, 128);
+      h->glitchHold(blonda::GxStutter); pump(); for (int i = 0; i < 50; ++i) h->render(L, R, 128); expect(h->glitchActive() == blonda::GxStutter, "glitch hold");
+      h->glitchHold(0); pump(); for (int i = 0; i < 50; ++i) h->render(L, R, 128); expect(h->glitchActive() == 0, "glitch let go");
+      h->togglePlay(); for (int i = 0; i < 100; ++i) h->render(L, R, 128);
+      h->setGlitchAmt(.4f); h->setGlitchMask(0x15); blonda::Project q; expect(q.loadJSON(h->toJSON(), &err) && std::fabs(q.glitchAmt - .4f) < 1e-4f && q.glitchMask == 0x15, "glitch saved"); h->setGlitchAmt(0); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }

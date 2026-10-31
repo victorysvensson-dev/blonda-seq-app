@@ -143,6 +143,11 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (double)motorParam:(NSInteger)p track:(NSInteger)track NS_SWIFT_NAME(motorParam(_:track:));
 - (void)setMotorParam:(NSInteger)p track:(NSInteger)track value:(double)v NS_SWIFT_NAME(setMotorParam(_:track:value:));
 - (float)motorMeter:(NSInteger)track NS_SWIFT_NAME(motorMeter(_:));
+/// BLONDA GLITCH: hold an effect (1 stutter … 7 gate, 0 let go), auto chance 0…1, which effects auto may use (bits).
+- (void)glitchHold:(NSInteger)fx NS_SWIFT_NAME(glitchHold(_:));
+@property (nonatomic) float glitchAmount;
+@property (nonatomic) NSInteger glitchMask;
+@property (nonatomic, readonly) NSInteger glitchActive;
 /// Colour world of the project (web: S.world).
 @property (nonatomic) NSInteger world;
 - (BOOL)undo;

@@ -7,6 +7,7 @@
 #include "drums.hpp"
 #include "dynamics.hpp"
 #include "engines.hpp"
+#include "glitch.hpp"
 #include "json.hpp"
 #include "sampler.hpp"
 #include "bris/bris.h"   // BLONDA motor (External/blonda-motor, pinned tag)
@@ -46,6 +47,7 @@ struct Project {
     std::array<LoopSlot, 4> loops;
     std::array<MotorState, 4> motor;
     int world = 0;   // web: S.world (colour world, the sound does not change)
+    float glitchAmt = 0; int glitchMask = 0x7F;   // BLONDA GLITCH: auto chance per step, which effects auto may pick (bits 0..6)
     Cell cells[kPatterns][kTracks][kSteps];
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
@@ -165,6 +167,11 @@ public:
     // drum kit of track i (web: S.dk[id]); index into kKitNames
     void setKit(int i, int idx) { if (i < 0 || i >= 6 || idx < 0 || idx >= kNumKits) return; dsmp_[i] = nullptr; P_.kit[i] = kKitNames[idx]; drums_[i].setKit(kKitNames[idx]); }
     void setGlideT(float v) { P_.glideT = v; }
+    // BLONDA GLITCH (master): hold an effect (0 = let go), auto chance, which effects auto uses
+    void glitchHold(int fx) { glitch_.hold(fx, frame_, std::max(64, (int)std::lround(60.0 / P_.bpm / 4 * sr_))); }
+    void setGlitchAmt(float a) { P_.glitchAmt = std::max(0.f, std::min(1.f, a)); }
+    void setGlitchMask(int m) { P_.glitchMask = m & 0x7F; }
+    int glitchActive() const { return glitch_.active(); }
     void setChord(int t, bool on) { if (t == 7) P_.chordKeys = on; else if (t == 9) P_.chordPad = on; }
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
     void setChain(int k, int v) { if (k >= 0 && k < 8) P_.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; }
@@ -183,6 +190,7 @@ public:
     void bypassMasterDynamics() { comp_.threshold = 0; comp_.ratio = 1; comp_.knee = 0; }   // tests
 
 private:
+    Glitch glitch_;
     double nowT_ = 0;   // start of the block being scheduled (nudged steps never land before it)
     struct Ev { long long f; int track; float vel; int note; float ls; int glide; };   // f = absolute frame
     struct Strip {
