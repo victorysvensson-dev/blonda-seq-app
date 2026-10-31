@@ -125,8 +125,12 @@ jobs:
           PH=$(xcrun simctl list devices available -j | python3 -c "import json,sys;d=json.load(sys.stdin)['devices'];print(next(x['udid'] for k,v in d.items() if 'iOS' in k for x in v if x['name'].startswith('iPhone 16 Pro') or x['name'].startswith('iPhone 17 Pro')))")
           xcrun simctl boot $PH; T 300 xcrun simctl bootstatus $PH -b
           T 120 xcrun simctl install $PH "$APP"; T 30 xcrun simctl ui $PH appearance dark || true
-          T 60 xcrun simctl launch $PH se.blonda.seq -autoplay || true; sleep 6
+          T 60 xcrun simctl launch --console-pty $PH se.blonda.seq -autoplay > ../ci-shots/iphone_console.txt 2>&1 &
+          sleep 12
           T 60 xcrun simctl io $PH screenshot ../ci-shots/iphone.png || true
+          T 60 xcrun simctl spawn $PH log show --last 1m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -v -e UIFocus -e renderbox | tail -80 > ../ci-shots/iphone_log.txt || true
+          ls ~/Library/Logs/DiagnosticReports 2>/dev/null | grep -i blonda | head -3 > ../ci-shots/iphone_crash.txt || true
+          f=$(ls -t ~/Library/Logs/DiagnosticReports/*BLONDA* 2>/dev/null | head -1); [ -n "$f" ] && head -120 "$f" >> ../ci-shots/iphone_crash.txt || true
       - name: Publish screenshots to the ci-shots branch
         if: always()
         run: |
