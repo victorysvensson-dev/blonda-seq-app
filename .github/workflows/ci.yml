@@ -97,6 +97,9 @@ jobs:
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -duo || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/duo_open.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
+          T 60 xcrun simctl launch $UDID se.blonda.seq -nointro -autoplay -duofold || true; sleep 7
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/duo_fold.png || true
+          T 30 xcrun simctl terminate $UDID se.blonda.seq || true
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -projects || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/projects.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
@@ -126,7 +129,10 @@ jobs:
           xcrun simctl boot $PH; T 300 xcrun simctl bootstatus $PH -b
           T 120 xcrun simctl install $PH "$APP"; T 30 xcrun simctl ui $PH appearance dark || true
           T 60 xcrun simctl launch --console-pty $PH se.blonda.seq -autoplay > ../ci-shots/iphone_console.txt 2>&1 &
-          sleep 12
+          sleep 10
+          T 60 xcrun simctl io $PH screenshot ../ci-shots/iphone_a.png || true
+          T 30 xcrun simctl terminate $PH se.blonda.seq || true; sleep 2
+          T 60 xcrun simctl launch $PH se.blonda.seq -autoplay || true; sleep 9
           T 60 xcrun simctl io $PH screenshot ../ci-shots/iphone.png || true
           T 60 xcrun simctl spawn $PH log show --last 1m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -v -e UIFocus -e renderbox | tail -80 > ../ci-shots/iphone_log.txt || true
           ls ~/Library/Logs/DiagnosticReports 2>/dev/null | grep -i blonda | head -3 > ../ci-shots/iphone_crash.txt || true

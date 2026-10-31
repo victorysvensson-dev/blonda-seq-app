@@ -44,6 +44,9 @@ struct RootView: View {
             LibDemo(page: Int(ProcessInfo.processInfo.arguments[i + 1]) ?? 0)
         } else if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-gallery"), i + 1 < ProcessInfo.processInfo.arguments.count {
             SynthGallery(page: Int(ProcessInfo.processInfo.arguments[i + 1]) ?? 0)
+        } else if ProcessInfo.processInfo.arguments.contains("-duofold") {
+            // CI: the folded DUO (a phone-wide strip) on the iPad simulator
+            HStack { DuoView(canSwitch: false).frame(width: 420) }.frame(maxWidth: .infinity).background(Color.black)
         } else if hsc == .compact { DuoView(canSwitch: false) } else if layout.duo { DuoView() } else { SEQ3View() }
     }
 }
