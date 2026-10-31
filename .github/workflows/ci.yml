@@ -82,6 +82,12 @@ jobs:
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -look 2 -glitch || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/look_dots.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true
+          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -glitchfull || true; sleep 7
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/glitch.png || true
+          T 30 xcrun simctl terminate $UDID se.blonda.seq || true
+          T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -autoplay -glitchfull -look 2 || true; sleep 7
+          T 60 xcrun simctl io $UDID screenshot ../ci-shots/glitch_dots.png || true
+          T 30 xcrun simctl terminate $UDID se.blonda.seq || true
           T 60 xcrun simctl launch $UDID se.blonda.seq -landscape -nointro -projects || true; sleep 7
           T 60 xcrun simctl io $UDID screenshot ../ci-shots/projects.png || true
           T 30 xcrun simctl terminate $UDID se.blonda.seq || true

@@ -421,7 +421,7 @@ struct MasterCard: View {
             }
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))))
+        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))).dotsHidden())
         .modifier(LookInvert())
         .shadow(color: .black.opacity(LookStore.shared.look == .glass ? 0.45 : 0), radius: 22, y: 13)
     }

@@ -135,7 +135,8 @@ struct SEQ3View: View {
             if let i = args.firstIndex(of: "-world"), i + 1 < args.count, let w = Int(args[i + 1]) { for _ in 0..<kWorlds.count where model.world != w % kWorlds.count { model.nextWorld() } }
             if let i = args.firstIndex(of: "-drumedit"), i + 1 < args.count, let t = Int(args[i + 1]) {   // CI screenshot
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.setKit(t, "808"); model.openDrumEditor(t) } }
-            if args.contains("-glitch") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { model.engine.glitchAmount = 1; model.revision += 1 } }   // CI
+            if args.contains("-glitchfull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("glitch") } }   // CI
+            if args.contains("-glitch") || args.contains("-glitchfull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { model.engine.glitchAmount = 1; model.revision += 1 } }   // CI
             if args.contains("-swing") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: swing and nudged steps show in the dots
                 model.setParam(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0, 0.5)
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }

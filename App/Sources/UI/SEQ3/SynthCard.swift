@@ -206,13 +206,14 @@ struct SynthCard: View {
         }
         .padding(16)
         .foregroundColor(th.fg)
-        .background(EngBackground(e: inst))
+        .background(EngBackground(e: inst).dotsHidden())
         .clipShape(RoundedRectangle(cornerRadius: T.cardR, style: .continuous))
         .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).strokeBorder(LinearGradient(stops: [
             .init(color: Color.white.opacity(0.35), location: 0), .init(color: Color.white.opacity(0.04), location: 0.4), .init(color: Color.white.opacity(0.12), location: 1),
-        ], startPoint: .top, endPoint: .bottom), lineWidth: 1).allowsHitTesting(false))
+        ], startPoint: .top, endPoint: .bottom), lineWidth: 1).allowsHitTesting(false).dotsHidden())
+        .dotsInvert(["fm", "pluck", "chip"].contains(inst))   // the light engines draw dark ink
         .compositingGroup()
-        .shadow(color: .black.opacity(0.55), radius: 25, y: 13)
+        .shadow(color: .black.opacity(LookStore.shared.look == .dots ? 0 : 0.55), radius: 25, y: 13)
         .animation(.easeInOut(duration: 0.25), value: inst)
         .onChange(of: model.selectedTrack) { _, t in if t >= 6 && !pinned { synT = t } }
         .onChange(of: inst) { _, _ in

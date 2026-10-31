@@ -36,8 +36,18 @@ extension T {
 /// colours keep their character but the blocks of light disappear.
 struct LookInvert: ViewModifier {
     @ObservedObject private var store = LookStore.shared
+    var dots = true   // false: an inner part whose card is already inverted as a whole in the dots look
     func body(content: Content) -> some View {
-        if store.look == .glass { content } else { content.colorInvert().hueRotation(.degrees(180)) }
+        if store.look == .glass || (!dots && store.look == .dots) { content } else { content.colorInvert().hueRotation(.degrees(180)) }
+    }
+}
+
+extension View {
+    /// Card blocks (backgrounds, rims, shadows) disappear in the dots look — everything sits on the one yellow surface.
+    func dotsHidden() -> some View { opacity(LookStore.shared.look == .dots ? 0 : 1) }
+    /// Cards drawn dark-on-light get inverted in the dots look, so their ink comes out dark on the yellow like the rest.
+    @ViewBuilder func dotsInvert(_ on: Bool = true) -> some View {
+        if on && LookStore.shared.look == .dots { colorInvert() } else { self }
     }
 }
 

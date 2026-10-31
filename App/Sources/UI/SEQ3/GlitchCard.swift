@@ -50,7 +50,7 @@ struct AsciiScreen: View {
                     .padding(.horizontal, 6).frame(height: 18).background(fx > 0 ? T.dmY : Color.clear).padding(6)
             }
         }
-        .background(Color(hex: 0x0E0F10))
+        .background(LookStore.shared.look == .dots ? Color.clear : Color(hex: 0x0E0F10))
         .overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
         .clipped()
     }

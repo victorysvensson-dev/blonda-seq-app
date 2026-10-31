@@ -53,9 +53,10 @@ struct LiveCard: View {
             }
         }
         .padding(16)
-        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xF8F7F3), Color(hex: 0xEAE9E3)], startPoint: UnitPoint(x: 0.37, y: 0), endPoint: UnitPoint(x: 0.63, y: 1))))
-        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.08)), lineWidth: 1).allowsHitTesting(false))
-        .shadow(color: .black.opacity(0.55), radius: 24, y: 24 - 12)
+        .background(RoundedRectangle(cornerRadius: 26, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xF8F7F3), Color(hex: 0xEAE9E3)], startPoint: UnitPoint(x: 0.37, y: 0), endPoint: UnitPoint(x: 0.63, y: 1))).dotsHidden())
+        .overlay(RoundedRectangle(cornerRadius: 26, style: .continuous).strokeBorder(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.08)), lineWidth: 1).allowsHitTesting(false).dotsHidden())
+        .dotsInvert()
+        .shadow(color: .black.opacity(LookStore.shared.look == .dots ? 0 : 0.55), radius: 24, y: 24 - 12)
     }
 
     // MARK: XY pad
@@ -250,9 +251,9 @@ struct LiveDevice: View {
             ruler
         }
         .padding(.horizontal, 16).padding(.top, 16).padding(.bottom, 12)
-        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xFDFCF5), Color(hex: 0xF2EFC9)], startPoint: UnitPoint(x: 0.41, y: 0), endPoint: UnitPoint(x: 0.59, y: 1))))
+        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(hex: 0xFDFCF5), Color(hex: 0xF2EFC9)], startPoint: UnitPoint(x: 0.41, y: 0), endPoint: UnitPoint(x: 0.59, y: 1))).dotsHidden().overlay(LookStore.shared.look == .dots ? DotBorder(color: Color.black.opacity(0.5)) : nil))
         .overlay(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).strokeBorder(LinearGradient(colors: [.white, .white.opacity(0)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.06)), lineWidth: 1).allowsHitTesting(false))
-        .modifier(LookInvert())
+        .modifier(LookInvert(dots: false))
         .shadow(color: .black.opacity(LookStore.shared.look == .glass ? 0.3 : 0), radius: 12, y: 12 - 6)
     }
 
