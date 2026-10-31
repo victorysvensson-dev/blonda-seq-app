@@ -379,6 +379,15 @@ final class EngineModel: NSObject, ObservableObject {
     /// master swing (0…1): every other step is played later by swing × 0.66 of a step (web schedule())
     var swing: Float { param(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0) }
     /// How many dot columns (quarter steps) a step's dots move to show its timing: swing on the off-beats plus its own nudge.
+    /// Dots that a neighbouring step pushed into this one: > 0 = that many columns on the left (the step before is late),
+    /// < 0 = columns on the right (the step after is early). A dragged step switches off a column and lights it next door.
+    func dotSpill(_ t: Int, _ s: Int) -> Int {
+        let p = (s + 15) % 16, n = (s + 1) % 16
+        var k = 0
+        if value(t, p) > 0 { let d = dotShift(t, p); if d > 0 { k = d } }
+        if k == 0, value(t, n) > 0 { let d = dotShift(t, n); if d < 0 { k = d } }
+        return k
+    }
     func dotShift(_ t: Int, _ s: Int) -> Int {
         let share = Double(engine.stepNudge(t, step: s)) + (s % 2 == 1 ? Double(swing) * 0.66 : 0)
         return max(-2, min(2, Int((share * 4).rounded())))

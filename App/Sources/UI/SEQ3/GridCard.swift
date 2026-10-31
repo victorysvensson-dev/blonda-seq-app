@@ -87,7 +87,7 @@ struct GridRow: View {
                 ForEach(0..<16, id: \.self) { s in
                     let ref = EngineModel.StepRef(track: track, step: s)
                     let v = model.value(track, s)
-                    DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0)
+                    DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0, spill: model.dotSpill(track, s))
                         .frame(width: cell, height: cell)
                         .onTapGesture { model.cycle(track, s) }
                         .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
@@ -134,6 +134,7 @@ struct DotCell: View {
     let dimGroup: Bool
     var out = false          // beyond the track's length
     var shift = 0            // timing: the lit dots slide this many dot columns (swing / nudge, a quarter step each)
+    var spill = 0            // columns lit by a neighbour that slid into this step (> 0 left edge, < 0 right edge)
     var body: some View {
         let on = value > 0, acc = value == 2
         let bg: Color = on ? (playhead ? Color(hex: 0x201E16) : Color(hex: 0x18191C)) : (playhead ? Color(hex: 0x29282A) : (dimGroup ? T.dmCell2 : T.dmCell))
@@ -148,6 +149,15 @@ struct DotCell: View {
                 if c - shift >= 0 && c - shift < 4 { lit.addEllipse(in: e) }   // the block of lit dots slides sideways
             } }
             if on && shift != 0 { ctx.fill(path, with: .color(T.dmInk.opacity(0.09))); path = lit }
+            if spill != 0 {   // the columns the neighbour moved in here, in its colour
+                var sp = Path()
+                for r in 0..<4 { for c in 0..<4 where (spill > 0 && c < spill) || (spill < 0 && c >= 4 + spill) {
+                    let cx = inset + (CGFloat(c) + 0.5) * tile, cy = inset + (CGFloat(r) + 0.5) * tile, rad = tile * 0.345
+                    sp.addEllipse(in: CGRect(x: cx - rad, y: cy - rad, width: 2 * rad, height: 2 * rad))
+                } }
+                var g = ctx; g.addFilter(.shadow(color: Color(hex: colorHex), radius: 1.5))
+                g.fill(sp, with: .color(mixColor(colorHex, 0xFFFFFF, 0.78).opacity(on ? 0.55 : 0.85)))
+            }
             if on {
                 let dc = playhead ? mixColor(colorHex, 0xFFFFFF, 0.45) : mixColor(colorHex, 0xFFFFFF, 0.78)
                 var g = ctx
