@@ -148,6 +148,8 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 @property (nonatomic) float glitchAmount;
 @property (nonatomic) NSInteger glitchMask;
 @property (nonatomic, readonly) NSInteger glitchActive;
+/// The last `count` master output samples (≤ 8192), oldest first — for the yellow master deck.
+- (NSInteger)scopeLeft:(float *)left right:(float *)right count:(NSInteger)count;
 /// Colour world of the project (web: S.world).
 @property (nonatomic) NSInteger world;
 - (BOOL)undo;

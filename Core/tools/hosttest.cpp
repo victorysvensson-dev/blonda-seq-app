@@ -15,6 +15,7 @@ int main(int argc, char** argv) {
     if (!host.load(ss.str(), &err)) { std::fprintf(stderr, "load: %s\n", err.c_str()); return 2; }
 
     std::atomic<bool> done{false}; std::atomic<long long> rendered{0};
+    int scopeOk = 0;
     double peak = 0, sumsq = 0; bool finite = true; int stepChanges = 0, badOrder = 0, lastStep = -1;
     std::thread midi([&] { int k = 0; while (!done) { host.midiNoteOn(8, 60 + k % 7, .7f); std::this_thread::sleep_for(std::chrono::milliseconds(3)); host.midiNoteOff(8, 60 + k % 7); ++k; std::this_thread::sleep_for(std::chrono::milliseconds(40)); } });
     std::thread audio([&] {
@@ -41,13 +42,14 @@ int main(int argc, char** argv) {
         if (k % 13 == 0) { host.noteOn(7, 57 + k % 12, .8f); }
         if (k % 300 == 299) host.selectPattern(0);
         if (k % 7 == 0) host.setParam(k % 3, k % 10, k % 7, (k % 100) / 100.f);
+        if (k % 50 == 0) { static float sl[8192], sr[8192]; const int got = host.scope(sl, sr, 8192); double m = 0; for (int i = 0; i < got; ++i) m = std::max(m, (double)std::fabs(sl[i])); if (got == 8192 && rendered > 48000 && m > 1e-4) ++scopeOk; }
         host.collect();
         std::this_thread::sleep_for(std::chrono::microseconds(700));
     }
     audio.join(); midi.join(); host.shutdown();
     const double rms = std::sqrt(sumsq / rendered.load());
-    std::printf("edits %d  peak %.3f  rms %.4f  finite %d  stepChanges %d  outOfOrder %d\n", n, peak, rms, finite, stepChanges, badOrder);
-    const bool ok = finite && rms > 1e-3 && peak <= 1.05 && stepChanges > 80 && badOrder <= 2;
+    std::printf("scope %d  ", scopeOk); std::printf("edits %d  peak %.3f  rms %.4f  finite %d  stepChanges %d  outOfOrder %d\n", n, peak, rms, finite, stepChanges, badOrder);
+    const bool ok = finite && rms > 1e-3 && peak <= 1.05 && stepChanges > 80 && badOrder <= 2 && scopeOk > 5;
     std::puts(ok ? "HOSTTEST OK" : "HOSTTEST FAIL");
     return ok ? 0 : 1;
 }

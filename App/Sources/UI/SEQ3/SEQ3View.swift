@@ -6,6 +6,8 @@ struct SEQ3View: View {
     @EnvironmentObject var model: EngineModel
     @ObservedObject private var full = FullStore.shared
     @ObservedObject private var lookStore = LookStore.shared
+    @ObservedObject private var drawers = DrawerState.shared
+    @ObservedObject private var cols = ColStore.shared
     @State private var started = false
     @State private var entered = true
     @State private var showKeys = false
@@ -18,28 +20,27 @@ struct SEQ3View: View {
             ZStack(alignment: .bottom) {
                 LookBackground().modifier(DotsFilter())
                 VStack(spacing: 0) {
-                    SEQ3Header()
+                    SEQ3Header().zIndex(2)   // the dock drawer hangs over the cards
                     GeometryReader { geo in
                         let w = geo.size.width
                         if w >= 1780 || Self.forceThree {   // only when every column has room for its cards (grid ≥ ~690 pt)
                             // big Mac window / full screen: three columns, so everything is in view with little scrolling
-                            let unit = (w - 52) / 3.0
+                            let avail = w - 52, f = cols.shares(3)
                             HStack(alignment: .top, spacing: 0) {
-                                column(width: unit * 0.92, cards: [AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard())], base: 0, clip: true)
-                                Hinge().frame(width: 26)
-                                column(width: unit * 1.2, cards: [AnyView(GridCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(SongCard())], base: 1, clip: true)
-                                Hinge().frame(width: 26)
-                                column(width: unit * 0.88, cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(GlitchCard()), AnyView(PluginsCard())], base: 2, clip: true)
+                                column(width: avail * f[0], cards: [AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard())], base: 0, clip: true)
+                                ResizeHinge(count: 3, index: 0, avail: avail)
+                                column(width: avail * f[1], cards: [AnyView(GridCard()), AnyView(MasterCard()), AnyView(MixerCard()), AnyView(SongCard())], base: 1, clip: true)
+                                ResizeHinge(count: 3, index: 1, avail: avail)
+                                column(width: avail * f[2], cards: [AnyView(SynthCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(GlitchCard()), AnyView(PluginsCard())], base: 2, clip: true)
                             }
                         } else {
-                            let wide = w >= 1100
-                            let unit = (w - 26) / (wide ? 2.0 : 2.1)
+                            let avail = w - 26, f = cols.shares(2, wide: w >= 1100)
                             HStack(alignment: .top, spacing: 0) {
-                                column(width: unit * (wide ? 0.8 : 1.0), cards: [
+                                column(width: avail * f[0], cards: [
                                     AnyView(OrbitCard()), AnyView(PadsCard()), AnyView(SoundCard()), AnyView(FXCard()), AnyView(SynthCard()),
                                 ], base: 0)
-                                Hinge().frame(width: 26)
-                                column(width: unit * (wide ? 1.2 : 1.1), cards: [
+                                ResizeHinge(count: 2, index: 0, avail: avail, wide: w >= 1100)
+                                column(width: avail * f[1], cards: [
                                     AnyView(GridCard()), AnyView(LoopsCard()), AnyView(LiveCard()), AnyView(SongCard()), AnyView(MasterCard()), AnyView(GlitchCard()), AnyView(MixerCard()), AnyView(PluginsCard()),
                                 ], base: 1)
                             }
@@ -102,6 +103,14 @@ struct SEQ3View: View {
             if let t = model.rollTrack {
                 PianoRoll(track: t).modifier(DotsFilter()).transition(.move(edge: .bottom)).zIndex(4)
             }
+            if drawers.deck {
+                Color.black.opacity(0.45).ignoresSafeArea().onTapGesture { drawers.setDeck(false) }.transition(.opacity).zIndex(2.4)
+                MasterDeck()
+                    .padding(.horizontal, 14).padding(.top, 60)
+                    .modifier(DotsFilter())
+                    .transition(.move(edge: .bottom))
+                    .zIndex(2.5)
+            }
             if model.projOpen {
                 ProjectsView().modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.985))).zIndex(6)
             }
@@ -140,6 +149,8 @@ struct SEQ3View: View {
             if args.contains("-swing") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: swing and nudged steps show in the dots
                 model.setParam(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0, 0.5)
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }
+            if args.contains("-deck") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { DrawerState.shared.setDeck(true) } }   // CI
+            if args.contains("-dockopen") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { DrawerState.shared.setDock(true) } }   // CI
             if args.contains("-full") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mönster") } }   // CI screenshot
             if args.contains("-roll") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openRoll(8) } }
             if args.contains("-inspect") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.openInspector(1, 4) } }   // CI screenshot
@@ -228,6 +239,57 @@ struct Enter: ViewModifier {
 struct BlurOut: ViewModifier {
     let r: CGFloat
     func body(content: Content) -> some View { content.blur(radius: r) }
+}
+
+/// Column widths the user sets by dragging the hinges (an app setting; double-click a hinge for the default).
+final class ColStore: ObservableObject {
+    static let shared = ColStore()
+    @Published private var two: [Double] { didSet { UserDefaults.standard.set(two, forKey: "cols2") } }
+    @Published private var three: [Double] { didSet { UserDefaults.standard.set(three, forKey: "cols3") } }
+    private init() {
+        two = (UserDefaults.standard.array(forKey: "cols2") as? [Double]) ?? []
+        three = (UserDefaults.standard.array(forKey: "cols3") as? [Double]) ?? []
+    }
+    static func defaults(_ n: Int, wide: Bool) -> [Double] { n == 3 ? [0.92 / 3, 1.2 / 3, 0.88 / 3] : (wide ? [0.4, 0.6] : [1 / 2.1, 1.1 / 2.1]) }
+    func shares(_ n: Int, wide: Bool = true) -> [CGFloat] {
+        let s = n == 3 ? three : two
+        return (s.count == n ? s : Self.defaults(n, wide: wide)).map { CGFloat($0) }
+    }
+    func set(_ n: Int, _ v: [Double]) { if n == 3 { three = v } else { two = v } }
+    func reset(_ n: Int) { set(n, []) }
+}
+
+/// The hinge between two columns: drag it sideways to make one column wider and the other narrower.
+struct ResizeHinge: View {
+    let count: Int
+    let index: Int
+    let avail: CGFloat
+    var wide = true
+    @State private var start: [Double]?
+    @State private var hover = false
+    var body: some View {
+        ZStack {
+            Hinge()
+            Capsule().fill(Color.white.opacity(start != nil ? 0.7 : (hover ? 0.45 : 0.16))).frame(width: 4, height: 46)
+        }
+        .frame(width: 26)
+        .contentShape(Rectangle())
+        .onHover { hover = $0 }
+        .gesture(DragGesture(minimumDistance: 2, coordinateSpace: .global)
+            .onChanged { g in
+                let s0 = start ?? ColStore.shared.shares(count, wide: wide).map(Double.init)
+                if start == nil { start = s0 }
+                var f = s0
+                let lo = max(0.16, Double(300 / max(avail, 1)))
+                let d = Double(g.translation.width / max(avail, 1))
+                let a = min(max(s0[index] + d, lo), s0[index] + s0[index + 1] - lo)
+                f[index] = a; f[index + 1] = s0[index] + s0[index + 1] - a
+                ColStore.shared.set(count, f)
+            }
+            .onEnded { _ in start = nil })
+        .onTapGesture(count: 2) { withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { ColStore.shared.reset(count) } }
+        .accessibilityLabel("Dra för att ändra kolumnernas bredd")
+    }
 }
 
 /// The vertical hairline between the two columns.

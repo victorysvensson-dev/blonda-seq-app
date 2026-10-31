@@ -7,25 +7,26 @@ struct GridCard: View {
     var body: some View {
         Card(style: .dark, title: [("Mönster ", false), (["A", "B", "C", "D"][model.pattern].lowercased(), true), (" · takt ", false), ("\(model.bar % 4 + 1)", true)], extra: AnyView(PatternSwitch())) {
             VStack(alignment: .leading, spacing: 6) {
+                // the width the card offers (not the width of its rows, so the steps can always shrink to fit)
+                GeometryReader { g in Color.clear.preference(key: GridWidthKey.self, value: g.size.width) }.frame(height: 0)
                 StepRule(cell: cell)
                 ForEach(0..<10, id: \.self) { i in GridRow(track: i, cell: cell) }
                 GridActions().padding(.top, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(GeometryReader { g in Color.clear.preference(key: GridWidthKey.self, value: g.size.width) })
             .onPreferenceChange(GridWidthKey.self) { width = $0 }
         }
     }
     /// The steps grow with the card (a big window gives big steps), from 20 up to 64 points.
     private var cell: CGFloat {
         guard width > 0 else { return 35 }
-        return min(64, max(20, ((width - kLabelW - 15 * kGap) / 16).rounded(.down)))
+        return min(64, max(12, ((width - kLabelW - 15 * kGap) / 16 - 0.5).rounded(.down)))
     }
 }
 
 private struct GridWidthKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { let v = nextValue(); if v > 0 { value = v } }
 }
 
 private let kLabelW: CGFloat = 104

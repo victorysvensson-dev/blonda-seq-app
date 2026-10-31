@@ -42,6 +42,8 @@ struct Brand: View {
 /// The glass dock: pattern A–D (yellow indicator slides to the current one), copy, world, midi, projekt, lib.
 struct Dock: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var drawers = DrawerState.shared
+    @State private var pull: CGFloat = 0
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 6) {
@@ -65,10 +67,23 @@ struct Dock: View {
                 GButton(width: 65, action: { model.openLibrary() }) { HStack(spacing: 6) { SVGIcon(d: "M3 2.5v11M6.5 2.5v11M10 3l3 10.2", size: 14); Text("lib") } }
             }
             .padding(.top, 12)
-            RoundedRectangle(cornerRadius: 2).fill(.white.opacity(0.35)).frame(width: 38, height: 4).padding(.top, 8).padding(.bottom, 4)
+            if drawers.dock { DockDrawer().transition(.opacity.combined(with: .move(edge: .top))) }
+            // the tab: tap or pull down for project and song controls (web: .dock-h)
+            RoundedRectangle(cornerRadius: 2).fill(.white.opacity(drawers.dock || pull > 0 ? 0.6 : 0.35)).frame(width: drawers.dock || pull > 0 ? 52 : 38, height: 4)
+                .frame(width: 160, height: 22).contentShape(Rectangle())
+                .padding(.top, 2)
+                .onTapGesture { drawers.setDock(!drawers.dock) }
+                .gesture(DragGesture(minimumDistance: 3)
+                    .onChanged { g in pull = g.translation.height }
+                    .onEnded { g in
+                        let d = g.translation.height + 0.3 * (g.predictedEndTranslation.height - g.translation.height)
+                        if d > 30 { drawers.setDock(true) } else if d < -30 { drawers.setDock(false) }
+                        pull = 0
+                    })
         }
         .padding(.horizontal, 14)
-        .frame(width: 640, height: 70, alignment: .top)
+        .frame(width: drawers.dock ? 680 : 640, alignment: .top)
+        .frame(minHeight: 70, alignment: .top)
         .background(
             UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 24, bottomTrailing: 24))
                 .fill(.clear)

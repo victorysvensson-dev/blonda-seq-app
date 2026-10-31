@@ -71,7 +71,7 @@ struct LookBackground: View {
         case .glass: LivingBackground()
         case .studio: BS.ground.ignoresSafeArea()
         case .dots:
-            BS.ground.overlay(DotGrid(spacing: 12, radius: 1.2, color: BS.accent.opacity(0.22))).ignoresSafeArea()
+            BS.ground.ignoresSafeArea()   // a plain yellow surface (no dot grid behind)
         }
     }
 }

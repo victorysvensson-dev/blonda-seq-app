@@ -228,6 +228,7 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (NSInteger)glitchMask { return _host->glitchMask(); }
 - (void)setGlitchMask:(NSInteger)m { _host->setGlitchMask((int)m); }
 - (NSInteger)glitchActive { return _host->glitchActive(); }
+- (NSInteger)scopeLeft:(float *)left right:(float *)right count:(NSInteger)count { return _host->scope(left, right, (int)count); }
 - (NSInteger)world { return _host->world(); }
 - (void)setWorld:(NSInteger)w { _host->setWorld((int)w); }
 - (BOOL)undo { return _host->undo(); }

@@ -119,6 +119,13 @@ public:
     int glitchMask() const { return ui.glitchMask; }
     void setGlitchMask(int m) { ui.glitchMask = m & 0x7F; Cmd c; c.type = GlitchMask; c.a = ui.glitchMask; send(c); }
     int glitchActive() const { return glitchShown_.load(std::memory_order_relaxed); }   // which effect sounds now (0 none)
+    // the last n (≤ kScope) master samples, oldest first (UI thread; a torn read only shows as one odd frame)
+    static constexpr int kScope = 8192;
+    int scope(float* l, float* r, int n) const {
+        n = std::max(0, std::min(n, kScope)); const unsigned w = scopeW_.load(std::memory_order_acquire);
+        for (int k = 0; k < n; ++k) { const unsigned i = (w - (unsigned)n + (unsigned)k) & (kScope - 1); l[k] = scopeL_[i]; r[k] = scopeR_[i]; }
+        return n;
+    }
     int world() const { return ui.world; }
     void setWorld(int w) { ui.world = w; }   // colour only: nothing for the audio thread
     // ---- piano roll: the whole note list of a melodic track (current pattern); g = index of the glide target or -1
@@ -416,10 +423,17 @@ public:
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
         for (int k = 0; k < 4; ++k) motMeter_[k].store((float)engine_->motorMeter(k), std::memory_order_relaxed);
         glitchShown_.store(engine_->glitchActive(), std::memory_order_relaxed);
+        {   // master scope for the yellow deck (waveform, stereo, spectrum, peak/rms): the last kScope samples
+            unsigned w = scopeW_.load(std::memory_order_relaxed);
+            for (int x = 0; x < frames; ++x) { scopeL_[w & (kScope - 1)] = L[x]; scopeR_[w & (kScope - 1)] = R[x]; ++w; }
+            scopeW_.store(w, std::memory_order_release);
+        }
         audioPat_.store(engine_->pattern(), std::memory_order_relaxed); chainIdx_.store(engine_->chainIndex(), std::memory_order_relaxed);
     }
 
 private:
+    float scopeL_[kScope] = {}, scopeR_[kScope] = {};
+    std::atomic<unsigned> scopeW_{0};
     struct Snap { Cell cells[kPatterns][kTracks][kSteps]; std::vector<RollNote> roll[kPatterns][4]; std::array<int, kTracks> len, mute; int solo; };
     Snap snap() const { Snap s; std::memcpy(s.cells, ui.cells, sizeof(ui.cells)); for (int p = 0; p < kPatterns; ++p) for (int k = 0; k < 4; ++k) s.roll[p][k] = ui.roll[p][k];
         s.len = ui.len; s.mute = ui.mute; s.solo = ui.solo; return s; }

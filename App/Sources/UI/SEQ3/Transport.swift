@@ -71,9 +71,9 @@ struct TransportBar: View {
         .frame(maxWidth: .infinity)
         .background(
             UnevenRoundedRectangle(cornerRadii: .init(topLeading: 26, topTrailing: 26)).fill(T.yellow)
-                .overlay(alignment: .top) { Capsule().fill(T.ink.opacity(0.3)).frame(width: 40, height: 5).padding(.top, 0) }
                 .shadow(color: .black.opacity(0.45), radius: 30, y: -12)
         )
+        .overlay(alignment: .top) { DeckTab() }
     }
 }
 
@@ -96,5 +96,20 @@ struct StartOverlay: View {
         .background(Color(rgb: 10, 10, 14, 0.25))
         .contentShape(Rectangle())
         .onTapGesture(perform: onStart)
+    }
+}
+
+/// The tab on top of the transport: tap or pull up for the yellow master deck (web: the deck that pulls up).
+private struct DeckTab: View {
+    @State private var pull: CGFloat = 0
+    var body: some View {
+        Capsule().fill(T.ink.opacity(pull < 0 ? 0.55 : 0.3)).frame(width: pull < 0 ? 52 : 40, height: 5)
+            .frame(width: 180, height: 20, alignment: .top)
+            .contentShape(Rectangle())
+            .onTapGesture { DrawerState.shared.setDeck(true) }
+            .gesture(DragGesture(minimumDistance: 3)
+                .onChanged { g in pull = g.translation.height }
+                .onEnded { g in if g.translation.height < -24 || g.predictedEndTranslation.height < -120 { DrawerState.shared.setDeck(true) }; pull = 0 })
+            .accessibilityLabel("Öppna mastervyn")
     }
 }
