@@ -86,7 +86,7 @@ struct Dock: View {
         .frame(minHeight: 70, alignment: .top)
         .background(
             UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 24, bottomTrailing: 24))
-                .fill(.clear)
+                .fill(drawers.dock && LookStore.shared.look != .glass ? T.dmBg : Color.clear)
                 .background(Backdrop().clipShape(UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 24, bottomTrailing: 24))))
                 .overlay(UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 24, bottomTrailing: 24)).fill(LinearGradient(colors: [.white.opacity(0.16), .white.opacity(0.07)], startPoint: .top, endPoint: .bottom)))
                 .overlay(UnevenRoundedRectangle(cornerRadii: .init(bottomLeading: 24, bottomTrailing: 24)).stroke(.white.opacity(0.18), lineWidth: 1))

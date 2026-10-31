@@ -8,13 +8,13 @@ struct GridCard: View {
         Card(style: .dark, title: [("Mönster ", false), (["A", "B", "C", "D"][model.pattern].lowercased(), true), (" · takt ", false), ("\(model.bar % 4 + 1)", true)], extra: AnyView(PatternSwitch())) {
             VStack(alignment: .leading, spacing: 6) {
                 // the width the card offers (not the width of its rows, so the steps can always shrink to fit)
-                GeometryReader { g in Color.clear.preference(key: GridWidthKey.self, value: g.size.width) }.frame(height: 0)
+                Color.clear.frame(maxWidth: .infinity).frame(height: 1)
+                    .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { w in if abs(w - width) > 0.5 { width = w } }
                 StepRule(cell: cell)
                 ForEach(0..<10, id: \.self) { i in GridRow(track: i, cell: cell) }
                 GridActions().padding(.top, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .onPreferenceChange(GridWidthKey.self) { width = $0 }
         }
     }
     /// The steps grow with the card (a big window gives big steps), from 20 up to 64 points.
