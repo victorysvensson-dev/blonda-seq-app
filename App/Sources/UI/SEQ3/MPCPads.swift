@@ -71,6 +71,7 @@ private struct NoteGrid: View {
         }
         .aspectRatio(1, contentMode: .fit)
         .frame(maxWidth: 760)
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -88,6 +89,7 @@ private struct DrumGrid: View {
             }
         }
         .frame(maxWidth: 900)
+        .frame(maxWidth: .infinity)
     }
 }
 
