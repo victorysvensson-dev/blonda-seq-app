@@ -364,6 +364,10 @@ struct DockDrawer: View {
                 DrawerBtn(title: "−", width: 44) { model.nudgeBPM(-1) }
                 DrawerBtn(title: "+", width: 44) { model.nudgeBPM(1) }
             }
+            DrawerLabel(text: "vy")
+            HStack(spacing: 6) {
+                DrawerBtn(title: "BLONDA DUO · allt i ett fönster", on: true) { DrawerState.shared.setDock(false); LayoutStore.shared.toggle() }
+            }
         }
         .padding(.top, 10).padding(.bottom, 4)
         .onAppear { load() }

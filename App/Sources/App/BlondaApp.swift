@@ -35,6 +35,7 @@ struct BlondaApp: App {
 /// SEQ.3 Glass design on iPad / Mac; the compact layout on iPhone.
 struct RootView: View {
     @Environment(\.horizontalSizeClass) private var hsc
+    @ObservedObject private var layout = LayoutStore.shared
     var body: some View {
         if ProcessInfo.processInfo.arguments.contains("-widegrid") {
             // CI: the step grid in a very wide card (a big Mac window)
@@ -43,7 +44,7 @@ struct RootView: View {
             LibDemo(page: Int(ProcessInfo.processInfo.arguments[i + 1]) ?? 0)
         } else if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-gallery"), i + 1 < ProcessInfo.processInfo.arguments.count {
             SynthGallery(page: Int(ProcessInfo.processInfo.arguments[i + 1]) ?? 0)
-        } else if hsc == .compact { ContentView() } else { SEQ3View() }
+        } else if hsc == .compact { DuoView(canSwitch: false) } else if layout.duo { DuoView() } else { SEQ3View() }
     }
 }
 
