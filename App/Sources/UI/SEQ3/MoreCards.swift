@@ -4,10 +4,13 @@ import SwiftUI
 
 struct PadsCard: View {
     @EnvironmentObject var model: EngineModel
+    @ObservedObject private var full = FullStore.shared
     var body: some View {
         Card(style: .glass, title: [("Pads · 1–0 ", false), (model.recording ? "● rec" : "", true)]) {
+            if full.key == "pads" { MPCPads() } else {   // full screen: play them like an MPC
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 5), spacing: 9) {
                 ForEach(0..<10, id: \.self) { i in Pad(track: i) }
+            }
             }
         }
     }

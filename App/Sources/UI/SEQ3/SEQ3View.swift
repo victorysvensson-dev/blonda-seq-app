@@ -149,6 +149,7 @@ struct SEQ3View: View {
             if args.contains("-swing") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: swing and nudged steps show in the dots
                 model.setParam(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0, 0.5)
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }
+            if args.contains("-mpc") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.selectedTrack = 7; FullStore.shared.toggle("pads") } }   // CI
             if args.contains("-deck") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { DrawerState.shared.setDeck(true) } }   // CI
             if args.contains("-dockopen") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { DrawerState.shared.setDock(true) } }   // CI
             if args.contains("-full") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mönster") } }   // CI screenshot
@@ -280,7 +281,7 @@ struct ResizeHinge: View {
                 let s0 = start ?? ColStore.shared.shares(count, wide: wide).map(Double.init)
                 if start == nil { start = s0 }
                 var f = s0
-                let lo = max(0.16, Double(300 / max(avail, 1)))
+                let lo = max(0.16, Double(400 / max(avail, 1)))
                 let d = Double(g.translation.width / max(avail, 1))
                 let a = min(max(s0[index] + d, lo), s0[index] + s0[index + 1] - lo)
                 f[index] = a; f[index + 1] = s0[index] + s0[index + 1] - a

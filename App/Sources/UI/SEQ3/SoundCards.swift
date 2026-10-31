@@ -407,7 +407,7 @@ struct MasterCard: View {
             }
             .frame(height: 26)
             if !fold.isFolded("master") {
-                HStack(spacing: 8) {
+                LazyVGrid(columns: [GridItem(.adaptive(minimum: 62), spacing: 8)], spacing: 12) {   // seven in a row, or two rows in a narrow column
                     ForEach(order, id: \.0) { f, label, dot in
                         let def = kMasterParams.first { $0.field == f }!
                         MasterKnob(def: def, label: label, dot: dot)

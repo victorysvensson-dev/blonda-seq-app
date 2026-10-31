@@ -87,7 +87,7 @@ struct GridRow: View {
                 ForEach(0..<16, id: \.self) { s in
                     let ref = EngineModel.StepRef(track: track, step: s)
                     let v = model.value(track, s)
-                    DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0, spill: model.dotSpill(track, s))
+                    DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0)
                         .frame(width: cell, height: cell)
                         .onTapGesture { model.cycle(track, s) }
                         .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }
@@ -146,9 +146,9 @@ struct DotCell: View {
                 let cx = inset + (CGFloat(c) + 0.5) * tile, cy = inset + (CGFloat(r) + 0.5) * tile, rad = tile * 0.345
                 let e = CGRect(x: cx - rad, y: cy - rad, width: 2 * rad, height: 2 * rad)
                 path.addEllipse(in: e)
-                if c - shift >= 0 && c - shift < 4 { lit.addEllipse(in: e) }   // the block of lit dots slides sideways
+                if (shift > 0 && c >= 1) || (shift < 0 && c <= 2) { lit.addEllipse(in: e) }   // late: the left column goes dark, early: the right one
             } }
-            if on && shift != 0 { ctx.fill(path, with: .color(T.dmInk.opacity(0.09))); path = lit }
+            if on && shift != 0 { ctx.fill(path, with: .color(Color(hex: dimGroup ? 0x303134 : 0x353639))); path = lit }   // unlit dots look like everywhere else
             if spill != 0 {   // the columns the neighbour moved in here, in its colour
                 var sp = Path()
                 for r in 0..<4 { for c in 0..<4 where (spill > 0 && c < spill) || (spill < 0 && c >= 4 + spill) {

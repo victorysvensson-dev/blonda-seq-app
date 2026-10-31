@@ -34,10 +34,12 @@ struct AsciiScreen: View {
     private static let ramp: [Character] = Array(" .:-=+*#%@")
 
     var body: some View {
+        GeometryReader { geo in
         TimelineView(.animation(minimumInterval: 1.0 / 24)) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate
             let fx = model.engine.glitchActive
-            let lines = Self.frame(t: t, fx: fx, energy: model.energy, amt: Double(model.engine.glitchAmount), cols: 56, rows: 11)
+            let cols = max(20, min(72, Int((geo.size.width - 12) / 6.35)))   // as many characters as fit
+            let lines = Self.frame(t: t, fx: fx, energy: model.energy, amt: Double(model.engine.glitchAmount), cols: cols, rows: 11)
             VStack(alignment: .leading, spacing: 0) {
                 ForEach(lines.indices, id: \.self) { i in
                     Text(lines[i]).font(BFont.mono(10.5, 500)).foregroundColor(fx > 0 ? T.dmY : T.dmInk.opacity(0.78)).lineLimit(1).fixedSize()
@@ -49,6 +51,7 @@ struct AsciiScreen: View {
                     .foregroundColor(fx > 0 ? Color(hex: 0x17181A) : T.dmInk.opacity(0.4))
                     .padding(.horizontal, 6).frame(height: 18).background(fx > 0 ? T.dmY : Color.clear).padding(6)
             }
+        }
         }
         .background(LookStore.shared.look == .dots ? Color.clear : Color(hex: 0x0E0F10))
         .overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))

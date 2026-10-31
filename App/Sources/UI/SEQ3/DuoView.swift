@@ -207,7 +207,7 @@ private struct DuoScreen: View {
                     let ph = model.playing && model.step >= 0 ? model.step : -1
                     ForEach(0..<16, id: \.self) { s in
                         let v = model.value(t, s)
-                        DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, shift: v > 0 ? model.dotShift(t, s) : 0, spill: model.dotSpill(t, s))
+                        DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, shift: v > 0 ? model.dotShift(t, s) : 0)
                             .frame(width: cell, height: cell)
                             .onTapGesture { model.cycle(t, s) }
                             .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(t, s) }
@@ -385,7 +385,7 @@ private struct DuoRow: View {
             let ph = model.playing && model.step >= 0 ? (L < 16 ? model.globalStep % L : model.step) : -1
             ForEach(0..<16, id: \.self) { s in
                 let v = model.value(track, s)
-                DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0, spill: model.dotSpill(track, s))
+                DotCell(value: v, colorHex: col, playhead: ph == s, dimGroup: (s >= 4 && s < 8) || s >= 12, out: s >= L, shift: v > 0 ? model.dotShift(track, s) : 0)
                     .frame(width: cell, height: cell)
                     .onTapGesture { model.cycle(track, s) }
                     .onLongPressGesture(minimumDuration: 0.43) { model.openInspector(track, s) }

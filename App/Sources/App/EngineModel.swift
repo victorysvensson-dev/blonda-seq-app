@@ -192,6 +192,14 @@ final class EngineModel: NSObject, ObservableObject {
         if recording { recOn(i, i < 6 ? 60 : (i == 6 ? 45 : 57), 0.85); if i >= 6 { recOff(i, i == 6 ? 45 : 57) } }
     }
 
+    /// Pads played like an MPC: any note, any velocity, held until let go (records like the keyboard).
+    func padNoteOn(_ t: Int, _ n: Int, _ v: Float) {
+        engine.noteOn(n, velocity: v, track: t)
+        hitTime[t] = CACurrentMediaTime(); hitVel[t] = Double(v)
+        energy = min(1, energy + (t == 0 ? 0.9 : t < 3 ? 0.35 : 0.12) * Double(v))
+        if recording { recOn(t, n, v) }
+    }
+    func padNoteOff(_ t: Int, _ n: Int) { engine.noteOff(n, track: t); if recording { recOff(t, n) } }
     var bpm: Float { engine.bpm }
     func nudgeBPM(_ d: Float) { engine.bpm = engine.bpm + d; revision += 1; scheduleSave() }
     func togglePlay() { engine.togglePlay() }
