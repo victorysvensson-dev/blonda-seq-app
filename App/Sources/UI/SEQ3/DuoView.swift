@@ -226,17 +226,21 @@ private struct DuoFolded: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         VStack(spacing: 0) {
-            DuoScreen().padding(14)
-            Rectangle().fill(D.line).frame(height: 1)
-            HStack {
-                DuoPatterns()
-                Spacer()
-                DuoTool(title: "tärning", fill: D.y) { model.rollDice() }
+            ScrollView(.vertical, showsIndicators: false) {   // a short outer screen scrolls; the transport stays put
+                VStack(spacing: 0) {
+                    DuoScreen().padding(14)
+                    Rectangle().fill(D.line).frame(height: 1)
+                    HStack {
+                        DuoPatterns()
+                        Spacer()
+                        DuoTool(title: "tärning", fill: D.y) { model.rollDice() }
+                    }
+                    .padding(.horizontal, 14).padding(.vertical, 10)
+                    DuoPadGrid(columns: 2).padding(.horizontal, 14)
+                    DuoKnobRow(track: model.selectedTrack, compact: true).padding(.horizontal, 10).padding(.vertical, 12)
+                }
             }
-            .padding(.horizontal, 14).padding(.vertical, 10)
-            DuoPadGrid(columns: 2).padding(.horizontal, 14)
-            DuoKnobRow(track: model.selectedTrack, compact: true).padding(.horizontal, 10).padding(.top, 12)
-            Spacer(minLength: 8)
+            .lockedWhileDragging()
             HStack {
                 Text("fäll ut för stegsekvensern").font(BFont.mono(8.5)).foregroundColor(D.mute)
                 Spacer()
@@ -301,19 +305,20 @@ private struct DuoPad: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
     var height: CGFloat = 64
+    var small = false   // the strip under the sequencer: just the name, shrinking to fit
     var body: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
             let lit = model.flash(track, 0.12) > 0, col = model.trackColor(track), sel = model.selectedTrack == track
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(kTracks[track].name.lowercased()).font(BFont.sans(15, 500))
-                    Text(model.trackSub(track).lowercased()).font(BFont.mono(8.5)).opacity(0.6)
+                    Text(kTracks[track].name.lowercased()).font(BFont.sans(small ? 13 : 15, 500)).lineLimit(1).minimumScaleFactor(0.6)
+                    if !small { Text(model.trackSub(track).lowercased()).font(BFont.mono(8.5)).opacity(0.6).lineLimit(1) }
                 }
-                Spacer()
-                Text("\(track + 1 == 10 ? 0 : track + 1)").font(BFont.mono(9)).opacity(0.5)
+                Spacer(minLength: 0)
+                if !small { Text("\(track + 1 == 10 ? 0 : track + 1)").font(BFont.mono(9)).opacity(0.5) }
             }
             .foregroundColor(lit ? D.dark : D.ink)
-            .padding(10)
+            .padding(small ? 7 : 10)
             .frame(maxWidth: .infinity, minHeight: height, maxHeight: height, alignment: .bottomLeading)
             .background(Rectangle().fill(lit ? col : Color.white.opacity(sel ? 0.1 : 0.04)))
             .overlay(Rectangle().strokeBorder(sel ? col : D.line, lineWidth: sel ? 1.5 : 1))
@@ -462,7 +467,7 @@ private struct DuoPadStrip: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         HStack(spacing: 6) {
-            ForEach(0..<10, id: \.self) { i in DuoPad(track: i, height: 54) }
+            ForEach(0..<10, id: \.self) { i in DuoPad(track: i, height: 54, small: true) }
         }
         .padding(12)
     }
