@@ -367,6 +367,7 @@ struct DockDrawer: View {
             DrawerLabel(text: "vy")
             HStack(spacing: 6) {
                 DrawerBtn(title: "BLONDA DUO · allt i ett fönster", on: true) { DrawerState.shared.setDock(false); LayoutStore.shared.toggle() }
+                DrawerBtn(title: "förhandsvisa iPhone Duo") { DrawerState.shared.setDock(false); withAnimation(.easeInOut(duration: 0.3)) { LayoutStore.shared.preview = true } }
             }
         }
         .padding(.top, 10).padding(.bottom, 4)

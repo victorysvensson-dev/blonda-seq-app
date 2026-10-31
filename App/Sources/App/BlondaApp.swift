@@ -47,7 +47,7 @@ struct RootView: View {
         } else if ProcessInfo.processInfo.arguments.contains("-duofold") {
             // CI: the folded DUO (a phone-wide strip) on the iPad simulator
             HStack { DuoView(canSwitch: false).frame(width: 420) }.frame(maxWidth: .infinity).background(Color.black)
-        } else if hsc == .compact { DuoView(canSwitch: false) } else if layout.duo { DuoView() } else { SEQ3View() }
+        } else if hsc == .compact { DuoView(canSwitch: false) } else if layout.preview { DuoPreview() } else if layout.duo { DuoView() } else { SEQ3View() }
     }
 }
 

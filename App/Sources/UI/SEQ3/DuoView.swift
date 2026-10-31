@@ -8,6 +8,63 @@ final class LayoutStore: ObservableObject {
     @Published var duo: Bool { didSet { UserDefaults.standard.set(duo, forKey: "layoutDuo") } }
     private init() { duo = ProcessInfo.processInfo.arguments.contains("-duo") || UserDefaults.standard.bool(forKey: "layoutDuo") }
     func toggle() { withAnimation(.easeInOut(duration: 0.3)) { duo.toggle() } }
+    /// Preview of the folding iPhone on a Mac / iPad: the DUO view in a phone-sized frame, folded or unfolded.
+    @Published var preview = ProcessInfo.processInfo.arguments.contains("-duopreview")
+    @Published var unfolded = ProcessInfo.processInfo.arguments.contains("-unfolded")
+}
+
+/// Shows how BLONDA DUO looks on the folding iPhone before you have one: the phone outline at its size in points
+/// (folded: the outer screen, unfolded: the inner one), with a button to fold and unfold. The app inside is the real one.
+/// Sizes are an estimate from the rumoured screens (outer ≈ 5.5", inner ≈ 7.8" 4:3) — change them here when Apple says.
+struct DuoPreview: View {
+    @ObservedObject private var layout = LayoutStore.shared
+    static let folded = CGSize(width: 420, height: 600), unfolded = CGSize(width: 840, height: 630)
+    var body: some View {
+        GeometryReader { geo in
+            let size = layout.unfolded ? Self.unfolded : Self.folded
+            let scale = min(1, (geo.size.width - 40) / (size.width + 24), (geo.size.height - 110) / (size.height + 24))
+            VStack(spacing: 16) {
+                HStack(spacing: 10) {
+                    Text("iPhone Duo · förhandsvisning").font(BFont.mono(10, 500)).foregroundColor(D.ink)
+                    Text(layout.unfolded ? "utfälld \(Int(size.width))×\(Int(size.height))" : "hopfälld \(Int(size.width))×\(Int(size.height))").font(BFont.mono(9)).foregroundColor(D.mute)
+                    Spacer()
+                    PreviewBtn(title: layout.unfolded ? "fäll ihop" : "fäll ut", on: true) { withAnimation(.spring(response: 0.55, dampingFraction: 0.85)) { layout.unfolded.toggle() } }
+                    PreviewBtn(title: "stäng") { withAnimation(.easeInOut(duration: 0.3)) { layout.preview = false } }
+                }
+                .padding(.horizontal, 20)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 44, style: .continuous).fill(Color(hex: 0x050506))
+                        .overlay(RoundedRectangle(cornerRadius: 44, style: .continuous).strokeBorder(Color.white.opacity(0.18), lineWidth: 2))
+                    DuoView(canSwitch: false)
+                        .frame(width: size.width, height: size.height)
+                        .clipShape(RoundedRectangle(cornerRadius: 32, style: .continuous))
+                    if layout.unfolded {   // the fold in the middle
+                        Rectangle().fill(LinearGradient(colors: [.clear, .white.opacity(0.06), .clear], startPoint: .leading, endPoint: .trailing))
+                            .frame(width: 14, height: size.height).allowsHitTesting(false)
+                    }
+                }
+                .frame(width: size.width + 24, height: size.height + 24)
+                .scaleEffect(scale)
+                .frame(width: (size.width + 24) * scale, height: (size.height + 24) * scale)
+                Text("Appen inuti är den riktiga: allt går att spela och ändra. Måtten är en uppskattning tills Apple visar telefonen.")
+                    .font(BFont.mono(9)).foregroundColor(D.mute)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .background(Color(hex: 0x0B0B0D).ignoresSafeArea())
+    }
+}
+
+private struct PreviewBtn: View {
+    let title: String
+    var on = false
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            Text(title).font(BFont.mono(10, 500)).foregroundColor(on ? D.dark : D.ink).padding(.horizontal, 14).frame(height: 32)
+                .background(Rectangle().fill(on ? D.y : Color.white.opacity(0.06)))
+        }.buttonStyle(PressScale())
+    }
 }
 
 private enum D {
@@ -75,6 +132,10 @@ private struct DuoTopBar: View {
             DuoBPM()
             if open { DuoTransport(size: 40) }
             if canSwitch {
+                Button { withAnimation(.easeInOut(duration: 0.3)) { LayoutStore.shared.preview = true } } label: {
+                    Text("iphone duo").font(BFont.mono(9.5, 500)).foregroundColor(D.dark).padding(.horizontal, 10).frame(height: 30)
+                        .background(Rectangle().fill(D.y))
+                }.buttonStyle(.plain)
                 Button { LayoutStore.shared.toggle() } label: {
                     Text("kort").font(BFont.mono(9.5, 500)).foregroundColor(D.ink).padding(.horizontal, 10).frame(height: 30)
                         .overlay(Rectangle().strokeBorder(D.line, lineWidth: 1))
