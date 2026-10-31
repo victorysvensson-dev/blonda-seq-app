@@ -2,7 +2,7 @@ import SwiftUI
 
 /// BLONDA GLITCH — master glitch: hold a pad to stutter / roll / reverse / tape-stop / half-speed / crush / gate,
 /// or let "slump" throw random glitches on the beat. The ASCII screen moves with the music and shows what plays.
-private let kGlitchNames = ["stutter", "roll", "rev", "stop", "½ fart", "crush", "gate"]
+private let kGlitchNames = ["stutter", "roll", "rev", "stop", "halv", "crush", "gate"]
 
 struct GlitchCard: View {
     @EnvironmentObject var model: EngineModel
