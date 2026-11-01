@@ -2,7 +2,7 @@ import SwiftUI
 
 /// The pads in full screen, played like an MPC Live: for a synth, 16 pads in a scale — where you press decides
 /// velocity (up = harder) and filter (left = darker, right = open), and moving the finger keeps shaping it.
-/// For drums, the ten sounds as big pads: up = harder, sideways = tone. Recording works as usual.
+/// For drums, a classic 4×4: kick bottom left, the ten sounds, then six glitch pads. Up = harder, sideways = tone. Recording works as usual.
 struct MPCPads: View {
     @EnvironmentObject var model: EngineModel
     @AppStorage("mpcScale") private var scaleIx = 0
@@ -75,21 +75,54 @@ private struct NoteGrid: View {
     }
 }
 
+/// The drums as a classic 4×4 (MPC order): pad 1 = kick bottom left, 1–10 the ten sounds, 11–16 glitch held down.
 private struct DrumGrid: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         VStack(spacing: 10) {
-            ForEach(0..<2, id: \.self) { r in
+            ForEach(0..<4, id: \.self) { r in
                 HStack(spacing: 10) {
-                    ForEach(0..<5, id: \.self) { c in
-                        let i = r * 5 + c
-                        MPCPad(track: i, note: i < 6 ? 60 : (i == 6 ? 45 : 57), label: kTracks[i].name.lowercased(), index: i + 1, xParam: kTrackParams[1], xMap: { x in x })
+                    ForEach(0..<4, id: \.self) { c in
+                        let k = (3 - r) * 4 + c   // 0 = bottom left
+                        if k < 10 {
+                            MPCPad(track: k, note: k < 6 ? 60 : (k == 6 ? 45 : 57), label: kTracks[k].name.lowercased(), index: k + 1, xParam: kTrackParams[1], xMap: { x in x })
+                        } else {
+                            GlitchPad(fx: k - 9, index: k + 1)
+                        }
                     }
                 }
             }
         }
-        .frame(maxWidth: 900)
+        .frame(maxWidth: 760)
         .frame(maxWidth: .infinity)
+    }
+}
+
+private let kMPCGlitch = ["stutter", "roll", "rev", "stop", "halv", "crush"]
+
+/// A pad that holds a glitch effect on the master while pressed.
+private struct GlitchPad: View {
+    @EnvironmentObject var model: EngineModel
+    let fx: Int
+    let index: Int
+    @State private var on = false
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 12, style: .continuous).fill(on ? T.yellow : Color.white.opacity(0.06))
+            RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(on ? 0.5 : 0.14), lineWidth: 1)
+            VStack(alignment: .leading) {
+                Text("\(index) · glitch").font(BFont.mono(9)).opacity(0.5)
+                Spacer()
+                Text(kMPCGlitch[fx - 1]).font(BFont.sans(15, 500))
+            }
+            .foregroundColor(on ? Color(hex: 0x111211) : T.fg)
+            .padding(10)
+        }
+        .contentShape(Rectangle())
+        .gesture(DragGesture(minimumDistance: 0)
+            .onChanged { _ in if !on { on = true; model.engine.glitchHold(fx) } }
+            .onEnded { _ in on = false; model.engine.glitchHold(0) })
+        .aspectRatio(1.25, contentMode: .fit)
     }
 }
 
