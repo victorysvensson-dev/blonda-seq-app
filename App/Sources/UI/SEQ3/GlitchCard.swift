@@ -216,7 +216,7 @@ private struct GxSlump: View {
     @State private var dragging = false
     var body: some View {
         let a = model.engine.glitchAmount, on = a > 0.005 || dragging
-        let ink: Color = (on && LookStore.shared.look != .glass) ? T.dmBg : Color(hex: 0xF4F3EE)
+        let ink: Color = (dragging && LookStore.shared.look != .glass) ? T.dmBg : Color(hex: 0xF4F3EE)
         GxFrame(fx: 8, on: dragging, level: 0.6 + 0.4 * Double(a)) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(alignment: .firstTextBaseline, spacing: 2) {
