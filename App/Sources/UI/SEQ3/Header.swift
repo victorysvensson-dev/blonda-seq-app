@@ -52,6 +52,8 @@ struct Dock: View {
     @State private var pull: CGFloat = 0
     var body: some View {
         VStack(spacing: 0) {
+            // web: the drawer opens above the dock row, which slides down to the bottom of the glass
+            if drawers.dock { DockDrawer().padding(.top, 12).transition(.opacity.combined(with: .move(edge: .top))) }
             HStack(spacing: 6) {
                 PatternSegment()
                 GButton(width: 38, action: { model.copyPattern() }) { SVGIcon(d: "M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5", size: 14).overlay(SVGIcon(d: "M7 5h4.5a2 2 0 0 1 2 2v4.5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z", size: 14)) }
@@ -72,8 +74,7 @@ struct Dock: View {
                 GButton(width: 90, action: { model.openProjects() }) { HStack(spacing: 6) { SVGIcon(d: "M2 4.5a1 1 0 0 1 1-1h3.2l1.5 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z", size: 14); Text("projekt") } }
                 GButton(width: 65, action: { model.openLibrary() }) { HStack(spacing: 6) { SVGIcon(d: "M3 2.5v11M6.5 2.5v11M10 3l3 10.2", size: 14); Text("lib") } }
             }
-            .padding(.top, 12)
-            if drawers.dock { DockDrawer().transition(.opacity.combined(with: .move(edge: .top))) }
+            .padding(.top, drawers.dock ? 6 : 12)
             // the tab: tap or pull down for project and song controls (web: .dock-h)
             RoundedRectangle(cornerRadius: 2).fill(.white.opacity(drawers.dock || pull > 0 ? 0.6 : 0.35)).frame(width: drawers.dock || pull > 0 ? 52 : 38, height: 4)
                 .frame(width: 160, height: 22).contentShape(Rectangle())

@@ -1,5 +1,6 @@
 import SwiftUI
 import Accelerate
+import UniformTypeIdentifiers
 
 /// Open/closed state of the two drawers: the yellow master deck (bottom tab) and the dock drawer (top tab).
 final class DrawerState: ObservableObject {
@@ -172,15 +173,22 @@ private struct DeckLeft: View {
             }
             DBox(title: "master · vågform", right: model.playing ? "spelar" : "stopp") {
                 Canvas { c, size in
-                    deckDots(c, size)
-                    let w = scope.wave, n = max(1, w.count)
-                    let dx = size.width / 240, mid = size.height / 2
-                    var p = Path()
-                    for (i, v) in w.enumerated() {
-                        let x = size.width - CGFloat(n - i) * dx, h = max(1, CGFloat(min(1, v)) * mid)
-                        p.addRect(CGRect(x: x, y: mid - h, width: max(1, dx - 1), height: 2 * h))
+                    // dot matrix like the web: the newest audio on the right, each column lit from the middle out
+                    let pitch: CGFloat = 6, cols = Int(size.width / pitch), rows = Int(size.height / pitch)
+                    let w = scope.wave, n = w.count, per = max(1, n / max(1, cols))
+                    var on = Path(), off = Path()
+                    for col in 0..<cols {
+                        var v: Float = 0
+                        let i1 = n - (cols - col - 1) * per
+                        if i1 > 0 { for i in max(0, i1 - per)..<min(n, i1) { v = max(v, w[i]) } }
+                        let half = CGFloat(min(1, v)) * CGFloat(rows) / 2
+                        for r in 0..<rows {
+                            let d = abs(CGFloat(r) + 0.5 - CGFloat(rows) / 2)
+                            let rc = CGRect(x: CGFloat(col) * pitch + pitch / 2 - 1.9, y: CGFloat(r) * pitch + pitch / 2 - 1.9, width: 3.8, height: 3.8)
+                            if d < max(0.5, half) && v > 0.004 { on.addEllipse(in: rc) } else { off.addRect(rc.insetBy(dx: 1.3, dy: 1.3)) }
+                        }
                     }
-                    c.fill(p, with: .color(T.ink))
+                    c.fill(off, with: .color(T.ink.opacity(0.16))); c.fill(on, with: .color(T.ink))
                 }
                 .frame(minHeight: 96, maxHeight: fill ? .infinity : 96)
             }
@@ -244,11 +252,19 @@ private struct DeckRight: View {
                 .frame(maxWidth: .infinity)
                 DBox(title: "spektrum", right: "40 hz – 16 khz") {
                     Canvas { c, size in
-                        deckDots(c, size)
-                        let n = scope.spec.count, bw = size.width / CGFloat(n)
-                        var path = Path()
-                        for i in 0..<n { let h = max(1, CGFloat(scope.spec[i]) * size.height); path.addRect(CGRect(x: CGFloat(i) * bw, y: size.height - h, width: max(1, bw - 1), height: h)) }
-                        c.fill(path, with: .color(T.ink))
+                        // dot columns, lit from the bottom (web)
+                        let pitch: CGFloat = 6, cols = Int(size.width / pitch), rows = Int(size.height / pitch), n = scope.spec.count
+                        var on = Path(), off = Path()
+                        for col in 0..<cols {
+                            let a = col * n / max(1, cols), b = max(a + 1, (col + 1) * n / max(1, cols))
+                            var v: Float = 0; for i in a..<min(n, b) { v = max(v, scope.spec[i]) }
+                            let lit = Int((CGFloat(v) * CGFloat(rows)).rounded())
+                            for r in 0..<rows {
+                                let rc = CGRect(x: CGFloat(col) * pitch + pitch / 2 - 1.9, y: size.height - CGFloat(r + 1) * pitch + pitch / 2 - 1.9, width: 3.8, height: 3.8)
+                                if r < lit { on.addEllipse(in: rc) } else { off.addRect(rc.insetBy(dx: 1.3, dy: 1.3)) }
+                            }
+                        }
+                        c.fill(off, with: .color(T.ink.opacity(0.16))); c.fill(on, with: .color(T.ink))
                     }
                     .frame(minHeight: 110, maxHeight: fill ? 170 : 110)
                 }
@@ -363,6 +379,9 @@ struct DockDrawer: View {
     @ObservedObject private var store = EngineModel.sharedProjects
     @State private var name = ""
     @State private var taps: [Double] = []
+    @State private var importing = false
+    @State private var exporting = false
+    @State private var thumbs: [String: [[Int]]] = [:]
     @FocusState private var nameFocus: Bool
     private static let fmt: DateFormatter = { let f = DateFormatter(); f.locale = Locale(identifier: "sv_SE"); f.dateFormat = "d MMM HH:mm"; return f }()
     private func when(_ t: Double) -> String { Self.fmt.string(from: Date(timeIntervalSince1970: t / 1000)).lowercased() }
@@ -378,23 +397,40 @@ struct DockDrawer: View {
             .padding(.horizontal, 12).frame(height: 40)
             .background(Capsule().fill(Color.white.opacity(0.08)))
             HStack(spacing: 6) {
-                DrawerBtn(title: "spara", on: true) { model.flushSave(); model.showToast("Sparat · \(store.currentMeta?.name ?? "")") }
-                DrawerBtn(title: "ny") { model.newProject(); load() }
-                DrawerBtn(title: "duplicera") { duplicate() }
-                DrawerBtn(title: "alla projekt") { DrawerState.shared.setDock(false); model.openProjects() }
+                DrawerBtn(title: "spara", icon: "M3 3h8l2 2v8H3zM5.5 3v3h4V3M5 13V9h6v4", light: true) { model.flushSave(); model.showToast("Sparat · \(store.currentMeta?.name ?? "")") }
+                DrawerBtn(title: "ny", icon: "M8 3v10M3 8h10") { model.newProject(); load() }
+                DrawerBtn(title: "duplicera", icon: "M5 5h8.5v8.5H5zM3 10.5V3.5A1 1 0 0 1 4 2.5h6.5") { duplicate() }
+                DrawerBtn(title: "exportera", icon: "M8 2v9M4.5 7.5 8 11l3.5-3.5M3 10v3.5h10V10") { model.flushSave(); exporting = true }
+                DrawerBtn(title: "importera", icon: "M8 11V2M4.5 5.5 8 2l3.5 3.5M3 10v3.5h10V10") { importing = true }
             }
+            DrawerBtn(title: "alla projekt", icon: "M2.5 3.5h11v9h-11zM2.5 6.5h11") { DrawerState.shared.setDock(false); model.openProjects() }
             DrawerLabel(text: "byt låt")
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
                     ForEach(store.items.sorted { $0.t > $1.t }) { p in
                         Button { if p.id != store.current { model.openProject(p.id); load() } else { model.showToast("Redan öppet") } } label: {
+                            let cur = p.id == store.current
                             VStack(alignment: .leading, spacing: 3) {
-                                Text(p.name).font(BFont.sans(13, p.id == store.current ? 500 : 300)).lineLimit(1)
+                                Text(p.name).font(BFont.sans(13, cur ? 500 : 300)).lineLimit(1)
                                 Text("\(when(p.t)) · \(p.bpm > 0 ? "\(Int(p.bpm.rounded()))" : "—") bpm").font(BFont.mono(8.5)).opacity(0.6).lineLimit(1)
+                                // the first pattern as a tiny dot grid, like the web drawer
+                                Canvas { c, size in
+                                    guard let rows = thumbs[p.id], !rows.isEmpty else { return }
+                                    let cw = size.width / 16, ch = size.height / CGFloat(rows.count)
+                                    var on = Path(), off = Path()
+                                    for (r, row) in rows.enumerated() { for (k, v) in row.prefix(16).enumerated() {
+                                        let d: CGFloat = v > 0 ? 2.4 : 1.2
+                                        let rc = CGRect(x: CGFloat(k) * cw + cw / 2 - d / 2, y: CGFloat(r) * ch + ch / 2 - d / 2, width: d, height: d)
+                                        if v > 0 { on.addRect(rc) } else { off.addRect(rc) }
+                                    } }
+                                    c.fill(off, with: .color(.white.opacity(0.12))); c.fill(on, with: .color(.white.opacity(0.9)))
+                                }
+                                .frame(height: 26).padding(.top, 4)
                             }
-                            .foregroundColor(p.id == store.current ? Color(hex: 0x17181A) : T.hfg)
-                            .padding(.horizontal, 12).frame(width: 150, height: 50, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(p.id == store.current ? T.yellow : Color.white.opacity(0.08)))
+                            .foregroundColor(T.hfg)
+                            .padding(.horizontal, 10).padding(.vertical, 9).frame(width: 136, alignment: .leading)
+                            .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.white.opacity(cur ? 0.1 : 0.06)))
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(cur ? T.yellow : Color.white.opacity(0.12), lineWidth: cur ? 2 : 1))
                         }
                         .buttonStyle(PressScale())
                     }
@@ -414,8 +450,13 @@ struct DockDrawer: View {
             }
         }
         .padding(.top, 10).padding(.bottom, 4)
-        .onAppear { load() }
+        .onAppear { load(); for p in store.items { if let j = store.json(p.id) { thumbs[p.id] = ProjectStore.thumb(j) } } }
         .onChange(of: store.current) { _, _ in load() }
+        .fileImporter(isPresented: $importing, allowedContentTypes: [.json]) { r in
+            if case .success(let u) = r { model.importProject(u); load() }
+        }
+        .fileExporter(isPresented: $exporting, document: ProjectFile(text: store.json(store.current) ?? ""), contentType: .json,
+                      defaultFilename: (store.currentMeta?.name ?? "projekt") + ".json") { _ in }
         .onChange(of: nameFocus) { _, f in model.textEditing = f; if !f { rename() } }
     }
     private func load() { name = store.currentMeta?.name ?? "" }
@@ -446,14 +487,19 @@ private struct DrawerBtn: View {
     let title: String
     var on = false
     var width: CGFloat? = nil
+    var icon: String? = nil
+    var light = false   // the white "spara" pill (web)
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(title).font(BFont.mono(10, 500)).tracking(0.3).lineLimit(1)
-                .foregroundColor(on ? Color(hex: 0x17181A) : T.hfg)
-                .frame(maxWidth: width == nil ? .infinity : nil).frame(width: width, height: 36)
-                .background(Capsule().fill(on ? T.yellow : Color.white.opacity(0.1)))
-                .overlay(Capsule().strokeBorder(.white.opacity(on ? 0 : 0.14), lineWidth: 1))
+            HStack(spacing: 7) {
+                if let icon { SVGIcon(d: icon, size: 13) }
+                Text(title).font(BFont.mono(10, 500)).tracking(0.3).lineLimit(1)
+            }
+            .foregroundColor(on || light ? Color(hex: 0x17181A) : T.hfg)
+            .padding(.horizontal, 14).frame(width: width, height: 36)
+            .background(Capsule().fill(light ? Color(hex: 0xF2F1EC) : (on ? T.yellow : Color.white.opacity(0.1))))
+            .overlay(Capsule().strokeBorder(.white.opacity(on || light ? 0 : 0.14), lineWidth: 1))
         }
         .buttonStyle(PressScale())
     }

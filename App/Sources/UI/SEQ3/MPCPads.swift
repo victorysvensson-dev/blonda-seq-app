@@ -166,9 +166,14 @@ private struct MPCPad: View {
         GeometryReader { g in
             let col = model.trackColor(track), on = touch != nil
             ZStack(alignment: .topLeading) {
-                RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(on ? col.opacity(0.35 + 0.65 * Double(vel)) : Color.white.opacity(0.06))
-                    .shadow(color: on ? col.opacity(0.8) : .clear, radius: 14)
+                // web: each pad carries its track's colour and lights up when the sequencer plays it
+                TimelineView(.animation(minimumInterval: 1.0 / 30, paused: on)) { tl in
+                    let flash = xParam.group == 0 && track < 10 ? max(0, 1 - (CACurrentMediaTime() - model.hitTime[track]) * 5) : 0
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(on ? col.opacity(0.35 + 0.65 * Double(vel)) : col.opacity(0.13 + 0.5 * flash))
+                        .shadow(color: on ? col.opacity(0.8) : col.opacity(0.5 * flash), radius: 14)
+                }
+                Circle().fill(col).frame(width: 7, height: 7).padding(10).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topTrailing).opacity(on ? 0 : 0.9)
                 RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.white.opacity(on ? 0.5 : 0.14), lineWidth: 1)
                 if let p = touch {
                     Circle().fill(Color.white).frame(width: 16, height: 16).shadow(color: .white, radius: 6).position(p)
