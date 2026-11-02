@@ -222,7 +222,8 @@ jobs:
           done
           # the same views as the web comparison: name|arguments
           for v in "deck|-deck" "dockopen|-dockopen" "studio|-look 1" "dots|-look 2" "midi|-midi" "mpc|-mpc" "mixfull|-mixfull" \
-                   "glitchfull|-glitchfull" "sed|-sed" "projects|-projects" "roll|-roll" "drumedit|-drumedit 0" "inspect|-inspect" "dotsdeck|-look 2 -deck"; do
+                   "glitchfull|-glitchfull" "sed|-sed" "projects|-projects" "roll|-roll" "drumedit|-drumedit 0" "inspect|-inspect" "dotsdeck|-look 2 -deck" \
+                   "master|-masterfull" "masterstudio|-masterfull -look 1" "masterdots|-masterfull -look 2" "analys|-anafull"; do
             n="${v%%|*}"; a="${v#*|}"
             "$APP/Contents/MacOS/BLONDA SEQ" -nointro -autoplay $a > /dev/null 2>&1 &
             sleep 7; screencapture -x "../mac-out/mac_$n.png" || true

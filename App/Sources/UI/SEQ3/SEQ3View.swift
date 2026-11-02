@@ -154,6 +154,8 @@ struct SEQ3View: View {
                 model.setParam(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0, 0.5)
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }
             if args.contains("-mpc") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.selectedTrack = 7; FullStore.shared.toggle("pads") } }   // CI
+            if args.contains("-masterfull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("master") } }   // CI
+            if args.contains("-anafull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("plugins") } }   // CI
             if args.contains("-mixfull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mixer") } }   // CI
             if args.contains("-midi") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { model.openMidi() } }
             if args.contains("-sed") || args.contains("-sedtrim") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: a made-up 2 s break on perc, chopped
