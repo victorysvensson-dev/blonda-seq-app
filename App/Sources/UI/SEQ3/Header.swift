@@ -17,12 +17,18 @@ struct SEQ3Header: View {
     }
 }
 
+/// The app's version, shown next to BLONDA (bump with every Mac/iPad release).
+let kAppVersion = "v25"
+
 struct Brand: View {
     @EnvironmentObject var model: EngineModel
     @ObservedObject private var store = EngineModel.sharedProjects
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text("BLONDA").font(BFont.pixel(16)).tracking(1.28).foregroundColor(T.hfg)
+            HStack(alignment: .firstTextBaseline, spacing: 7) {
+                Text("BLONDA").font(BFont.pixel(16)).tracking(1.28).foregroundColor(T.hfg)
+                Text(kAppVersion).font(BFont.mono(9)).tracking(0.5).foregroundColor(T.hmute)
+            }
             HStack(spacing: 0) {
                 Text("seq.3 · ").foregroundColor(T.hmute)
                 Text((store.currentMeta?.name ?? "projekt").lowercased()).foregroundColor(T.hfg)
