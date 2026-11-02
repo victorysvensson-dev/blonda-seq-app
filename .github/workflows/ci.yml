@@ -210,9 +210,12 @@ jobs:
           sleep 10
           screencapture -x ../mac-out/mac.png || true
           pkill -f "BLONDA SEQ" || true; sleep 2
-          for v in deck dockopen; do
-            "$APP/Contents/MacOS/BLONDA SEQ" -nointro -autoplay -$v > /dev/null 2>&1 &
-            sleep 7; screencapture -x ../mac-out/mac_$v.png || true
+          # the same views as the web comparison: name|arguments
+          for v in "deck|-deck" "dockopen|-dockopen" "studio|-look 1" "dots|-look 2" "midi|-midi" "mpc|-mpc" "mixfull|-mixfull" \
+                   "glitchfull|-glitchfull" "sed|-sed" "projects|-projects" "roll|-roll" "drumedit|-drumedit 0" "inspect|-inspect" "dotsdeck|-look 2 -deck"; do
+            n="${v%%|*}"; a="${v#*|}"
+            "$APP/Contents/MacOS/BLONDA SEQ" -nointro -autoplay $a > /dev/null 2>&1 &
+            sleep 7; screencapture -x "../mac-out/mac_$n.png" || true
             pkill -f "BLONDA SEQ" || true; sleep 2
           done
           "$APP/Contents/MacOS/BLONDA SEQ" -autoplay > /dev/null 2>&1 &

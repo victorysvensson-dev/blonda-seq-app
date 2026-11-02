@@ -12,8 +12,6 @@ struct SEQ3View: View {
     @State private var entered = true
     @State private var showKeys = false
     @FocusState private var keysFocused: Bool
-    @State private var octave = 4
-    @State private var held: [Character: Int] = [:]
 
     var body: some View {
         ZStack(alignment: .bottom) {
@@ -138,13 +136,7 @@ struct SEQ3View: View {
         .focusEffectDisabled()
         .focused($keysFocused)
         .onAppear { keysFocused = true }
-        .onChange(of: model.textEditing) { _, e in if !e { keysFocused = true } }
-        .onChange(of: model.libOpen) { _, o in if !o { keysFocused = true } }
-        .onChange(of: model.projOpen) { _, o in if !o { keysFocused = true } }
-        .onChange(of: model.midiOpen) { _, o in if !o { keysFocused = true } }
-        .onChange(of: model.sampleEdit) { _, o in if o == nil { keysFocused = true } }
-        .onChange(of: model.drumEdit) { _, o in if o == nil { keysFocused = true } }
-        .onChange(of: model.rollTrack) { _, o in if o == nil { keysFocused = true } }
+        .modifier(KeyRefocus(focused: $keysFocused))
         .onKeyPress(phases: [.down, .up]) { press in handleKey(press) }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: showKeys)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: model.toast)
@@ -358,4 +350,14 @@ struct ScrollTuner: UIViewRepresentable {
 struct ClipIf: ViewModifier {
     let on: Bool
     func body(content: Content) -> some View { if on { content.clipped() } else { content } }
+}
+
+/// Gives the key catcher its focus back when a text field or an overlay lets go of the keyboard.
+private struct KeyRefocus: ViewModifier {
+    @EnvironmentObject var model: EngineModel
+    var focused: FocusState<Bool>.Binding
+    private var busy: Bool { model.textEditing || model.libOpen || model.projOpen || model.midiOpen || model.sampleEdit != nil || model.drumEdit != nil || model.rollTrack != nil }
+    func body(content: Content) -> some View {
+        content.onChange(of: busy) { _, b in if !b { focused.wrappedValue = true } }
+    }
 }
