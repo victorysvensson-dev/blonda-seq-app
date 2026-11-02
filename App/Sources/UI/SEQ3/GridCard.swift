@@ -11,7 +11,10 @@ struct GridCard: View {
                 Color.clear.frame(maxWidth: .infinity).frame(height: 1)
                     .onGeometryChange(for: CGFloat.self, of: { $0.size.width }) { w in if abs(w - width) > 0.5 { width = w } }
                 StepRule(cell: cell)
-                ForEach(0..<10, id: \.self) { i in GridRow(track: i, cell: cell) }
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(0..<10, id: \.self) { i in GridRow(track: i, cell: cell) }
+                }
+                .modifier(FlatIf(on: Perf.flatGrid))   // 160 glowing cells drawn in one GPU pass instead of 160 CPU canvases
                 GridActions().padding(.top, 8)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -286,4 +289,10 @@ struct InspectorPopover: ViewModifier {
             }
         } else { content }
     }
+}
+
+/// .drawingGroup() when on: the subtree is rendered offscreen by Metal in one pass.
+struct FlatIf: ViewModifier {
+    let on: Bool
+    func body(content: Content) -> some View { if on { content.drawingGroup() } else { content } }
 }

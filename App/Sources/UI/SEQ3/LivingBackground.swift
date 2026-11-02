@@ -44,10 +44,15 @@ struct LivingBackground: View {
 
     var body: some View {
         GeometryReader { geo in
+            let full = geo.size, k = Perf.fieldScale
             TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
                 let t = tl.date.timeIntervalSince(Field.start)
-                Canvas { ctx, size in
-                    ScreenSize.current = size
+                // The field is nothing but soft gradients, so it is drawn at a tenth of the size and scaled up:
+                // the same picture for a fraction of the work (it was the main reason the Mac app felt slow).
+                Canvas { ctx, small in
+                    ScreenSize.current = full
+                    let size = full
+                    ctx.scaleBy(x: small.width / max(1, full.width), y: small.height / max(1, full.height))
                     let state = BlobState.shared, P = palette ?? Palette.current
                     // ease blob colours toward their targets (web: += (target-col)*.04 per ~32 ms frame)
                     let dt = state.last == 0 ? 1.0 / 30.0 : max(0, min(0.25, t - state.last)); state.last = t
@@ -61,6 +66,9 @@ struct LivingBackground: View {
                     var c = ctx
                     Field.draw(&c, size: size, origin: .zero, screen: size, t: t, energy: model.energy, palette: P)
                 }
+                .frame(width: max(1, (full.width / k).rounded(.up)), height: max(1, (full.height / k).rounded(.up)))
+                .scaleEffect(k, anchor: .topLeading)
+                .frame(width: full.width, height: full.height, alignment: .topLeading)
             }
             .onAppear { ScreenSize.current = geo.size }
         }

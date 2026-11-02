@@ -39,14 +39,20 @@ struct Backdrop: View {
     }
     private var glass: some View {
         GeometryReader { geo in
-            let f = geo.frame(in: .global)
+            let f = geo.frame(in: .global), full = geo.size, k = Perf.fieldScale
             TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { tl in
-                Canvas { ctx, size in
+                Canvas { ctx, small in   // drawn small and scaled up, like the background (it is only soft gradients)
                     var c = ctx
+                    c.scaleBy(x: small.width / max(1, full.width), y: small.height / max(1, full.height))
+                    let size = full
                     Field.draw(&c, size: size, origin: f.origin, screen: ScreenSize.current, t: tl.date.timeIntervalSince(Field.start), energy: model.energy)
                     // light world (web body.bg-light --glass): the glass gets a dark tint so the cards stay dark
                     if Palette.current.light { c.fill(Path(CGRect(origin: .zero, size: size)), with: .color(Color(rgb: 17, 18, 17, 0.56))) }
                 }
+                .frame(width: max(1, (full.width / k).rounded(.up)), height: max(1, (full.height / k).rounded(.up)))
+                .scaleEffect(k, anchor: .topLeading)
+                .frame(width: full.width, height: full.height, alignment: .topLeading)
+                .clipped()
             }
             .saturation(saturation)
         }
@@ -54,6 +60,12 @@ struct Backdrop: View {
 }
 
 enum ScreenSize { static var current = CGSize(width: 1366, height: 1024) }
+
+/// Drawing settings that keep the app light. -slowbg draws the field at full size (to measure the difference in CI).
+enum Perf {
+    static let fieldScale: CGFloat = ProcessInfo.processInfo.arguments.contains("-slowbg") ? 1 : 10
+    static let flatGrid = !ProcessInfo.processInfo.arguments.contains("-slowbg")
+}
 
 // MARK: - Card styles
 
