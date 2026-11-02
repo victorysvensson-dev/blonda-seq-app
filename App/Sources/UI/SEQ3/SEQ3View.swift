@@ -153,6 +153,15 @@ struct SEQ3View: View {
                 model.setParam(kMasterParams.first { $0.group == 2 && $0.field == 5 }!, 0, 0.5)
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }
             if args.contains("-mpc") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.selectedTrack = 7; FullStore.shared.toggle("pads") } }   // CI
+            if args.contains("-mixfull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mixer") } }   // CI
+            if args.contains("-sed") || args.contains("-sedtrim") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: a made-up 2 s break on perc, chopped
+                let sr = 48000, n = sr * 2; var l = [Float](repeating: 0, count: n)
+                for h in 0..<8 { let i0 = h * sr / 4, f: Float = h % 2 == 0 ? 70 : 220; for k in 0..<(sr / 5) where i0 + k < n { let t = Float(k) / Float(sr); l[i0 + k] += exp(-t * (h % 2 == 0 ? 9 : 18)) * (h % 2 == 0 ? sin(2 * .pi * f * t) : Float.random(in: -0.7...0.7)) } }
+                l.withUnsafeBufferPointer { b in model.engine.addSample("ci-break", left: Data(buffer: b), right: Data(buffer: b), frames: n) }
+                model.engine.assignDrum(5, sample: "ci-break"); model.engine.bindDrum(5, norm: 1)
+                if args.contains("-sed") { model.setChop(5, model.chopAuto(5, 0)) } else { model.setEdit(5, ["st": 0.12, "en": 0.7, "fi": 20, "fo": 80]) }
+                model.openSampleEditor(5)
+            } }
             if args.contains("-deck") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { DrawerState.shared.setDeck(true) } }   // CI
             if args.contains("-dockopen") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { DrawerState.shared.setDock(true) } }   // CI
             if args.contains("-full") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mönster") } }   // CI screenshot
