@@ -217,6 +217,7 @@ jobs:
             pid=$!; sleep 6; tot=0
             for i in 1 2 3 4 5 6 7 8; do c=$(ps -o %cpu= -p $pid | tr -d ' '); tot=$(echo "$tot + ${c:-0}" | bc); sleep 1; done
             echo "cpu $n: $(echo "scale=1; $tot / 8" | bc) %" | tee -a ../mac-out/cpu.txt
+            sample $pid 5 -file "../mac-out/sample_$n.txt" > /dev/null 2>&1 || true
             kill $pid || true; sleep 2
           done
           # the same views as the web comparison: name|arguments
