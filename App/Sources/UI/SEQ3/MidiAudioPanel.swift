@@ -8,12 +8,13 @@ import AVKit
 /// out, and the audio buffer / output. Everything is remembered between launches.
 struct MidiAudioPanel: View {
     @EnvironmentObject var model: EngineModel
+    @State private var contentH: CGFloat = 600
     var body: some View {
         ZStack {
             Rectangle().fill(Color(rgb: 6, 7, 9, 0.55)).ignoresSafeArea().onTapGesture { model.closeMidi() }
-            ScrollView { MidiPanelBody().padding(18) }
+            ScrollView { MidiPanelBody().padding(18).onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentH = $0 } }
                 .frame(maxWidth: 560)
-                .fixedSize(horizontal: false, vertical: true)
+                .frame(height: min(contentH, max(240, ScreenSize.current.height - 48)))   // hugs its content, scrolls in a short window
                 .background(RoundedRectangle(cornerRadius: 28, style: .continuous).fill(Color(rgb: 24, 24, 27, 0.97))
                     .overlay(RoundedRectangle(cornerRadius: 28, style: .continuous).strokeBorder(Color.white.opacity(0.1))))
                 .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))

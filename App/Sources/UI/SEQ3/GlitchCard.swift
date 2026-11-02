@@ -23,12 +23,18 @@ private let kGxCol: [(UInt32, UInt32)] = [(0xF2F2EE, 0xB8C2CC), (0xFF7A1E, 0xF2A
 struct GlitchModules: View {
     @EnvironmentObject var model: EngineModel
     @State private var width: CGFloat = 600
+    @ObservedObject private var full = FullStore.shared
     var body: some View {
-        let cols = width >= 900 ? 8 : (width < 400 ? 2 : 4)
-        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: cols), spacing: 10) {
+        // full screen (web): 4 × 2 big modules that fill the window, sized so both rows fit its height
+        let isFull = full.key == "glitch"
+        let cols = isFull ? (width < 400 ? 2 : 4) : (width >= 900 ? 8 : (width < 400 ? 2 : 4))
+        let maxW: CGFloat = isFull ? max(320, ((ScreenSize.current.height - 190) / 2 / 1.05) * 4 + 30) : .infinity
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: isFull ? 14 : 10), count: cols), spacing: isFull ? 14 : 10) {
             ForEach(1...7, id: \.self) { fx in GxModule(fx: fx) }
             GxSlump()
         }
+        .frame(maxWidth: maxW)
+        .frame(maxWidth: .infinity)
         .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
     }
 }

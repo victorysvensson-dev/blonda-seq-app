@@ -190,7 +190,7 @@ private struct DeckLeft: View {
                     }
                     c.fill(off, with: .color(T.ink.opacity(0.16))); c.fill(on, with: .color(T.ink))
                 }
-                .frame(minHeight: 96, maxHeight: fill ? .infinity : 96)
+                .frame(minHeight: 70, maxHeight: fill ? .infinity : 96)
             }
             DBox(title: "spår · mönster \(["A", "B", "C", "D"][model.pattern].lowercased())", right: "10 × 16") {
                 Canvas { c, size in
@@ -211,7 +211,7 @@ private struct DeckLeft: View {
                         }
                     }
                 }
-                .frame(minHeight: 150, maxHeight: fill ? .infinity : 150)
+                .frame(minHeight: 110, maxHeight: fill ? .infinity : 150)
             }
         }
     }
@@ -247,9 +247,9 @@ private struct DeckRight: View {
                         }
                         c.fill(path, with: .color(T.ink.opacity(0.75)))
                     }
-                    .frame(minHeight: 110, maxHeight: fill ? 170 : 110)
+                    .frame(minHeight: 80, maxHeight: fill ? 170 : 110)
                 }
-                .frame(maxWidth: .infinity)
+                .frame(minWidth: 110, maxWidth: .infinity)
                 DBox(title: "spektrum", right: "40 hz – 16 khz") {
                     Canvas { c, size in
                         // dot columns, lit from the bottom (web)
@@ -266,10 +266,9 @@ private struct DeckRight: View {
                         }
                         c.fill(off, with: .color(T.ink.opacity(0.16))); c.fill(on, with: .color(T.ink))
                     }
-                    .frame(minHeight: 110, maxHeight: fill ? 170 : 110)
+                    .frame(minHeight: 80, maxHeight: fill ? 170 : 110)
                 }
-                .frame(maxWidth: .infinity)
-                .layoutPriority(1.4)
+                .frame(minWidth: 150, maxWidth: .infinity)
             }
             DeckStats(items: [("peak db", String(format: "%.1f", max(-60, scope.peakDb))), ("rms db", String(format: "%.1f", max(-60, scope.rmsDb))),
                               ("bpm", "\(Int(model.bpm.rounded()))"), ("mönster", ["A", "B", "C", "D"][model.pattern])])
@@ -288,7 +287,7 @@ private struct DeckRight: View {
                         c.fill(d, with: .color(T.ink.opacity(0.25)))
                     }
                 }
-                .frame(minHeight: 64, maxHeight: fill ? 120 : 64)
+                .frame(minHeight: 40, maxHeight: fill ? 120 : 64)
                 HStack(spacing: 0) {
                     ForEach(0..<10, id: \.self) { tr in
                         Text(model.trackShort(tr, max: 6, chopMark: false).lowercased()).font(BFont.mono(8.5, 500)).foregroundColor(T.ink.opacity(0.8)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity)
@@ -307,7 +306,7 @@ private struct DeckRight: View {
                     c.stroke(path, with: .color(T.ink), lineWidth: 1.5)
                 }
                 .background(Canvas { c, size in deckDots(c, size) })
-                .frame(minHeight: 54, maxHeight: fill ? 90 : 54)
+                .frame(minHeight: 30, maxHeight: fill ? 90 : 54)
             }
             DBox(title: "låt", right: model.songMode ? "på" : "av") {
                 HStack(spacing: 5) {

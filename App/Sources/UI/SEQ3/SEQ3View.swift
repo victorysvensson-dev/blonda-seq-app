@@ -106,9 +106,8 @@ struct SEQ3View: View {
             }
             if drawers.deck {
                 Color.black.opacity(0.45).ignoresSafeArea().onTapGesture { drawers.setDeck(false) }.transition(.opacity).zIndex(2.4)
-                MasterDeck()
+                MasterDeck()   // already yellow and black in every look (web: the deck is not run through the dots filter)
                     .padding(.horizontal, 14).padding(.top, 60)
-                    .modifier(DotsFilter())
                     .transition(.move(edge: .bottom))
                     .zIndex(2.5)
             }

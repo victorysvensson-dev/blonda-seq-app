@@ -29,8 +29,8 @@ private struct GridWidthKey: PreferenceKey {
     static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { let v = nextValue(); if v > 0 { value = v } }
 }
 
-private let kLabelW: CGFloat = 104
-private let kGap: CGFloat = 5.4
+private let kLabelW: CGFloat = 88   // web .seqlite: a tight label column and 2–3 pt between the steps, so the steps get the room
+private let kGap: CGFloat = 3
 
 struct StepRule: View {
     @EnvironmentObject var model: EngineModel
@@ -69,7 +69,7 @@ struct GridRow: View {
                             }
                         }
                     }
-                    .frame(width: 22).padding(.trailing, 15)
+                    .frame(width: 22).padding(.trailing, 10)
                     Text(model.trackShort(track, max: 8, chopMark: false)).font(BFont.mono(10)).tracking(0.6)
                         .foregroundColor(sel ? T.dmY : T.dmInk.opacity(0.55))
                         .strikethrough(muted)
@@ -194,7 +194,7 @@ struct PatternSwitch: View {
                 .buttonStyle(PressScale())
             }
             Button { model.copyPattern() } label: {
-                Text("kopiera → \(["A", "B", "C", "D"][(model.pattern + 1) % 4])").font(BFont.mono(9.5, 500)).foregroundColor(T.dmInk.opacity(0.85))
+                Text("kopiera → \(["A", "B", "C", "D"][(model.pattern + 1) % 4])").font(BFont.mono(9.5, 500)).foregroundColor(T.dmInk.opacity(0.85)).lineLimit(1).fixedSize()
                     .padding(.horizontal, 8).frame(height: 24)
                     .overlay(Rectangle().strokeBorder(T.dmLine, lineWidth: 1))
             }

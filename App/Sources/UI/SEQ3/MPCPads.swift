@@ -75,7 +75,7 @@ private struct NoteGrid: View {
             }
         }
         .aspectRatio(1, contentMode: .fit)
-        .frame(maxWidth: 760)
+        .frame(maxWidth: min(760, max(320, ScreenSize.current.height - 300)))   // all 16 pads fit the window
         .frame(maxWidth: .infinity)
     }
 }
@@ -99,7 +99,7 @@ private struct DrumGrid: View {
                 }
             }
         }
-        .frame(maxWidth: 760)
+        .frame(maxWidth: min(760, max(360, (ScreenSize.current.height - 300) * 1.25)))   // all 16 pads fit the window
         .frame(maxWidth: .infinity)
     }
 }
