@@ -223,6 +223,29 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 - (void)setMotorParam:(NSInteger)p track:(NSInteger)t value:(double)v { if (t >= 6 && t <= 9) _host->setMotorParam((int)t - 6, (int)p, v); }
 - (float)motorMeter:(NSInteger)t { return (t >= 6 && t <= 9) ? _host->motorMeter((int)t - 6) : 0; }
 - (void)glitchHold:(NSInteger)fx { _host->glitchHold((int)fx); }
+- (void)glitchHoldSource:(NSInteger)src mods:(NSInteger)mods { _host->glitchHoldSet((int)src, (int)mods); }
+- (NSInteger)glitchActiveMask { return _host->glitchActiveMask(); }
+- (NSDictionary<NSString *, NSNumber *> *)sampleEdit:(NSInteger)t {
+    const blonda::SampleEdit e = _host->sampleEdit((int)t);
+    return @{@"st": @(e.st), @"en": @(e.en), @"fi": @(e.fi), @"fo": @(e.fo), @"g": @(e.g), @"rev": @(e.rev)};
+}
+- (void)setSampleEdit:(NSDictionary<NSString *, NSNumber *> *)d track:(NSInteger)t {
+    blonda::SampleEdit e = _host->sampleEdit((int)t);
+    if (d[@"st"]) e.st = d[@"st"].floatValue; if (d[@"en"]) e.en = d[@"en"].floatValue; if (d[@"fi"]) e.fi = d[@"fi"].floatValue;
+    if (d[@"fo"]) e.fo = d[@"fo"].floatValue; if (d[@"g"]) e.g = d[@"g"].floatValue; if (d[@"rev"]) e.rev = d[@"rev"].intValue;
+    _host->setSampleEdit((int)t, e);
+}
+- (void)resetSampleEdit:(NSInteger)t { _host->resetSampleEdit((int)t); }
+- (NSArray<NSNumber *> *)chopCuts:(NSInteger)t { NSMutableArray *a = [NSMutableArray array]; for (float f : _host->chopCuts((int)t)) [a addObject:@(f)]; return a; }
+- (void)setChopCuts:(NSArray<NSNumber *> *)cuts track:(NSInteger)t { std::vector<float> v; for (NSNumber *n in cuts) v.push_back(n.floatValue); _host->setChop((int)t, v); }
+- (NSArray<NSNumber *> *)chopAuto:(NSString *)sid mode:(NSInteger)mode { NSMutableArray *a = [NSMutableArray array]; for (float f : _host->chopAuto(sid.UTF8String, (int)mode)) [a addObject:@(f)]; return a; }
+- (void)chopToPattern:(NSInteger)t bars:(NSInteger)bars { _host->chopToPattern((int)t, (int)bars); }
+- (NSInteger)stepSlice:(NSInteger)t step:(NSInteger)s { return _host->stepSlice((int)t, (int)s); }
+- (void)setStepSlice:(NSInteger)c track:(NSInteger)t step:(NSInteger)s { _host->setStepSlice((int)t, (int)s, (int)c); }
+- (double)sampleSeconds:(NSString *)sid { return _host->sampleSeconds(sid.UTF8String); }
+- (NSInteger)samplePeaks:(NSString *)sid from:(double)t0 to:(double)t1 columns:(NSInteger)cols min:(float *)mn max:(float *)mx { return _host->samplePeaks(sid.UTF8String, t0, t1, (int)cols, mn, mx); }
+- (NSArray<NSNumber *> *)sampleOnsets:(NSString *)sid { NSMutableArray *a = [NSMutableArray array]; for (double t : _host->onsets(sid.UTF8String)) [a addObject:@(t)]; return a; }
+- (double)sampleZeroCross:(NSString *)sid at:(double)t { return _host->zeroCross(sid.UTF8String, t); }
 - (float)glitchAmount { return _host->glitchAmt(); }
 - (void)setGlitchAmount:(float)a { _host->setGlitchAmt(a); }
 - (NSInteger)glitchMask { return _host->glitchMask(); }

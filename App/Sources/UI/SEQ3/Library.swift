@@ -270,6 +270,7 @@ struct LibTile: View {
                         }
                     }
                 }
+                chip("✂ chop", on: false) { model.chopSample(m) }
                 Button {
                     if confirm { model.deleteSample(m) } else {
                         confirm = true

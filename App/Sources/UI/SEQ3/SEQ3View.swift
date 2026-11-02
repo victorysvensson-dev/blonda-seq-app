@@ -100,6 +100,9 @@ struct SEQ3View: View {
             if let t = model.drumEdit {
                 DrumEditor(track: t).modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.96))).zIndex(3.5)
             }
+            if let t = model.sampleEdit {
+                SampleEditor(track: t).modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.97))).zIndex(3.6)
+            }
             if let t = model.rollTrack {
                 PianoRoll(track: t).modifier(DotsFilter()).transition(.move(edge: .bottom)).zIndex(4)
             }
@@ -183,6 +186,7 @@ struct SEQ3View: View {
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         if model.rollTrack != nil || model.libOpen || model.projOpen || model.textEditing { return .ignored }
+        if model.sampleEdit != nil, press.key == .escape { model.closeSampleEditor(); return .handled }
         if model.drumEdit != nil, press.key == .escape { model.closeDrumEditor(); return .handled }
         guard let ch = press.characters.lowercased().first else { return .ignored }
         if press.modifiers.contains(.command) {

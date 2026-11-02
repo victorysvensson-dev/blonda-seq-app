@@ -94,6 +94,11 @@ struct DedKits: View {
             Button { model.closeDrumEditor(); model.openLibrary("hit", target: .drum(track)) } label: {
                 DedTile(title: smp == nil ? "+ sample" : "byt sample", tag: smp?.name ?? "från biblioteket", on: smp != nil, dashed: smp == nil, tc: tc)
             }.buttonStyle(.plain)
+            if smp != nil {
+                Button { model.openSampleEditor(track) } label: {
+                    DedTile(title: "✂ editor", tag: "klipp, fade, chop", on: false, dashed: true, tc: tc)
+                }.buttonStyle(.plain)
+            }
         }
     }
 }

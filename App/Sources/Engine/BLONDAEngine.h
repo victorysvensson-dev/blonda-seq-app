@@ -145,6 +145,28 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (float)motorMeter:(NSInteger)track NS_SWIFT_NAME(motorMeter(_:));
 /// BLONDA GLITCH: hold an effect (1 stutter … 7 gate, 0 let go), auto chance 0…1, which effects auto may use (bits).
 - (void)glitchHold:(NSInteger)fx NS_SWIFT_NAME(glitchHold(_:));
+/// Several glitch pads held at once: src 1–5 (stutter … halv, 0 none) plays, mods bit 6 crush / bit 7 gate on top.
+- (void)glitchHoldSource:(NSInteger)src mods:(NSInteger)mods NS_SWIFT_NAME(glitchHold(source:mods:));
+/// Which glitch effects sound right now (bit fx).
+@property (nonatomic, readonly) NSInteger glitchActiveMask;
+/// Sample editor on drum track 0–5 (web: S.se): start/end 0…1, fades in ms, gain dB, reverse.
+- (NSDictionary<NSString *, NSNumber *> *)sampleEdit:(NSInteger)track NS_SWIFT_NAME(sampleEdit(_:));
+- (void)setSampleEdit:(NSDictionary<NSString *, NSNumber *> *)e track:(NSInteger)track NS_SWIFT_NAME(setSampleEdit(_:track:));
+- (void)resetSampleEdit:(NSInteger)track NS_SWIFT_NAME(resetSampleEdit(_:));
+/// Chop (web: S.chop): slice starts 0…1 on drum track 0–5; empty = not chopped.
+- (NSArray<NSNumber *> *)chopCuts:(NSInteger)track NS_SWIFT_NAME(chopCuts(_:));
+- (void)setChopCuts:(NSArray<NSNumber *> *)cuts track:(NSInteger)track NS_SWIFT_NAME(setChopCuts(_:track:));
+/// Cuts for a sample: mode 0 = one per hit, otherwise that many equal parts.
+- (NSArray<NSNumber *> *)chopAuto:(NSString *)sid mode:(NSInteger)mode NS_SWIFT_NAME(chopAuto(_:mode:));
+- (void)chopToPattern:(NSInteger)track bars:(NSInteger)bars NS_SWIFT_NAME(chopToPattern(_:bars:));
+/// Which slice a drum step plays (-1 = its own step number).
+- (NSInteger)stepSlice:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(stepSlice(_:step:));
+- (void)setStepSlice:(NSInteger)c track:(NSInteger)track step:(NSInteger)s NS_SWIFT_NAME(setStepSlice(_:track:step:));
+/// Sample data for drawing: length in seconds, min/max per column, hits (seconds), nearest zero crossing.
+- (double)sampleSeconds:(NSString *)sid NS_SWIFT_NAME(sampleSeconds(_:));
+- (NSInteger)samplePeaks:(NSString *)sid from:(double)t0 to:(double)t1 columns:(NSInteger)cols min:(float *)mn max:(float *)mx NS_SWIFT_NAME(samplePeaks(_:from:to:columns:min:max:));
+- (NSArray<NSNumber *> *)sampleOnsets:(NSString *)sid NS_SWIFT_NAME(sampleOnsets(_:));
+- (double)sampleZeroCross:(NSString *)sid at:(double)t NS_SWIFT_NAME(sampleZeroCross(_:at:));
 @property (nonatomic) float glitchAmount;
 @property (nonatomic) NSInteger glitchMask;
 @property (nonatomic, readonly) NSInteger glitchActive;

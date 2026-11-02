@@ -48,6 +48,19 @@ struct StepInspector: View {
             seg([("1×", 1), ("2×", 2), ("3×", 3), ("4×", 4)].map { ($0.0, Double($0.1)) }, Double(r)) { model.setStepRatchet(ref, Int($0)) }
             row("chans att spelas", nil)
             seg([("100%", 1), ("75%", 0.75), ("50%", 0.5), ("25%", 0.25)], Double(p)) { model.setStepProb(ref, Float($0)) }
+            if ref.track < 6 && !model.chop(ref.track).isEmpty {
+                let cuts = model.chop(ref.track), cur = model.stepSlice(ref)
+                row("chop · vilken del", cur >= 0 ? "del \(cur + 1)" : "auto · \(ref.step % cuts.count + 1)")
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 6), spacing: 4) {
+                    ForEach(-1..<cuts.count, id: \.self) { k in
+                        Button { model.setStepSlice(ref, k); model.chopHit(ref.track, k < 0 ? ref.step % cuts.count : k) } label: {
+                            Text(k < 0 ? "auto" : "\(k + 1)").font(BFont.mono(10)).foregroundColor(cur == k ? .black : kInk)
+                                .frame(maxWidth: .infinity).frame(height: 28)
+                                .background(RoundedRectangle(cornerRadius: 8).fill(cur == k ? tc : kInk.opacity(0.07)))
+                        }.buttonStyle(.plain)
+                    }
+                }
+            }
             row("timing · tidigt ← → sent", nudgeText(model.stepNudge(ref)))
             NudgeBar(ref: ref, tint: tc)
             HStack(spacing: 6) {

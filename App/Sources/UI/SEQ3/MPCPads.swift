@@ -85,7 +85,7 @@ private struct DrumGrid: View {
                     ForEach(0..<4, id: \.self) { c in
                         let k = (3 - r) * 4 + c   // 0 = bottom left
                         if k < 10 {
-                            MPCPad(track: k, note: k < 6 ? 60 : (k == 6 ? 45 : 57), label: kTracks[k].name.lowercased(), index: k + 1, xParam: kTrackParams[1], xMap: { x in x })
+                            MPCPad(track: k, note: k < 6 ? 60 : (k == 6 ? 45 : 57), label: model.trackShort(k), index: k + 1, xParam: kTrackParams[1], xMap: { x in x })
                         } else {
                             GlitchPad(fx: k - 9, index: k + 1)
                         }
@@ -120,8 +120,8 @@ private struct GlitchPad: View {
         }
         .contentShape(Rectangle())
         .gesture(DragGesture(minimumDistance: 0)
-            .onChanged { _ in if !on { on = true; model.engine.glitchHold(fx) } }
-            .onEnded { _ in on = false; model.engine.glitchHold(0) })
+            .onChanged { _ in if !on { on = true; model.glitchPress(fx, true) } }
+            .onEnded { _ in on = false; model.glitchPress(fx, false) })
         .aspectRatio(1.25, contentMode: .fit)
     }
 }

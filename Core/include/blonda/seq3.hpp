@@ -20,7 +20,7 @@ namespace blonda {
 constexpr int kTracks = 10, kSteps = 16, kPatterns = 4;
 enum TrackId { T_KICK, T_SNARE, T_CLAP, T_HAT, T_OHAT, T_PERC, T_BASS, T_KEYS, T_LEAD, T_PAD };
 
-struct Cell { int v = 0, n = 0, r = 1; float p = 1.f, vel = -1.f, o = 0.f; };   // o: nudge, share of a step (-0.5 early … +0.5 late)
+struct Cell { int v = 0, n = 0, r = 1; float p = 1.f, vel = -1.f, o = 0.f; int c = -1; };   // o: nudge, share of a step (-0.5 early … +0.5 late); c: chop slice (-1 = the step's own number)
 struct RollNote { float s = 0, l = 1; int n = 60; float v = .72f; int id = -1, g = -1; };
 struct TrackParams { float level = .5f, tune = 0, decay = .4f, tone = .5f, pan = 0, echo = 0, space = 0; };
 struct TrackFX { float drive = 0, filt = 0, reso = 0, crush = 0, comp = 0, pump = 0; };
@@ -34,6 +34,9 @@ enum ParamGroup { PG_TRACK, PG_TFX, PG_MASTER };
 // BLONDA motor state per melodic track: chosen factory sound + every parameter (in the motor's own units)
 struct MotorState { int preset = 1; std::array<double, bris::kNumParams> vals{}; bool set = false; };
 
+// sample editor per drum track (web: S.se[id]; fi/fo in ms, g in dB) and chop (web: S.chop[id]); both belong to the sample `sid`
+struct SampleEdit { float st = 0, en = 1, fi = 0, fo = 0, g = 0; int rev = 0; std::string sid; };
+struct ChopMap { std::string sid; std::vector<float> cuts; };
 struct LoopSlot { std::string sid; bool on = true; float vol = .8f; int bars = 0; };   // web: S.loops[k] (bars 0 = the sample's own)
 
 struct Project {
@@ -48,6 +51,7 @@ struct Project {
     std::array<MotorState, 4> motor;
     int world = 0;   // web: S.world (colour world, the sound does not change)
     float glitchAmt = 0; int glitchMask = 0x7F;   // BLONDA GLITCH: auto chance per step, which effects auto may pick (bits 0..6)
+    std::array<SampleEdit, 6> se; std::array<ChopMap, 6> chop;
     Cell cells[kPatterns][kTracks][kSteps];
     std::vector<RollNote> roll[kPatterns][4];
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
@@ -124,6 +128,17 @@ inline bool engOpt(Project& p, int k, int e, int f, int* get, const int* set) {
 
 void buildReverb(Convolver& c, float size, float sr);
 
+// what drum track i plays of its sample: the edit and the chop only count while they belong to the sample on the track
+inline std::string drumSid(const Project& p, int i) { return (i >= 0 && i < 6 && p.kit[i].rfind("smp:", 0) == 0) ? p.kit[i].substr(4) : std::string(); }
+inline SampleRegion regionFor(const Project& p, int i) {
+    SampleRegion r; if (i < 0 || i >= 6) return r; const std::string sid = drumSid(p, i); if (sid.empty()) return r;
+    const SampleEdit& e = p.se[i];
+    if (e.sid == sid) { r.st = std::max(0.f, std::min(1.f, e.st)); r.en = std::max(r.st, std::min(1.f, e.en)); r.fi = std::max(0.f, e.fi); r.fo = std::max(0.f, e.fo); r.g = std::max(-24.f, std::min(24.f, e.g)); r.rev = e.rev ? 1 : 0; }
+    const ChopMap& c = p.chop[i];
+    if (c.sid == sid && !c.cuts.empty()) { r.n = (int)std::min<size_t>(16, c.cuts.size()); for (int k = 0; k < r.n; ++k) r.cuts[k] = std::max(0.f, std::min(.999f, c.cuts[k])); }
+    return r;
+}
+
 class Seq3 {
 public:
     void prepare(float sampleRate);
@@ -160,6 +175,7 @@ public:
     void setDrumSample(int i, const SampleData* smp, float norm);   // nullptr: back to the synth kit
     void previewSample(const SampleData* smp, float rate, float gain);   // nullptr stops the preview
     void dropSample(const SampleData* smp);                          // nothing may play it after this returns
+    void setRegion(int i, const SampleRegion& r) { if (i >= 0 && i < 6) reg_[i] = r; }
     // BLONDA motor (engine "bris6")
     void setMotorPreset(int k, int i) { if (k < 0 || k >= 4) return; mot_[k].loadPreset(i); P_.motor[k].preset = i; for (int p = 0; p < bris::kNumParams; ++p) P_.motor[k].vals[p] = mot_[k].getParam(p); }
     void setMotorParam(int k, int p, double v) { if (k < 0 || k >= 4 || p < 0 || p >= bris::kNumParams) return; mot_[k].setParam(p, v); P_.motor[k].vals[p] = mot_[k].getParam(p); }
@@ -169,6 +185,9 @@ public:
     void setGlideT(float v) { P_.glideT = v; }
     // BLONDA GLITCH (master): hold an effect (0 = let go), auto chance, which effects auto uses
     void glitchHold(int fx) { glitch_.hold(fx, frame_, std::max(64, (int)std::lround(60.0 / P_.bpm / 4 * sr_))); }
+    // several pads at once: src = the playing source (stutter … halv, 0 none), mods = bits 6 (crush) and 7 (gate) layered on top
+    void glitchHoldSet(int src, int mods) { glitch_.holdSet(src, mods, frame_, std::max(64, (int)std::lround(60.0 / P_.bpm / 4 * sr_))); }
+    int glitchMaskNow() const { return glitch_.activeMask(); }
     void setGlitchAmt(float a) { P_.glitchAmt = std::max(0.f, std::min(1.f, a)); }
     void setGlitchMask(int m) { P_.glitchMask = m & 0x7F; }
     int glitchActive() const { return glitch_.active(); }
@@ -233,7 +252,8 @@ private:
     struct LoopRt { const SampleData* s = nullptr; float srcBpm = 120; int bars = 1; float norm = 1; };
     std::array<LoopRt, 4> loopRt_{}; std::array<const SampleData*, 6> dsmp_{}; std::array<float, 6> dnorm_{};
     std::array<SampleVoice, 32> svox_{}; std::array<bool, 6> sampleTail_{}; std::array<LoopVoice, 16> lvox_{}; long long sAge_ = 0;
-    void startSample(int i, long long f, float vel);
+    std::array<SampleRegion, 6> reg_{};
+    void startSample(int i, long long f, float vel, int slice);
     void startLoop(int slot, const SampleData* s, long long f, double dur, double rate, float lv);
     void killLoops(int slot);   // -1: every loop, -2: the preview
     void renderSamples(long long b0, int n);

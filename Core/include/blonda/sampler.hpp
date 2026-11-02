@@ -22,11 +22,16 @@ inline float hermiteAt(const float* x, int n, double pos) {
     return ((c3 * t + c2) * t + c1) * t + y1;
 }
 
+// What part of a sample a drum track plays (web: S.se[id] trim/fades/reverse/gain, S.chop[id] slices).
+// n > 0: chopped — slice k runs from cuts[k] to cuts[k+1] (or the end); st/en are then ignored.
+struct SampleRegion { float st = 0, en = 1, fi = 0, fo = 0, g = 0; int rev = 0; int n = 0; float cuts[16] = {}; };
+
 // A one-shot on a drum track: rate = 2^(tune/12); tone = LP below the middle, HP above; level held for 55 %
 // of the length and then an exponential fade to −80 dB (web: smpVoice).
 struct SampleVoice {
     const SampleData* s = nullptr; int track = -1; bool active = false;
     long long start = 0; double pos = 0, rate = 1; double len = 0, holdEnd = 0; float lv = 0;
+    double stPos = 0, enPos = 0, fi = 0, fo = 0;   // the region in frames, fades in seconds (rate < 0: reversed)
     float lpc[5]{}, hpc[5]{}, z[2][4]{};
     bool choked = false; long long chokeAt = 0; float chokeG = 1;
 };

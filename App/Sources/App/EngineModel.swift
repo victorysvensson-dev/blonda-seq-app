@@ -405,6 +405,8 @@ final class EngineModel: NSObject, ObservableObject {
     func toggleAccent(_ r: StepRef) { engine.toggleAccent(r.track, step: r.step); revision += 1; scheduleSave(); auditionStep(r) }
     func clearStep(_ r: StepRef) { engine.clearStep(r.track, step: r.step); revision += 1; scheduleSave(); inspect = nil }
     /// web: inspPreview — the step as it will sound (ratchets included)
+    func stepSlice(_ r: StepRef) -> Int { _ = revision; return engine.stepSlice(r.track, step: r.step) }
+    func setStepSlice(_ r: StepRef, _ c: Int) { engine.pushUndo(); engine.setStepSlice(c, track: r.track, step: r.step); revision += 1; scheduleSave() }
     func auditionStep(_ r: StepRef) {
         let n = stepRatchet(r), v = stepVel(r), sd = stepDur
         for k in 0..<n {
@@ -437,6 +439,60 @@ final class EngineModel: NSObject, ObservableObject {
     var keyboard: KeyboardInput?
     /// true once the hardware keyboard is read directly (then the SwiftUI key handlers leave notes and space alone)
     var keyboardDirect: Bool { keyboard?.active ?? false }
+    // MARK: BLONDA GLITCH — several pads at once (web: gxPress / gxSend)
+    @Published var glitchHeld: [Int] = []
+    func glitchPress(_ fx: Int, _ on: Bool) {
+        if on { if glitchHeld.contains(fx) { return }; glitchHeld.append(fx) } else { guard let i = glitchHeld.firstIndex(of: fx) else { return }; glitchHeld.remove(at: i) }
+        let src = glitchHeld.last(where: { $0 <= 5 }) ?? 0
+        let mods = glitchHeld.filter { $0 > 5 }.reduce(0) { $0 | (1 << $1) }
+        engine.glitchHold(source: src, mods: mods)
+    }
+    func glitchReleaseAll() { glitchHeld.removeAll(); engine.glitchHold(source: 0, mods: 0) }
+
+    // MARK: sample editor + chop (web: #sed, S.se, S.chop)
+    @Published var sampleEdit: Int?
+    func openSampleEditor(_ t: Int) {
+        guard t >= 0 && t < 6, !engine.drumSample(t).isEmpty else { showToast("Välj ett sampel för \(kTracks[max(0, min(9, t))].name.lowercased()) först"); return }
+        drumEdit = nil; selectedTrack = t
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) { sampleEdit = t }
+    }
+    func closeSampleEditor() { withAnimation(.easeIn(duration: 0.18)) { sampleEdit = nil }; scheduleSave() }
+    func edit(_ t: Int) -> [String: Float] { _ = revision; return (engine.sampleEdit(t) as [String: NSNumber]).mapValues { $0.floatValue } }
+    func setEdit(_ t: Int, _ e: [String: Float]) { engine.setSampleEdit(e.mapValues { NSNumber(value: $0) }, track: t); revision += 1 }
+    func chop(_ t: Int) -> [Float] { _ = revision; return engine.chopCuts(t).map { $0.floatValue } }
+    func setChop(_ t: Int, _ cuts: [Float]) { engine.setChopCuts(cuts.map { NSNumber(value: $0) }, track: t); revision += 1; scheduleSave() }
+    func chopAuto(_ t: Int, _ mode: Int) -> [Float] { engine.chopAuto(engine.drumSample(t), mode: mode).map { $0.floatValue } }
+    /// play slice k of a chopped track (pads), records like the other pads
+    func chopHit(_ t: Int, _ k: Int) { padNoteOn(t, 1000 + k, 0.9); chopLast = (t, k, CACurrentMediaTime()) }
+    var chopLast: (Int, Int, Double) = (-1, -1, 0)
+    /// "✂ chop" in the library: the sample goes on the track (perc unless the library was opened for a drum track), cut up, editor open
+    func chopSample(_ m: SampleMeta) {
+        var t = 5; if case .drum(let i)? = libTarget { t = i }
+        if previewing != nil { engine.previewSample("", rate: 1, gain: 0); previewing = nil }
+        engine.pushUndo(); engine.assignDrum(t, sample: m.id)
+        setParam(kTrackParams[1], t, 0.5); setParam(kTrackParams[2], t, 1); setParam(kTrackParams[3], t, 0)
+        ensureLoaded([m.id]) { [weak self] in
+            guard let self = self else { return }
+            self.engine.bindDrum(t, norm: m.norm)
+            let cuts = self.chopAuto(t, (m.kind == "loop" || m.dur > 1.2) ? 16 : 0)
+            self.setChop(t, cuts); self.showToast("\(m.name) hackad på \(kTracks[t].name.lowercased()) · \(cuts.count) delar")
+            self.openSampleEditor(t)
+        }
+        closeLibrary()
+    }
+    /// lowercase track name, or the sample's name (shortened) when the track plays a sample
+    func trackShort(_ i: Int, max: Int = 12, chopMark: Bool = true) -> String { drumSampleMeta(i) == nil ? kTracks[i].name.lowercased() : trackLabel(i, max: max, chopMark: chopMark) }
+    /// the name a track shows: the sample's name when it plays one (web: trkLabel), ✂ when it is chopped
+    func trackLabel(_ i: Int, max: Int = 12, chopMark: Bool = true) -> String {
+        _ = revision
+        guard i < 6, let m = drumSampleMeta(i) else { return kTracks[i].name }
+        var n = m.name.replacingOccurrences(of: "\\.(wav|wave|aif|aiff|mp3|m4a|flac|ogg|caf)$", with: "", options: [.regularExpression, .caseInsensitive])
+            .replacingOccurrences(of: "_", with: " ").trimmingCharacters(in: .whitespaces)
+        if n.isEmpty { n = kTracks[i].name }
+        if n.count > max { n = String(n.prefix(max - 1)) + "…" }
+        return (chopMark && !chop(i).isEmpty ? "✂ " : "") + n
+    }
+
     // MARK: drum editor (web: #ded)
     @Published var drumEdit: Int?
     func openDrumEditor(_ t: Int) {
@@ -551,6 +607,7 @@ final class EngineModel: NSObject, ObservableObject {
         recUndo()
         if t < 6 {
             if engine.stepValue(forTrack: t, step: s) == 0 { engine.cycleStep(forTrack: t, step: s) }
+            if n >= 1000 { engine.setStepSlice(n - 1000, track: t, step: s) }   // a chop pad: the step plays that slice
             if v >= 0.95 && engine.stepValue(forTrack: t, step: s) != 2 { engine.toggleAccent(t, step: s) }
         } else {
             var notes = rollNotes(t)

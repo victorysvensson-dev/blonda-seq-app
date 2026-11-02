@@ -11,5 +11,6 @@
 /home/claude/blonda-seq-app/Core/build-asan/CMakeFiles/savetest.dir
 /home/claude/blonda-seq-app/Core/build-asan/CMakeFiles/edittest.dir
 /home/claude/blonda-seq-app/Core/build-asan/CMakeFiles/samptest.dir
+/home/claude/blonda-seq-app/Core/build-asan/CMakeFiles/motortest.dir
 /home/claude/blonda-seq-app/Core/build-asan/CMakeFiles/edit_cache.dir
 /home/claude/blonda-seq-app/Core/build-asan/CMakeFiles/rebuild_cache.dir

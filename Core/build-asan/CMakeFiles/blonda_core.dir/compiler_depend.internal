@@ -403,12 +403,18 @@ CMakeFiles/blonda_core.dir/src/engines.cpp.o
 
 CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /home/claude/blonda-seq-app/Core/src/seq3.cpp
+ /home/claude/blonda-seq-app/External/blonda-motor/include/blonda/gen_runtime.h
+ /home/claude/blonda-seq-app/External/blonda-motor/include/blonda/motor.h
+ /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris.h
+ /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_gen.h
+ /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_ljud.h
  /home/claude/blonda-seq-app/Core/include/blonda/bris.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/convolver.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/drums.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/dynamics.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/engines.hpp
+ /home/claude/blonda-seq-app/Core/include/blonda/glitch.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/json.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/sampler.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/seq3.hpp
@@ -419,6 +425,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/asm-generic/errno.h
  /usr/include/c++/13/algorithm
  /usr/include/c++/13/array
+ /usr/include/c++/13/atomic
  /usr/include/c++/13/backward/auto_ptr.h
  /usr/include/c++/13/backward/binders.h
  /usr/include/c++/13/bit

@@ -70,7 +70,7 @@ struct GridRow: View {
                         }
                     }
                     .frame(width: 22).padding(.trailing, 15)
-                    Text(kTracks[track].name.lowercased()).font(BFont.mono(10)).tracking(0.6)
+                    Text(model.trackShort(track, max: 8, chopMark: false)).font(BFont.mono(10)).tracking(0.6)
                         .foregroundColor(sel ? T.dmY : T.dmInk.opacity(0.55))
                         .strikethrough(muted)
                         .opacity(muted ? 0.3 : 1)

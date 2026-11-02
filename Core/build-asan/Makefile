@@ -285,6 +285,19 @@ samptest/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/build
 .PHONY : samptest/fast
 
+#=============================================================================
+# Target rules for targets named motortest
+
+# Build rule for target.
+motortest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 motortest
+.PHONY : motortest
+
+# fast build rule for target.
+motortest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/build
+.PHONY : motortest/fast
+
 src/bris.o: src/bris.cpp.o
 .PHONY : src/bris.o
 
@@ -573,6 +586,30 @@ tools/livetest.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/tools/livetest.cpp.s
 .PHONY : tools/livetest.cpp.s
 
+tools/motortest.o: tools/motortest.cpp.o
+.PHONY : tools/motortest.o
+
+# target to build an object file
+tools/motortest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/tools/motortest.cpp.o
+.PHONY : tools/motortest.cpp.o
+
+tools/motortest.i: tools/motortest.cpp.i
+.PHONY : tools/motortest.i
+
+# target to preprocess a source file
+tools/motortest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/tools/motortest.cpp.i
+.PHONY : tools/motortest.cpp.i
+
+tools/motortest.s: tools/motortest.cpp.s
+.PHONY : tools/motortest.s
+
+# target to generate assembly for a file
+tools/motortest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/tools/motortest.cpp.s
+.PHONY : tools/motortest.cpp.s
+
 tools/probe.o: tools/probe.cpp.o
 .PHONY : tools/probe.o
 
@@ -709,6 +746,7 @@ help:
 	@echo "... engprobe"
 	@echo "... hosttest"
 	@echo "... livetest"
+	@echo "... motortest"
 	@echo "... probe"
 	@echo "... render"
 	@echo "... samptest"
@@ -750,6 +788,9 @@ help:
 	@echo "... tools/livetest.o"
 	@echo "... tools/livetest.i"
 	@echo "... tools/livetest.s"
+	@echo "... tools/motortest.o"
+	@echo "... tools/motortest.i"
+	@echo "... tools/motortest.s"
 	@echo "... tools/probe.o"
 	@echo "... tools/probe.i"
 	@echo "... tools/probe.s"

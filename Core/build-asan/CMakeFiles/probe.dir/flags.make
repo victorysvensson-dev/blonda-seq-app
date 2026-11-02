@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/claude/blonda-seq-app/Core/include
+CXX_INCLUDES = -I/home/claude/blonda-seq-app/Core/include -I/home/claude/blonda-seq-app/Core/../External/blonda-motor/include -I/home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer
 
 CXX_FLAGS = -fsanitize=address,undefined -fno-omit-frame-pointer -g -std=gnu++17
 

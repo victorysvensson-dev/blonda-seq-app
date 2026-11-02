@@ -197,6 +197,9 @@ CMakeFiles/samptest.dir/tools/samptest.cpp.o: \
  /home/claude/blonda-seq-app/Core/include/blonda/dynamics.hpp \
  /home/claude/blonda-seq-app/Core/include/blonda/engines.hpp \
  /home/claude/blonda-seq-app/Core/include/blonda/wg.hpp \
+ /home/claude/blonda-seq-app/Core/include/blonda/glitch.hpp \
+ /usr/include/c++/13/atomic /usr/include/c++/13/bits/atomic_base.h \
+ /usr/include/c++/13/bits/atomic_lockfree_defines.h \
  /home/claude/blonda-seq-app/Core/include/blonda/json.hpp \
  /usr/include/c++/13/map /usr/include/c++/13/bits/stl_tree.h \
  /usr/include/c++/13/ext/aligned_buffer.h \
@@ -211,13 +214,25 @@ CMakeFiles/samptest.dir/tools/samptest.cpp.o: \
  /usr/include/c++/13/bits/allocated_ptr.h \
  /usr/include/c++/13/ext/concurrence.h \
  /usr/include/c++/13/bits/shared_ptr_atomic.h \
- /usr/include/c++/13/bits/atomic_base.h \
- /usr/include/c++/13/bits/atomic_lockfree_defines.h \
  /usr/include/c++/13/backward/auto_ptr.h \
  /usr/include/c++/13/pstl/glue_memory_defs.h \
  /home/claude/blonda-seq-app/Core/include/blonda/sampler.hpp \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer/bris/bris.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/include/blonda/motor.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer/bris/bris_gen.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/include/blonda/gen_runtime.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer/bris/bris_ljud.h \
  /home/claude/blonda-seq-app/Core/include/blonda/dice.hpp \
- /usr/include/c++/13/atomic /usr/include/c++/13/unordered_map \
+ /usr/include/c++/13/climits \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
+ /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/local_lim.h \
+ /usr/include/linux/limits.h \
+ /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
+ /usr/include/c++/13/unordered_map \
  /usr/include/c++/13/bits/unordered_map.h \
  /usr/include/c++/13/bits/hashtable.h \
  /usr/include/c++/13/bits/hashtable_policy.h \

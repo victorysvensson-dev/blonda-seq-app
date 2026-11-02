@@ -4,7 +4,9 @@
 #pragma once
 #include "seq3.hpp"
 #include "dice.hpp"
+#include <algorithm>
 #include <array>
+#include <climits>
 #include <atomic>
 #include <unordered_map>
 #include <cmath>
@@ -22,8 +24,8 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask };
-    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask, GlitchSet, Region };
+    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; SampleRegion reg; };
 
     ~Host() { shutdown(); }
 
@@ -111,9 +113,13 @@ public:
     void setKit(int i, const std::string& name) {
         if (i < 0 || i >= 6) return; int idx = -1; for (int k = 0; k < kNumKits; ++k) if (name == kKitNames[k]) idx = k; if (idx < 0) return;
         ui.kit[i] = kKitNames[idx]; Cmd c; c.type = Kit; c.a = i; c.b = idx; send(c);
+        ui.se[i] = SampleEdit{}; ui.chop[i] = ChopMap{}; sendRegion(i);   // a new sound starts from scratch
     }
     // BLONDA GLITCH
     void glitchHold(int fx) { Cmd c; c.type = GlitchHold; c.a = fx; send(c); }
+    /// several pads at once: `src` the playing source (1 stutter … 5 halv, 0 none), `mods` bit 6 crush, bit 7 gate
+    void glitchHoldSet(int src, int mods) { Cmd c; c.type = GlitchSet; c.a = src; c.b = mods; send(c); }
+    int glitchActiveMask() const { return glitchMask_.load(std::memory_order_relaxed); }   // bit fx = sounding now
     float glitchAmt() const { return ui.glitchAmt; }
     void setGlitchAmt(float a) { ui.glitchAmt = std::max(0.f, std::min(1.f, a)); Cmd c; c.type = GlitchAmt; c.f = ui.glitchAmt; send(c); }
     int glitchMask() const { return ui.glitchMask; }
@@ -320,10 +326,77 @@ public:
     void setLoopBars(int k, int bars) { if (k >= 0 && k < 4) ui.loops[k].bars = std::max(0, bars); }
     // one-shots on drum tracks (web: S.dk[id] = "smp:<id>")
     std::string drumSample(int i) const { return (i >= 0 && i < 6 && ui.kit[i].rfind("smp:", 0) == 0) ? ui.kit[i].substr(4) : std::string(); }
-    void assignDrum(int i, const std::string& sid) { if (i >= 0 && i < 6) ui.kit[i] = sid.empty() ? std::string() : "smp:" + sid; }
+    void assignDrum(int i, const std::string& sid) {
+        if (i < 0 || i >= 6) return; ui.kit[i] = sid.empty() ? std::string() : "smp:" + sid;
+        if (ui.se[i].sid != sid) ui.se[i] = SampleEdit{};   // the edit and the chop belong to the sample they were made on
+        if (ui.chop[i].sid != sid) ui.chop[i] = ChopMap{};
+        sendRegion(i);
+    }
+    // ---- sample editor (web: S.se[id]) and chop (web: S.chop[id]) on drum track i
+    SampleEdit sampleEdit(int i) const { SampleEdit e; if (i < 0 || i >= 6) return e; const std::string sid = drumSample(i); e = ui.se[i].sid == sid ? ui.se[i] : SampleEdit{}; e.sid = sid; return e; }
+    void setSampleEdit(int i, const SampleEdit& e) {
+        if (i < 0 || i >= 6) return; SampleEdit x = e; x.sid = drumSample(i); x.st = std::max(0.f, std::min(1.f, x.st)); x.en = std::max(x.st, std::min(1.f, x.en));
+        x.fi = std::max(0.f, x.fi); x.fo = std::max(0.f, x.fo); x.g = std::max(-12.f, std::min(12.f, x.g)); ui.se[i] = x; sendRegion(i);
+    }
+    void resetSampleEdit(int i) { if (i < 0 || i >= 6) return; ui.se[i] = SampleEdit{}; sendRegion(i); }
+    std::vector<float> chopCuts(int i) const { return (i >= 0 && i < 6 && !ui.chop[i].cuts.empty() && ui.chop[i].sid == drumSample(i)) ? ui.chop[i].cuts : std::vector<float>(); }
+    void setChop(int i, std::vector<float> cuts) {
+        if (i < 0 || i >= 6) return; std::sort(cuts.begin(), cuts.end()); if (cuts.size() > 16) cuts.resize(16);
+        for (auto& f : cuts) f = std::max(0.f, std::min(.999f, f));
+        ui.chop[i].sid = cuts.empty() ? std::string() : drumSample(i); ui.chop[i].cuts = cuts; sendRegion(i);
+    }
+    /// cuts for a sample: mode 0 = one per hit (onsets), otherwise mode equal parts
+    std::vector<float> chopAuto(const std::string& id, int mode) const {
+        std::vector<float> c; auto it = bank_.find(id); if (it == bank_.end() || it->second->frames < 2) return c; const SampleData& s = *it->second; const double D = s.frames / (double)sampleRate;
+        if (mode <= 0) { c.push_back(0); for (double t : onsets(id)) { if (t <= .01) continue; if (c.size() >= 16) break; c.push_back((float)(zeroCross(id, std::max(0.0, t - .002)) / D)); } }
+        else for (int k = 0; k < std::min(16, mode); ++k) c.push_back(k ? (float)(zeroCross(id, (double)k / mode * D) / D) : 0.f);
+        return c;
+    }
+    // step slice (-1 = auto: the step's own number)
+    int stepSlice(int t, int s) const { return (t >= 0 && t < 6 && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].c : -1; }
+    void setStepSlice(int t, int s, int c) { if (t < 0 || t >= 6 || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].c = c < 0 ? -1 : std::min(15, c); sendCell(t, s); }
+    /// lay the slices out in order on the track (a loop: where they sit in the bars; a hit: spread over the 16 steps)
+    void chopToPattern(int i, int bars) {
+        const auto cuts = chopCuts(i); if (cuts.empty()) return; pushHist();
+        for (auto& c : ui.cells[ui.pat][i]) c = Cell{};
+        const int n = (int)cuts.size();
+        for (int k = 0; k < n; ++k) { const int s = bars > 0 ? (int)std::lround(cuts[k] * bars * 16) : (int)std::lround(k * 16.0 / n); if (s >= 0 && s < 16) { Cell& c = ui.cells[ui.pat][i][s]; c.v = 1; c.c = k; } }
+        ui.len[i] = 0; Cmd c; c.type = Len; c.a = i; c.b = 16; send(c);
+        commitTrack(i);
+    }
+    // ---- sample data for drawing and editing (UI thread; the bank never changes a sample in place)
+    double sampleSeconds(const std::string& id) const { auto it = bank_.find(id); return it == bank_.end() ? 0 : it->second->frames / (double)sampleRate; }
+    /// min/max per column between t0 and t1 seconds (mono mix)
+    int samplePeaks(const std::string& id, double t0, double t1, int cols, float* mn, float* mx) const {
+        auto it = bank_.find(id); if (it == bank_.end() || cols <= 0) return 0; const SampleData& s = *it->second;
+        const double f0 = t0 * sampleRate, spp = std::max(1e-6, (t1 - t0) * sampleRate / cols);
+        for (int x = 0; x < cols; ++x) {
+            long long a = (long long)std::floor(f0 + x * spp), b = std::max(a + 1, (long long)std::floor(f0 + (x + 1) * spp));
+            float lo = 0, hi = 0; const long long st = std::max<long long>(1, (b - a) / 400);
+            for (long long k = std::max(0LL, a); k < std::min<long long>(s.frames, b); k += st) { const float v = (s.L[k] + s.R[k]) * .5f; lo = std::min(lo, v); hi = std::max(hi, v); }
+            mn[x] = lo; mx[x] = hi;
+        }
+        return cols;
+    }
+    /// hits (web: seOnsets): a 2 ms energy envelope, a hit = a clear jump above what came just before
+    std::vector<double> onsets(const std::string& id) const {
+        std::vector<double> out; auto it = bank_.find(id); if (it == bank_.end()) return out; const SampleData& s = *it->second;
+        const int hop = std::max(1, (int)std::lround(sampleRate * .002)), N = s.frames / hop; std::vector<float> env(std::max(0, N)); float mx = 0;
+        for (int k = 0; k < N; ++k) { double e = 0; for (int j = k * hop, J = std::min(s.frames, j + hop * 2); j < J; ++j) { const float v = (s.L[j] + s.R[j]) * .5f; e += v * v; } env[k] = (float)std::sqrt(e / (hop * 2)); mx = std::max(mx, env[k]); }
+        int last = -1000000000;
+        for (int k = 3; k < N; ++k) { float pre = 0; for (int q = std::max(0, k - 10); q < k; ++q) pre = std::max(pre, env[q]); if (env[k] > mx * .06f && env[k] > pre * 1.9f + mx * .01f && k - last > 15) { out.push_back(k * hop / (double)sampleRate); last = k; } }
+        return out;
+    }
+    /// the nearest zero crossing within 3 ms (so cuts do not click)
+    double zeroCross(const std::string& id, double t) const {
+        auto it = bank_.find(id); if (it == bank_.end()) return t; const SampleData& s = *it->second; const float* d = s.L.data();
+        const long long i0 = (long long)std::llround(t * sampleRate), w = (long long)std::lround(sampleRate * .003); long long best = i0, bd = LLONG_MAX;
+        for (long long k = std::max(1LL, i0 - w); k < std::min<long long>(s.frames - 1, i0 + w); ++k) if ((d[k - 1] <= 0 && d[k] > 0) || (d[k - 1] >= 0 && d[k] < 0)) { const long long dd = std::llabs(k - i0); if (dd < bd) { bd = dd; best = k; } }
+        return best / (double)sampleRate;
+    }
     void bindDrum(int i, float norm) {
         if (i < 0 || i >= 6) return; const std::string sid = drumSample(i); auto it = sid.empty() ? bank_.end() : bank_.find(sid);
-        Cmd c; c.type = DrumSmp; c.a = i; c.f = norm; c.smp = it == bank_.end() ? nullptr : it->second; send(c);
+        Cmd c; c.type = DrumSmp; c.a = i; c.f = norm; c.smp = it == bank_.end() ? nullptr : it->second; send(c); sendRegion(i);
     }
     void previewSample(const std::string& id, float rate, float gain) {
         auto it = bank_.find(id); Cmd c; c.type = Preview; c.smp = it == bank_.end() ? nullptr : it->second; c.f = rate; c.g = gain; send(c);
@@ -405,6 +478,8 @@ public:
                 case GlitchHold: if (e) e->glitchHold(c.a); break;
                 case GlitchAmt: if (e) e->setGlitchAmt(c.f); break;
                 case GlitchMask: if (e) e->setGlitchMask(c.a); break;
+                case GlitchSet: if (e) e->glitchHoldSet(c.a, c.b); break;
+                case Region: if (e) e->setRegion(c.a, c.reg); break;
                 case MotPreset: if (e) e->setMotorPreset(c.a, c.b); break;
                 case MotParam: if (e) e->setMotorParam(c.a, c.b, c.f); break;
                 case GlideT: if (e) e->setGlideT(c.f); break;
@@ -422,7 +497,7 @@ public:
         engine_->render(L, R, frames);
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
         for (int k = 0; k < 4; ++k) motMeter_[k].store((float)engine_->motorMeter(k), std::memory_order_relaxed);
-        glitchShown_.store(engine_->glitchActive(), std::memory_order_relaxed);
+        glitchShown_.store(engine_->glitchActive(), std::memory_order_relaxed); glitchMask_.store(engine_->glitchMaskNow(), std::memory_order_relaxed);
         {   // master scope for the yellow deck (waveform, stereo, spectrum, peak/rms): the last kScope samples
             unsigned w = scopeW_.load(std::memory_order_relaxed);
             for (int x = 0; x < frames; ++x) { scopeL_[w & (kScope - 1)] = L[x]; scopeR_[w & (kScope - 1)] = R[x]; ++w; }
@@ -441,7 +516,7 @@ private:
         for (int p = 0; p < kPatterns; ++p) {
             for (int t = 0; t < kTracks; ++t) for (int st = 0; st < kSteps; ++st) {
                 const Cell& a = s.cells[p][t][st]; Cell& b = ui.cells[p][t][st];
-                if (a.v != b.v || a.n != b.n || a.r != b.r || a.p != b.p || a.vel != b.vel) { b = a; Cmd c; c.type = SetCell; c.a = p; c.b = t; c.c = st; c.cell = b; send(c); }
+                if (a.v != b.v || a.n != b.n || a.r != b.r || a.p != b.p || a.vel != b.vel || a.o != b.o || a.c != b.c) { b = a; Cmd c; c.type = SetCell; c.a = p; c.b = t; c.c = st; c.cell = b; send(c); }
             }
             for (int k = 0; k < 4; ++k) {
                 bool same = s.roll[p][k].size() == ui.roll[p][k].size();
@@ -478,6 +553,7 @@ private:
         commitTrack(t);
     }
     // send a whole track (cells, and the roll for melodic tracks) to the engine
+    void sendRegion(int i) { Cmd c; c.type = Region; c.a = i; c.reg = regionFor(ui, i); send(c); }
     void sendCell(int t, int s) { Cmd c; c.type = SetCell; c.a = ui.pat; c.b = t; c.c = s; c.cell = ui.cells[ui.pat][t][s]; send(c); }
     void commitTrack(int t, int pat = -1) {
         if (pat < 0) pat = ui.pat;
@@ -499,7 +575,7 @@ private:
     std::unordered_map<std::string, SampleData*> bank_;
     void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
     SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_;
-    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {}; std::atomic<int> glitchShown_{0};
+    std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {}; std::atomic<int> glitchShown_{0}, glitchMask_{0};
 };
 
 } // namespace blonda

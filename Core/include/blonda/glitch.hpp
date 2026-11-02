@@ -18,9 +18,9 @@ public:
 
     void prepare(double sr) {
         sr_ = sr; L_.assign(kRing, 0.f); R_.assign(kRing, 0.f); xf_ = std::max(16, (int)(sr * .003));
-        ev_ = Ev{}; next_ = Ev{}; held_ = 0;
+        ev_ = Ev{}; next_ = Ev{}; held_ = 0; md_[0] = md_[1] = Mod{};
     }
-    void reset() { std::fill(L_.begin(), L_.end(), 0.f); std::fill(R_.begin(), R_.end(), 0.f); ev_ = Ev{}; next_ = Ev{}; held_ = 0; }
+    void reset() { std::fill(L_.begin(), L_.end(), 0.f); std::fill(R_.begin(), R_.end(), 0.f); ev_ = Ev{}; next_ = Ev{}; held_ = 0; md_[0] = md_[1] = Mod{}; }
 
     // a glitch that starts at frame `start` and lasts `len` frames; `slice` = the repeated piece (stutter/roll/gate)
     void queue(int fx, long long start, long long len, int slice) {
@@ -32,20 +32,56 @@ public:
         if (fx > GxNone && fx < GxCount) { held_ = fx; ev_ = Ev{fx, now, (long long)1 << 62, std::max(32, std::min(slice, kRing / 2))}; ev_.pos = 0; ev_.cur = ev_.slice; next_ = Ev{}; }
         else if (held_) { held_ = 0; if (ev_.fx) ev_.end = std::max(ev_.start + 1, now + xf_); }
     }
+    // several pads held at once (web: gxSend): src = the last held of stutter/roll/reverse/stop/half (0 none),
+    // mods bit 6 = crush, bit 7 = gate, played on top of whatever sounds
+    void holdSet(int src, int mods, long long now, int slice) {
+        if (src < GxNone || src > GxHalf) src = 0;
+        if (src != held_) { if (src) { held_ = src; ev_ = Ev{src, now, (long long)1 << 62, std::max(32, std::min(slice, kRing / 2))}; ev_.pos = 0; ev_.cur = ev_.slice; next_ = Ev{}; }
+                            else { held_ = 0; if (ev_.fx) ev_.end = std::max(ev_.start + 1, now + xf_); } }
+        for (int k = 0; k < 2; ++k) {
+            const bool want = (mods >> (6 + k)) & 1; Mod& m = md_[k];
+            if (want && !(m.on && m.end > ((long long)1 << 61))) { m = Mod{}; m.on = true; m.start = now; m.end = (long long)1 << 62; m.slice = std::max(32, std::min(slice, kRing / 2)); }
+            else if (!want && m.on && m.end > ((long long)1 << 61)) m.end = now + xf_;
+        }
+    }
+    int activeMask() const { return shownMask_.load(std::memory_order_relaxed); }   // bit fx = sounding now
     bool busy(long long f) const { return (ev_.fx && f < ev_.end) || (next_.fx != 0); }
     int active() const { return shown_.load(std::memory_order_relaxed); }
 
     void process(float* L, float* R, int n, long long b0) {
-        int show = 0;
+        int show = 0, mask = 0;
         for (int x = 0; x < n; ++x) {
             const long long f = b0 + x;
             const int wi = (int)(f & (kRing - 1));
             const float inL = L[x], inR = R[x];
             L_[wi] = inL; R_[wi] = inR;
             if (next_.fx && f >= next_.start && (!ev_.fx || f >= ev_.end)) { ev_ = next_; ev_.pos = 0; ev_.cur = ev_.slice; next_ = Ev{}; }
-            if (!ev_.fx) continue;
-            if (f >= ev_.end) { ev_ = Ev{}; continue; }
-            if (f < ev_.start) continue;
+            if (ev_.fx && f >= ev_.end) ev_ = Ev{};
+            if (ev_.fx && f >= ev_.start) source(L[x], R[x], inL, inR, f), show = ev_.fx;
+            layers(L[x], R[x], f, mask);
+        }
+        shown_.store(show ? show : (ev_.fx && b0 + n >= ev_.start ? ev_.fx : 0), std::memory_order_relaxed);
+        if (ev_.fx && b0 + n >= ev_.start) mask |= 1 << ev_.fx;
+        shownMask_.store(mask, std::memory_order_relaxed);
+    }
+
+private:
+    struct Mod { bool on = false; long long start = 0, end = 0; int slice = 0, pos = 0; float hL = 0, hR = 0; };
+    Mod md_[2];
+    std::atomic<int> shownMask_{0};
+    // crush (6) and gate (7) held as layers on top of the output
+    void layers(float& L, float& R, long long f, int& mask) {
+        for (int k = 0; k < 2; ++k) {
+            Mod& m = md_[k]; if (!m.on) continue; if (f >= m.end) { m.on = false; continue; } if (f < m.start) continue;
+            const long long dm = f - m.start; const float em = (float)std::min<long long>(std::min<long long>(dm, m.end - f), xf_) / (float)xf_;
+            const float a = L, b = R; float wa, wb;
+            if (k == 0) { if (m.pos-- <= 0) { m.pos = 7; m.hL = std::round(a * 12.f) / 12.f; m.hR = std::round(b * 12.f) / 12.f; } wa = m.hL; wb = m.hR; }
+            else { const int h = std::max(16, m.slice / 2); const bool g = (dm / h) % 2; wa = g ? 0.f : a; wb = g ? 0.f : b; }
+            L = a + (wa - a) * em; R = b + (wb - b) * em; mask |= 1 << (6 + k);
+        }
+    }
+    void source(float& outL, float& outR, float inL, float inR, long long f) {
+            {
             const long long d = f - ev_.start;
             float wL = inL, wR = inR;
             switch (ev_.fx) {
@@ -73,13 +109,10 @@ public:
             }
             // 3 ms crossfade in and out so nothing clicks
             const float e = (float)std::min<long long>(std::min<long long>(d, ev_.end - f), xf_) / (float)xf_;
-            L[x] = inL + (wL - inL) * e; R[x] = inR + (wR - inR) * e;
-            show = ev_.fx;
-        }
-        shown_.store(show ? show : (ev_.fx && b0 + n >= ev_.start ? ev_.fx : 0), std::memory_order_relaxed);
+            outL = inL + (wL - inL) * e; outR = inR + (wR - inR) * e;
+            }
     }
 
-private:
     struct Ev { int fx = 0; long long start = 0, end = 0; int slice = 0; long long pos = 0, cur = 0; int reps = 0; double rpos = 0; float hL = 0, hR = 0; };
     void read(long long p, float& l, float& r) const { const int i = (int)(p & (kRing - 1)); l = L_[i]; r = R_[i]; }
     void readFrac(double p, float& l, float& r) const {
