@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Plugins · master (web: .card.plugs) — Echo, Space, Tape and Crush as glass tiles. The pencil steps through a
+// Effect tiles (web: .ptile, now inside the master) — Echo, Space, Tape and Crush as glass tiles. The pencil steps through a
 // plugin's parameters, the big number is dragged up/down, and the green pill switches the plugin on/bypass.
 
 private func circ(_ cx: Double, _ cy: Double, _ r: Double) -> String {
@@ -50,16 +50,16 @@ let kPlugins: [PlugDef] = [
     ]),
 ]
 
-struct PluginsCard: View {
+/// The four effect tiles; they live in the master card now ("effekter"), the plugins card became "analys".
+struct PluginTiles: View {
     @EnvironmentObject var model: EngineModel
+    var cols = 2
     @State private var sel = "echo"
     @State private var pIdx: [String: Int] = [:]
 
     var body: some View {
-        Card(style: .glass, title: [("plugins · ", false), ("master", true)]) {
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-                ForEach(kPlugins.indices, id: \.self) { i in tile(kPlugins[i]) }
-            }
+        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: cols), spacing: 8) {
+            ForEach(kPlugins.indices, id: \.self) { i in tile(kPlugins[i]) }
         }
     }
 

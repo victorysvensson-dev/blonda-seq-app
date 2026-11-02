@@ -38,7 +38,9 @@ struct LookInvert: ViewModifier {
     @ObservedObject private var store = LookStore.shared
     var dots = true   // false: an inner part whose card is already inverted as a whole in the dots look
     func body(content: Content) -> some View {
-        if store.look == .glass || (!dots && store.look == .dots) { content } else { content.colorInvert().hueRotation(.degrees(180)) }
+        if store.look == .glass || (!dots && store.look == .dots) { content }
+        else if store.look == .studio { content.colorInvert().hueRotation(.degrees(180)).saturation(0.22) }   // the warm light cards came out brown: keep them graphite like the rest
+        else { content.colorInvert().hueRotation(.degrees(180)) }
     }
 }
 

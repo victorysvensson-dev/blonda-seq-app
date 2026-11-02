@@ -50,6 +50,8 @@ private struct MasterConsole: View {
                 let tiles = [AnyView(EqTile()), AnyView(GlueTile()), AnyView(WidthTile(scope: scope)), AnyView(LoudTile(scope: scope))]
                 if narrow { LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) { ForEach(0..<4, id: \.self) { tiles[$0] } } }
                 else { HStack(alignment: .top, spacing: 14) { tiles[0].frame(maxWidth: .infinity).layoutPriority(1.5); ForEach(1..<4, id: \.self) { tiles[$0].frame(maxWidth: .infinity) } } }
+                Section(title: "effekter", sub: "eko · rymd · tejp · crush · pennan byter vad siffran styr")
+                PluginTiles(cols: narrow ? 2 : 4)
                 Section(title: "färg & rum", sub: "tejp, eko, rymd, groove och volym")
                 ColorRoom()
             }
