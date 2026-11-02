@@ -20,7 +20,7 @@ struct Pad: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
+        LiveTimeline(interval: 1.0 / 30) { _ in
             let lit = model.flash(track, 0.12) > 0, col = model.trackColor(track)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 10, style: .continuous).fill(lit ? col : Color.white.opacity(0.05))
@@ -54,7 +54,7 @@ struct MixerCard: View {
     @ObservedObject private var full = FullStore.shared
     var body: some View {
         let act = (0..<10).filter { !model.isMuted($0) }.count
-        Card(style: .glass, title: [("Mixer · ", false), ("\(act) av 10 kanaler" + (model.soloTrack >= 0 ? " · solo \(model.trackShort(model.soloTrack))" : ""), true)]) {
+        Card(style: .glass, title: [("Mixer · ", false), ("\(act) av 10 kanaler" + ((0..<10).filter { model.isSolo($0) }.isEmpty ? "" : " · solo " + (0..<10).filter { model.isSolo($0) }.map { model.trackShort($0) }.joined(separator: ", ")), true)]) {
             if full.key == "mixer" {
                 MixerDesk()
             } else {
@@ -121,7 +121,7 @@ private struct DeskStrip: View {
             if master { Color.clear.frame(height: 24) } else {
                 HStack(spacing: 4) {
                     Button { model.toggleMute(track) } label: { mini("M", on: model.isMuted(track), Color(hex: 0xE5484D)) }.buttonStyle(.plain)
-                    Button { model.toggleSolo(track) } label: { mini("S", on: model.soloTrack == track, T.yellow) }.buttonStyle(.plain)
+                    Button { model.toggleSolo(track) } label: { mini("S", on: model.isSolo(track), T.yellow) }.buttonStyle(.plain)
                 }
             }
             Text(master ? "master" : model.trackShort(track, max: 10)).font(BFont.mono(10)).lineLimit(1)
@@ -197,7 +197,7 @@ struct Strip: View {
             if !master {
                 HStack(spacing: 3) {
                     Button { model.toggleMute(track) } label: { Text("m").font(BFont.mono(8)).foregroundColor(model.isMuted(track) ? .black : T.mute).frame(width: 14, height: 14).background(RoundedRectangle(cornerRadius: 3).fill(model.isMuted(track) ? Color(hex: 0xE5484D) : .white.opacity(0.07))) }.buttonStyle(.plain)
-                    Button { model.toggleSolo(track) } label: { Text("s").font(BFont.mono(8)).foregroundColor(model.soloTrack == track ? .black : T.mute).frame(width: 14, height: 14).background(RoundedRectangle(cornerRadius: 3).fill(model.soloTrack == track ? T.yellow : .white.opacity(0.07))) }.buttonStyle(.plain)
+                    Button { model.toggleSolo(track) } label: { Text("s").font(BFont.mono(8)).foregroundColor(model.isSolo(track) ? .black : T.mute).frame(width: 14, height: 14).background(RoundedRectangle(cornerRadius: 3).fill(model.isSolo(track) ? T.yellow : .white.opacity(0.07))) }.buttonStyle(.plain)
                 }
             } else { Color.clear.frame(height: 14) }
         }

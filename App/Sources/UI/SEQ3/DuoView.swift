@@ -431,7 +431,7 @@ private struct DuoRow: View {
     let gap: CGFloat
     let head: CGFloat
     var body: some View {
-        let sel = model.selectedTrack == track, col = model.trackHex(track), muted = model.isMuted(track), solo = model.soloTrack == track
+        let sel = model.selectedTrack == track, col = model.trackHex(track), muted = model.isMuted(track), solo = model.isSolo(track)
         HStack(spacing: gap) {
             HStack(spacing: 6) {
                 Rectangle().fill(Color(hex: col)).frame(width: 3, height: cell * 0.8)

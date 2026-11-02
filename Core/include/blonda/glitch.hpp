@@ -99,7 +99,11 @@ private:
                     if (u >= 1) { wL = wR = 0; }
                     break;
                 }
-                case GxHalf: readFrac((double)ev_.start - ev_.slice + std::fmod(d * .5, (double)ev_.slice * 2), wL, wR); break;
+                case GxHalf: {   // everything at half speed, continuously (not a looped half-bar): the read point falls behind by half the held time
+                    if (ev_.h0 == 0) ev_.h0 = ev_.start;
+                    long long dd = f - ev_.h0;
+                    if (dd * .5 > kRing * .7) { ev_.h0 = f; dd = 0; }   // held so long the ring would run out: start over from now
+                    readFrac((double)ev_.h0 + dd * .5, wL, wR); break; }
                 case GxCrush: {
                     if (ev_.pos-- <= 0) { ev_.pos = 7; ev_.hL = std::round(inL * 12.f) / 12.f; ev_.hR = std::round(inR * 12.f) / 12.f; }
                     wL = ev_.hL; wR = ev_.hR; break;
@@ -113,7 +117,7 @@ private:
             }
     }
 
-    struct Ev { int fx = 0; long long start = 0, end = 0; int slice = 0; long long pos = 0, cur = 0; int reps = 0; double rpos = 0; float hL = 0, hR = 0; };
+    struct Ev { int fx = 0; long long start = 0, end = 0; int slice = 0; long long pos = 0, cur = 0; int reps = 0; double rpos = 0; float hL = 0, hR = 0; long long h0 = 0; };
     void read(long long p, float& l, float& r) const { const int i = (int)(p & (kRing - 1)); l = L_[i]; r = R_[i]; }
     void readFrac(double p, float& l, float& r) const {
         const double fl = std::floor(p); const float fr = (float)(p - fl); const long long i0 = (long long)fl;

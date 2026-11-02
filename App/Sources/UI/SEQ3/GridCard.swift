@@ -64,7 +64,7 @@ struct GridRow: View {
         HStack(spacing: 0) {
             Button { model.selectedTrack = track } label: {
                 HStack(spacing: 0) {
-                    TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
+                    LiveTimeline(interval: 1.0 / 30) { _ in
                         let f = model.flash(track, 0.2)
                         HStack(spacing: 2) {
                             ForEach(0..<4, id: \.self) { k in
@@ -245,7 +245,7 @@ struct GridActions: View {
             DMChip(action: { model.shift(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M2 8h11M10 5l3 3-3 3", size: 14, stroke: 1.6); Text("flytta") } }
             DMChip(action: { model.clear(model.selectedTrack) }) { HStack(spacing: 7) { SVGIcon(d: "M3 3l10 10M13 3L3 13", size: 14, stroke: 1.6); Text("rensa spår") } }
             DMChip(fill: model.isMuted(model.selectedTrack) ? Color(hex: 0xC9452F) : nil, action: { model.toggleMute(model.selectedTrack) }) { Text("mute") }
-            DMChip(fill: model.soloTrack == model.selectedTrack ? T.dmY : nil, action: { model.toggleSolo(model.selectedTrack) }) { Text("solo") }
+            DMChip(fill: model.isSolo(model.selectedTrack) ? T.dmY : nil, action: { model.toggleSolo(model.selectedTrack) }) { Text("solo") }
             DMChip(action: { model.undo() }) { SVGIcon(d: "M5 3L2 6l3 3M2 6h7a4 4 0 010 8H6", size: 14, stroke: 1.6) }
             DMChip(action: { model.redo() }) { SVGIcon(d: "M11 3l3 3-3 3M14 6H7a4 4 0 000 8h3", size: 14, stroke: 1.6) }
         }

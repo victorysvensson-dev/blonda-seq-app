@@ -30,7 +30,7 @@ struct OrbitDial: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         ZStack {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { _ in
+            LiveTimeline(interval: 1.0 / 30.0) { _ in
                 Canvas { c, size in drawOrbit(&c, size) }
                     .background(GeometryReader { g in Color.clear.onAppear { dialSize = g.size.width }.onChange(of: g.size.width) { _, v in dialSize = v } })
             }

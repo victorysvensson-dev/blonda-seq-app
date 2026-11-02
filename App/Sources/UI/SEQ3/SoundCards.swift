@@ -392,40 +392,7 @@ struct BigKnob: View {
 
 // MARK: - Master
 
-struct MasterCard: View {
-    @EnvironmentObject var model: EngineModel
-    @ObservedObject private var fold = FoldStore.shared
-    private let order: [(Int, String, UInt32?)] = [(0, "filter", 0x3D6CF5), (1, "echo", 0x27B26B), (2, "space", nil), (3, "tape", 0xFF6A1A), (5, "swing", 0x3D6CF5), (4, "pump", 0x27B26B), (6, "volym", nil)]
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                (Text("master · ").foregroundColor(kInk.opacity(0.5)) + Text("glue · tape").foregroundColor(kInk).font(BFont.mono(9.5, 500)))
-                    .font(BFont.mono(9.5)).tracking(0.855)
-                Spacer()
-                HStack(spacing: 5) { LiteCap(.min, dark: false, fold: "master"); LiteCap(.full, dark: false, fold: "master") }
-                LiteCap(.grab, dark: false).padding(.leading, 8)
-            }
-            .frame(height: 26)
-            if !fold.isFolded("master") {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 62), spacing: 8)], spacing: 12) {   // seven in a row, or two rows in a narrow column
-                    ForEach(order, id: \.0) { f, label, dot in
-                        let def = kMasterParams.first { $0.field == f }!
-                        MasterKnob(def: def, label: label, dot: dot)
-                    }
-                }
-                Canvas { c, size in
-                    let n = Int(size.width / 8)
-                    for i in 0..<n { c.fill(Path(ellipseIn: CGRect(x: CGFloat(i) * 8, y: 0, width: 6, height: 6)), with: .color(kInk.opacity(0.1))) }
-                }
-                .frame(height: 6)
-            }
-        }
-        .padding(16)
-        .background(RoundedRectangle(cornerRadius: T.cardR, style: .continuous).fill(LinearGradient(colors: [Color(rgb: 249, 247, 238), Color(rgb: 237, 234, 217)], startPoint: UnitPoint(x: 0.4, y: 0), endPoint: UnitPoint(x: 0.6, y: 1))).dotsHidden())
-        .modifier(LookInvert())
-        .shadow(color: .black.opacity(LookStore.shared.look == .glass ? 0.45 : 0), radius: 22, y: 13)
-    }
-}
+// MasterCard: see MasterConsole.swift (the redesigned master)
 
 struct MasterKnob: View {
     @EnvironmentObject var model: EngineModel

@@ -65,7 +65,7 @@ struct LiveCard: View {
         GeometryReader { g in
             let w = g.size.width, h = g.size.height
             ZStack {
-                TimelineView(.animation(minimumInterval: 1.0 / 60.0)) { tl in
+                LiveTimeline(interval: 1.0 / 60.0) { tl in
                     Canvas { ctx, size in drawPad(&ctx, size, tl.date) }
                 }
                 tags(w, h)
@@ -316,7 +316,7 @@ struct Blink: ViewModifier {
     let period: Double
     func body(content: Content) -> some View {
         if on {
-            TimelineView(.animation) { tl in
+            LiveTimeline(interval: 1.0 / 60) { tl in
                 let ph = tl.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: max(0.02, period)) / max(0.02, period)
                 content.opacity(ph < 0.5 ? 1 : 0.25)
             }

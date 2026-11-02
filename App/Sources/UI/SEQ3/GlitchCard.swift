@@ -157,7 +157,7 @@ private struct GxArt: View {
     let ink: Color
     @State private var since = Date()
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !on)) { tl in
+        LiveTimeline(interval: 1.0 / 30, paused: !on) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate, age = on ? tl.date.timeIntervalSince(since) : 0
             Canvas { c, size in
                 let w = size.width, h = size.height, s = min(w / 100, h / 80)
@@ -277,7 +277,7 @@ struct AsciiScreen: View {
 
     var body: some View {
         GeometryReader { geo in
-        TimelineView(.animation(minimumInterval: 1.0 / 24)) { tl in
+        LiveTimeline(interval: 1.0 / 24) { tl in
             let t = tl.date.timeIntervalSinceReferenceDate
             let fx = model.engine.glitchActive
             let cols = max(20, min(72, Int((geo.size.width - 12) / 6.35)))   // as many characters as fit

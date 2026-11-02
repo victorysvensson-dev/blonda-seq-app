@@ -148,7 +148,7 @@ private struct SedWave: View {
     var body: some View {
         GeometryReader { g in
             let w = g.size.width, h = g.size.height
-            TimelineView(.animation(minimumInterval: 1.0 / 30)) { _ in
+            LiveTimeline(interval: 1.0 / 30) { _ in
                 Canvas { c, size in draw(c, size) }
             }
             .background(RoundedRectangle(cornerRadius: 10).fill(Color(hex: 0x0E0F11)))
@@ -327,7 +327,7 @@ private struct SedPad: View {
     let active: Bool
     @State private var down = false
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !active)) { _ in
+        LiveTimeline(interval: 1.0 / 30, paused: !active) { _ in
             let lit = down || (model.chopLast.0 == track && model.chopLast.1 == k && CACurrentMediaTime() - model.chopLast.2 < 0.12)
             ZStack(alignment: .topLeading) {
                 RoundedRectangle(cornerRadius: 14).fill(lit ? kLime : Color(hex: 0x222225))

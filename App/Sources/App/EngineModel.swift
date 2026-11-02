@@ -244,6 +244,13 @@ final class EngineModel: NSObject, ObservableObject {
     func variation(_ t: Int) { edit { engine.variation(track: t) } }
     func toggleSolo(_ t: Int) { edit { engine.toggleSolo(track: t) } }
     var soloTrack: Int { _ = revision; return engine.soloTrack }
+    func isSolo(_ t: Int) -> Bool { _ = revision; return engine.isSolo(track: t) }
+    // buses (0 trummor, 1 synth, 2 loopar): mute / solo and the pump settings, saved with the project
+    func busFlag(_ b: Int, _ flag: Int) -> Bool { _ = paramRevision; return engine.busFlag(b, flag: flag) }
+    func setBusFlag(_ b: Int, _ flag: Int, _ on: Bool) { engine.setBusFlag(b, flag: flag, on: on); paramRevision += 1; scheduleSave() }
+    struct Pump { var src = 0, rate = 4; var shape: Float = -1, rel: Float = -1, amt: Float = 0 }
+    func pump(_ b: Int) -> Pump { _ = paramRevision; let d = engine.busPump(b); return Pump(src: d["src"]?.intValue ?? 0, rate: d["rate"]?.intValue ?? 4, shape: d["shape"]?.floatValue ?? -1, rel: d["rel"]?.floatValue ?? -1, amt: d["amt"]?.floatValue ?? 0) }
+    func setPump(_ b: Int, _ p: Pump) { engine.setBusPump(b, src: p.src, rate: p.rate, shape: p.shape, rel: p.rel, amt: p.amt); paramRevision += 1; scheduleSave() }
     /// Copies this pattern into the next one and goes there, so you can build a variation right away.
     func copyPattern() {
         let a = pattern, b = (a + 1) % 4, L = ["A", "B", "C", "D"]

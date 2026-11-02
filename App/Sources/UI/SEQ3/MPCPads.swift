@@ -167,7 +167,7 @@ private struct MPCPad: View {
             let col = model.trackColor(track), on = touch != nil
             ZStack(alignment: .topLeading) {
                 // web: each pad carries its track's colour and lights up when the sequencer plays it
-                TimelineView(.animation(minimumInterval: 1.0 / 30, paused: on)) { tl in
+                LiveTimeline(interval: 1.0 / 30, paused: on) { tl in
                     let flash = xParam.group == 0 && track < 10 ? max(0, 1 - (CACurrentMediaTime() - model.hitTime[track]) * 5) : 0
                     RoundedRectangle(cornerRadius: 12, style: .continuous)
                         .fill(on ? col.opacity(0.35 + 0.65 * Double(vel)) : col.opacity(0.13 + 0.5 * flash))

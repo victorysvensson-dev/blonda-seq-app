@@ -40,7 +40,7 @@ struct Backdrop: View {
     private var glass: some View {
         GeometryReader { geo in
             let f = geo.frame(in: .global), full = geo.size, k = Perf.fieldScale
-            TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { tl in
+            LiveTimeline(interval: 1.0 / 20.0) { tl in
                 Canvas { ctx, small in   // drawn small and scaled up, like the background (it is only soft gradients)
                     var c = ctx
                     c.scaleBy(x: small.width / max(1, full.width), y: small.height / max(1, full.height))
@@ -60,6 +60,29 @@ struct Backdrop: View {
 }
 
 enum ScreenSize { static var current = CGSize(width: 1366, height: 1024) }
+
+/// Whether a card is on screen: animations inside cards scrolled out of view pause (they were redrawn 30–60 times a
+/// second even when nobody could see them, which made the Mac app feel slow).
+private struct LiveOnKey: EnvironmentKey { static let defaultValue = true }
+extension EnvironmentValues { var liveOn: Bool { get { self[LiveOnKey.self] } set { self[LiveOnKey.self] = newValue } } }
+struct VisibleTracker: ViewModifier {
+    @State private var visible = true
+    func body(content: Content) -> some View {
+        content.environment(\.liveOn, visible)
+            .onGeometryChange(for: Bool.self) { p in
+                let f = p.frame(in: .global), S = ScreenSize.current
+                return f.maxY > -60 && f.minY < S.height + 60 && f.maxX > -60 && f.minX < S.width + 60
+            } action: { visible = $0 }
+    }
+}
+/// TimelineView(.animation) that also pauses while its card is off screen.
+struct LiveTimeline<C: View>: View {
+    var interval: Double = 1.0 / 30
+    var paused = false
+    @ViewBuilder let content: (TimelineViewDefaultContext) -> C
+    @Environment(\.liveOn) private var on
+    var body: some View { TimelineView(.animation(minimumInterval: interval, paused: paused || !on)) { content($0) } }
+}
 
 /// Drawing settings that keep the app light. -slowbg draws the field at full size (to measure the difference in CI).
 enum Perf {

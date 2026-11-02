@@ -74,7 +74,7 @@ struct PianoRoll: View {
         VStack(spacing: 0) {
             header
             GeometryReader { g in
-                TimelineView(.animation) { tl in
+                LiveTimeline(interval: 1.0 / 60) { tl in
                     Canvas { ctx, size in draw(&ctx, size, tl.date.timeIntervalSinceReferenceDate) }
                 }
                 .contentShape(Rectangle())
@@ -587,7 +587,7 @@ struct PianoRoll: View {
     @State private var velDrag: (best: Int, grp: [(Int, Float)])?
     private var velocityLane: some View {
         ZStack(alignment: .topLeading) {
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { _ in
+            LiveTimeline(interval: 1.0 / 30.0) { _ in
                 Canvas { ctx, size in
                     let vh = size.height, col = Color(hex: model.trackHex(track))
                     ctx.fill(Path(CGRect(x: 0, y: vh - 6, width: size.width, height: 1)), with: .color(.white.opacity(0.06)))

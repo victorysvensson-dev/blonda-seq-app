@@ -246,6 +246,16 @@ static SInt32 endpointID(MIDIEndpointRef e) { SInt32 v = 0; MIDIObjectGetInteger
 - (void)variationTrack:(NSInteger)track { _host->variation((int)track, arc4random()); }
 - (void)toggleSoloTrack:(NSInteger)track { _host->setSolo((int)track); }
 - (NSInteger)soloTrack { return _host->solo(); }
+- (BOOL)isSoloTrack:(NSInteger)track { return _host->isSolo((int)track); }
+- (BOOL)busFlag:(NSInteger)bus flag:(NSInteger)flag { const blonda::BusParams& b = _host->bus((int)bus); return flag ? b.solo != 0 : b.mute != 0; }
+- (void)setBusFlag:(NSInteger)bus flag:(NSInteger)flag on:(BOOL)on { _host->setBusFlag((int)bus, (int)flag, on); }
+- (NSDictionary<NSString *, NSNumber *> *)busPump:(NSInteger)bus { const blonda::PumpParams& p = _host->bus((int)bus).pump;
+    return @{@"src": @(p.src), @"rate": @(p.rate), @"shape": @(p.shape), @"rel": @(p.rel), @"amt": @(p.amt)}; }
+- (void)setBusPump:(NSInteger)bus src:(NSInteger)src rate:(NSInteger)rate shape:(float)shape rel:(float)rel amt:(float)amt { _host->setBusPump((int)bus, (int)src, (int)rate, shape, rel, amt); }
+- (float)pumpCurve:(NSInteger)bus at:(float)u { return _host->pumpCurveUI((int)bus, u); }
+- (float)pumpRelease:(NSInteger)bus { return _host->pumpReleaseUI((int)bus); }
+- (float)masterGR { return _host->masterGR(); }
+- (float)busPeak:(NSInteger)bus { return _host->busPeak((int)bus); }
 - (void)copyPatternToNext { _host->copyPatternToNext(); }
 - (BOOL)patternHasSteps:(NSInteger)p { return _host->patternHasSteps((int)p); }
 - (NSString *)rollDice:(NSInteger)n { return [NSString stringWithUTF8String:_host->dice((int)n, arc4random()).c_str()]; }

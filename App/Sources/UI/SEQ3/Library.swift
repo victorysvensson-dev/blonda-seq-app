@@ -92,7 +92,7 @@ struct LoopRow: View {
     @ViewBuilder private func wave(_ m: SampleMeta?) -> some View {
         if let m = m {
             ZStack(alignment: .leading) {
-                TimelineView(.animation(minimumInterval: 1.0 / 20.0)) { _ in WaveBars(pk: m.pk, color: T.loopGreen, progress: model.loopProgress(k)) }
+                LiveTimeline(interval: 1.0 / 20.0) { _ in WaveBars(pk: m.pk, color: T.loopGreen, progress: model.loopProgress(k)) }
                 HStack(spacing: 6) {
                     Text(m.name).font(BFont.mono(10.5, 500)).foregroundColor(T.fg).lineLimit(1)
                     Text("\(model.loopBarsEff(k)) takt\(model.loopBarsEff(k) > 1 ? "er" : "") · \(Int(m.bpm.rounded()))→\(Int(model.bpm.rounded()))").font(BFont.mono(9)).foregroundColor(T.mute).lineLimit(1)
@@ -211,7 +211,7 @@ struct PreviewHead: View {
     let m: SampleMeta
     var body: some View {
         if let p = model.previewing, p.id == m.id {
-            TimelineView(.animation) { tl in
+            LiveTimeline(interval: 1.0 / 60) { tl in
                 Canvas { c, size in
                     let _ = tl.date; let f = CGFloat(min(1, max(0, (CACurrentMediaTime() - p.start) / p.len)))
                     if m.kind == "loop" {

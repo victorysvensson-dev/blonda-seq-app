@@ -18,7 +18,7 @@ struct SEQ3Header: View {
 }
 
 /// The app's version, shown next to BLONDA (bump with every Mac/iPad release).
-let kAppVersion = "v26"
+let kAppVersion = "v27"
 
 struct Brand: View {
     @EnvironmentObject var model: EngineModel

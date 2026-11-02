@@ -217,7 +217,7 @@ struct SEQ3View: View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(spacing: 14) {
                 ForEach(cards.indices, id: \.self) { k in
-                    cards[k].modifier(Enter(index: base + k * 2, on: entered))
+                    cards[k].modifier(Enter(index: base + k * 2, on: entered)).modifier(VisibleTracker())   // off-screen cards stop animating
                 }
             }
             .padding(.bottom, 24)

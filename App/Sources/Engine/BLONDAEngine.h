@@ -80,6 +80,19 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 - (void)clearTrack:(NSInteger)track NS_SWIFT_NAME(clear(track:));
 - (void)variationTrack:(NSInteger)track NS_SWIFT_NAME(variation(track:));
 - (void)toggleSoloTrack:(NSInteger)track NS_SWIFT_NAME(toggleSolo(track:));
+/// Several channels can be soloed at once.
+- (BOOL)isSoloTrack:(NSInteger)track NS_SWIFT_NAME(isSolo(track:));
+/// Buses: 0 trummor (1–6), 1 synth (7–10), 2 loopar. flag 0 = mute, 1 = solo.
+- (BOOL)busFlag:(NSInteger)bus flag:(NSInteger)flag NS_SWIFT_NAME(busFlag(_:flag:));
+- (void)setBusFlag:(NSInteger)bus flag:(NSInteger)flag on:(BOOL)on NS_SWIFT_NAME(setBusFlag(_:flag:on:));
+/// Pump on synth (1) / loopar (2): src 0 follow kick, 1 beat every `rate` 16ths; shape / rel < 0 = classic; amt = loopar amount (synth: master pump).
+- (NSDictionary<NSString *, NSNumber *> *)busPump:(NSInteger)bus NS_SWIFT_NAME(busPump(_:));
+- (void)setBusPump:(NSInteger)bus src:(NSInteger)src rate:(NSInteger)rate shape:(float)shape rel:(float)rel amt:(float)amt NS_SWIFT_NAME(setBusPump(_:src:rate:shape:rel:amt:));
+- (float)pumpCurve:(NSInteger)bus at:(float)u NS_SWIFT_NAME(pumpCurve(_:at:));
+- (float)pumpRelease:(NSInteger)bus NS_SWIFT_NAME(pumpRelease(_:));
+/// Meters: dB of gain reduction in the master glue + limiter, peak of each bus (linear).
+@property (nonatomic, readonly) float masterGR;
+- (float)busPeak:(NSInteger)bus NS_SWIFT_NAME(busPeak(_:));
 @property (nonatomic, readonly) NSInteger soloTrack;
 - (void)copyPatternToNext;
 - (BOOL)patternHasSteps:(NSInteger)p NS_SWIFT_NAME(patternHasSteps(_:));

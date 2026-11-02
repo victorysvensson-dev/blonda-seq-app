@@ -128,7 +128,7 @@ struct EngBackground: View {
     let e: String
     var body: some View {
         if e == "analog" || e == "fm" || e == "super" {
-            TimelineView(.animation(minimumInterval: 1.0 / 15.0)) { tl in
+            LiveTimeline(interval: 1.0 / 15.0) { tl in
                 Canvas { ctx, size in draw(&ctx, size, tl.date.timeIntervalSinceReferenceDate) }
             }
         } else {
@@ -446,7 +446,7 @@ struct AnalogSynth: View {
 
     private var envelope: some View {
         GeometryReader { g in
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
+            LiveTimeline(interval: 1.0 / 30.0) { tl in
                 Canvas { ctx, size in drawEnv(&ctx, size, tl.date) }
             }
             .contentShape(Rectangle())
@@ -556,7 +556,7 @@ struct GenericSynth: View {
                 Text(D.tag).font(BFont.mono(9)).foregroundColor(theme.mute).multilineTextAlignment(.trailing).lineLimit(2)
             }
             .padding(.top, 2).padding(.bottom, 2)
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { tl in
+            LiveTimeline(interval: 1.0 / 30.0) { tl in
                 Canvas { ctx, size in
                     EngViz(model: model, track: track, e: D.key, theme: theme).draw(&ctx, size, tl.date.timeIntervalSinceReferenceDate)
                 }

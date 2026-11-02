@@ -20,6 +20,16 @@ static void designBQ(int type, float f, float q, float sr, float* c) {
         if (type == 0) { b0 = (1 - cs) * .5f; b1 = 1 - cs; b2 = b0; } else { b0 = (1 + cs) * .5f; b1 = -(1 + cs); b2 = b0; } }
     c[0] = b0 / a0; c[1] = b1 / a0; c[2] = b2 / a0; c[3] = a1 / a0; c[4] = a2 / a0;
 }
+// Web Audio lowshelf (3) / highshelf (4) / peaking (5); shelves ignore Q (S = 1), gain in dB
+static void designEQ(int type, float f, float q, float gainDb, float sr, float* c) {
+    f = clampf(f, 1.f, sr * .5f - 1.f);
+    const float A = std::pow(10.f, gainDb / 40.f), w = kTwoPi * f / sr, cs = std::cos(w), sn = std::sin(w); float b0, b1, b2, a0, a1, a2;
+    if (type == 5) { const float al = sn / (2 * q); b0 = 1 + al * A; b1 = -2 * cs; b2 = 1 - al * A; a0 = 1 + al / A; a1 = -2 * cs; a2 = 1 - al / A; }
+    else { const float al = sn / 2 * std::sqrt(2.f), k = 2 * std::sqrt(A) * al;
+        if (type == 3) { b0 = A * ((A + 1) - (A - 1) * cs + k); b1 = 2 * A * ((A - 1) - (A + 1) * cs); b2 = A * ((A + 1) - (A - 1) * cs - k); a0 = (A + 1) + (A - 1) * cs + k; a1 = -2 * ((A - 1) + (A + 1) * cs); a2 = (A + 1) + (A - 1) * cs - k; }
+        else { b0 = A * ((A + 1) + (A - 1) * cs + k); b1 = -2 * A * ((A - 1) + (A + 1) * cs); b2 = A * ((A + 1) + (A - 1) * cs - k); a0 = (A + 1) - (A - 1) * cs + k; a1 = 2 * ((A - 1) - (A + 1) * cs); a2 = (A + 1) - (A - 1) * cs - k; } }
+    c[0] = b0 / a0; c[1] = b1 / a0; c[2] = b2 / a0; c[3] = a1 / a0; c[4] = a2 / a0;
+}
 static inline float runBQ(const float* c, float* z, float x) { const float y = c[0] * x + z[0]; z[0] = c[1] * x - c[3] * y + z[1]; z[1] = c[2] * x - c[4] * y; return y; }
 static inline float driveCurve(float x, float k, float kn) { x = clampf(x, -1.f, 1.f); return std::tanh(k * x) * kn; }
 static float crushCurve(float x, int bits) {   // 2048-point staircase, linearly interpolated like a WaveShaper
@@ -48,7 +58,16 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
         len[i] = (int)S["len"][kTrackIds[i]].numOr(16);
     }
     const json::Value& m = S["master"];
-    master = {(float)m["filter"].numOr(0), (float)m["echo"].numOr(.38), (float)m["space"].numOr(.4), (float)m["drive"].numOr(.12), (float)m["pump"].numOr(.4), (float)m["swing"].numOr(.12), (float)m["vol"].numOr(.75)};
+    master = {(float)m["filter"].numOr(0), (float)m["echo"].numOr(.38), (float)m["space"].numOr(.4), (float)m["drive"].numOr(.12), (float)m["pump"].numOr(.4), (float)m["swing"].numOr(.12), (float)m["vol"].numOr(.75),
+              (float)m["eqL"].numOr(0), (float)m["eqM"].numOr(0), (float)m["eqH"].numOr(0), (float)m["glue"].numOr(.5), (float)m["width"].numOr(1), (float)m["loud"].numOr(0)};
+    for (int b = 0; b < 3; ++b) { const json::Value& B = S["bus"][kBusIds[b]]; BusParams& o = bus[b];
+        o.lv = (float)B["lv"].numOr(1); o.filter = (float)B["filter"].numOr(0); o.drive = (float)B["drive"].numOr(0); o.glue = (float)B["glue"].numOr(0); o.mute = (int)B["mute"].numOr(0); o.solo = (int)B["solo"].numOr(0);
+        const json::Value& Pm = B["pump"]; o.pump.src = Pm["src"].strOr("") == "beat" ? 1 : 0; o.pump.rate = std::max(1, (int)Pm["rate"].numOr(4));
+        o.pump.shape = Pm["shape"].type == json::Value::Number ? (float)Pm["shape"].numOr(.5) : -1.f; o.pump.rel = Pm["rel"].type == json::Value::Number ? (float)Pm["rel"].numOr(.2) : -1.f; o.pump.amt = (float)Pm["amt"].numOr(0); }
+    // several soloed channels (web S.solos); an old single S.solo becomes one entry
+    for (int i = 0; i < kTracks; ++i) solos[i] = (int)S["solos"][i].numOr(0) ? 1 : 0;
+    if (solo >= 0 && solo < kTracks) { solos[solo] = 1; }
+    solo = -1;
     const json::Value& X = S["fx"];
     fx.echoOn = X["echo"]["on"].numOr(1) != 0; fx.echoFb = (float)X["echo"]["fb"].numOr(.38); fx.echoTime = (float)X["echo"]["time"].numOr(.75);
     fx.spaceOn = X["space"]["on"].numOr(1) != 0; fx.spaceSize = (float)X["space"]["size"].numOr(2.6);
@@ -159,6 +178,13 @@ std::string Project::toJSON(const std::string& base) const {
     V& m = S.at("master");
     m.at("filter") = V::number(master.filter); m.at("echo") = V::number(master.echo); m.at("space") = V::number(master.space); m.at("drive") = V::number(master.drive);
     m.at("pump") = V::number(master.pump); m.at("swing") = V::number(master.swing); m.at("vol") = V::number(master.vol);
+    m.at("eqL") = V::number(master.eqL); m.at("eqM") = V::number(master.eqM); m.at("eqH") = V::number(master.eqH);
+    m.at("glue") = V::number(master.glue); m.at("width") = V::number(master.width); m.at("loud") = V::number(master.loud);
+    for (int b = 0; b < 3; ++b) { V& B = S.at("bus").at(kBusIds[b]); const BusParams& o = bus[b]; B = V::object();
+        B.at("lv") = V::number(o.lv); B.at("filter") = V::number(o.filter); B.at("drive") = V::number(o.drive); B.at("glue") = V::number(o.glue); B.at("mute") = V::number(o.mute); B.at("solo") = V::number(o.solo);
+        if (b > 0) { V& Pm = B.at("pump"); Pm = V::object(); Pm.at("src") = V::string_(o.pump.src ? "beat" : "kick"); Pm.at("rate") = V::number(o.pump.rate);
+            Pm.at("shape") = o.pump.shape < 0 ? V() : V::number(o.pump.shape); Pm.at("rel") = o.pump.rel < 0 ? V() : V::number(o.pump.rel); if (b == 2) Pm.at("amt") = V::number(o.pump.amt); } }
+    { V a = V::array(); for (int i = 0; i < kTracks; ++i) a.arr.push_back(V::number(solos[i])); S.at("solos") = a; }
     for (int k = 0; k < 4; ++k) S.at("inst").at(kMelIds[k]) = V::string_(inst[k]);
     static const char* kWaves[4] = {"sine", "square", "sawtooth", "triangle"};
     for (int k = 0; k < 4; ++k) {
@@ -221,6 +247,8 @@ void Seq3::prepare(float sampleRate) {
     const int maxB = 4096;
     for (int i = 0; i < kTracks; ++i) { chL_[i].assign(maxB, 0); chR_[i].assign(maxB, 0); strips_[i].comp.prepare(sr_); }
     for (auto* v : {&busL_, &busR_, &dInL_, &dInR_, &rInL_, &rInR_, &tmpL_, &tmpR_}) v->assign(maxB, 0);
+    for (auto& b : bus_) { b.L.assign(maxB, 0); b.R.assign(maxB, 0); b.comp.prepare(sr_); b.comp.attack = .01f; b.comp.release = .2f; b.comp.knee = 8; }
+    for (auto& g : gate_) g.assign(maxB, 1.f);
     dlL_.assign((size_t)(2.5 * sr_), 0); dlR_.assign((size_t)(2.5 * sr_), 0); dlW_ = 0;
     for (auto& b : rpBuf_) for (auto& c : b) c.assign((size_t)(4.1 * sr_), 0.f);
     perf_.setTau(.03f, sr_); perf_.snap(0); rpDry_.setTau(.0025f, sr_); rpDry_.snap(1); rpWet_.setTau(.0025f, sr_); rpWet_.snap(0); rpPh_ = 0; rpLoop_ = false;
@@ -259,7 +287,7 @@ Convolver* Seq3::swapReverb(Convolver* c) {
 }
 
 void Seq3::load(const Project& p) {
-    P_ = p; playing_ = false; evq_.clear();
+    P_ = p; playing_ = false; evq_.clear(); for (auto& e : penv_) e.clear();
     for (int i = 0; i < 6; ++i) reg_[i] = regionFor(P_, i);
     for (int k = 0; k < 4; ++k) { mot_[k].reset(); motN_[k] = 0; for (int q = 0; q < bris::kNumParams; ++q) mot_[k].setParam(q, P_.motor[k].vals[q]); }
     // web: comp threshold -12 ratio 1.8 attack .025 release .25 knee 12; limiter -1.5 / 20 / .002 / .12 / 0
@@ -272,6 +300,8 @@ void Seq3::load(const Project& p) {
     applyParams();
     for (auto* s : {&dlTime_, &fb_, &dRet_, &rRet_, &pre_, &post_, &tapeF_, &crushWet_, &crushDry_, &lpF_, &hpF_, &out_}) s->snap(s->target);
     for (auto& s : strips_) for (auto* m : {&s.g, &s.pan, &s.se, &s.ss, &s.dpre, &s.dpost, &s.mk, &s.lpf, &s.hpf, &s.lpq, &s.hpq}) m->snap(m->target);
+    for (auto& b : bus_) for (auto* m : {&b.lv, &b.gate, &b.dpre, &b.dpost, &b.lpf, &b.hpf, &b.mk}) m->snap(m->target);
+    for (auto* m : {&eqLg_, &eqMg_, &eqHg_, &width_, &loud_}) m->snap(m->target);
 }
 
 // applyAll(): push parameters to the smoothers (time constants like the web's setTargetAtTime calls)
@@ -298,6 +328,16 @@ void Seq3::applyParams() {
     crushWet_.setTau(.03f, sr_); crushWet_.target = X.crushOn ? X.crushMix : 0.f; crushDry_.setTau(.03f, sr_); crushDry_.target = X.crushOn ? 1 - X.crushMix * .6f : 1.f;
     fb_.setTau(.05f, sr_); fb_.target = X.echoFb; dRet_.setTau(.03f, sr_); dRet_.target = X.echoOn ? m.echo : 0.f; rRet_.setTau(.03f, sr_); rRet_.target = X.spaceOn ? m.space * .7f : 0.f;
     dlTime_.setTau(.05f, sr_); dlTime_.target = 60.f / P_.bpm * X.echoTime; out_.setTau(.03f, sr_); out_.target = m.vol;
+    // buses (web applyBuses)
+    for (int b = 0; b < 3; ++b) { BusRt& B = bus_[b]; const BusParams& o = P_.bus[b]; const float on = busOn(b) ? 1.f : 0.f, f = o.filter, dr = o.drive, g = o.glue;
+        B.lv.setTau(.012f, sr_); B.lv.target = on * o.lv; B.gate.setTau(.012f, sr_); B.gate.target = on;
+        B.lpf.setTau(.03f, sr_); B.lpf.target = f < 0 ? 200.f * std::pow(100.f, 1 + f) : 20000.f; B.hpf.setTau(.03f, sr_); B.hpf.target = f > 0 ? 20.f * std::pow(100.f, f * 1.15f) : 10.f;
+        B.driveOn = dr > .005f; B.driveK = 1 + dr * 6; B.dpre.setTau(.03f, sr_); B.dpre.target = 1 + dr * .8f; B.dpost.setTau(.03f, sr_); B.dpost.target = 1 / (1 + dr * .75f);
+        B.comp.threshold = -30 * g; B.comp.ratio = 1 + 3 * g; B.mk.setTau(.03f, sr_); B.mk.target = 1 + g * .5f; }
+    // mastering (web applyMastering): glue .5 = the old fixed comp (-12 dB, 1.8:1)
+    if (!dynBypass_) { comp_.threshold = -24 * m.glue; comp_.ratio = 1 + 1.6f * m.glue; }
+    eqLg_.setTau(.03f, sr_); eqLg_.target = m.eqL; eqMg_.setTau(.03f, sr_); eqMg_.target = m.eqM; eqHg_.setTau(.03f, sr_); eqHg_.target = m.eqH;
+    width_.setTau(.03f, sr_); width_.target = m.width; loud_.setTau(.03f, sr_); loud_.target = std::pow(10.f, m.loud * 9 / 20);
     for (int i = 0; i < 6; ++i) { drums_[i].setKit(P_.kit[i].c_str()); drums_[i].params = {P_.params[i].tune, P_.params[i].decay, P_.params[i].tone}; }   // ohat has its own kit entry (S.dk.ohat)
     for (int k = 0; k < 4; ++k) {
         const std::string& in = P_.inst[k]; MelodicTrack& M = mel_[k];
@@ -415,6 +455,29 @@ void Seq3::startLoop(int slot, const SampleData* s, long long f, double dur, dou
 void Seq3::killLoops(int slot) {
     for (auto& v : lvox_) if (v.active && (slot == -1 ? v.slot >= 0 : v.slot == slot)) { if (v.start > frame_) v.active = false; else v.killing = true; }
 }
+void Seq3::processBus(int b, int n) {
+    BusRt& B = bus_[b]; float* l = B.L.data(); float* r = B.R.data();
+    const float kn = 1.f / std::tanh(B.driveK);
+    for (int x = 0; x < n; ++x) {
+        const float dpre = B.dpre.next(), dpost = B.dpost.next(), lf = B.lpf.next(), hf = B.hpf.next();
+        if (std::fabs(lf - B.lastLp) > 1e-2f) { designBQ(0, lf, .7f, sr_, B.lpc); B.lastLp = lf; }
+        if (std::fabs(hf - B.lastHp) > 1e-3f) { designBQ(1, hf, .7f, sr_, B.hpc); B.lastHp = hf; }
+        for (int c = 0; c < 2; ++c) {
+            float v = (c ? r : l)[x] * dpre;
+            if (B.driveOn) {   // driveCurve on a 2x-oversampled shaper, with its latency (as the master tape)
+                const float mid = .5f * (B.up[c] + v); B.up[c] = v; const float y = B.dec[c].process(driveCurve(mid, B.driveK, kn), driveCurve(v, B.driveK, kn));
+                float* lb = B.lat.data() + c * 128; const float o = lb[B.li]; lb[B.li] = y; v = o;
+            }
+            v *= dpost; v = runBQ(B.lpc, &B.z[c][0], v); v = runBQ(B.hpc, &B.z[c][2], v);
+            (c ? r : l)[x] = v;
+        }
+        if (B.driveOn) B.li = B.li + 1 >= 112 ? 0 : B.li + 1;
+    }
+    B.comp.process(l, r, n);
+    float pk = 0; for (int x = 0; x < n; ++x) { const float g = B.mk.next() * B.lv.next(); l[x] *= g; r[x] *= g; pk = std::max(pk, std::max(std::fabs(l[x]), std::fabs(r[x]))); }
+    busPk_[b] = pk;
+}
+
 void Seq3::renderLoops(long long b0, int n) {
     const float kc = std::exp(-1.f / (.01f * sr_)), up = .004f * sr_, dn = .008f * sr_;
     for (auto& v : lvox_) {
@@ -427,7 +490,7 @@ void Seq3::renderLoops(long long b0, int n) {
             if (v.killing) { v.g = v.g == 0 ? 1 : v.g * kc; if (v.g < 1e-4f) { v.active = false; break; } env *= v.g; }
             if (v.pos < S.frames - 1) {
                 const float gg = env * v.lv;
-                busL_[x] += hermiteAt(S.L.data(), S.frames, v.pos) * gg; busR_[x] += hermiteAt(S.R.data(), S.frames, v.pos) * gg;
+                bus_[2].L[x] += hermiteAt(S.L.data(), S.frames, v.pos) * gg; bus_[2].R[x] += hermiteAt(S.R.data(), S.frames, v.pos) * gg;
             }
             v.pos += v.rate;
         }
@@ -463,9 +526,15 @@ void Seq3::duckAt(WebParam& g, double t, float a, float base) {
     const float hold = .02f + std::min(a, 1.f) * .13f + over * .3f, rel = .04f + std::min(a, 1.f) * .2f + over * 1.1f;
     g.cancelAndHold(t); g.linearRampToValueAtTime(floor * base, t + .004); g.setValueAtTime(floor * base, t + .004 + hold); g.setTargetAtTime(base, t + .004 + hold, rel / 3);
 }
+void Seq3::pumpHit(int b, double t) {   // web pumpHit: classic duck when shape and release are untouched, else the shaped curve
+    const float a = pumpAmount(P_, b); if (a <= 0) return; pumpLast_[b] = t; const PumpParams& c = P_.bus[b].pump;
+    if (c.shape < 0 && c.rel < 0) { duckAt(b == 1 ? duck_ : lpDuck_, t, a, 1); return; }
+    const float fl = 1 - std::pow(std::min(1.f, a), .7f), sh = c.shape < 0 ? .5f : c.shape;
+    (void)sh; penv_[b].push(t, fl, pumpRelease(P_, b), pumpExponent(P_, b));
+}
 void Seq3::pump(double t) {
     for (int i = 1; i < kTracks; ++i) { const float a = P_.tfx[i].pump; if (a > 0) duckAt(strips_[i].pg, t, a, 1); }
-    if (P_.master.pump > 0) duckAt(duck_, t, P_.master.pump, 1);
+    for (int b = 1; b < 3; ++b) if (P_.bus[b].pump.src == 0) pumpHit(b, t);
 }
 
 // ---------------------------------------------------------------- sequencer (port of schedule())
@@ -500,6 +569,7 @@ void Seq3::scheduleStep(long long) {
     Noise& prob = prob_;
     const int ps = step_; const double sd = stepDur();
     outPush({(long long)std::llround(nextT_ * sr_), 1, -1, ps, 0, (float)sd});   // MIDI clock: 6 ticks per step
+    for (int b = 1; b < 3; ++b) { const PumpParams& c = P_.bus[b].pump; if (c.src == 1 && step_ % std::max(1, c.rate) == 0) pumpHit(b, nextT_); }   // web beatPump
     const double t = nextT_ + ((ps % 2) ? P_.master.swing * sd * .66 : 0.0);
     // BLONDA GLITCH auto: on the 8ths, a random effect from the chosen ones, 1–4 steps long, now and then
     if (P_.glitchAmt > 0 && P_.glitchMask && ps % 2 == 0) {
@@ -609,7 +679,9 @@ void Seq3::render(float* L, float* R, int frames) {
         std::memset(busL_.data(), 0, sizeof(float) * n); std::memset(busR_.data(), 0, sizeof(float) * n);
         std::memset(dInL_.data(), 0, sizeof(float) * n); std::memset(dInR_.data(), 0, sizeof(float) * n);
         std::memset(rInL_.data(), 0, sizeof(float) * n); std::memset(rInR_.data(), 0, sizeof(float) * n);
-        std::memset(tmpL_.data(), 0, sizeof(float) * n); std::memset(tmpR_.data(), 0, sizeof(float) * n);   // melodic sum (before duck)
+        std::memset(tmpL_.data(), 0, sizeof(float) * n); std::memset(tmpR_.data(), 0, sizeof(float) * n);
+        for (int b = 0; b < 3; ++b) { BusRt& B = bus_[b]; std::memset(B.L.data(), 0, sizeof(float) * n); std::memset(B.R.data(), 0, sizeof(float) * n);
+            float* g = gate_[b].data(); for (int x = 0; x < n; ++x) g[x] = B.gate.next(); }   // a muted bus mutes its sends too
         // channel strips
         for (int i = 0; i < kTracks; ++i) {
             Strip& s = strips_[i]; float* cl = chL_[i].data(); float* cr = chR_[i].data();
@@ -635,16 +707,20 @@ void Seq3::render(float* L, float* R, int frames) {
             s.comp.process(cl, cr, n);
             for (int x = 0; x < n; ++x) {
                 const double t = (double)(b0 + x) / sr_;
-                const float g = s.mk.next() * s.pg.valueAt(t) * s.g.next(), se = s.se.next(), ss = s.ss.next(), pan = s.pan.next();
+                const float bg = gate_[i >= 6 ? 1 : 0][x];
+                const float g = s.mk.next() * s.pg.valueAt(t) * s.g.next(), se = s.se.next() * bg, ss = s.ss.next() * bg, pan = s.pan.next();
                 float l = cl[x] * g, r = cr[x] * g;
                 dInL_[x] += l * se; dInR_[x] += r * se; rInL_[x] += l * ss; rInR_[x] += r * ss;
                 panStereo(l, r, pan);   // Chrome's per-track compressor always outputs stereo, so every panner sees two channels
-                if (i >= 6) { tmpL_[x] += l; tmpR_[x] += r; } else { busL_[x] += l; busR_[x] += r; }
+                BusRt& B = bus_[i >= 6 ? 1 : 0]; B.L[x] += l; B.R[x] += r;
             }
         }
-        // duck (melodic) -> dry -> bus
-        for (int x = 0; x < n; ++x) { const float d = duck_.valueAt((double)(b0 + x) / sr_); busL_[x] += tmpL_[x] * d; busR_[x] += tmpR_[x] * d; }
-        renderLoops(b0, n);   // web: loopBus -> dry
+        renderLoops(b0, n);   // web: loopBus -> loopar bus -> dry
+        for (int b = 0; b < 3; ++b) processBus(b, n);
+        // trummor + loopar -> dry; synth -> duck (pump) -> dry
+        for (int b = 1; b < 3; ++b) penv_[b].prune((double)b0 / sr_);
+        for (int x = 0; x < n; ++x) { const double t = (double)(b0 + x) / sr_; const float d = duck_.valueAt(t) * penv_[1].at(t), dl = lpDuck_.valueAt(t) * penv_[2].at(t);
+            busL_[x] = bus_[0].L[x] + bus_[2].L[x] * dl + bus_[1].L[x] * d; busR_[x] = bus_[0].R[x] + bus_[2].R[x] * dl + bus_[1].R[x] * d; }
         // live throw (web: dry -> perf -> dIn + rIn)
         for (int x = 0; x < n; ++x) { const float g = perf_.next(); if (g > 1e-5f) { dInL_[x] += busL_[x] * g; dInR_[x] += busR_[x] * g; rInL_[x] += busL_[x] * g; rInR_[x] += busR_[x] * g; } }
         // echo: dIn -> delay -> bandpass 1800 -> feedback; return to bus
@@ -702,10 +778,21 @@ void Seq3::render(float* L, float* R, int frames) {
                 (c ? busR_ : busL_)[x] = v;
             }
             shLi_ = shLi_ + 1 >= 112 ? 0 : shLi_ + 1;
+            // mastering EQ (110 Hz shelf, 1.5 kHz peak, 8 kHz shelf) and M/S width
+            const float gl = eqLg_.next(), gm = eqMg_.next(), gh = eqHg_.next(), w = width_.next();
+            if (std::fabs(gl - lastEq_[0]) > 1e-3f) { designEQ(3, 110, 1, gl, sr_, eqC_[0]); lastEq_[0] = gl; }
+            if (std::fabs(gm - lastEq_[1]) > 1e-3f) { designEQ(5, 1500, .8f, gm, sr_, eqC_[1]); lastEq_[1] = gm; }
+            if (std::fabs(gh - lastEq_[2]) > 1e-3f) { designEQ(4, 8000, 1, gh, sr_, eqC_[2]); lastEq_[2] = gh; }
+            if (std::fabs(gl) > 1e-4f || std::fabs(gm) > 1e-4f || std::fabs(gh) > 1e-4f || std::fabs(lastEq_[0]) > 1e-4f || std::fabs(lastEq_[1]) > 1e-4f || std::fabs(lastEq_[2]) > 1e-4f)
+                for (int c = 0; c < 2; ++c) { float v = (c ? busR_ : busL_)[x]; for (int e = 0; e < 3; ++e) v = runBQ(eqC_[e], eqZ_[e][c], v); (c ? busR_ : busL_)[x] = v; }
+            if (std::fabs(w - 1) > 1e-4f) { const float l = busL_[x], r = busR_[x], a = (1 + w) * .5f, b = (1 - w) * .5f; busL_[x] = l * a + r * b; busR_[x] = r * a + l * b; }
         }
         { static const int skip = getenv("MASTER_SKIP") ? atoi(getenv("MASTER_SKIP")) : 0;
           static FILE* dc = getenv("DUMP_COMPIN") ? fopen(getenv("DUMP_COMPIN"), "wb") : nullptr; if (dc) for (int x = 0; x < n; ++x) { fwrite(&busL_[x], 4, 1, dc); fwrite(&busR_[x], 4, 1, dc); }
-          if (!(skip & 4)) comp_.process(busL_.data(), busR_.data(), n); if (!(skip & 8)) lim_.process(busL_.data(), busR_.data(), n); }
+          if (!(skip & 4)) comp_.process(busL_.data(), busR_.data(), n);
+          for (int x = 0; x < n; ++x) { const float g = loud_.next(); busL_[x] *= g; busR_[x] *= g; }   // loudness into the limiter
+          if (!(skip & 8)) lim_.process(busL_.data(), busR_.data(), n);
+          grDb_ = std::fabs(20.f * std::log10(std::max(1e-6f, comp_.reduction()))) + std::fabs(20.f * std::log10(std::max(1e-6f, lim_.reduction()))); }
         for (int x = 0; x < n; ++x) { const float o = out_.next(); L[x] = busL_[x] * o; R[x] = busR_[x] * o; }
         { long long best = -1; int st = -1; for (const auto& m : marks_) if (m.f <= frame_ + n && m.f > best) { best = m.f; st = m.step; } audible_ = playing_ ? st : -1; }
         L += n; R += n; frames -= n; frame_ += n;

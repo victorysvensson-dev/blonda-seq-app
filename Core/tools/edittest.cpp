@@ -30,7 +30,8 @@ int main(int argc, char** argv) {
     h->variation(1, 12345); pump();     expect(true, ("variation snare " + row(*h, 1)).c_str());
     h->setLen(3, 12); pump();           expect(h->trackLen(3) == 12, "length 12");
     h->setSolo(2); pump();              expect(h->solo() == 2, "solo clap");
-    h->setSolo(2); pump();              expect(h->solo() == -1, "solo off");
+    h->setSolo(5); pump();              expect(h->isSolo(2) && h->isSolo(5), "solo clap and perc together");
+    h->setSolo(2); h->setSolo(5); pump(); expect(h->solo() == -1, "solo off");
     h->copyPatternToNext(); pump();     h->selectPattern(1); expect(row(*h, 0) == "_..._..._.._.._." || h->hits(0) == 5, ("copy to B " + row(*h, 0)).c_str());
     (void)bassBefore;
     // the saved file reloads with the edits
@@ -144,6 +145,28 @@ int main(int argc, char** argv) {
       h->glitchHold(0); pump(); for (int i = 0; i < 50; ++i) h->render(L, R, 128); expect(h->glitchActive() == 0, "glitch let go");
       h->togglePlay(); for (int i = 0; i < 100; ++i) h->render(L, R, 128);
       h->setGlitchAmt(.4f); h->setGlitchMask(0x15); blonda::Project q; expect(q.loadJSON(h->toJSON(), &err) && std::fabs(q.glitchAmt - .4f) < 1e-4f && q.glitchMask == 0x15, "glitch saved"); h->setGlitchAmt(0); }
+    // buses + mastering + pump (web v105)
+    { auto level = [&](int blocks) { double e = 0; for (int i = 0; i < blocks; ++i) { h->render(L, R, 128); for (int j = 0; j < 128; ++j) e += L[j] * L[j] + R[j] * R[j]; } return 10 * std::log10(e / (blocks * 256.0) + 1e-12); };
+      h->togglePlay(); level(200); const double all = level(800);   // settles: the echo and reverb tails ring for ~3 s after a change
+      h->setBusFlag(0, 0, true); pump(); level(1300); const double noDr = level(800);
+      h->setBusFlag(1, 1, true); pump(); level(1300); const double soloSy = level(800);
+      h->setBusFlag(1, 0, true); pump(); level(40); const double soloSyMuted = level(800);   // solo wins over mute? web: solo decides
+      h->setBusFlag(0, 0, false); h->setBusFlag(1, 0, false); h->setBusFlag(1, 1, false); pump(); level(40);
+      h->setBusFlag(2, 1, true); pump(); level(1300); const double onlyLoops = level(800); h->setBusFlag(2, 1, false); pump();
+      std::printf("     buses: all %.1f  no drums %.1f  solo synth %.1f  only loops %.1f dB\n", all, noDr, soloSy, onlyLoops);
+      expect(noDr < all - 1 && std::fabs(soloSy - noDr) < 1.5 && onlyLoops < -70, "bus mute and solo change the mix (no loops loaded = silence)"); (void)soloSyMuted;
+      h->setParam(blonda::PG_MASTER, 0, 7, 12); pump(); level(40); const double eqUp = level(800); h->setParam(blonda::PG_MASTER, 0, 7, 0); pump();
+      std::printf("     mastering: low +12 dB -> %.1f dB\n", eqUp); expect(eqUp > all + .5, "mastering low shelf boosts");
+      h->setParam(blonda::PG_MASTER, 0, 12, 1); pump(); level(40); const double loud = level(800); h->setParam(blonda::PG_MASTER, 0, 12, 0); pump();
+      std::printf("     loud +9 dB -> %.1f dB\n", loud); expect(loud > all + 1, "loud pushes into the limiter");
+      // shaped pump on the synth bus following a beat: output stays finite and the setting is saved
+      h->setParam(blonda::PG_MASTER, 0, 4, .9f); h->setBusPump(1, 1, 2, .9f, .15f, 0); pump(); bool fin = true;
+      for (int i = 0; i < 600; ++i) { h->render(L, R, 128); for (int j = 0; j < 128; ++j) if (!std::isfinite(L[j])) fin = false; }
+      expect(fin, "shaped pump on a beat stays finite");
+      h->setBusPump(2, 0, 4, .1f, .3f, .6f); h->setBusFlag(2, 0, true); h->setParam(blonda::PG_BUS, 1, 2, .5f); pump();
+      blonda::Project q; expect(q.loadJSON(h->toJSON(), &err) && q.bus[1].pump.src == 1 && q.bus[1].pump.rate == 2 && std::fabs(q.bus[1].pump.shape - .9f) < 1e-4f
+          && std::fabs(q.bus[2].pump.amt - .6f) < 1e-4f && q.bus[2].mute == 1 && std::fabs(q.bus[1].drive - .5f) < 1e-4f && !q.solos[2], "buses, pump and mastering saved");
+      h->togglePlay(); for (int i = 0; i < 100; ++i) h->render(L, R, 128); }
     h->shutdown();
     std::puts(fails ? "EDITTEST FAIL" : "EDITTEST OK"); return fails ? 1 : 0;
 }

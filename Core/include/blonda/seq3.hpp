@@ -24,12 +24,17 @@ struct Cell { int v = 0, n = 0, r = 1; float p = 1.f, vel = -1.f, o = 0.f; int c
 struct RollNote { float s = 0, l = 1; int n = 60; float v = .72f; int id = -1, g = -1; };
 struct TrackParams { float level = .5f, tune = 0, decay = .4f, tone = .5f, pan = 0, echo = 0, space = 0; };
 struct TrackFX { float drive = 0, filt = 0, reso = 0, crush = 0, comp = 0, pump = 0; };
-struct MasterParams { float filter = 0, echo = .38f, space = .4f, drive = .12f, pump = .4f, swing = .12f, vol = .75f; };
+struct MasterParams { float filter = 0, echo = .38f, space = .4f, drive = .12f, pump = .4f, swing = .12f, vol = .75f;
+                      float eqL = 0, eqM = 0, eqH = 0, glue = .5f, width = 1, loud = 0; };   // mastering (web v104): EQ dB, glue 0..1 (.5 = the old fixed comp), width 0..2, loud 0..1 = +0..9 dB into the limiter
+// buses (web S.bus, OP-XY style): 0 trummor (tracks 1–6), 1 synth (7–10), 2 loopar
+struct PumpParams { int src = 0; int rate = 4; float shape = -1, rel = -1, amt = 0; };   // src 0 = follow kick, 1 = beat (every `rate` 16ths); shape/rel -1 = classic (web null); amt: loopar (synth uses master.pump)
+struct BusParams { float lv = 1, filter = 0, drive = 0, glue = 0; int mute = 0, solo = 0; PumpParams pump; };
+static const char* const kBusIds[3] = {"dr", "sy", "lp"};
 struct FxParams { bool echoOn = true; float echoFb = .38f, echoTime = .75f; bool spaceOn = true; float spaceSize = 2.6f; bool tapeOn = true; float tapeColor = .75f;
                   bool crushOn = false; float crushBits = 6, crushMix = .4f; };
 
 // parameter addressing for the UI / MIDI learn: group 0 = track sound, 1 = track FX, 2 = master
-enum ParamGroup { PG_TRACK, PG_TFX, PG_MASTER };
+enum ParamGroup { PG_TRACK, PG_TFX, PG_MASTER, PG_BUS };   // PG_BUS: track = bus 0..2, field = lv filter drive glue
 
 // BLONDA motor state per melodic track: chosen factory sound + every parameter (in the motor's own units)
 struct MotorState { int preset = 1; std::array<double, bris::kNumParams> vals{}; bool set = false; };
@@ -40,7 +45,8 @@ struct ChopMap { std::string sid; std::vector<float> cuts; };
 struct LoopSlot { std::string sid; bool on = true; float vol = .8f; int bars = 0; };   // web: S.loops[k] (bars 0 = the sample's own)
 
 struct Project {
-    float bpm = 118; int pat = 0; int solo = -1; std::array<int, kTracks> mute{};
+    float bpm = 118; int pat = 0; int solo = -1; std::array<int, kTracks> mute{}; std::array<int, kTracks> solos{};   // solos: several channels at once (web S.solos)
+    std::array<BusParams, 3> bus;
     std::array<TrackParams, kTracks> params; std::array<TrackFX, kTracks> tfx; std::array<int, kTracks> len{};
     MasterParams master; FxParams fx;
     std::array<std::string, 4> inst{"analog", "analog", "pluck", "pad"};
@@ -62,7 +68,8 @@ struct Project {
 // field order — track: level tune decay tone pan echo space · fx: drive filt reso crush comp pump ·
 // master: filter echo space drive pump swing vol
 inline float* paramPtr(Project& p, int group, int track, int field) {
-    if (group == PG_MASTER) { MasterParams& m = p.master; float* f[] = {&m.filter, &m.echo, &m.space, &m.drive, &m.pump, &m.swing, &m.vol}; return field >= 0 && field < 7 ? f[field] : nullptr; }
+    if (group == PG_MASTER) { MasterParams& m = p.master; float* f[] = {&m.filter, &m.echo, &m.space, &m.drive, &m.pump, &m.swing, &m.vol, &m.eqL, &m.eqM, &m.eqH, &m.glue, &m.width, &m.loud}; return field >= 0 && field < 13 ? f[field] : nullptr; }
+    if (group == PG_BUS) { if (track < 0 || track > 2) return nullptr; BusParams& b = p.bus[track]; float* f[] = {&b.lv, &b.filter, &b.drive, &b.glue}; return field >= 0 && field < 4 ? f[field] : nullptr; }
     if (track < 0 || track >= kTracks) return nullptr;
     if (group == PG_TRACK) { TrackParams& t = p.params[track]; float* f[] = {&t.level, &t.tune, &t.decay, &t.tone, &t.pan, &t.echo, &t.space}; return field >= 0 && field < 7 ? f[field] : nullptr; }
     if (group == PG_TFX) { TrackFX& t = p.tfx[track]; float* f[] = {&t.drive, &t.filt, &t.reso, &t.crush, &t.comp, &t.pump}; return field >= 0 && field < 6 ? f[field] : nullptr; }
@@ -76,7 +83,17 @@ inline void paramRange(int group, int field, float& lo, float& hi) {
     if (group == PG_TFX && field == 1) { lo = -1; }
     if (group == PG_TFX && field == 5) { hi = 1.5f; }
     if (group == PG_MASTER && field == 0) { lo = -1; }
+    if (group == PG_MASTER && field >= 7 && field <= 9) { lo = -12; hi = 12; }
+    if (group == PG_MASTER && field == 11) { hi = 2; }
+    if (group == PG_BUS && field == 0) { hi = 1.5f; }
+    if (group == PG_BUS && field == 1) { lo = -1; }
 }
+
+// pump curve (web pumpGain / pumpRel): b = 1 synth (amount = master pump), 2 loopar
+inline float pumpAmount(const Project& P, int b) { return b == 1 ? P.master.pump : (b == 2 ? P.bus[2].pump.amt : 0.f); }
+inline float pumpRelease(const Project& P, int b) { const PumpParams& c = P.bus[b].pump; return c.rel >= 0 ? c.rel : .06f + std::min(pumpAmount(P, b), 1.f) * .33f; }
+inline float pumpExponent(const Project& P, int b) { const float sh = P.bus[b].pump.shape < 0 ? .5f : P.bus[b].pump.shape; return std::pow(2.f, (sh - .5f) * 3.2f); }
+inline float pumpCurve(const Project& P, int b, float u) { const float a = std::min(1.f, pumpAmount(P, b)), fl = 1 - std::pow(a, .7f); return fl + (1 - fl) * std::pow(std::max(0.f, std::min(1.f, u)), pumpExponent(P, b)); }
 
 // engine names as stored in projects (S.inst); index = id used by the real-time instrument switch
 constexpr int kNumKits = 15;
@@ -198,7 +215,12 @@ public:
     void setSong(bool on) { P_.song = on; songStart_ = true; if (!on) chainIdx_ = -1; }
     void setChain(int k, int v) { if (k >= 0 && k < 8) P_.chain[k] = (v >= 0 && v < kPatterns) ? v : -1; }
     int chainIndex() const { return P_.song && playing_ ? chainIdx_ : -1; }
-    void setSolo(int t) { P_.solo = (t >= 0 && t < kTracks) ? t : -1; applyParams(); }
+    void setSoloOn(int t, bool on) { if (P_.solo >= 0) { P_.solos[P_.solo] = 1; P_.solo = -1; } if (t >= 0 && t < kTracks) P_.solos[t] = on; else P_.solos.fill(0); applyParams(); }   // several channels can be soloed; t < 0 clears
+    void setBusPump(int b, int src, int rate, float shape, float rel, float amt) { if (b < 1 || b > 2) return; PumpParams& P = P_.bus[b].pump; P.src = src; P.rate = std::max(1, rate); P.shape = shape; P.rel = rel; P.amt = amt; }
+    void setBusMute(int b, bool m) { if (b >= 0 && b < 3) { P_.bus[b].mute = m; applyParams(); } }
+    void setBusSolo(int b, bool m) { if (b >= 0 && b < 3) { P_.bus[b].solo = m; applyParams(); } }
+    bool busOn(int b) const { const bool any = P_.bus[0].solo || P_.bus[1].solo || P_.bus[2].solo; return any ? P_.bus[b].solo != 0 : !P_.bus[b].mute; }
+    float masterGR() const { return grDb_; }   // dB of gain reduction in the glue + limiter (for the meter)
     void setLen(int t, int L) { if (t >= 0 && t < kTracks) P_.len[t] = std::max(1, std::min(16, L)); }
     void setParam(int group, int track, int field, float v) {
         if (float* f = paramPtr(P_, group, track, field)) { float lo, hi; paramRange(group, field, lo, hi); *f = std::max(lo, std::min(hi, v)); applyParams(); }
@@ -214,7 +236,7 @@ public:
     const MidiOutEv* midiOut() const { return mout_; }
     void clearMidiOut() { outN_ = 0; }
     std::vector<float>* dbgBus = nullptr; const std::vector<float>* dbgInBus = nullptr; size_t dbgInPos = 0;   // tests: capture the bus before the master chain (interleaved)
-    void bypassMasterDynamics() { comp_.threshold = 0; comp_.ratio = 1; comp_.knee = 0; }   // tests
+    void bypassMasterDynamics() { dynBypass_ = true; comp_.threshold = 0; comp_.ratio = 1; comp_.knee = 0; }   // tests
 
 private:
     Glitch glitch_;
@@ -237,7 +259,9 @@ private:
     void duckAt(WebParam& g, double t, float a, float base);
     void pump(double t);
     static float web2lin(float);
-    bool isMuted(int i) const { return P_.solo >= 0 ? P_.solo != i : P_.mute[i] != 0; }
+    bool anySolo() const { if (P_.solo >= 0) return true; for (int v : P_.solos) if (v) return true; return false; }
+    bool soloOn(int i) const { return P_.solo == i || P_.solos[i] != 0; }
+    bool isMuted(int i) const { return anySolo() ? !soloOn(i) : P_.mute[i] != 0; }
     int trkLen(int i) const { int v = P_.len[i]; return v >= 1 && v <= 16 ? v : 16; }
     double stepDur() const { return 60.0 / P_.bpm / 4.0; }
 
@@ -276,6 +300,24 @@ private:
     float shUp_[2]{}; HalfbandDecimator shDec_[2]; std::array<float, 2 * 128> shLat_{}; int shLi_ = 0;
     Convolver revA_; Convolver* rev_ = &revA_; WebCompressor comp_, lim_;
     std::vector<float> busL_, busR_, dInL_, dInR_, rInL_, rInR_, tmpL_, tmpR_;
+    // buses (web mkBus): in -> drive (2x shaper) -> LP -> HP -> glue comp -> makeup -> level·on -> dry; sends gated by on
+    struct BusRt { std::vector<float> L, R; Smoother lv, gate, dpre, dpost, lpf, hpf, mk; float lastLp = -1, lastHp = -1, lpc[5]{}, hpc[5]{}, z[2][4]{};
+                   float up[2]{}; HalfbandDecimator dec[2]; std::array<float, 2 * 128> lat{}; int li = 0; bool driveOn = false; float driveK = 1; WebCompressor comp; };
+    std::array<BusRt, 3> bus_; std::array<std::vector<float>, 3> gate_; bool dynBypass_ = false;
+    void processBus(int b, int n);
+    // shaped pump (web pumpHit with a curve): dip to `floor` in 4 ms, then floor + (1-floor)·u^p over `rel`
+    struct PumpEnv { struct E { double t0; float start, floor, rel, p; }; E e[8]; int n = 0;
+        float at(double t) const { int k = -1; for (int i = 0; i < n; ++i) if (e[i].t0 <= t) k = i; if (k < 0) return n ? e[0].start : 1.f; const E& v = e[k]; const double d = t - v.t0;
+            if (d < .004) return v.start + (v.floor - v.start) * (float)(d / .004); if (d < .005) return v.floor; const double u = (d - .005) / v.rel; return u >= 1 ? 1.f : v.floor + (1 - v.floor) * (float)std::pow(u, (double)v.p); }
+        void push(double t0, float floor, float rel, float p) { const float st = at(t0); while (n > 0 && e[n - 1].t0 >= t0) --n; if (n == 8) { for (int i = 1; i < 8; ++i) e[i - 1] = e[i]; --n; } e[n++] = {t0, st, floor, std::max(.02f, rel), p}; }
+        void prune(double now) { while (n > 1 && e[1].t0 <= now) { for (int i = 1; i < n; ++i) e[i - 1] = e[i]; --n; } }
+        void clear() { n = 0; } };
+    PumpEnv penv_[3]; WebParam lpDuck_{1.f};
+    void pumpHit(int b, double t);
+    double pumpLast_[3] = {-9, -9, -9};
+    public: float busPeak(int b) const { return busPk_[b]; } private: float busPk_[3] = {};
+    // mastering: EQ shelves/peak, M/S width, loudness gain between the filter and the glue / limiter
+    Smoother eqLg_, eqMg_, eqHg_, width_, loud_; float lastEq_[3]{-99, -99, -99}, eqC_[3][5]{}, eqZ_[3][2][2]{}; float grDb_ = 0;
 };
 
 } // namespace blonda

@@ -83,7 +83,7 @@ struct MotorSynth: View {
                 DotMatrixText(text: BLONDAEngine.motorPresetName(pi), height: 15, color: theme.acc, offOpacity: 0.06, glow: theme.acc.opacity(0.6))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { _ in
+            LiveTimeline(interval: 1.0 / 30.0) { _ in
                 Canvas { ctx, size in drawEnvelopes(&ctx, size) }
             }
             .frame(height: 70)

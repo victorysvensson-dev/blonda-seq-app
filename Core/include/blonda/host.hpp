@@ -24,7 +24,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask, GlitchSet, Region };
+    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask, GlitchSet, Region, BusFlag, BusPump };
     struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; SampleRegion reg; };
 
     ~Host() { shutdown(); }
@@ -196,8 +196,20 @@ public:
     int trackLen(int t) const { const int v = ui.len[t]; return v >= 1 && v <= 16 ? v : 16; }
     int hits(int t) const { int k = 0; for (int s = 0; s < trackLen(t); ++s) k += stepValue(t, s) > 0; return k; }
     int rotation(int t) const { return t >= 0 && t < kTracks ? rot_[t] : 0; }
-    void setSolo(int t) { ui.solo = ui.solo == t ? -1 : t; Cmd c; c.type = Solo; c.a = ui.solo; send(c); }
-    int solo() const { return ui.solo; }
+    // several channels can be soloed (web S.solos); setSolo toggles one, setSolo(-1) clears them all
+    void setSolo(int t) { if (t >= 0 && t < kTracks) { if (ui.solo >= 0) ui.solos[ui.solo] = 1; ui.solo = -1; ui.solos[t] = !ui.solos[t]; } else { ui.solos.fill(0); ui.solo = -1; }
+        Cmd c; c.type = Solo; c.a = t; c.b = t >= 0 ? ui.solos[t] : 0; send(c); }
+    bool isSolo(int t) const { return t >= 0 && t < kTracks && (ui.solos[t] || ui.solo == t); }
+    int solo() const { for (int t = 0; t < kTracks; ++t) if (isSolo(t)) return t; return -1; }   // the first soloed channel (-1 none)
+    // buses: 0 trummor, 1 synth, 2 loopar — mute / solo (flag 0 / 1), pump source / rate / shape / release / amount
+    void setBusFlag(int b, int flag, bool on) { if (b < 0 || b > 2) return; (flag ? ui.bus[b].solo : ui.bus[b].mute) = on; Cmd c; c.type = BusFlag; c.a = b; c.b = flag; c.c = on; send(c); }
+    const BusParams& bus(int b) const { return ui.bus[std::max(0, std::min(2, b))]; }
+    float pumpCurveUI(int b, float u) const { return pumpCurve(ui, b, u); }
+    float pumpReleaseUI(int b) const { return pumpRelease(ui, b); }
+    float masterGR() const { return gr_.load(std::memory_order_relaxed); }
+    float busPeak(int b) const { return b >= 0 && b < 3 ? busPk_[b].load(std::memory_order_relaxed) : 0.f; }
+    void setBusPump(int b, int src, int rate, float shape, float rel, float amt) { if (b < 1 || b > 2) return; PumpParams& P = ui.bus[b].pump; P.src = src; P.rate = std::max(1, rate); P.shape = shape; P.rel = rel; P.amt = amt;
+        Cmd c; c.type = BusPump; c.a = b; c.b = src; c.c = P.rate; c.f = shape; c.g = rel; c.reg.st = amt; send(c); }
     void setLen(int t, int L) {
         if (t < 0 || t >= kTracks) return; pushHist(); ui.len[t] = std::max(1, std::min(16, L));
         Cmd c; c.type = Len; c.a = t; c.b = ui.len[t]; send(c);
@@ -467,7 +479,9 @@ public:
                 case NoteOn: if (e) e->liveNote(c.a, c.b, c.f, true); break;
                 case NoteOff: if (e) e->liveNote(c.a, c.b, 0, false); break;
                 case Param: if (e) e->setParam(c.a, c.b, c.c, c.f); break;
-                case Solo: if (e) e->setSolo(c.a); break;
+                case Solo: if (e) e->setSoloOn(c.a, c.b != 0); break;
+                case BusFlag: if (e) { if (c.b) e->setBusSolo(c.a, c.c != 0); else e->setBusMute(c.a, c.c != 0); } break;
+                case BusPump: if (e) e->setBusPump(c.a, c.b, c.c, c.f, c.g, c.reg.st); break;
                 case Len: if (e) e->setLen(c.a, c.b); break;
                 case Inst: if (e) e->setInstrument(c.a, c.b); break;
                 case EngParam: if (e) e->setEngParam(c.a, c.b, c.c, c.f); break;
@@ -499,6 +513,7 @@ public:
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }
         blockFrame_.store(engine_->frame(), std::memory_order_relaxed);
         engine_->render(L, R, frames);
+        gr_.store(engine_->masterGR(), std::memory_order_relaxed); for (int b = 0; b < 3; ++b) busPk_[b].store(engine_->busPeak(b), std::memory_order_relaxed);
         for (int k = 0; k < engine_->midiOutCount(); ++k) midiOut_.push(engine_->midiOut()[k]); engine_->clearMidiOut();   // a full queue just drops (nobody reads it without MIDI out)
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
         for (int k = 0; k < 4; ++k) motMeter_[k].store((float)engine_->motorMeter(k), std::memory_order_relaxed);
@@ -514,9 +529,9 @@ public:
 private:
     float scopeL_[kScope] = {}, scopeR_[kScope] = {};
     std::atomic<unsigned> scopeW_{0};
-    struct Snap { Cell cells[kPatterns][kTracks][kSteps]; std::vector<RollNote> roll[kPatterns][4]; std::array<int, kTracks> len, mute; int solo; };
+    struct Snap { Cell cells[kPatterns][kTracks][kSteps]; std::vector<RollNote> roll[kPatterns][4]; std::array<int, kTracks> len, mute, solos; int solo; };
     Snap snap() const { Snap s; std::memcpy(s.cells, ui.cells, sizeof(ui.cells)); for (int p = 0; p < kPatterns; ++p) for (int k = 0; k < 4; ++k) s.roll[p][k] = ui.roll[p][k];
-        s.len = ui.len; s.mute = ui.mute; s.solo = ui.solo; return s; }
+        s.len = ui.len; s.mute = ui.mute; s.solos = ui.solos; s.solo = ui.solo; return s; }
     void restore(const Snap& s) {
         for (int p = 0; p < kPatterns; ++p) {
             for (int t = 0; t < kTracks; ++t) for (int st = 0; st < kSteps; ++st) {
@@ -533,7 +548,8 @@ private:
             if (s.len[t] != ui.len[t]) { ui.len[t] = s.len[t]; Cmd c; c.type = Len; c.a = t; c.b = trackLen(t); send(c); }
             if (s.mute[t] != ui.mute[t]) { ui.mute[t] = s.mute[t]; Cmd c; c.type = Mute; c.a = t; c.b = ui.mute[t]; send(c); }
         }
-        if (s.solo != ui.solo) { ui.solo = s.solo; Cmd c; c.type = Solo; c.a = ui.solo; send(c); }
+        if (s.solos != ui.solos || s.solo != ui.solo) { ui.solo = -1; ui.solos = s.solos; if (s.solo >= 0) ui.solos[s.solo] = 1;
+            { Cmd c; c.type = Solo; c.a = -1; send(c); } for (int t = 0; t < kTracks; ++t) if (ui.solos[t]) { Cmd c; c.type = Solo; c.a = t; c.b = 1; send(c); } }
     }
     // set a drum track's steps (or the melodic notes on those steps) from a mask
     void setSteps(int t, const bool* want, int L) {
@@ -579,7 +595,7 @@ private:
     std::string base_;
     std::unordered_map<std::string, SampleData*> bank_;
     void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
-    SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_; SPSC<MidiOutEv, 2048> midiOut_; std::atomic<long long> blockFrame_{0};
+    SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_; SPSC<MidiOutEv, 2048> midiOut_; std::atomic<long long> blockFrame_{0}; std::atomic<float> gr_{0}, busPk_[3]{};
     std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {}; std::atomic<int> glitchShown_{0}, glitchMask_{0};
 };
 

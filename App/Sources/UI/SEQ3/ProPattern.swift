@@ -160,7 +160,7 @@ private struct ProRowExtras: View {
     let cell: CGFloat
     var body: some View {
         let muted: Bool = model.isMuted(track)
-        let solo: Bool = model.soloTrack == track
+        let solo: Bool = model.isSolo(track)
         let len: Int = model.length(track)
         let tc: Color = Color(hex: model.trackHex(track))
         HStack(spacing: 8) {

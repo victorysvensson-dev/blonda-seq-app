@@ -24,6 +24,7 @@ final class DeckScope {
     private(set) var loud: [Float] = []        // rms dB per frame for the last 30 s
     private(set) var spec = [Float](repeating: 0, count: 64)   // 0..1 per log band 40 Hz – 16 kHz
     private(set) var gonX: [Float] = [], gonY: [Float] = []
+    private(set) var pkL: Float = 0, pkR: Float = 0, msAvg: Float = 0   // L/R peaks (falling) and a ~3 s mean square for short-term loudness
     private var lastT: Double = 0
 
     init() { vDSP_hann_window(&win, vDSP_Length(DeckScope.n), Int32(vDSP_HANN_NORM)) }
@@ -38,6 +39,8 @@ final class DeckScope {
         vDSP_measqv(l, 1, &ms, vDSP_Length(DeckScope.n))
         let pdb = 20 * log10(max(pk, 1e-5)), rdb = 10 * log10(max(ms, 1e-10))
         peakDb = max(pdb, peakDb - 1.2); rmsDb = rdb; hold = max(pdb, hold - 0.25)
+        var pl: Float = 0, prr: Float = 0; vDSP_maxmgv(l, 1, &pl, vDSP_Length(DeckScope.n)); vDSP_maxmgv(r, 1, &prr, vDSP_Length(DeckScope.n))
+        pkL = max(pl, pkL * 0.9); pkR = max(prr, pkR * 0.9); var mr: Float = 0; vDSP_measqv(r, 1, &mr, vDSP_Length(DeckScope.n)); msAvg += ((ms + mr) / 2 - msAvg) * 0.03
         wave.append(pk); if wave.count > 240 { wave.removeFirst(wave.count - 240) }
         loud.append(rdb); if loud.count > 1200 { loud.removeFirst(loud.count - 1200) }
         // stereo: the last 512 samples as mid/side points
