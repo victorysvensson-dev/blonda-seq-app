@@ -469,7 +469,7 @@ struct PianoRoll: View {
         }
         if !st.sel.isEmpty && (k.key == .upArrow || k.key == .downArrow) { transpose((k.key == .upArrow ? 1 : -1) * (k.modifiers.contains(.shift) ? 12 : 1)); return .handled }
         if k.characters == "g" && st.sel.count > 1 { glideSelected(); return .handled }
-        if k.key == .space { if !model.keyboardDirect { model.togglePlay() }; return .handled }
+        if k.key == .space { model.keyboard?.handle(.space, true); model.keyboard?.handle(.space, false); return .handled }
         return .ignored
     }
 

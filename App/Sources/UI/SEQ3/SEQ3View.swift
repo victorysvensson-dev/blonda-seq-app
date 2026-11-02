@@ -138,6 +138,13 @@ struct SEQ3View: View {
         .focusEffectDisabled()
         .focused($keysFocused)
         .onAppear { keysFocused = true }
+        .onChange(of: model.textEditing) { _, e in if !e { keysFocused = true } }
+        .onChange(of: model.libOpen) { _, o in if !o { keysFocused = true } }
+        .onChange(of: model.projOpen) { _, o in if !o { keysFocused = true } }
+        .onChange(of: model.midiOpen) { _, o in if !o { keysFocused = true } }
+        .onChange(of: model.sampleEdit) { _, o in if o == nil { keysFocused = true } }
+        .onChange(of: model.drumEdit) { _, o in if o == nil { keysFocused = true } }
+        .onChange(of: model.rollTrack) { _, o in if o == nil { keysFocused = true } }
         .onKeyPress(phases: [.down, .up]) { press in handleKey(press) }
         .animation(.spring(response: 0.4, dampingFraction: 0.85), value: showKeys)
         .animation(.spring(response: 0.35, dampingFraction: 0.8), value: model.toast)
@@ -207,22 +214,12 @@ struct SEQ3View: View {
             if press.phase == .down && ch == "z" { if press.modifiers.contains(.shift) { model.redo() } else { model.undo() }; return .handled }
             return .ignored
         }
-        if model.keyboardDirect {   // KeyboardInput plays notes and space; swallow them here so nothing else reacts too
-            return press.key == .space || ch == "z" || ch == "x" || Self.keyMap.contains(ch) ? .handled : .ignored
+        // space, notes (A W S E D …), Z/X and 1–0 go to KeyboardInput, which also hears the hardware directly and plays each press once
+        if let kb = model.keyboard, press.phase == .down || press.phase == .up {
+            let c: Character = press.key == .space ? " " : ch
+            if kb.swiftUIKey(c, press.phase == .down) { return .handled }
         }
-        if press.key == .space { if press.phase == .down { model.togglePlay() }; return .handled }
-        if ch == "z" || ch == "x" { if press.phase == .down { octave = max(1, min(7, octave + (ch == "z" ? -1 : 1))) }; return .handled }
-        guard let ix = Self.keyMap.firstIndex(of: ch) else { return .ignored }
-        if press.phase == .down {
-            if held[ch] != nil { return .handled }   // key repeat
-            let base = 12 * (octave + 1) - (model.selectedTrack == 6 ? 24 : 12)
-            let note = base + ix
-            held[ch] = note
-            if model.selectedTrack < 6 { model.hitPad(model.selectedTrack) } else { model.noteOn(note) }
-        } else if let n = held.removeValue(forKey: ch) {
-            if model.selectedTrack >= 6 { model.noteOff(n) }
-        }
-        return .handled
+        return .ignored
     }
 
     private func column(width: CGFloat, cards: [AnyView], base: Int, clip: Bool = false) -> some View {

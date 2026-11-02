@@ -7,6 +7,8 @@ struct MPCPads: View {
     @EnvironmentObject var model: EngineModel
     @AppStorage("mpcScale") private var scaleIx = 0
     @AppStorage("mpcOct") private var octave = 0
+    @AppStorage("mpcDrumX") private var drumX = false    // drums: sideways changes the tone — off unless you want it
+    @AppStorage("mpcSynthX") private var synthX = true   // synths: sideways = filter
     static let scales: [(String, [Int])] = [("moll", [0, 2, 3, 5, 7, 8, 10]), ("dur", [0, 2, 4, 5, 7, 9, 11]), ("penta", [0, 3, 5, 7, 10]), ("krom", Array(0..<12))]
     var body: some View {
         let t = model.selectedTrack
@@ -32,18 +34,20 @@ struct MPCPads: View {
                         }.buttonStyle(PressScale())
                     }
                     Spacer()
+                    XChip(title: "sidled · filter", on: $synthX)
                     Text("oktav").font(BFont.mono(9)).foregroundColor(T.mute)
                     Button { octave = max(-2, octave - 1) } label: { Text("−").font(BFont.mono(14, 500)).frame(width: 34, height: 30).background(Capsule().fill(Color.white.opacity(0.07))) }.buttonStyle(PressScale())
                     Text("\(octave >= 0 ? "+" : "")\(octave)").font(BFont.mono(11, 500)).frame(width: 28)
                     Button { octave = min(2, octave + 1) } label: { Text("+").font(BFont.mono(14, 500)).frame(width: 34, height: 30).background(Capsule().fill(Color.white.opacity(0.07))) }.buttonStyle(PressScale())
                 }
                 .foregroundColor(T.fg)
-                NoteGrid(track: t, notes: notes(t))
+                NoteGrid(track: t, notes: notes(t), xOn: synthX)
             } else {
-                DrumGrid()
+                HStack { Spacer(); XChip(title: "sidled · ton", on: $drumX) }
+                DrumGrid(xOn: drumX)
             }
-            Text(t >= 6 ? "tryck högt upp = hårdare · vänster = mörkare filter, höger = öppet · dra med fingret för att forma tonen"
-                        : "tryck högt upp = hårdare · i sidled = tonen · flera fingrar samtidigt går bra")
+            Text(t >= 6 ? (synthX ? "tryck högt upp = hårdare · vänster = mörkare filter, höger = öppet · dra med fingret för att forma tonen" : "tryck högt upp = hårdare · flera fingrar samtidigt går bra")
+                        : (drumX ? "tryck högt upp = hårdare · i sidled = tonen · flera fingrar samtidigt går bra" : "tryck högt upp = hårdare · trummorna låter som i mönstret · flera fingrar samtidigt går bra"))
                 .font(BFont.mono(9)).foregroundColor(T.mute)
         }
     }
@@ -58,13 +62,14 @@ private struct NoteGrid: View {
     @EnvironmentObject var model: EngineModel
     let track: Int
     let notes: [Int]
+    let xOn: Bool
     var body: some View {
         let rows = [[12, 13, 14, 15], [8, 9, 10, 11], [4, 5, 6, 7], [0, 1, 2, 3]]
         VStack(spacing: 10) {
             ForEach(0..<4, id: \.self) { r in
                 HStack(spacing: 10) {
                     ForEach(rows[r], id: \.self) { k in
-                        MPCPad(track: track, note: notes[k], label: noteName(notes[k]), index: k + 1, xParam: kFxParams[1], xMap: { x in -0.9 * (1 - x) })
+                        MPCPad(track: track, note: notes[k], label: noteName(notes[k]), index: k + 1, xParam: kFxParams[1], xOn: xOn, xMap: { x in -0.9 * (1 - x) })
                     }
                 }
             }
@@ -78,6 +83,7 @@ private struct NoteGrid: View {
 /// The drums as a classic 4×4 (MPC order): pad 1 = kick bottom left, 1–10 the ten sounds, 11–16 glitch held down.
 private struct DrumGrid: View {
     @EnvironmentObject var model: EngineModel
+    let xOn: Bool
     var body: some View {
         VStack(spacing: 10) {
             ForEach(0..<4, id: \.self) { r in
@@ -85,7 +91,7 @@ private struct DrumGrid: View {
                     ForEach(0..<4, id: \.self) { c in
                         let k = (3 - r) * 4 + c   // 0 = bottom left
                         if k < 10 {
-                            MPCPad(track: k, note: k < 6 ? 60 : (k == 6 ? 45 : 57), label: model.trackShort(k), index: k + 1, xParam: kTrackParams[1], xMap: { x in x })
+                            MPCPad(track: k, note: k < 6 ? 60 : (k == 6 ? 45 : 57), label: model.trackShort(k), index: k + 1, xParam: kTrackParams[1], xOn: xOn, xMap: { x in x })
                         } else {
                             GlitchPad(fx: k - 9, index: k + 1)
                         }
@@ -95,6 +101,23 @@ private struct DrumGrid: View {
         }
         .frame(maxWidth: 760)
         .frame(maxWidth: .infinity)
+    }
+}
+
+/// on/off pill: whether sideways on a pad shapes the sound
+private struct XChip: View {
+    let title: String
+    @Binding var on: Bool
+    var body: some View {
+        Button { on.toggle() } label: {
+            HStack(spacing: 7) {
+                Circle().fill(on ? Color(hex: 0x111211) : T.fg.opacity(0.35)).frame(width: 6, height: 6)
+                Text(title + (on ? " på" : " av")).font(BFont.mono(10, 500))
+            }
+            .foregroundColor(on ? Color(hex: 0x111211) : T.fg.opacity(0.8))
+            .padding(.horizontal, 12).frame(height: 30)
+            .background(Capsule().fill(on ? T.yellow : Color.white.opacity(0.07)))
+        }.buttonStyle(PressScale())
     }
 }
 
@@ -134,6 +157,7 @@ private struct MPCPad: View {
     let label: String
     let index: Int
     let xParam: ParamDef
+    var xOn = true
     let xMap: (Double) -> Double   // 0..1 across the pad → parameter value
     @State private var touch: CGPoint?
     @State private var saved: Float?
@@ -165,11 +189,10 @@ private struct MPCPad: View {
                     let x = max(0, min(1, d.location.x / max(1, g.size.width))), y = max(0, min(1, d.location.y / max(1, g.size.height)))
                     let v = Float(1 - 0.65 * y)
                     if touch == nil {
-                        saved = model.param(xParam, track)
-                        apply(x)
+                        if xOn { saved = model.param(xParam, track); apply(x) }
                         vel = v
                         model.padNoteOn(track, note, v)
-                    } else { apply(x) }
+                    } else if xOn { apply(x) }
                     touch = CGPoint(x: x * g.size.width, y: y * g.size.height)
                 }
                 .onEnded { _ in

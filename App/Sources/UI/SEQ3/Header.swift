@@ -11,14 +11,14 @@ struct SEQ3Header: View {
                 BPMPill().padding(.top, 12)
             }
             .padding(.horizontal, 22)
-            Dock()
+            Dock().fixedSize(horizontal: false, vertical: true)   // the pulled-down drawer keeps its full height (and its glass) instead of being squeezed into the header row
         }
         .frame(height: 92, alignment: .top)
     }
 }
 
 /// The app's version, shown next to BLONDA (bump with every Mac/iPad release).
-let kAppVersion = "v25"
+let kAppVersion = "v26"
 
 struct Brand: View {
     @EnvironmentObject var model: EngineModel

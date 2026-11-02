@@ -209,6 +209,14 @@ jobs:
           "$APP/Contents/MacOS/BLONDA SEQ" -autoplay > ../mac-out/stdout.txt 2>&1 &
           sleep 10
           screencapture -x ../mac-out/mac.png || true
+          pkill -f "BLONDA SEQ" || true; sleep 2
+          for v in deck dockopen; do
+            "$APP/Contents/MacOS/BLONDA SEQ" -nointro -autoplay -$v > /dev/null 2>&1 &
+            sleep 7; screencapture -x ../mac-out/mac_$v.png || true
+            pkill -f "BLONDA SEQ" || true; sleep 2
+          done
+          "$APP/Contents/MacOS/BLONDA SEQ" -autoplay > /dev/null 2>&1 &
+          sleep 8
           log show --last 1m --predicate 'process == "BLONDA SEQ"' --style compact 2>/dev/null | grep -E "DIAG|rror|crash" | tail -40 > ../mac-out/log.txt || true
           pkill -f "BLONDA SEQ" || true
           ditto -c -k --sequesterRsrc --keepParent "$APP" "../mac-out/BLONDA SEQ (Mac).zip"

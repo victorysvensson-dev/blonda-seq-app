@@ -87,10 +87,11 @@ struct MasterDeck: View {
                     let _ = scope.update(model.engine, sampleRate: 48000, t: t)
                     Group {
                         if wide {
-                            HStack(alignment: .top, spacing: 26) {
-                                DeckLeft(scope: scope, t: t).frame(maxWidth: .infinity)
-                                DeckRight(scope: scope, t: t).frame(width: min(520, geo.size.width * 0.42))
+                            HStack(alignment: .top, spacing: 30) {
+                                DeckLeft(scope: scope, t: t, fill: true).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                                DeckRight(scope: scope, t: t, fill: true).frame(width: min(560, geo.size.width * 0.42)).frame(maxHeight: .infinity, alignment: .top)
                             }
+                            .padding(.bottom, 14)
                         } else {
                             ScrollView(.vertical, showsIndicators: false) {
                                 VStack(spacing: 14) { DeckLeft(scope: scope, t: t); DeckRight(scope: scope, t: t) }
@@ -98,6 +99,7 @@ struct MasterDeck: View {
                         }
                     }
                 }
+                .frame(maxHeight: .infinity, alignment: .top)
                 .padding(.horizontal, 22)
                 DeckFoot().padding(.horizontal, 22).padding(.bottom, 14)
             }
@@ -143,14 +145,14 @@ private struct DBox<C: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text(title).font(BFont.mono(9)).tracking(0.5).foregroundColor(T.ink.opacity(0.6))
+                Text(title).font(BFont.mono(9)).tracking(0.5).foregroundColor(T.ink.opacity(0.55))
                 Spacer()
-                Text(right).font(BFont.mono(9, 500)).tracking(0.5).foregroundColor(T.ink.opacity(0.8))
+                Text(right).font(BFont.mono(9)).tracking(0.5).foregroundColor(T.ink.opacity(0.75))
             }
             content()
         }
-        .padding(12)
-        .overlay(Rectangle().strokeBorder(T.ink.opacity(0.18), lineWidth: 1))
+        .padding(.top, 8)
+        .overlay(alignment: .top) { Rectangle().fill(T.ink.opacity(0.2)).frame(height: 1) }
     }
 }
 
@@ -158,17 +160,19 @@ private struct DeckLeft: View {
     @EnvironmentObject var model: EngineModel
     let scope: DeckScope
     let t: Double
+    var fill = false
     var body: some View {
         let el = model.playing ? max(0, CACurrentMediaTime() - model.playStart) : 0
         let beat = model.step >= 0 && model.playing ? model.step / 4 : -1
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .bottom, spacing: 16) {
                 DotMatrixText(text: String(format: "%02d:%02d", Int(el) / 60, Int(el) % 60), height: 74, color: T.ink, offOpacity: 0.08)
-                HStack(spacing: 8) { ForEach(0..<4, id: \.self) { k in Circle().fill(T.ink.opacity(k == beat ? 1 : 0.18)).frame(width: 12, height: 12) } }.padding(.bottom, 10)
                 Spacer()
+                HStack(spacing: 8) { ForEach(0..<4, id: \.self) { k in Circle().fill(T.ink.opacity(k == beat ? 1 : 0.18)).frame(width: 12, height: 12) } }.padding(.bottom, 6)
             }
             DBox(title: "master · vågform", right: model.playing ? "spelar" : "stopp") {
                 Canvas { c, size in
+                    deckDots(c, size)
                     let w = scope.wave, n = max(1, w.count)
                     let dx = size.width / 240, mid = size.height / 2
                     var p = Path()
@@ -177,9 +181,8 @@ private struct DeckLeft: View {
                         p.addRect(CGRect(x: x, y: mid - h, width: max(1, dx - 1), height: 2 * h))
                     }
                     c.fill(p, with: .color(T.ink))
-                    c.fill(Path(CGRect(x: 0, y: mid - 0.5, width: size.width, height: 1)), with: .color(T.ink.opacity(0.25)))
                 }
-                .frame(height: 96)
+                .frame(minHeight: 96, maxHeight: fill ? .infinity : 96)
             }
             DBox(title: "spår · mönster \(["A", "B", "C", "D"][model.pattern].lowercased())", right: "10 × 16") {
                 Canvas { c, size in
@@ -190,30 +193,45 @@ private struct DeckLeft: View {
                             let v = model.value(tr, s)
                             let r = CGRect(x: CGFloat(s) * cw + 1.5, y: CGFloat(tr) * ch + 1.5, width: cw - 3, height: ch - 3)
                             let on = s == model.step && model.playing
-                            let a: Double = v == 0 ? 0.1 : (v == 2 ? 1 : 0.62)
-                            c.fill(Path(r), with: .color(T.ink.opacity(on && v > 0 ? 1 : a * (on ? 1 : 0.85 + 0.15 * flash))))
-                            if on { c.stroke(Path(r.insetBy(dx: -1, dy: -1)), with: .color(T.ink), lineWidth: 1) }
+                            if v == 0 {   // an empty step is a small dot, like the web deck
+                                let d: CGFloat = on ? 4 : 2.6
+                                c.fill(Path(ellipseIn: CGRect(x: r.midX - d / 2, y: r.midY - d / 2, width: d, height: d)), with: .color(T.ink.opacity(on ? 0.7 : 0.28)))
+                                continue
+                            }
+                            let a: Double = v == 2 ? 1 : 0.62
+                            c.fill(Path(roundedRect: r, cornerRadius: 2), with: .color(T.ink.opacity(on ? 1 : a * (0.85 + 0.15 * flash))))
                         }
                     }
                 }
-                .frame(height: 150)
+                .frame(minHeight: 150, maxHeight: fill ? .infinity : 150)
             }
         }
     }
+}
+
+/// the dot-matrix ground the web deck draws under its scopes
+private func deckDots(_ c: GraphicsContext, _ size: CGSize, pitch: CGFloat = 6) {
+    var p = Path()
+    var y = pitch / 2
+    while y < size.height { var x = pitch / 2; while x < size.width { p.addRect(CGRect(x: x - 0.6, y: y - 0.6, width: 1.2, height: 1.2)); x += pitch }; y += pitch }
+    c.fill(p, with: .color(T.ink.opacity(0.16)))
 }
 
 private struct DeckRight: View {
     @EnvironmentObject var model: EngineModel
     let scope: DeckScope
     let t: Double
+    var fill = false
     private func p(_ f: Int) -> Float { let d = kMasterParams.first { $0.field == f }!; return model.param(d, 0) }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
+            HStack(alignment: .top, spacing: 16) {
                 DBox(title: "stereo", right: "l · r") {
                     Canvas { c, size in
-                        let m = min(size.width, size.height) / 2, cx = size.width / 2, cy = size.height / 2
-                        c.stroke(Path(ellipseIn: CGRect(x: cx - m, y: cy - m, width: 2 * m, height: 2 * m)), with: .color(T.ink.opacity(0.18)), lineWidth: 1)
+                        let m = min(size.width, size.height) / 2 - 1, cx = size.width / 2, cy = size.height / 2
+                        c.stroke(Path(ellipseIn: CGRect(x: cx - m, y: cy - m, width: 2 * m, height: 2 * m)), with: .color(T.ink.opacity(0.3)), style: StrokeStyle(lineWidth: 1.2, dash: [1.2, 4]))
+                        var cross = Path(); cross.move(to: CGPoint(x: cx - m, y: cy)); cross.addLine(to: CGPoint(x: cx + m, y: cy)); cross.move(to: CGPoint(x: cx, y: cy - m)); cross.addLine(to: CGPoint(x: cx, y: cy + m))
+                        c.stroke(cross, with: .color(T.ink.opacity(0.22)), style: StrokeStyle(lineWidth: 1, dash: [1, 5]))
                         var path = Path()
                         for i in 0..<scope.gonX.count {
                             let x = cx + CGFloat(max(-1, min(1, scope.gonX[i]))) * m, y = cy - CGFloat(max(-1, min(1, scope.gonY[i]))) * m
@@ -221,21 +239,26 @@ private struct DeckRight: View {
                         }
                         c.fill(path, with: .color(T.ink.opacity(0.75)))
                     }
-                    .frame(height: 110)
+                    .frame(minHeight: 110, maxHeight: fill ? 170 : 110)
                 }
+                .frame(maxWidth: .infinity)
                 DBox(title: "spektrum", right: "40 hz – 16 khz") {
                     Canvas { c, size in
+                        deckDots(c, size)
                         let n = scope.spec.count, bw = size.width / CGFloat(n)
                         var path = Path()
                         for i in 0..<n { let h = max(1, CGFloat(scope.spec[i]) * size.height); path.addRect(CGRect(x: CGFloat(i) * bw, y: size.height - h, width: max(1, bw - 1), height: h)) }
                         c.fill(path, with: .color(T.ink))
                     }
-                    .frame(height: 110)
+                    .frame(minHeight: 110, maxHeight: fill ? 170 : 110)
                 }
+                .frame(maxWidth: .infinity)
+                .layoutPriority(1.4)
             }
             DeckStats(items: [("peak db", String(format: "%.1f", max(-60, scope.peakDb))), ("rms db", String(format: "%.1f", max(-60, scope.rmsDb))),
                               ("bpm", "\(Int(model.bpm.rounded()))"), ("mönster", ["A", "B", "C", "D"][model.pattern])])
             DBox(title: "kanaler · senaste slagen", right: "10") {
+                VStack(spacing: 6) {
                 Canvas { c, size in
                     let now = CACurrentMediaTime(), bw = size.width / 10
                     for tr in 0..<10 {
@@ -243,9 +266,19 @@ private struct DeckRight: View {
                         let h = max(2, CGFloat(v) * size.height)
                         c.fill(Path(CGRect(x: CGFloat(tr) * bw + 3, y: size.height - h, width: bw - 6, height: h)), with: .color(Color(hex: model.trackHex(tr)).opacity(0.25)))
                         c.fill(Path(CGRect(x: CGFloat(tr) * bw + 3, y: size.height - h, width: bw - 6, height: h)), with: .color(T.ink.opacity(0.85)))
+                        // the fader track, dotted like the web
+                        var d = Path(); var y: CGFloat = 2
+                        while y < size.height - h { d.addRect(CGRect(x: CGFloat(tr) * bw + bw / 2 - 0.6, y: y, width: 1.2, height: 1.2)); y += 5 }
+                        c.fill(d, with: .color(T.ink.opacity(0.25)))
                     }
                 }
-                .frame(height: 64)
+                .frame(minHeight: 64, maxHeight: fill ? 120 : 64)
+                HStack(spacing: 0) {
+                    ForEach(0..<10, id: \.self) { tr in
+                        Text(model.trackShort(tr, max: 6, chopMark: false).lowercased()).font(BFont.mono(8.5, 500)).foregroundColor(T.ink.opacity(0.8)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity)
+                    }
+                }
+                }
             }
             DBox(title: "nivå · senaste 30 s", right: String(format: "%.0f db", max(-60, scope.rmsDb))) {
                 Canvas { c, size in
@@ -257,16 +290,18 @@ private struct DeckRight: View {
                     }
                     c.stroke(path, with: .color(T.ink), lineWidth: 1.5)
                 }
-                .frame(height: 54)
+                .background(Canvas { c, size in deckDots(c, size) })
+                .frame(minHeight: 54, maxHeight: fill ? 90 : 54)
             }
             DBox(title: "låt", right: model.songMode ? "på" : "av") {
                 HStack(spacing: 5) {
                     ForEach(0..<8, id: \.self) { k in
                         let v = model.chainSlot(k), on = model.songMode && model.chainIdx == k
-                        Text(v >= 0 ? ["A", "B", "C", "D"][v] : "·").font(BFont.mono(11, 500))
+                        Text(v >= 0 ? ["A", "B", "C", "D"][v] : "·").font(BFont.pixel(17))
                             .foregroundColor(on ? T.yellow : T.ink.opacity(v >= 0 ? 0.9 : 0.35))
-                            .frame(maxWidth: .infinity).frame(height: 26)
-                            .background(Rectangle().fill(on ? T.ink : T.ink.opacity(0.08)))
+                            .frame(maxWidth: .infinity).frame(height: 36)
+                            .background(RoundedRectangle(cornerRadius: 9, style: .continuous).fill(on ? T.ink : Color.clear))
+                            .overlay(RoundedRectangle(cornerRadius: 9, style: .continuous).strokeBorder(T.ink.opacity(on ? 0 : 0.3), lineWidth: 1))
                     }
                 }
             }
@@ -288,6 +323,8 @@ private struct DeckStats: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
+        .padding(.top, 10)
+        .overlay(alignment: .top) { Rectangle().fill(T.ink.opacity(0.2)).frame(height: 1) }
     }
 }
 
@@ -295,7 +332,13 @@ private struct DeckFoot: View {
     @EnvironmentObject var model: EngineModel
     var body: some View {
         HStack(spacing: 10) {
-            Text("dra ner eller tryck på pilen för att stänga").font(BFont.mono(9)).foregroundColor(T.ink.opacity(0.5))
+            HStack(spacing: 9) {
+                ForEach(0..<16, id: \.self) { k in
+                    let on = model.playing && model.step == k
+                    Circle().fill(T.ink.opacity(on ? 1 : (k % 4 == 0 ? 0.3 : 0.17))).frame(width: on ? 10 : 8, height: on ? 10 : 8).frame(width: 10)
+                }
+            }
+            .accessibilityLabel("dra ner eller tryck på pilen för att stänga")
             Spacer()
             Button { model.toggleRecord() } label: {
                 ZStack { Circle().fill(model.recording ? T.ink : Color.clear); Circle().strokeBorder(T.ink, lineWidth: 2); Circle().fill(Color(hex: 0xFF4A33)).frame(width: 16, height: 16) }.frame(width: 54, height: 54)
