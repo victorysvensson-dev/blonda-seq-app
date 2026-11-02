@@ -5,16 +5,20 @@ import SwiftUI
 struct PluginsCard: View {   // keeps the card key "plugins" so saved layouts still find it
     @EnvironmentObject var model: EngineModel
     @State private var an = Analyzer()
+    @State private var width: CGFloat = 600
     var body: some View {
         Card(style: .glass, title: [("analys · ", false), ("mix", true)]) {
             LiveTimeline(interval: 1.0 / 30) { tl in
                 let _ = an.update(model.engine, t: tl.date.timeIntervalSinceReferenceDate)
                 VStack(alignment: .leading, spacing: 10) {
                     head("spektrum", "20 hz – 20 khz · linje = topp")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { width = $0 }
                     well(170) { Canvas { c, s in an.drawSpectrum(c, s) } }
+                    let u = max(80, (width - 10) / 2.4)   // 1.4 : 1 like the web
                     HStack(alignment: .top, spacing: 10) {
-                        VStack(alignment: .leading, spacing: 6) { head("loudness", "senaste 30 s"); well(96) { Canvas { c, s in an.drawHistory(c, s) } } }.frame(maxWidth: .infinity).layoutPriority(1.4)
-                        VStack(alignment: .leading, spacing: 6) { head("stereo", "korrelation"); well(96) { Canvas { c, s in an.drawStereo(c, s) } } }.frame(maxWidth: .infinity)
+                        VStack(alignment: .leading, spacing: 6) { head("loudness", "senaste 30 s"); well(96) { Canvas { c, s in an.drawHistory(c, s) } } }.frame(width: u * 1.4)
+                        VStack(alignment: .leading, spacing: 6) { head("stereo", "korrelation"); well(96) { Canvas { c, s in an.drawStereo(c, s) } } }.frame(width: u)
                     }
                     Rectangle().fill(Color.white.opacity(0.1)).frame(height: 1)
                     HStack(spacing: 8) {

@@ -49,7 +49,8 @@ private struct MasterConsole: View {
                 Section(title: "mastering", sub: "eq → glue → bredd → loud → limiter")
                 let tiles = [AnyView(EqTile()), AnyView(GlueTile()), AnyView(WidthTile(scope: scope)), AnyView(LoudTile(scope: scope))]
                 if narrow { LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) { ForEach(0..<4, id: \.self) { tiles[$0] } } }
-                else { HStack(alignment: .top, spacing: 14) { tiles[0].frame(maxWidth: .infinity).layoutPriority(1.5); ForEach(1..<4, id: \.self) { tiles[$0].frame(maxWidth: .infinity) } } }
+                else { let u = max(60, (width - 3 * 14) / 4.5)   // eq gets 1.5 shares, the others 1 each (web grid 1.5fr 1fr 1fr 1fr)
+                    HStack(alignment: .top, spacing: 14) { tiles[0].frame(width: u * 1.5); ForEach(1..<4, id: \.self) { tiles[$0].frame(width: u) } } }
                 Section(title: "effekter", sub: "eko · rymd · tejp · crush · pennan byter vad siffran styr")
                 PluginTiles(cols: narrow ? 2 : 4)
                 Section(title: "färg & rum", sub: "tejp, eko, rymd, groove och volym")
