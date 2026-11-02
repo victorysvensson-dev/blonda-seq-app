@@ -42,6 +42,27 @@ typedef struct { float s; float l; int32_t n; float v; int32_t g; } BLRollNote;
 @property (nonatomic, copy, nullable) void (^midiNoteHandler)(NSInteger track, NSInteger note, float velocity, BOOL on);
 /// Number of MIDI sources currently connected.
 @property (nonatomic, readonly) NSInteger midiSourceCount;
+/// MIDI devices: each {"id": uniqueID, "name": display name}.
+@property (nonatomic, readonly) NSArray<NSDictionary<NSString *, id> *> *midiInputs;
+@property (nonatomic, readonly) NSArray<NSDictionary<NSString *, id> *> *midiOutputs;
+/// Which input plays (0 = all), which output gets clock / notes (0 = none).
+@property (nonatomic) NSInteger midiInputID;
+@property (nonatomic) NSInteger midiOutputID;
+/// Follow an external MIDI clock (tempo, start, stop); send clock (24 per beat, start/stop); send the sequenced notes
+/// (bass ch 1, keys 2, lead 3, pad 4, drums ch 10 with GM notes).
+@property (nonatomic) BOOL midiFollowClock;
+@property (nonatomic) BOOL midiSendClock;
+@property (nonatomic) BOOL midiSendNotes;
+/// Main thread: the tempo of an external clock (when following), start (YES) / stop (NO) from it, devices changed.
+@property (nonatomic, copy, nullable) void (^midiClockHandler)(double bpm);
+@property (nonatomic, copy, nullable) void (^midiTransportHandler)(BOOL start);
+@property (nonatomic, copy, nullable) void (^midiSetupHandler)(void);
+/// Seconds since the last MIDI message came in (large when nothing has).
+@property (nonatomic, readonly) double midiIdleSeconds;
+/// Audio: buffer size in frames (64 … 1024), the real one after the system answered, output route and latency.
+@property (nonatomic) NSInteger ioBufferFrames;
+@property (nonatomic, readonly) NSString *outputName;
+@property (nonatomic, readonly) double outputLatency;
 
 /// Sound parameters. group 0 = track (level tune decay tone pan echo space), 1 = track FX (drive filt reso crush comp pump),
 /// 2 = master (filter echo space drive pump swing vol; track ignored). Values use the web version's ranges.

@@ -454,8 +454,8 @@ void Seq3::renderMotor(int k, long long b0, int n, float* L, float* R) {
     motEnv_[k] = m.envelope();
 }
 
-void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); }
-void Seq3::stop() { killLoops(-1); playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
+void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); outPush({nextF_, 2}); }
+void Seq3::stop() { if (playing_) outPush({frame_, 3}); killLoops(-1); playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
 
 // ---------------------------------------------------------------- pump (duckAt)
 void Seq3::duckAt(WebParam& g, double t, float a, float base) {
@@ -470,6 +470,7 @@ void Seq3::pump(double t) {
 
 // ---------------------------------------------------------------- sequencer (port of schedule())
 void Seq3::trigger(int i, long long f, float vel, int note, float ls, int glide) {
+    if (!liveCall_) outPush({f, 0, i, note, vel, (float)(stepDur() * (ls > 0 ? ls : 1))});
     if (i < 6) {   // drums are built at schedule time (like the web), so a later closed hat can choke a scheduled open hat
         if (i == T_KICK && isMuted(i)) return;
         if (i == T_HAT) for (auto& v : svox_) if (v.active && v.track == T_OHAT && !v.choked) { v.choked = true; v.chokeAt = f; }   // web hatChoke
@@ -498,6 +499,7 @@ void Seq3::scheduleStep(long long) {
     }
     Noise& prob = prob_;
     const int ps = step_; const double sd = stepDur();
+    outPush({(long long)std::llround(nextT_ * sr_), 1, -1, ps, 0, (float)sd});   // MIDI clock: 6 ticks per step
     const double t = nextT_ + ((ps % 2) ? P_.master.swing * sd * .66 : 0.0);
     // BLONDA GLITCH auto: on the 8ths, a random effect from the chosen ones, 1–4 steps long, now and then
     if (P_.glitchAmt > 0 && P_.glitchMask && ps % 2 == 0) {
@@ -583,7 +585,7 @@ void Seq3::dispatch(long long blockStart, int frames) {
 }
 
 void Seq3::liveNote(int track, int note, float vel, bool on) {
-    if (track < 6) { if (on) trigger(track, frame_, vel, note >= 1000 ? note : 1000, 1, -1); return; }   // note 1000 + k: chop slice k
+    if (track < 6) { if (on) { liveCall_ = true; trigger(track, frame_, vel, note >= 1000 ? note : 1000, 1, -1); liveCall_ = false; } return; }   // note 1000 + k: chop slice k
     const int k = track - 6;
     if (P_.inst[k] == "bris") { if (on) bris_[k].noteOn(note, vel, 0, 1, 0.f); else bris_[k].noteOff(note, 0); return; }
     if (P_.inst[k] == "bris6") { const int nn = std::max(0, std::min(127, note + (int)std::lround(P_.params[6 + k].tune))); if (on) { ++motGen_[k][nn]; motorEvent(k, frame_, nn, vel, true); } else motorEvent(k, frame_, nn, 0, false, motGen_[k][nn]); return; }

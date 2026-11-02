@@ -114,6 +114,9 @@ struct SEQ3View: View {
                     .transition(.move(edge: .bottom))
                     .zIndex(2.5)
             }
+            if model.midiOpen {
+                MidiAudioPanel().modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.97))).zIndex(5.5)
+            }
             if model.projOpen {
                 ProjectsView().modifier(DotsFilter()).transition(.opacity.combined(with: .scale(scale: 0.985))).zIndex(6)
             }
@@ -154,6 +157,7 @@ struct SEQ3View: View {
                 model.setStepNudge(EngineModel.StepRef(track: 0, step: 4), 0.25); model.setStepNudge(EngineModel.StepRef(track: 0, step: 8), -0.5) } }
             if args.contains("-mpc") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { model.selectedTrack = 7; FullStore.shared.toggle("pads") } }   // CI
             if args.contains("-mixfull") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { FullStore.shared.toggle("mixer") } }   // CI
+            if args.contains("-midi") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { model.openMidi() } }
             if args.contains("-sed") || args.contains("-sedtrim") { DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {   // CI: a made-up 2 s break on perc, chopped
                 let sr = 48000, n = sr * 2; var l = [Float](repeating: 0, count: n)
                 for h in 0..<8 { let i0 = h * sr / 4, f: Float = h % 2 == 0 ? 70 : 220; for k in 0..<(sr / 5) where i0 + k < n { let t = Float(k) / Float(sr); l[i0 + k] += exp(-t * (h % 2 == 0 ? 9 : 18)) * (h % 2 == 0 ? sin(2 * .pi * f * t) : Float.random(in: -0.7...0.7)) } }
@@ -195,6 +199,7 @@ struct SEQ3View: View {
 
     private func handleKey(_ press: KeyPress) -> KeyPress.Result {
         if model.rollTrack != nil || model.libOpen || model.projOpen || model.textEditing { return .ignored }
+        if model.midiOpen, press.key == .escape { model.closeMidi(); return .handled }
         if model.sampleEdit != nil, press.key == .escape { model.closeSampleEditor(); return .handled }
         if model.drumEdit != nil, press.key == .escape { model.closeDrumEditor(); return .handled }
         guard let ch = press.characters.lowercased().first else { return .ignored }

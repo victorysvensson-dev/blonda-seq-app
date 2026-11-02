@@ -7,7 +7,18 @@
 #include <atomic>
 #include <memory>
 
-struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}; std::atomic<bool> rec{false}; };
+#include <mach/mach_time.h>
+struct MIDIState {
+    std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}; std::atomic<bool> rec{false};
+    std::atomic<bool> follow{false}, sendClock{false}, sendNotes{false};
+    std::atomic<uint64_t> lastMsg{0};
+    // clock in (MIDI thread only)
+    uint64_t lastTick = 0; double iv[48] = {}; int ivN = 0, ivW = 0, tickN = 0; double lastBpm = 0;
+    // audio clock: engine frame at the start of the last block and its host time (written by the audio thread)
+    std::atomic<long long> blockFrame{0}; std::atomic<uint64_t> blockHost{0}; std::atomic<double> sr{48000}, latency{0};
+};
+static double hostSeconds(uint64_t t) { static mach_timebase_info_data_t tb; if (!tb.denom) mach_timebase_info(&tb); return (double)t * tb.numer / tb.denom / 1e9; }
+static uint64_t hostTicks(double s) { static mach_timebase_info_data_t tb; if (!tb.denom) mach_timebase_info(&tb); return (uint64_t)(s * 1e9 * tb.denom / tb.numer); }
 
 @implementation BLONDAEngine {
     AVAudioEngine *_avEngine;
@@ -15,7 +26,10 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
     std::shared_ptr<blonda::Host> _host;
     std::shared_ptr<MIDIState> _midi;
     MIDIClientRef _client;
-    MIDIPortRef _port;
+    MIDIPortRef _port, _outPort;
+    MIDIEndpointRef _dest;
+    dispatch_source_t _outTimer;
+    NSInteger _inputID, _outputID;
 }
 
 - (instancetype)init {
@@ -24,6 +38,7 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 }
 
 - (void)dealloc {
+    if (_outTimer) dispatch_source_cancel(_outTimer);
     if (_port) MIDIPortDispose(_port);
     if (_client) MIDIClientDispose(_client);
     [_avEngine stop]; _host->shutdown();
@@ -33,17 +48,21 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
     AVAudioSession *s = [AVAudioSession sharedInstance];
     [s setCategory:AVAudioSessionCategoryPlayback mode:AVAudioSessionModeDefault options:AVAudioSessionCategoryOptionMixWithOthers error:nil];
     [s setPreferredSampleRate:48000 error:nil];
-    [s setPreferredIOBufferDuration:0.005 error:nil];
+    { const NSInteger b = [NSUserDefaults.standardUserDefaults integerForKey:@"ioBuffer"]; [s setPreferredIOBufferDuration:(b > 0 ? (double)b / 48000.0 : 0.005) error:nil]; }
     if (![s setActive:YES error:error]) return NO;
     _host->sampleRate = s.sampleRate > 0 ? (float)s.sampleRate : 48000.f;
 
     _avEngine = [[AVAudioEngine alloc] init];
     AVAudioFormat *fmt = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:_host->sampleRate channels:2];   // float, non-interleaved
     std::shared_ptr<blonda::Host> host = _host;
+    if (!_midi) { _midi = std::make_shared<MIDIState>(); _midi->host = _host; }
+    _midi->sr.store(_host->sampleRate); _midi->latency.store(s.outputLatency + s.IOBufferDuration);
+    std::shared_ptr<MIDIState> mst = _midi;
     _source = [[AVAudioSourceNode alloc] initWithFormat:fmt renderBlock:^OSStatus(BOOL *isSilence, const AudioTimeStamp *ts, AVAudioFrameCount frames, AudioBufferList *out) {
         float *L = (float *)out->mBuffers[0].mData;
         float *R = out->mNumberBuffers > 1 ? (float *)out->mBuffers[1].mData : L;
         host->render(L, R, (int)frames);
+        if (MIDIState *m = mst.get()) { m->blockFrame.store(host->blockFrame(), std::memory_order_relaxed); m->blockHost.store(ts->mHostTime ? ts->mHostTime : mach_absolute_time(), std::memory_order_relaxed); }
         return noErr;
     }];
     [_avEngine attachNode:_source];
@@ -62,26 +81,57 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
 }
 
 // ---------------------------------------------------------------- MIDI
+static NSString *endpointName(MIDIEndpointRef e) { CFStringRef n = nullptr; MIDIObjectGetStringProperty(e, kMIDIPropertyDisplayName, &n); NSString *s = n ? (__bridge_transfer NSString *)n : @"MIDI"; return s; }
+static SInt32 endpointID(MIDIEndpointRef e) { SInt32 v = 0; MIDIObjectGetIntegerProperty(e, kMIDIPropertyUniqueID, &v); return v; }
+
 - (void)connectAllSources {
     const ItemCount n = MIDIGetNumberOfSources();
-    for (ItemCount i = 0; i < n; ++i) MIDIPortConnectSource(_port, MIDIGetSource(i), nullptr);   // connecting twice is harmless
+    for (ItemCount i = 0; i < n; ++i) {
+        MIDIEndpointRef src = MIDIGetSource(i); MIDIPortDisconnectSource(_port, src);
+        if (_inputID == 0 || endpointID(src) == _inputID) MIDIPortConnectSource(_port, src, nullptr);
+    }
+    _dest = 0;
+    for (ItemCount i = 0; _outputID && i < MIDIGetNumberOfDestinations(); ++i) if (endpointID(MIDIGetDestination(i)) == _outputID) _dest = MIDIGetDestination(i);
 }
 
 - (void)startMIDI {
     if (_client) return;
-    _midi = std::make_shared<MIDIState>(); _midi->host = _host;
+    if (!_midi) { _midi = std::make_shared<MIDIState>(); _midi->host = _host; }
+    NSUserDefaults *d = NSUserDefaults.standardUserDefaults;
+    _inputID = [d integerForKey:@"midiIn"]; _outputID = [d integerForKey:@"midiOut"];
+    _midi->follow.store([d boolForKey:@"midiFollow"]); _midi->sendClock.store([d boolForKey:@"midiClockOut"]); _midi->sendNotes.store([d boolForKey:@"midiNotesOut"]);
     __weak BLONDAEngine *weakSelf = self;
     MIDIClientCreateWithBlock(CFSTR("BLONDA SEQ"), &_client, ^(const MIDINotification *msg) {
-        if (msg->messageID == kMIDIMsgSetupChanged) dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf connectAllSources]; });
+        if (msg->messageID == kMIDIMsgSetupChanged) dispatch_async(dispatch_get_main_queue(), ^{ BLONDAEngine *s = weakSelf; [s connectAllSources]; if (s.midiSetupHandler) s.midiSetupHandler(); });
     });
     std::shared_ptr<MIDIState> st = _midi;
     MIDIInputPortCreateWithProtocol(_client, CFSTR("in"), kMIDIProtocol_1_0, &_port, ^(const MIDIEventList *list, void *srcRef) {
-        // MIDI thread: UMP MIDI 1.0 channel-voice words (type 2) -> host MIDI queue (lock-free, no allocation)
+        // MIDI thread: UMP MIDI 1.0 words -> host MIDI queue (lock-free, no allocation); clock handled here too
         const MIDIEventPacket *p = &list->packet[0];
         for (UInt32 i = 0; i < list->numPackets; ++i) {
+            const uint64_t when = p->timeStamp ? p->timeStamp : mach_absolute_time();
             for (UInt32 w = 0; w < p->wordCount; ++w) {
-                const UInt32 word = p->words[w];
-                if ((word >> 28) != 0x2) continue;
+                const UInt32 word = p->words[w], type = word >> 28;
+                st->lastMsg.store(mach_absolute_time(), std::memory_order_relaxed);
+                if (type == 0x1) {   // system real time: clock, start, continue, stop
+                    const int sys = (word >> 16) & 0xFF;
+                    if (!st->follow.load(std::memory_order_relaxed)) continue;
+                    if (sys == 0xF8) {
+                        if (st->lastTick) { const double dt = hostSeconds(when - st->lastTick); if (dt > 0 && dt < .2) { st->iv[st->ivW] = dt; st->ivW = (st->ivW + 1) % 48; st->ivN = std::min(48, st->ivN + 1); } }
+                        st->lastTick = when;
+                        if (++st->tickN % 24 == 0 && st->ivN >= 24) {
+                            double sum = 0; for (int k = 0; k < st->ivN; ++k) sum += st->iv[k];
+                            const double bpm = 60.0 / (sum / st->ivN * 24);
+                            if (bpm >= 40 && bpm <= 240 && std::fabs(bpm - st->lastBpm) > .05) { st->lastBpm = bpm;
+                                dispatch_async(dispatch_get_main_queue(), ^{ BLONDAEngine *s = weakSelf; if (s.midiClockHandler) s.midiClockHandler(bpm); }); }
+                        }
+                    } else if (sys == 0xFA || sys == 0xFB || sys == 0xFC) {
+                        const BOOL start = sys != 0xFC; st->tickN = 0;
+                        dispatch_async(dispatch_get_main_queue(), ^{ BLONDAEngine *s = weakSelf; if (s.midiTransportHandler) s.midiTransportHandler(start); });
+                    }
+                    continue;
+                }
+                if (type != 0x2) continue;
                 const int status = (word >> 16) & 0xF0, d1 = (word >> 8) & 0x7F, d2 = word & 0x7F;
                 const int track = st->track.load(std::memory_order_relaxed);
                 const bool on = status == 0x90 && d2 > 0, off = status == 0x80 || (status == 0x90 && d2 == 0);
@@ -97,8 +147,65 @@ struct MIDIState { std::shared_ptr<blonda::Host> host; std::atomic<int> track{7}
             p = MIDIEventPacketNext(p);
         }
     });
+    MIDIOutputPortCreate(_client, CFSTR("out"), &_outPort);
     [self connectAllSources];
+    [self startMIDIOut];
 }
+
+// MIDI out: a 4 ms timer drains what the sequencer scheduled and sends it time-stamped, so it lands with the audio
+- (void)startMIDIOut {
+    std::shared_ptr<MIDIState> st = _midi; std::shared_ptr<blonda::Host> host = _host; __weak BLONDAEngine *weakSelf = self;
+    _outTimer = dispatch_source_create(DISPATCH_SOURCE_TYPE_TIMER, 0, 0, dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0));
+    dispatch_source_set_timer(_outTimer, DISPATCH_TIME_NOW, 4 * NSEC_PER_MSEC, NSEC_PER_MSEC);
+    dispatch_source_set_event_handler(_outTimer, ^{
+        BLONDAEngine *s = weakSelf; const MIDIEndpointRef dest = s ? s->_dest : 0; const MIDIPortRef port = s ? s->_outPort : 0;
+        const bool clk = st->sendClock.load() && !st->follow.load(), notes = st->sendNotes.load();
+        blonda::MidiOutEv e; Byte buf[4096]; MIDIEventList *list = (MIDIEventList *)buf; MIDIEventPacket *pk = MIDIEventListInit(list, kMIDIProtocol_1_0); int count = 0;
+        const double sr = st->sr.load(), lat = st->latency.load(); const long long bf = st->blockFrame.load(); const uint64_t bh = st->blockHost.load();
+        auto at = [&](long long f) -> uint64_t { if (!bh) return 0; const double sec = (double)(f - bf) / sr + lat; return sec >= 0 ? bh + hostTicks(sec) : bh - std::min(bh, hostTicks(-sec)); };
+        auto add = [&](uint64_t t, UInt32 word) { if (!pk) return; pk = MIDIEventListAdd(list, sizeof(buf), pk, t, 1, &word); ++count; };
+        static const int kGM[6] = {36, 38, 39, 42, 46, 37};
+        while (host->popMidiOut(e)) {
+            if (!dest || !port) continue;
+            if (e.kind == 1 && clk) { for (int k = 0; k < 6; ++k) add(at(e.f + (long long)std::llround(k * e.len / 6 * sr)), 0x10F80000u); }
+            else if (e.kind == 2 && clk) add(at(e.f), 0x10FA0000u);
+            else if (e.kind == 3) { if (clk) add(at(e.f), 0x10FC0000u); if (notes) for (int c = 0; c < 16; ++c) add(0, 0x20B07B00u | ((UInt32)c << 16)); }
+            else if (e.kind == 0 && notes) {
+                const int ch = e.track < 6 ? 9 : e.track - 6, n = e.track < 6 ? kGM[e.track] : std::max(0, std::min(127, e.note));
+                const UInt32 v = (UInt32)std::max(1, std::min(127, (int)std::lround(e.vel * 127)));
+                add(at(e.f), 0x20900000u | ((UInt32)ch << 16) | ((UInt32)n << 8) | v);
+                add(at(e.f + (long long)std::llround(std::max(.03, e.len * .9) * sr)), 0x20800000u | ((UInt32)ch << 16) | ((UInt32)n << 8));
+            }
+            if (count > 200) { MIDISendEventList(port, dest, list); pk = MIDIEventListInit(list, kMIDIProtocol_1_0); count = 0; }
+        }
+        if (count && dest && port) MIDISendEventList(port, dest, list);
+    });
+    dispatch_resume(_outTimer);
+}
+
+- (NSArray<NSDictionary<NSString *, id> *> *)midiInputs { NSMutableArray *a = [NSMutableArray array]; for (ItemCount i = 0; i < MIDIGetNumberOfSources(); ++i) { MIDIEndpointRef e = MIDIGetSource(i); [a addObject:@{@"id": @(endpointID(e)), @"name": endpointName(e)}]; } return a; }
+- (NSArray<NSDictionary<NSString *, id> *> *)midiOutputs { NSMutableArray *a = [NSMutableArray array]; for (ItemCount i = 0; i < MIDIGetNumberOfDestinations(); ++i) { MIDIEndpointRef e = MIDIGetDestination(i); [a addObject:@{@"id": @(endpointID(e)), @"name": endpointName(e)}]; } return a; }
+- (NSInteger)midiInputID { return _inputID; }
+- (void)setMidiInputID:(NSInteger)v { _inputID = v; [NSUserDefaults.standardUserDefaults setInteger:v forKey:@"midiIn"]; if (_client) [self connectAllSources]; }
+- (NSInteger)midiOutputID { return _outputID; }
+- (void)setMidiOutputID:(NSInteger)v { _outputID = v; [NSUserDefaults.standardUserDefaults setInteger:v forKey:@"midiOut"]; if (_client) [self connectAllSources]; }
+- (BOOL)midiFollowClock { return _midi && _midi->follow.load(); }
+- (void)setMidiFollowClock:(BOOL)v { if (!_midi) [self startMIDI]; _midi->follow.store(v); _midi->ivN = 0; _midi->lastBpm = 0; [NSUserDefaults.standardUserDefaults setBool:v forKey:@"midiFollow"]; }
+- (BOOL)midiSendClock { return _midi && _midi->sendClock.load(); }
+- (void)setMidiSendClock:(BOOL)v { if (!_midi) [self startMIDI]; _midi->sendClock.store(v); [NSUserDefaults.standardUserDefaults setBool:v forKey:@"midiClockOut"]; }
+- (BOOL)midiSendNotes { return _midi && _midi->sendNotes.load(); }
+- (void)setMidiSendNotes:(BOOL)v { if (!_midi) [self startMIDI]; _midi->sendNotes.store(v); [NSUserDefaults.standardUserDefaults setBool:v forKey:@"midiNotesOut"]; }
+- (double)midiIdleSeconds { const uint64_t t = _midi ? _midi->lastMsg.load() : 0; return t ? hostSeconds(mach_absolute_time() - t) : 1e9; }
+// ---------------------------------------------------------------- audio settings
+- (NSInteger)ioBufferFrames { AVAudioSession *s = AVAudioSession.sharedInstance; return (NSInteger)std::lround(s.IOBufferDuration * s.sampleRate); }
+- (void)setIoBufferFrames:(NSInteger)n {
+    AVAudioSession *s = AVAudioSession.sharedInstance; const double sr = s.sampleRate > 0 ? s.sampleRate : 48000;
+    [s setPreferredIOBufferDuration:(double)std::max<NSInteger>(32, std::min<NSInteger>(2048, n)) / sr error:nil];
+    [NSUserDefaults.standardUserDefaults setInteger:n forKey:@"ioBuffer"];
+    if (_midi) _midi->latency.store(s.outputLatency + s.IOBufferDuration);
+}
+- (NSString *)outputName { AVAudioSessionPortDescription *o = AVAudioSession.sharedInstance.currentRoute.outputs.firstObject; return o ? o.portName : @"–"; }
+- (double)outputLatency { AVAudioSession *s = AVAudioSession.sharedInstance; return s.outputLatency + s.IOBufferDuration; }
 
 - (NSInteger)midiTrack { return _midi ? _midi->track.load() : 7; }
 - (void)setMidiTrack:(NSInteger)midiTrack { if (!_midi) [self startMIDI]; _midi->track.store((int)std::max<NSInteger>(0, std::min<NSInteger>(9, midiTrack))); }

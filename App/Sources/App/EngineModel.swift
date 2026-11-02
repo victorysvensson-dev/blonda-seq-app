@@ -81,6 +81,16 @@ final class EngineModel: NSObject, ObservableObject {
             guard let self, self.recording else { return }
             if on { self.recOn(t, n, v); self.hitTime[t] = CACurrentMediaTime(); self.hitVel[t] = Double(v) } else { self.recOff(t, n) }
         }
+        engine.midiClockHandler = { [weak self] bpm in   // following an external clock: take its tempo
+            guard let self, self.engine.midiFollowClock else { return }
+            let v = Float((bpm * 10).rounded() / 10)
+            if abs(self.engine.bpm - v) >= 0.1 { self.engine.bpm = max(40, min(240, v)); self.revision += 1 }
+        }
+        engine.midiTransportHandler = { [weak self] start in
+            guard let self, self.engine.midiFollowClock else { return }
+            if start != self.engine.isPlaying { self.engine.togglePlay() }
+        }
+        engine.midiSetupHandler = { [weak self] in self?.midiRev += 1 }
         if ProcessInfo.processInfo.arguments.contains("-autoplay") {
             engine.togglePlay()
             // diagnostics for the CI simulator run: is the audio thread advancing?
@@ -99,6 +109,11 @@ final class EngineModel: NSObject, ObservableObject {
     var projects: ProjectStore { Self.sharedProjects }
     private var saveWork: DispatchWorkItem?
     @Published var projOpen = false
+    /// MIDI & ljud settings panel; midiRev changes when devices come and go
+    @Published var midiOpen = false
+    @Published var midiRev = 0
+    func openMidi() { midiRev += 1; withAnimation(.spring(response: 0.36, dampingFraction: 0.86)) { midiOpen = true } }
+    func closeMidi() { withAnimation(.easeIn(duration: 0.18)) { midiOpen = false } }
     var textEditing = false   // a text field has the keyboard: KeyboardInput stays quiet
     func flushSave() { saveWork?.cancel(); saveNow(sync: true) }
 

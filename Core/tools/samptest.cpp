@@ -112,6 +112,19 @@ int main(int argc, char** argv) {
         expect((m & 2) && (m & 64), "glitch: stutter and crush held together");
         h->glitchHoldSet(0, 0); run(40); expect(h->glitchActiveMask() == 0, "glitch: let go"); h->togglePlay(); run(20);
     }
+    // MIDI out: start, a step event every 16th, the notes, stop
+    {
+        if (h->isPlaying()) h->togglePlay(); run(20);
+        for (int t = 0; t < 10; ++t) h->setMute(t, false);
+        blonda::MidiOutEv e; while (h->popMidiOut(e)) {}
+        h->togglePlay(); run(375); h->togglePlay(); run(5);   // 1 s
+        int starts = 0, stops = 0, steps = 0, notes = 0; long long lastStep = -1; bool order = true;
+        while (h->popMidiOut(e)) { if (e.kind == 2) ++starts; if (e.kind == 3) ++stops; if (e.kind == 1) { if (e.f <= lastStep) order = false; lastStep = e.f; ++steps; } if (e.kind == 0) ++notes; }
+        std::printf("     midi out: start %d stop %d steps %d notes %d\n", starts, stops, steps, notes);
+        const int want = (int)(1.0 / (60.0 / h->ui.bpm / 4));
+        expect(starts == 1 && stops == 1 && order && steps >= want - 1 && steps <= want + 3 && notes > 0, "midi out: start, steps, notes, stop");
+        h->noteOn(0, 60, .9f); run(4); int live = 0; while (h->popMidiOut(e)) live += e.kind == 0; expect(live == 0, "midi out: live pads are not echoed");
+    }
     h->shutdown();
     std::puts(fails ? "SAMPTEST FAIL" : "SAMPTEST OK"); return fails ? 1 : 0;
 }

@@ -437,6 +437,9 @@ public:
         if (p == ui.pat || p < 0 || p >= kPatterns) return false;
         ui.pat = p; return true;
     }
+    // MIDI out (read by one MIDI thread): what was scheduled, and the engine frame at the start of the last block
+    bool popMidiOut(MidiOutEv& e) { return midiOut_.pop(e); }
+    long long blockFrame() const { return blockFrame_.load(std::memory_order_relaxed); }
     int currentStep() const { return step_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playing_.load(std::memory_order_relaxed); }
     void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; delete c.smp; } }   // free what audio handed back
@@ -494,7 +497,9 @@ public:
             }
         }
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }
+        blockFrame_.store(engine_->frame(), std::memory_order_relaxed);
         engine_->render(L, R, frames);
+        for (int k = 0; k < engine_->midiOutCount(); ++k) midiOut_.push(engine_->midiOut()[k]); engine_->clearMidiOut();   // a full queue just drops (nobody reads it without MIDI out)
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
         for (int k = 0; k < 4; ++k) motMeter_[k].store((float)engine_->motorMeter(k), std::memory_order_relaxed);
         glitchShown_.store(engine_->glitchActive(), std::memory_order_relaxed); glitchMask_.store(engine_->glitchMaskNow(), std::memory_order_relaxed);
@@ -574,7 +579,7 @@ private:
     std::string base_;
     std::unordered_map<std::string, SampleData*> bank_;
     void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
-    SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_;
+    SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_; SPSC<MidiOutEv, 2048> midiOut_; std::atomic<long long> blockFrame_{0};
     std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {}; std::atomic<int> glitchShown_{0}, glitchMask_{0};
 };
 

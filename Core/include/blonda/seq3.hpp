@@ -139,6 +139,9 @@ inline SampleRegion regionFor(const Project& p, int i) {
     return r;
 }
 
+// what the sequencer plays, for MIDI out (clock and notes): kind 0 note, 1 step (len = step length s), 2 start, 3 stop
+struct MidiOutEv { long long f = 0; int kind = 0, track = 0, note = 0; float vel = 0, len = 0; };
+
 class Seq3 {
 public:
     void prepare(float sampleRate);
@@ -205,11 +208,18 @@ public:
     void render(float* L, float* R, int frames);
     int currentStep() const { return audible_; }   // the step you hear right now (-1 when stopped)
     double timeSec() const { return (double)frame_ / sr_; }
+    long long frame() const { return frame_; }
+    // MIDI out: what the last render scheduled (audio thread; the Host copies it into its queue after every block)
+    int midiOutCount() const { return outN_; }
+    const MidiOutEv* midiOut() const { return mout_; }
+    void clearMidiOut() { outN_ = 0; }
     std::vector<float>* dbgBus = nullptr; const std::vector<float>* dbgInBus = nullptr; size_t dbgInPos = 0;   // tests: capture the bus before the master chain (interleaved)
     void bypassMasterDynamics() { comp_.threshold = 0; comp_.ratio = 1; comp_.knee = 0; }   // tests
 
 private:
     Glitch glitch_;
+    MidiOutEv mout_[256]; int outN_ = 0; bool liveCall_ = false;
+    void outPush(const MidiOutEv& e) { if (outN_ < 256) mout_[outN_++] = e; }
     double nowT_ = 0;   // start of the block being scheduled (nudged steps never land before it)
     struct Ev { long long f; int track; float vel; int note; float ls; int glide; };   // f = absolute frame
     struct Strip {
