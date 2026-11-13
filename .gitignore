@@ -9,3 +9,6 @@ Shell/*.xcodeproj/
 Shell/Info.plist
 Shell/dd/
 Shell/ddm/
+
+# the BLONDA sound pack is part of the SEQ.3 app (the page loads it from blonda-pack/)
+!Shell/Web/blonda-pack/*.wav
