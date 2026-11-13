@@ -10,6 +10,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     private lazy var selfTest = args.contains("-selftest")
 
     private var pendingSave: (id: Int, dir: URL)?
+    private let cpuMeter = CPUMeter()
     // self-test results from the app's side
     private var testOut: [[UInt8]] = []
     private var testSaveBytes = -1
@@ -32,6 +33,10 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         let uc = cfg.userContentController
         uc.addUserScript(WKUserScript(source: Bridge.script(platform: Self.platform, selfTest: selfTest),
                                       injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        if Diagnostics.enabled {
+            uc.addUserScript(WKUserScript(source: Bridge.diag, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+            Diagnostics.log("SEQ3 \(Bundle.main.infoDictionary?["CFBundleVersion"] ?? "?") started on \(Self.platform)")
+        }
         uc.add(MessageProxy(self), name: "blonda")
 
         web = WKWebView(frame: .zero, configuration: cfg)
@@ -78,6 +83,14 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         }
     }
 
+    // key presses that reach the app itself instead of the page (diagnostics only)
+    override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        if Diagnostics.enabled {
+            for p in presses { Diagnostics.log("native press began (not taken by the page): key=\(p.key?.characters ?? "?") code=\(p.key?.keyCode.rawValue ?? -1) responder=\(String(describing: type(of: view.window?.firstResponder() ?? self)))") }
+        }
+        super.pressesBegan(presses, with: event)
+    }
+
     override var prefersHomeIndicatorAutoHidden: Bool { true }
     override var prefersStatusBarHidden: Bool { true }
 
@@ -98,6 +111,10 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             UIApplication.shared.isIdleTimerDisabled = (b["on"] as? Bool) ?? false
         case "log":
             NSLog("SEQ3 page: %@", String(describing: b["m"] ?? ""))
+        case "diag":
+            Diagnostics.log(String(describing: b["m"] ?? ""))
+        case "mark":
+            if (b["p"] as? String) == "begin" { cpuMeter.begin(b["name"] as? String ?? "?") } else { Diagnostics.log(cpuMeter.end()) }
         case "test-midi-send":
             if selfTest { midi.sendTest() }
         case "selftest":
@@ -257,5 +274,14 @@ private final class MessageProxy: NSObject, WKScriptMessageHandler {
     init(_ t: ShellController) { target = t }
     func userContentController(_ uc: WKUserContentController, didReceive message: WKScriptMessage) {
         target?.handle(message.body)
+    }
+}
+
+private extension UIView {
+    /// The view that has keyboard focus inside this view (diagnostics only).
+    func firstResponder() -> UIResponder? {
+        if isFirstResponder { return self }
+        for v in subviews { if let r = v.firstResponder() { return r } }
+        return nil
     }
 }

@@ -60,6 +60,35 @@ if(document.body)watch();else document.addEventListener('DOMContentLoaded',watch
 })();
 """#
 
+    /// Diagnostics (only when ~/Applications/SEQ3-diag exists on the Mac): measures how heavy the page is and logs
+    /// every key press it gets. Written to ~/Applications/SEQ3-diag.log by the app.
+    static let diag = #"""
+(()=>{const post=m=>{try{webkit.messageHandlers.blonda.postMessage(m)}catch(e){}},L=m=>post({t:'diag',m:String(m)});
+const RA=window.requestAnimationFrame.bind(window),cost=new Map();
+window.requestAnimationFrame=function(cb){let src='?';try{src=((new Error().stack||'').split('\n').find(l=>/index\.html:\d/.test(l))||'?').replace(/^\s*at\s+/,'').replace(/(blonda:\/\/seq3|https?:\/\/[^ )]*)\/[^ )]*index\.html/,'').slice(0,48)}catch(e){}
+  return RA(t=>{const a=performance.now();try{cb(t)}finally{const d=performance.now()-a,c=cost.get(src)||[0,0];c[0]+=d;c[1]++;cost.set(src,c)}})};
+for(const ty of ['keydown','keyup'])addEventListener(ty,e=>{const tg=e.target,id=tg?(tg.tagName||'?')+(tg.id?'#'+tg.id:'')+(typeof tg.className==='string'&&tg.className?'.'+tg.className.split(' ')[0]:''):'?';
+  const d=ty+' code='+e.code+' key='+JSON.stringify(e.key)+' target='+id;setTimeout(()=>L(d+' prevented='+e.defaultPrevented+' focus='+document.hasFocus()+' active='+(document.activeElement&&document.activeElement.tagName)),0)},true);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+async function measure(name,ms){post({t:'mark',p:'begin',name});cost.clear();let n=0,maxGap=0,last=performance.now(),run=true;
+  const loop=()=>{const now=performance.now();maxGap=Math.max(maxGap,now-last);last=now;n++;if(run)RA(loop)};RA(loop);
+  let lag=0,lagMax=0,ticks=0,exp=performance.now()+50;const iv=setInterval(()=>{const now=performance.now(),l=Math.max(0,now-exp);lag+=l;lagMax=Math.max(lagMax,l);ticks++;exp=now+50},50);
+  await sleep(ms);run=false;clearInterval(iv);post({t:'mark',p:'end'});
+  const top=[...cost.entries()].sort((a,b)=>b[1][0]-a[1][0]).slice(0,8).map(([k,v])=>k+' '+(v[0]/ms*100).toFixed(1)+'%/'+v[1]).join(' | ');
+  L('['+name+'] fps '+(n/(ms/1000)).toFixed(1)+' maxGap '+maxGap.toFixed(0)+'ms lagAvg '+(lag/Math.max(1,ticks)).toFixed(1)+'ms lagMax '+lagMax.toFixed(0)+'ms || JS in rAF: '+top)}
+const css=t=>{const s=document.createElement('style');s.textContent=t;document.head.appendChild(s);return s};
+const X={blur:'*,*::before,*::after{backdrop-filter:none!important;-webkit-backdrop-filter:none!important;filter:none!important}',
+  bg:'#bg,#gbgC{display:none!important}',anim:'*,*::before,*::after{animation-play-state:paused!important;transition:none!important}',canvas:'canvas{visibility:hidden!important}'};
+async function exp(name,c){const s=css(c);await sleep(800);await measure(name,5000);s.remove();await sleep(500)}
+addEventListener('load',async()=>{L('page loaded '+innerWidth+'x'+innerHeight+' dpr '+devicePixelRatio+' body='+document.body.className+' ua='+navigator.userAgent);
+  for(let i=0;i<600;i++){const st=document.getElementById('start');if(st&&st.hidden)break;await sleep(500)}
+  L('intro closed, measuring (about 70 s) – body='+document.body.className);await sleep(1500);
+  await measure('idle',6000);for(const k of Object.keys(X))await exp('idle, no '+k,X[k]);await exp('idle, all off',Object.values(X).join('\n'));
+  try{__seq.play()}catch(e){L('play failed '+e)}await sleep(1500);await measure('playing',6000);await exp('playing, no blur',X.blur);await exp('playing, all off',Object.values(X).join('\n'));
+  try{__seq.stop()}catch(e){}L('measuring done – key presses keep being logged')});
+})();
+"""#
+
     /// Self-test (launch argument -selftest): checks what the page needs from the app and reports it to the app,
     /// which writes it to selftest.json and the log. Used by CI on the iPad simulator and the Mac.
     private static let test = #"""
