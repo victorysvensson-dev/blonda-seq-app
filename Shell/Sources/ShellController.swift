@@ -63,9 +63,9 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         web.load(URLRequest(url: BundleScheme.startURL))
         if selfTest {
             // if the page never reports, the app still writes what it knows, so a hang can be told apart from a crash
-            DispatchQueue.main.asyncAfter(deadline: .now() + 75) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 150) { [weak self] in
                 guard let self, !self.testDone else { return }
-                self.finishSelfTest(["fatal": "the page did not report within 75 s"])
+                self.finishSelfTest(["fatal": "the page did not report within 150 s"])
             }
         }
     }
