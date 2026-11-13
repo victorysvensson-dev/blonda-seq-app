@@ -34,7 +34,9 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         uc.addUserScript(WKUserScript(source: Bridge.script(platform: Self.platform, selfTest: selfTest),
                                       injectionTime: .atDocumentStart, forMainFrameOnly: true))
         if Diagnostics.enabled {
-            uc.addUserScript(WKUserScript(source: Bridge.diag, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+            // the marker file may hold a measuring script of its own (so a new measurement needs no new build)
+            let custom = (try? String(contentsOfFile: Diagnostics.markerPath, encoding: .utf8))?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            uc.addUserScript(WKUserScript(source: custom.isEmpty ? Bridge.diag : custom, injectionTime: .atDocumentStart, forMainFrameOnly: true))
             Diagnostics.log("SEQ3 \(Bundle.main.infoDictionary?["CFBundleVersion"] ?? "?") started on \(Self.platform)")
         }
         uc.add(MessageProxy(self), name: "blonda")
@@ -77,18 +79,85 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        NotificationCenter.default.addObserver(forName: UIWindow.didBecomeKeyNotification, object: view.window, queue: .main) { [weak self] _ in
+            self?.focusPage("window became active")
+        }
         // the window on the Mac: not smaller than a phone
         if let scene = view.window?.windowScene {
             scene.sizeRestrictions?.minimumSize = CGSize(width: 390, height: 640)
         }
     }
 
-    // key presses that reach the app itself instead of the page (diagnostics only)
+    // MARK: - keyboard
+
+    /// The page gets the keyboard only when the web view is the first responder. On the Mac nothing makes it that by
+    /// itself (no view had keyboard focus, so space and the other shortcuts went to the app frame and were lost).
+    /// The web view takes focus when the page has loaded and whenever the window becomes active.
+    private func focusPage(_ why: String) {
+        let ok = web.becomeFirstResponder()
+        Diagnostics.log("focus page (\(why)): \(ok)")
+    }
+
+    /// A key that still reaches the app frame (e.g. pressed before the page had focus) is handed to the page as the
+    /// same keyboard event, and the page gets focus so the next keys go straight to it.
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
-        if Diagnostics.enabled {
-            for p in presses { Diagnostics.log("native press began (not taken by the page): key=\(p.key?.characters ?? "?") code=\(p.key?.keyCode.rawValue ?? -1) responder=\(String(describing: type(of: view.window?.firstResponder() ?? self)))") }
+        var rest = Set<UIPress>()
+        for p in presses { if let k = p.key, forward(k, type: "keydown") { continue }; rest.insert(p) }
+        if !presses.subtracting(rest).isEmpty { focusPage("key reached the app") }
+        if !rest.isEmpty { super.pressesBegan(rest, with: event) }
+    }
+
+    override func pressesEnded(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
+        var rest = Set<UIPress>()
+        for p in presses { if let k = p.key, forward(k, type: "keyup") { continue }; rest.insert(p) }
+        if !rest.isEmpty { super.pressesEnded(rest, with: event) }
+    }
+
+    private func forward(_ k: UIKey, type: String) -> Bool {
+        guard let (key, code) = Self.domKey(k) else { return false }
+        let f = k.modifierFlags
+        let args: [Any] = [type, key, code, f.contains(.shift), f.contains(.alternate), f.contains(.control), f.contains(.command)]
+        guard let data = try? JSONSerialization.data(withJSONObject: args), let json = String(data: data, encoding: .utf8) else { return false }
+        web.evaluateJavaScript("""
+            ((a)=>{const el=(document.activeElement&&document.activeElement!==document.documentElement)?document.activeElement:document.body;
+            el.dispatchEvent(new KeyboardEvent(a[0],{key:a[1],code:a[2],shiftKey:a[3],altKey:a[4],ctrlKey:a[5],metaKey:a[6],bubbles:true,cancelable:true,composed:true}))})(\(json))
+            """, completionHandler: nil)
+        Diagnostics.log("forwarded \(type) \(code) to the page")
+        return true
+    }
+
+    /// UIKit key → the DOM's key and code.
+    static func domKey(_ k: UIKey) -> (String, String)? {
+        let u = UIKeyboardHIDUsage.self
+        switch k.keyCode {
+        case u.keyboardSpacebar: return (" ", "Space")
+        case u.keyboardReturnOrEnter, u.keypadEnter: return ("Enter", "Enter")
+        case u.keyboardEscape: return ("Escape", "Escape")
+        case u.keyboardDeleteOrBackspace: return ("Backspace", "Backspace")
+        case u.keyboardDeleteForward: return ("Delete", "Delete")
+        case u.keyboardTab: return ("Tab", "Tab")
+        case u.keyboardLeftArrow: return ("ArrowLeft", "ArrowLeft")
+        case u.keyboardRightArrow: return ("ArrowRight", "ArrowRight")
+        case u.keyboardUpArrow: return ("ArrowUp", "ArrowUp")
+        case u.keyboardDownArrow: return ("ArrowDown", "ArrowDown")
+        case u.keyboardHome: return ("Home", "Home")
+        case u.keyboardEnd: return ("End", "End")
+        case u.keyboardPageUp: return ("PageUp", "PageUp")
+        case u.keyboardPageDown: return ("PageDown", "PageDown")
+        default: break
         }
-        super.pressesBegan(presses, with: event)
+        let raw = k.keyCode.rawValue
+        let ch = k.charactersIgnoringModifiers
+        guard !ch.isEmpty else { return nil }
+        if raw >= u.keyboardA.rawValue && raw <= u.keyboardZ.rawValue {
+            let letter = Character(UnicodeScalar(UInt8(65 + raw - u.keyboardA.rawValue)))
+            return (k.modifierFlags.contains(.shift) ? ch.uppercased() : ch, "Key\(letter)")
+        }
+        if raw >= u.keyboard1.rawValue && raw <= u.keyboard0.rawValue {
+            let d = raw == u.keyboard0.rawValue ? 0 : raw - u.keyboard1.rawValue + 1
+            return (ch, "Digit\(d)")
+        }
+        return (ch, "")
     }
 
     override var prefersHomeIndicatorAutoHidden: Bool { true }
@@ -181,6 +250,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         guard let url = action.request.url else { decisionHandler(.cancel); return }
+        if action.targetFrame?.isMainFrame ?? false { Diagnostics.log("navigation \(action.navigationType.rawValue) to \(url.absoluteString)") }
         switch url.scheme?.lowercased() {
         case BundleScheme.scheme, "blob", "data", "about":
             decisionHandler(.allow)
@@ -203,12 +273,15 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     /// saved by the page itself, so it comes back where it was.
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         NSLog("SEQ3: web content process ended – reloading")
+        Diagnostics.log("web content process ended – reloading")
         webView.load(URLRequest(url: BundleScheme.startURL))
     }
 
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // no pinch-zoom of the whole app (two fingers belong to the pads and faders)
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
+        Diagnostics.log("page finished loading \(webView.url?.absoluteString ?? "")")
+        focusPage("page loaded")
     }
 
     // MARK: - dialogs from the page (alert / confirm / prompt), in case the page ever uses them
@@ -274,14 +347,5 @@ private final class MessageProxy: NSObject, WKScriptMessageHandler {
     init(_ t: ShellController) { target = t }
     func userContentController(_ uc: WKUserContentController, didReceive message: WKScriptMessage) {
         target?.handle(message.body)
-    }
-}
-
-private extension UIView {
-    /// The view that has keyboard focus inside this view (diagnostics only).
-    func firstResponder() -> UIResponder? {
-        if isFirstResponder { return self }
-        for v in subviews { if let r = v.firstResponder() { return r } }
-        return nil
     }
 }
