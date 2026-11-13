@@ -39,7 +39,8 @@ def check(dev, run, r):
     lines.append(f"  info: {r.get('platform')} {r.get('system')} {r.get('width')}x{r.get('height')} body='{r.get('body')}' "
                  f"ins={r.get('midiIns')} outs={r.get('midiOuts')}")
 
-for dev in ('ipad', 'iphone', 'mac'):
+devices = sys.argv[2:] or ['ipad', 'iphone', 'mac']
+for dev in devices:
     for run in (1, 2):
         p = os.path.join(d, f'{dev}_selftest_{run}.json')
         lines.append(f"{dev} run {run}:")

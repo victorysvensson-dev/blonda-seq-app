@@ -1,13 +1,65 @@
 name: SEQ.3 app (web shell)
 # Builds the SEQ.3 app (Shell/: the web app in a native shell) for iPad/iPhone and Mac, runs its self-test on an iPad
 # and an iPhone simulator and on the Mac (twice each, so the second run proves saved data survives a restart), takes
-# screenshots and publishes everything plus the Mac app to the branch shell-out-<branch>.
+# screenshots and publishes the simulator results to shell-out-<branch> and the Mac results plus the Mac app to shell-mac-<branch>.
 on:
   push:
     paths: ['Shell/**', '.github/workflows/shell.yml']
   workflow_dispatch:
 
 jobs:
+  mac:
+    runs-on: macos-15
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate the project
+        run: cd Shell && xcodegen && mkdir -p ../shell-out
+      - name: Build and self-test the Mac app (Mac Catalyst, ad-hoc signed)
+        timeout-minutes: 20
+        run: |
+          cd Shell
+          set +e
+          xcodebuild -project SEQ3.xcodeproj -scheme SEQ3 -configuration Release \
+            -destination 'generic/platform=macOS,variant=Mac Catalyst' -derivedDataPath ddm \
+            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= ONLY_ACTIVE_ARCH=NO build > mac.log 2>&1
+          rc=$?
+          tail -20 mac.log
+          grep -E "error:" mac.log | sort -u | head -20 | sed 's#^/Users/runner/work/blonda-seq-app/blonda-seq-app/##' \
+            | while IFS= read -r l; do echo "::error::$l"; done
+          [ $rc -eq 0 ] || exit $rc
+          APP=$(find ddm -name "SEQ3.app" -path "*maccatalyst*" | head -1)
+          echo "app: $APP"
+          codesign --force --deep -s - "$APP"
+          for k in 1 2; do
+            "$APP/Contents/MacOS/SEQ3" -selftest > ../shell-out/mac_stdout_$k.txt 2>&1 &
+            pid=$!
+            sleep 35
+            screencapture -x ../shell-out/mac_$k.png || true
+            kill $pid 2>/dev/null; sleep 2
+            sed -n '/SEQ3-SELFTEST-BEGIN/,/SEQ3-SELFTEST-END/p' ../shell-out/mac_stdout_$k.txt | sed '1d;$d' > ../shell-out/mac_selftest_$k.json
+            [ -s ../shell-out/mac_selftest_$k.json ] || echo '{"missing":true}' > ../shell-out/mac_selftest_$k.json
+          done
+          ditto -c -k --sequesterRsrc --keepParent "$APP" "../shell-out/SEQ.3 (Mac).zip"
+          ls -la ../shell-out
+      - name: Check the self-test results
+        if: always()
+        run: python3 Shell/tools/check_selftest.py shell-out mac | tee shell-out/summary.txt
+      - name: Publish to the shell-mac branch
+        if: always()
+        run: |
+          cd shell-out
+          git init -q && git checkout -q -b "shell-mac-${GITHUB_REF_NAME}"
+          git config user.name ci && git config user.email ci@users.noreply.github.com
+          git add -A && git commit -qm "shell mac ${GITHUB_SHA}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${GITHUB_REPOSITORY}.git" "shell-mac-${GITHUB_REF_NAME}"
+      - name: Fail if a self-test failed
+        run: grep -q "^ALL OK" shell-out/summary.txt
+
   shell:
     runs-on: macos-15
     timeout-minutes: 100
@@ -47,8 +99,8 @@ jobs:
           run() {
             n=$1; U=$2
             echo "== $n $U"
-            xcrun simctl boot $U || true; T 300 xcrun simctl bootstatus $U -b
-            T 120 xcrun simctl install $U "$APP"
+            xcrun simctl boot $U || true; T 400 xcrun simctl bootstatus $U -b || echo "$n: boot status timed out"
+            T 180 xcrun simctl install $U "$APP" || echo "$n: install failed"
             for k in 1 2; do
               D=$(xcrun simctl get_app_container $U se.blonda.seq3 data)
               rm -f "$D/Documents/selftest.json"
@@ -72,36 +124,9 @@ jobs:
           }
           run ipad "$(pick 'iPad Pro 13' 'iPad Pro (12.9' 'iPad Air 13' 'iPad')"
           run iphone "$(pick 'iPhone 16 Pro' 'iPhone 17 Pro' 'iPhone 16' 'iPhone')"
-      - name: Build and self-test the Mac app (Mac Catalyst, ad-hoc signed)
-        timeout-minutes: 15
-        run: |
-          cd Shell
-          set +e
-          xcodebuild -project SEQ3.xcodeproj -scheme SEQ3 -configuration Release \
-            -destination 'generic/platform=macOS,variant=Mac Catalyst' -derivedDataPath ddm \
-            CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- DEVELOPMENT_TEAM= ONLY_ACTIVE_ARCH=NO build > mac.log 2>&1
-          rc=$?
-          tail -20 mac.log
-          grep -E "error:" mac.log | sort -u | head -20 | sed 's#^/Users/runner/work/blonda-seq-app/blonda-seq-app/##' \
-            | while IFS= read -r l; do echo "::error::$l"; done
-          [ $rc -eq 0 ] || exit $rc
-          APP=$(find ddm -name "SEQ3.app" -path "*maccatalyst*" | head -1)
-          echo "app: $APP"
-          codesign --force --deep -s - "$APP"
-          for k in 1 2; do
-            "$APP/Contents/MacOS/SEQ3" -selftest > ../shell-out/mac_stdout_$k.txt 2>&1 &
-            pid=$!
-            sleep 35
-            screencapture -x ../shell-out/mac_$k.png || true
-            kill $pid 2>/dev/null; sleep 2
-            sed -n '/SEQ3-SELFTEST-BEGIN/,/SEQ3-SELFTEST-END/p' ../shell-out/mac_stdout_$k.txt | sed '1d;$d' > ../shell-out/mac_selftest_$k.json
-            [ -s ../shell-out/mac_selftest_$k.json ] || echo '{"missing":true}' > ../shell-out/mac_selftest_$k.json
-          done
-          ditto -c -k --sequesterRsrc --keepParent "$APP" "../shell-out/SEQ.3 (Mac).zip"
-          ls -la ../shell-out
       - name: Check the self-test results
         if: always()
-        run: python3 Shell/tools/check_selftest.py shell-out | tee shell-out/summary.txt
+        run: python3 Shell/tools/check_selftest.py shell-out ipad iphone | tee shell-out/summary.txt
       - name: Publish to the shell-out branch
         if: always()
         run: |
