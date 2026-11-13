@@ -19,6 +19,8 @@ jobs:
         run: brew install xcodegen
       - name: Generate the project
         run: cd Shell && xcodegen && mkdir -p ../shell-out
+      - name: Pack the ready Xcode project (to build onto a real iPad from a Mac without XcodeGen)
+        run: ditto -c -k --sequesterRsrc --keepParent Shell "shell-out/SEQ3-Xcode.zip"
       - name: Build and self-test the Mac app (Mac Catalyst, ad-hoc signed)
         timeout-minutes: 20
         run: |
