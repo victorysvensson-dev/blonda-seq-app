@@ -103,6 +103,11 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             }
         }
         walk(web.scrollView)
+        // WebKit turns pinch back on when the page's layout changes, so this is kept off every time
+        web.scrollView.pinchGestureRecognizer?.isEnabled = false
+        web.scrollView.minimumZoomScale = 1
+        web.scrollView.maximumZoomScale = 1
+        if web.scrollView.zoomScale != 1 { web.scrollView.setZoomScale(1, animated: false) }
         if indicatorTimer == nil {
             indicatorTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in self?.hideScrollIndicators() }
         }

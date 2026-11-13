@@ -19,6 +19,12 @@ const N=window.__blonda={native:true,platform:'%PLATFORM%',errs:[]};window.BLOND
 addEventListener('error',e=>{const m=String(e.message||e.error||'error')+' @'+(e.lineno||0);if(N.errs.length<20)N.errs.push(m);post({t:'log',m})});
 addEventListener('unhandledrejection',e=>{const m='rejection: '+String(e.reason&&e.reason.message||e.reason);if(N.errs.length<20)N.errs.push(m);post({t:'log',m})});
 
+/* ---- no zooming the app: two fingers belong to pads and faders (a pad held + a fader moved read as a pinch) ---- */
+{const fix=()=>{const m=document.querySelector('meta[name=viewport]');if(!m)return false;if(!/user-scalable=no/.test(m.content))m.content=m.content+',maximum-scale=1,user-scalable=no';return true};
+ if(!fix()){const mo=new MutationObserver(()=>{if(fix())mo.disconnect()});mo.observe(document.documentElement,{childList:true,subtree:true});document.addEventListener('DOMContentLoaded',()=>{fix();mo.disconnect()})}
+ for(const k of ['gesturestart','gesturechange','gestureend'])document.addEventListener(k,e=>e.preventDefault(),{passive:false});
+ const st=document.createElement('style');st.textContent='html{touch-action:manipulation}';(document.head||document.documentElement).appendChild(st)}
+
 /* ---- Web MIDI on CoreMIDI ---- */
 const ins=new Map(),outs=new Map();let access=null;const waiting=[];
 class Port{constructor(o,type){this.id=o.id;this.name=o.name;this.manufacturer=o.man||'';this.version='';this.type=type;this.state='connected';this.connection='open';this.onstatechange=null}
@@ -107,6 +113,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
     await c.close()}catch(e){r.audioErr=String(e)}
   try{const j=await (await fetch('blonda-pack/pack.json')).json(),it=(j.items||[])[0];r.packItems=(j.items||[]).length;
     if(it){const b=await (await fetch('blonda-pack/'+it.file)).arrayBuffer(),C=new OfflineAudioContext(1,1,48000);r.packDecoded=(await C.decodeAudioData(b)).duration>0}}catch(e){r.packErr=String(e)}
+  r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
   r.midiApi=!!navigator.requestMIDIAccess;
   try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;
     for(let k=0;k<100&&!(ti&&to);k++){ti=[...a.inputs.values()].find(p=>p.name==='BLONDA TEST');to=[...a.outputs.values()].find(p=>p.name==='BLONDA TEST');if(!(ti&&to))await new Promise(s=>setTimeout(s,100))}
