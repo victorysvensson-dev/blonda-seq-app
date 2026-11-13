@@ -1,0 +1,60 @@
+# SEQ.3 – the web app (Shell/Web/index.html) in a native shell for iPad, iPhone and Mac.
+# The page is exactly the same as the web version; the shell adds CoreMIDI, saving files and keeping the screen on.
+# `brew install xcodegen && cd Shell && xcodegen` creates SEQ3.xcodeproj
+name: SEQ3
+options:
+  bundleIdPrefix: se.blonda
+  deploymentTarget:
+    iOS: "16.4"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  SEQ3:
+    type: application
+    platform: iOS
+    sources:
+      - path: Sources
+      - path: Web
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - sdk: WebKit.framework
+      - sdk: CoreMIDI.framework
+      - sdk: AVFoundation.framework
+    info:
+      path: Info.plist
+      properties:
+        CFBundleDisplayName: SEQ.3
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        LSApplicationCategoryType: public.app-category.music
+        ITSAppUsesNonExemptEncryption: false
+        UIBackgroundModes: [audio]
+        UILaunchScreen:
+          UIColorName: LaunchBlack
+        UIRequiresFullScreen: false
+        UIStatusBarHidden: true
+        UIViewControllerBasedStatusBarAppearance: false
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: se.blonda.seq3
+        PRODUCT_NAME: SEQ3
+        MARKETING_VERSION: "1.0"
+        CURRENT_PROJECT_VERSION: "232"
+        TARGETED_DEVICE_FAMILY: "1,2,6"   # 6 = Mac (optimised for Mac: 1 point = 1 pixel, the page looks as in a browser)
+        SUPPORTS_MACCATALYST: YES
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon

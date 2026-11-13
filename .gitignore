@@ -5,3 +5,7 @@ build/
 xcuserdata/
 DerivedData/
 App/*.xcodeproj/
+Shell/*.xcodeproj/
+Shell/Info.plist
+Shell/dd/
+Shell/ddm/

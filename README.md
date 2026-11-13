@@ -36,6 +36,29 @@ open BLONDA.xcodeproj       # pick your team under Signing & Capabilities, run o
 CI (GitHub Actions) builds the core on Linux, runs the tests, builds the app for the iOS simulator,
 launches it on an iPad and an iPhone simulator and pushes screenshots to the `ci-shots` branch.
 
+## SEQ.3 app – the web app in a native shell (`Shell/`)
+
+The fastest way to an app that is *exactly* the web version: `Shell/Web/index.html` is the same file as the web app
+(claude.ai artifact DR4B6JyXGdcw2QrxNfkKQb), shown in a WKWebView. Same code, so same look, sound and behaviour.
+The shell adds what a browser can't:
+
+| | |
+|---|---|
+| MIDI | Web MIDI API on CoreMIDI: all MIDI devices as inputs/outputs, plus "BLONDA SEQ3" as a virtual device for other apps (Ableton on the Mac). Outgoing clock and notes keep the page's timing (CoreMIDI timestamps). |
+| Files | Export (projects, stems) opens the system save dialog; import uses the normal file picker. |
+| Saving | Projects, settings and the sample library stay between launches (own origin `blonda://seq3`). |
+| Sound | Playback audio session (works with the silent switch on), 48 kHz, 5 ms buffer. |
+| Screen | Stays on while playing. |
+
+```sh
+tools/sync_web.sh <web index.html>   # new web version into the app (build number = web version)
+cd Shell && xcodegen && open SEQ3.xcodeproj
+```
+
+CI (`.github/workflows/shell.yml`) builds it, runs `-selftest` on an iPad and an iPhone simulator and on the Mac
+(twice each: the second run checks that saved data survived), and publishes screenshots, results and
+`SEQ.3 (Mac).zip` to the branch `shell-out-<branch>`. `Shell/tools/check_selftest.py` lists what is checked.
+
 ## Port fidelity
 
 The engines are A/B-tested against the web version rendered offline (OfflineAudioContext, same notes and presets).
