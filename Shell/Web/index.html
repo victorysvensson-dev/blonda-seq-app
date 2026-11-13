@@ -2879,7 +2879,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v234</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v235</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -8838,12 +8838,18 @@ function stxLaneOf(l){return {g:1,pan:0}}
   const isEmptyRow=r=>!r||!r.some(c=>c&&c.v);
   function ensureSong(){if(!(S.song&&S.chain[0]===0&&S.chain[1]===1&&S.chain[2]===2&&S.chain[3]===3)){S.chain=[0,1,2,3,-1,-1,-1,-1];S.song=1;try{renderChain()}catch(e){}}}
   /* the beat in all four bars: patterns that are still untouched copies (or empty) follow the pattern you work in */
+  /* v234: what you put in by hand stays in the pattern you put it in. Only beats the app makes itself (a new groove, dice,
+     variation …) are copied on to the patterns that were still copies; a step you click, play on a pad or record is yours –
+     it used to be copied to every pattern where that row was empty (a tom put in C landed in A, B and D too). */
+  let hand=false;const handOn=()=>{hand=true};
+  document.addEventListener('pointerdown',e=>{if(e.target.closest&&e.target.closest('#grid,#sgrid,#bigsteps,#pads,.trk,.tracker,.roll,.pr,.dc'))handOn()},true);
+  document.addEventListener('keydown',e=>{if(!e.metaKey&&!e.ctrlKey&&/^[0-9]$/.test(e.key))handOn()},true);
   function drumsFollow(){if(!S.stxw)S.stxw={};const W=S.stxw;if(!W.ph)W.ph={};let ch=false;
     TRACKS.forEach((t,i)=>{if(t.mel||(window.trkOn&&!trkOn(i)))return;const id=t.id,rows=[0,1,2,3].map(b=>S.pats[b][i]),cur=rows.map(r=>hash(JSON.stringify(r))),prev=W.ph[id];
       if(!prev){W.ph[id]=cur;return}const chg=[0,1,2,3].filter(b=>cur[b]!==prev[b]);
       /* one pattern changed (a new groove, your edit): the others that were still copies of it (or empty) follow */
-      if(chg.length===1&&!isEmptyRow(rows[chg[0]])){const src=chg[0];for(let b=0;b<4;b++){if(b===src)continue;if(isEmptyRow(rows[b])||cur[b]===prev[src]){S.pats[b][i]=JSON.parse(JSON.stringify(rows[src]));cur[b]=cur[src];ch=true}}}
-      W.ph[id]=cur});return ch}
+      if(chg.length===1&&!hand&&!isEmptyRow(rows[chg[0]])){const src=chg[0];for(let b=0;b<4;b++){if(b===src)continue;if(isEmptyRow(rows[b])||cur[b]===prev[src]){S.pats[b][i]=JSON.parse(JSON.stringify(rows[src]));cur[b]=cur[src];ch=true}}}
+      W.ph[id]=cur});hand=false;return ch}
   /* a new idea / a new groove: the drums of the pattern it was made in go to all four (locked drum tracks keep theirs), so the beat loops
      one bar while the synths play A → D. You can still make B–D different by hand afterwards. */
   window.drumsToAll=()=>{if(!S.stxw)S.stxw={};const W=S.stxw;if(!W.ph)W.ph={};const src=S.pat;
@@ -10647,7 +10653,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v234</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v235</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
