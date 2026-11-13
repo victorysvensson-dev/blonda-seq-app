@@ -7,6 +7,11 @@ src="$1"
 dst="$(cd "$(dirname "$0")/.." && pwd)/Shell/Web/index.html"
 grep -q 'class="ver">v' "$src" || { echo "that doesn't look like the SEQ.3 web app (no version found)"; exit 1; }
 cp "$src" "$dst"
+# the BLONDA sound pack the page loads from blonda-pack/ (pack.json + sounds) – taken along when it sits next to the page
+if [ -f "$(dirname "$src")/blonda-pack/pack.json" ]; then
+  rm -rf "$(dirname "$dst")/blonda-pack" && cp -R "$(dirname "$src")/blonda-pack" "$(dirname "$dst")/blonda-pack"
+  echo "sound pack: $(ls "$(dirname "$dst")/blonda-pack" | wc -l | tr -d ' ') files"
+fi
 ver=$(grep -o 'class="ver">v[0-9a-z]*' "$dst" | head -1 | sed 's/.*>//')
 num=$(echo "$ver" | tr -dc '0-9')
 # the build number follows the web version

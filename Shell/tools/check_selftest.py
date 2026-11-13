@@ -22,6 +22,7 @@ def check(dev, run, r):
     need(r.get('idb') is True, f"IndexedDB works ({r.get('idb')})")
     a = r.get('audio') or {}
     need(bool(a.get('workletOk')), f"Web Audio + AudioWorklet (sr {a.get('sr')}, state {a.get('state')}{', ' + r['audioErr'] if r.get('audioErr') else ''})")
+    need((r.get('packItems') or 0) > 200 and r.get('packDecoded') is True, f"BLONDA sound pack built in ({r.get('packItems')} sounds, decoded {r.get('packDecoded')}{', ' + r['packErr'] if r.get('packErr') else ''})")
     need(r.get('midiApi') is True, 'Web MIDI API present')
     need(r.get('midiIn') == [144, 60, 100], f"MIDI in: test note reached the page ({r.get('midiIn')}{', ' + r['midiErr'] if r.get('midiErr') else ''})")
     need([144, 64, 90] in (r.get('midiOutReceived') or []), f"MIDI out: page note reached the device ({r.get('midiOutReceived')})")
