@@ -54,7 +54,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: se.blonda.seq3
         PRODUCT_NAME: SEQ3
         MARKETING_VERSION: "1.0"
-        CURRENT_PROJECT_VERSION: "235"
+        CURRENT_PROJECT_VERSION: "236"
         TARGETED_DEVICE_FAMILY: "1,2,6"   # 6 = Mac (optimised for Mac: 1 point = 1 pixel, the page looks as in a browser)
         SUPPORTS_MACCATALYST: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
