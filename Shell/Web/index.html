@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v237</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v238</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10657,7 +10657,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v237</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v238</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -13351,6 +13351,19 @@ body.mob .seqlite.dotm .bigsteps .bs > i{font-size:9.5px!important;letter-spacin
 (()=>{let t=0;addEventListener('resize',()=>{try{if(typeof playing==='undefined'||!playing)return;
     if(!t&&window.__schedAhead){try{__schedAhead(2)}catch(e){}}clearTimeout(t);
     t=setTimeout(()=>{t=0},700)}catch(e){}},true)})();
+/* (v238) the bottom bar keeps its full width but is much lower: smaller clock, step dots and buttons, so the panels
+   get the room. Phones keep their own bar (body.mob / body.mob-land). */
+(()=>{const css=document.createElement('style');css.id='tbar';css.textContent=`
+body:not(.mob):not(.mob-land) .app .transport{padding-top:8px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));min-height:0;gap:12px;border-radius:18px 18px 0 0}
+body:not(.mob):not(.mob-land) .transport::before{top:3px;height:3px;width:32px;margin-left:-16px}
+body:not(.mob):not(.mob-land) .transport .clock{width:auto;height:auto}
+body:not(.mob):not(.mob-land) .transport #clock svg{height:20px;width:auto}
+body:not(.mob):not(.mob-land) .transport #pos{display:none}
+body:not(.mob):not(.mob-land) .transport .bar16 i{width:5px;height:5px}
+body:not(.mob):not(.mob-land) .transport .tr-r{gap:6px}
+body:not(.mob):not(.mob-land) .transport .tr-r button{width:32px;height:32px}
+body:not(.mob):not(.mob-land) .transport .tr-r button svg{width:14px;height:14px}
+body:not(.mob):not(.mob-land) .transport #recBtn i{width:9px;height:9px}`;document.head.appendChild(css)})();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
    The page is first drawn in its plain form (the glass look, the intro in Swedish) and only then gets your saved look and
