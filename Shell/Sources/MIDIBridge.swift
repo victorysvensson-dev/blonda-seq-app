@@ -249,8 +249,7 @@ final class MIDIBridge {
         var pkt: UnsafeMutablePointer<MIDIEventPacket> = MIDIEventListInit(list, ._1_0)
         for w in words {
             var word = w
-            guard let next = MIDIEventListAdd(list, size, pkt, ts, 1, &word) else { break }
-            pkt = next
+            pkt = MIDIEventListAdd(list, size, pkt, ts, 1, &word)
         }
         body(UnsafePointer(list))
     }
