@@ -88,6 +88,26 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         }
     }
 
+    // MARK: - scroll indicators
+
+    /// The page hides the scroll bars of its scroll areas (the card columns, lists). Safari on the Mac honours that, but
+    /// in the app (and on the iPad) WebKit draws each scroll area as a native scroll view with its own indicator, which
+    /// ignores the page's CSS – a grey bar appeared at the side of the column while scrolling. The page's own scroll
+    /// areas get no indicator, as on the web; the scroll areas come and go with the page, so this runs again regularly.
+    private var indicatorTimer: Timer?
+    private func hideScrollIndicators() {
+        func walk(_ v: UIView) {
+            for sub in v.subviews {
+                if let sv = sub as? UIScrollView { sv.showsVerticalScrollIndicator = false; sv.showsHorizontalScrollIndicator = false }
+                walk(sub)
+            }
+        }
+        walk(web.scrollView)
+        if indicatorTimer == nil {
+            indicatorTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in self?.hideScrollIndicators() }
+        }
+    }
+
     // MARK: - keyboard
 
     /// The page gets the keyboard only when the web view is the first responder. On the Mac nothing makes it that by
@@ -116,6 +136,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     private func forward(_ k: UIKey, type: String) -> Bool {
         guard let (key, code) = Self.domKey(k) else { return false }
         let f = k.modifierFlags
+        // ⌘-shortcuts belong to macOS and the menus (⌘Q, ⌘W, ⌘H …) – only ⌘Z / ⇧⌘Z (undo / redo) are the page's own
+        if f.contains(.command) && code != "KeyZ" { return false }
         let args: [Any] = [type, key, code, f.contains(.shift), f.contains(.alternate), f.contains(.control), f.contains(.command)]
         guard let data = try? JSONSerialization.data(withJSONObject: args), let json = String(data: data, encoding: .utf8) else { return false }
         web.evaluateJavaScript("""
@@ -280,6 +302,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
         // no pinch-zoom of the whole app (two fingers belong to the pads and faders)
         webView.scrollView.pinchGestureRecognizer?.isEnabled = false
+        hideScrollIndicators()
         Diagnostics.log("page finished loading \(webView.url?.absoluteString ?? "")")
         focusPage("page loaded")
     }

@@ -11,7 +11,7 @@ struct SEQ3App: App {
     var body: some Scene {
         WindowGroup {
             ShellView()
-                .ignoresSafeArea()
+                .modifier(EdgeToEdge())
                 .background(Color(red: 23 / 255, green: 24 / 255, blue: 26 / 255))
                 .persistentSystemOverlays(.hidden)
                 .statusBarHidden(true)
@@ -40,6 +40,18 @@ enum Audio {
         } catch {
             NSLog("SEQ3 audio session: %@", String(describing: error))
         }
+    }
+}
+
+/// iPad / iPhone: the page goes edge to edge and handles the safe areas itself (notch, home bar).
+/// Mac: the page starts below the window's title bar – edge to edge it slid under it and its top 26 points were hidden.
+struct EdgeToEdge: ViewModifier {
+    func body(content: Content) -> some View {
+        #if targetEnvironment(macCatalyst)
+        content.ignoresSafeArea(edges: [.bottom, .leading, .trailing])
+        #else
+        content.ignoresSafeArea()
+        #endif
     }
 }
 

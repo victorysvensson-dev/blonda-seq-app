@@ -1,5 +1,45 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>BLONDA SEQ.3 Glass</title>
+<script>
+/* ================= v233: the audio graph no longer grows while you play (WebKit: Safari, iPad, the SEQ.3 app) ================= */
+/* Voice clean-up for WebKit. Every note builds a small chain of audio nodes (oscillators/sample sources → filters,
+   shapers, gains, panners → a track's input). Chrome frees such a chain once its sources have ended; WebKit keeps every
+   node that is still connected, so silent chains pile up and the audio thread walks through all of them, 375 times a
+   second – the longer you play, the heavier the page gets. This disconnects a note's chain when all its sources have
+   ended.
+   Which nodes belong to a note: nodes made in the same task as its sources whose every input comes, step by step, from
+   that same task. A node that something older feeds (a lazily made effect or bus behind a track) is never touched, and
+   a node gets a 3 s grace period after the last source ended, in which a connection from any other task marks it as
+   shared for good. */
+(()=>{if(window.__vclean)return;const V=window.__vclean={tasks:0,cleaned:0,kept:0};
+  let task=1,bump=false;const now=()=>{if(!bump){bump=true;queueMicrotask(()=>{task++;bump=false})}return task};
+  const P=BaseAudioContext.prototype,T=new Map();                       // task -> {nodes:Set, live:0, srcs:0}
+  const rec=n=>{const id=now();n.__vt=id;let e=T.get(id);if(!e){e={nodes:new Set(),live:0,srcs:0};T.set(id,e)}e.nodes.add(n);return n};
+  for(const k of Object.getOwnPropertyNames(P))if(/^create(?!Buffer$|PeriodicWave$|MediaStreamDestination$)/.test(k)&&typeof P[k]==='function'){const f=P[k];
+    P[k]=function(...a){const n=f.apply(this,a);return n instanceof AudioNode?rec(n):n}}
+  /* constructors too (new GainNode(ctx) …) */
+  const C=AudioNode.prototype,conn=C.connect;
+  C.connect=function(dst,...a){if(dst instanceof AudioNode){(dst.__in||(dst.__in=new Set())).add(this);
+      if(this.__vt!==dst.__vt)dst.__shared=true}else if(dst instanceof AudioParam){this.__toParam=true}
+    return conn.call(this,dst,...a)};
+  const S=AudioScheduledSourceNode.prototype,st=S.start;
+  S.start=function(...a){const e=this.__vt&&T.get(this.__vt);if(e&&!this.__vs){this.__vs=1;e.live++;e.srcs++;
+      this.addEventListener('ended',()=>{e.live--;if(e.live<=0)setTimeout(()=>{if(e.live<=0)clean(this.__vt,e)},3000)})}
+    return st.apply(this,a)};
+  /* a node is local to the note when it is not shared and all its inputs are local (sources of the note are local) */
+  function clean(id,e){if(!T.has(id))return;T.delete(id);const local=new Map();
+    /* local = made in this note's task, never fed by anything else, and carrying this note's sound: a source of the
+       note itself, or a node whose every input is local (a node with no input at all is not local – it may be waiting
+       for something to be connected later) */
+    const isLocal=n=>{if(local.has(n))return local.get(n);local.set(n,false);let ok=n.__vt===id&&!n.__shared;
+      if(ok&&!n.__vs){if(!n.__in||!n.__in.size)ok=false;else for(const i of n.__in)if(!isLocal(i)){ok=false;break}}
+      local.set(n,ok);return ok};
+    for(const n of e.nodes){if(isLocal(n)){try{n.disconnect()}catch(x){}V.cleaned++}else V.kept++}
+    V.tasks++;e.nodes.clear()}
+  /* tasks that never start a source (set-up of buses and effects) are dropped from the list, never cleaned */
+  setInterval(()=>{const lim=task-200;for(const [id,e] of T)if(id<lim&&e.srcs===0)T.delete(id)},5000);
+})();
+</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -2839,7 +2879,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v232</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v233</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10604,7 +10644,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v232</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v233</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -12566,7 +12606,7 @@ body.look-dots .seqlite.dotm .cells .cell.on{--dd:rgba(232,230,220,.16)}
   /* test hook: how much time the scheduler had left each time it ran (below 0 = a note would come late) */
 try{const sc=schedule,L={n:0,late:0,low:0,min:1};schedule=function(){try{const t=performance.now();if(laT){const gap=(t-laT)/1000;if(gap>1.5){}else if(gap>.045)window.__LA=Math.min(.4,Math.max(window.__LA,gap*1.6+.06));else window.__LA=Math.max(.12,window.__LA-.0004)}laT=t;
     if(ctx){const d=nextT-ctx.currentTime;L.n++;if(d<0)L.late++;if(d<.03)L.low++;if(d<L.min)L.min=d}}catch(e){}return sc.apply(this,arguments)};
-    window.__late={get:()=>({...L,la:+window.__LA.toFixed(3)}),reset:()=>{L.n=0;L.late=0;L.low=0;L.min=1}}}catch(e){}
+    window.__late={get:()=>({...L,la:+window.__LA.toFixed(3)}),reset:()=>{L.n=0;L.late=0;L.low=0;L.min=1}};window.__schedAhead=sec=>{const k=window.__LA;window.__LA=sec;try{sc()}finally{window.__LA=k}}}catch(e){}
   /* the main animation frame: behind idea mode only follow the playback (the step and bar the rest of the app reads) */
   try{const fr=frame;frame=function(now){if(!document.body.classList.contains('duo-on'))return fr(now);requestAnimationFrame(frame);lastNow=now;
     if(ctx&&playing){const ct=ctx.currentTime;let ev=null;while(visQ.length&&visQ[0].t<=ct)ev=visQ.shift();if(ev){curStep=ev.step;curG=ev.g||0;curStepT=ev.t}}}}catch(e){console.warn('perf',e)}
@@ -13289,6 +13329,15 @@ body.mob .seqlite.dotm .bigsteps .bs.on{background-image:radial-gradient(circle 
 body.mob .seqlite.dotm .bigsteps .bs.on::before{background:radial-gradient(circle closest-side,var(--dc) 50%,transparent 56%) 0 0/25% 25%!important;filter:none!important}
 body.mob .seqlite.dotm .bigsteps .bs.on.ph::before{--dc:#fff!important;opacity:1!important}
 body.mob .seqlite.dotm .bigsteps .bs > i{font-size:9.5px!important;letter-spacing:.06em;opacity:.7;-webkit-font-smoothing:antialiased}`;document.head.appendChild(css)})();
+
+/* ================= v233: the music keeps going while the window changes size =================
+   In Safari's engine a big window change (zoom, full screen) relays and repaints the whole page, which can hold the page
+   for over a second. The notes are planned only a fraction of a second ahead, so such a pause went silent. When the size
+   starts to change, the next two seconds of notes are planned at once, before the engine starts relaying the page; the normal
+   short planning carries on from there. ================= */
+(()=>{let t=0;addEventListener('resize',()=>{try{if(typeof playing==='undefined'||!playing)return;
+    if(!t&&window.__schedAhead){try{__schedAhead(2)}catch(e){}}clearTimeout(t);
+    t=setTimeout(()=>{t=0},700)}catch(e){}},true)})();
 
 /* ================= the mixer gets the buses: trummor · synth · loopar strips between the channels and the master =================
    fader = bus level, m / s = bus mute / solo (several), meter = the bus output; a small "pump" lamp when the bus pumps. */
