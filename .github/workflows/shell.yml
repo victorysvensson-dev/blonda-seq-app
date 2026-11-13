@@ -55,6 +55,10 @@ jobs:
         if: always()
         run: |
           cd shell-out
+          # GitHub takes files up to 100 MB; with the sound pack the zips are bigger, so they go up in 90 MB parts
+          # (put back together with: cat "SEQ.3 (Mac).zip.part-"* > "SEQ.3 (Mac).zip")
+          for z in *.zip; do [ -f "$z" ] || continue; if [ $(stat -f %z "$z") -gt 94000000 ]; then split -b 90m "$z" "$z.part-" && rm "$z"; fi; done
+          ls -la
           git init -q && git checkout -q -b "shell-mac-${GITHUB_REF_NAME}"
           git config user.name ci && git config user.email ci@users.noreply.github.com
           git add -A && git commit -qm "shell mac ${GITHUB_SHA}"
