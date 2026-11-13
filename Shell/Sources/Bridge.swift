@@ -71,13 +71,13 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   r.body=document.body.className;r.width=innerWidth;r.height=innerHeight;
   try{const k='blonda-selftest';r.lsPrev=localStorage.getItem(k);localStorage.setItem(k,String(Date.now()));r.ls=localStorage.getItem(k)!=null}catch(e){r.ls=String(e)}
   r.project=!!localStorage.getItem('blonda-seq3-glass');
-  r.idb=await tmo(new Promise(res=>{try{const q=indexedDB.open('blonda-selftest',1);q.onsuccess=()=>{q.result.close();res(true)};q.onerror=()=>res(String(q.error))}catch(e){res(String(e))}}),3000).catch(e=>String(e));
+  {const t0=performance.now();r.idb=await tmo(new Promise(res=>{try{const q=indexedDB.open('blonda-selftest',1);q.onsuccess=()=>{q.result.close();res(true)};q.onerror=()=>res(String(q.error))}catch(e){res(String(e))}}),15000).catch(e=>String(e));r.idbMs=Math.round(performance.now()-t0)}
   try{const AC=window.AudioContext||window.webkitAudioContext,c=new AC();r.audio={sr:c.sampleRate,state:c.state,worklet:!!c.audioWorklet};
     if(c.audioWorklet){const u=URL.createObjectURL(new Blob(["registerProcessor('t',class extends AudioWorkletProcessor{process(){return true}})"],{type:'application/javascript'}));
       await tmo(c.audioWorklet.addModule(u),3000);new AudioWorkletNode(c,'t');r.audio.workletOk=true}
     await c.close()}catch(e){r.audioErr=String(e)}
   r.midiApi=!!navigator.requestMIDIAccess;
-  try{const a=await tmo(navigator.requestMIDIAccess(),4000);let ti=null,to=null;
+  try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;
     for(let k=0;k<20&&!(ti&&to);k++){ti=[...a.inputs.values()].find(p=>p.name==='BLONDA TEST');to=[...a.outputs.values()].find(p=>p.name==='BLONDA TEST');if(!(ti&&to))await new Promise(s=>setTimeout(s,100))}
     r.midiIns=[...a.inputs.values()].map(p=>p.name);r.midiOuts=[...a.outputs.values()].map(p=>p.name);
     if(ti)r.midiIn=await new Promise(res=>{ti.onmidimessage=e=>res(Array.from(e.data));post({t:'test-midi-send'});setTimeout(()=>res('timeout'),3000)});
@@ -85,6 +85,9 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   }catch(e){r.midiErr=String(e)}
   try{const dl=await window.claude.use('downloads');await tmo(dl.save({filename:'selftest.blonda.json',data:'{"blonda":"seq3"}'}),3000);r.save=true}catch(e){r.save=String(e&&e.message||e)}
   r.syncPill=(document.querySelector('#syncPill span')||{}).textContent||null;
+  /* start the sound like a tap on the intro button, so the screenshot shows the app and the page's own audio is checked */
+  try{const b=document.getElementById('startBtn');if(b)b.click();await new Promise(s=>setTimeout(s,2500));const st=document.getElementById('start');
+    r.started=!!(st&&st.hidden);const A=window.__seq&&__seq.Aref&&__seq.Aref();const c=A&&A.out&&A.out.context;r.pageAudio=c?{state:c.state,sr:c.sampleRate,base:Math.round((c.baseLatency||0)*1000),out:Math.round((c.outputLatency||0)*1000)}:null}catch(e){r.startErr=String(e)}
   r.errors=N.errs;
  }catch(e){r.fatal=String(e)}
  post({t:'selftest',r})},3500));

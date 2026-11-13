@@ -28,7 +28,11 @@ def check(dev, run, r):
     need([128, 64, 0] in (r.get('midiOutReceived') or []), 'MIDI out: timed note-off arrived')
     need(r.get('save') is True and r.get('saveBytes') == 17, f"saving a file ({r.get('save')}, {r.get('saveBytes')} bytes)")
     need(r.get('syncPill') == 'local', f"library says local ({r.get('syncPill')})")
+    pa = r.get('pageAudio') or {}
+    need(r.get('started') is True, f"intro tapped, app shown ({r.get('startErr') or ''})")
+    need(pa.get('state') == 'running', f"the page's own sound is running ({pa})")
     need(not r.get('errors'), f"no page errors {r.get('errors') or ''}")
+    lines.append(f"  time: IndexedDB {r.get('idbMs')} ms, MIDI access {r.get('midiMs')} ms")
     if run == 2:
         need(r.get('lsPrev') is not None, 'saved data survived a restart')
     lines.append(f"  info: {r.get('platform')} {r.get('system')} {r.get('width')}x{r.get('height')} body='{r.get('body')}' "
