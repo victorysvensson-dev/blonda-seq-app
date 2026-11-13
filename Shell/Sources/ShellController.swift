@@ -61,6 +61,13 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     override func viewDidLoad() {
         super.viewDidLoad()
         web.load(URLRequest(url: BundleScheme.startURL))
+        if selfTest {
+            // if the page never reports, the app still writes what it knows, so a hang can be told apart from a crash
+            DispatchQueue.main.asyncAfter(deadline: .now() + 75) { [weak self] in
+                guard let self, !self.testDone else { return }
+                self.finishSelfTest(["fatal": "the page did not report within 75 s"])
+            }
+        }
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -80,8 +87,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         guard let b = body as? [String: Any], let t = b["t"] as? String else { return }
         switch t {
         case "midi-open":
-            midi.start(selfTest: selfTest)
-            midi.refresh()
+            midi.open(selfTest: selfTest)
         case "midi-out":
             guard let id = b["id"] as? String, let d = b["d"] as? [NSNumber] else { return }
             midi.send(id: id, bytes: d.map { UInt8(truncatingIfNeeded: $0.intValue) },
@@ -220,7 +226,11 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
 
     // MARK: - self-test
 
+    private var testDone = false
+
     private func finishSelfTest(_ page: [String: Any]) {
+        guard !testDone else { return }
+        testDone = true
         // give the test note sent to "BLONDA TEST" (and its note-off 200 ms later) time to arrive
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) { [self] in
             var r = page
@@ -228,6 +238,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             r["system"] = UIDevice.current.systemName + " " + UIDevice.current.systemVersion
             r["midiOutReceived"] = testOut.map { $0.map { Int($0) } }
             r["saveBytes"] = testSaveBytes
+            r["midiNative"] = midi.diag
             let data = (try? JSONSerialization.data(withJSONObject: r, options: [.prettyPrinted, .sortedKeys])) ?? Data()
             let text = String(data: data, encoding: .utf8) ?? "{}"
             let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]

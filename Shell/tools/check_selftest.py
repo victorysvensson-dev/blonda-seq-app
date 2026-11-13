@@ -33,6 +33,7 @@ def check(dev, run, r):
     need(pa.get('state') == 'running', f"the page's own sound is running ({pa})")
     need(not r.get('errors'), f"no page errors {r.get('errors') or ''}")
     lines.append(f"  time: IndexedDB {r.get('idbMs')} ms, MIDI access {r.get('midiMs')} ms")
+    lines.append(f"  CoreMIDI: {r.get('midiNative')}")
     if run == 2:
         need(r.get('lsPrev') is not None, 'saved data survived a restart')
     lines.append(f"  info: {r.get('platform')} {r.get('system')} {r.get('width')}x{r.get('height')} body='{r.get('body')}' "

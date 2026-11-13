@@ -48,14 +48,44 @@ final class MIDIBridge {
         return t
     }()
 
-    func start(selfTest: Bool) {
-        guard !started else { return }
+    /// What happened when CoreMIDI was started (for the log and the self-test).
+    private(set) var diag: [String] = []
+    private var retries = 0
+
+    /// The page asked for MIDI. The page always gets an answer: the ports, or – if CoreMIDI can't be started yet –
+    /// an empty list (the page then shows no devices), and the app tries again every 2 s for a while; when it
+    /// succeeds the page gets the ports as a normal "devices changed".
+    func open(selfTest: Bool) {
+        if started { refresh(); return }
+        if start(selfTest: selfTest) { refresh(); return }
+        onPorts?([], [])
+        scheduleRetry(selfTest: selfTest)
+    }
+
+    private func scheduleRetry(selfTest: Bool) {
+        guard retries < 30 else { return }
+        retries += 1
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+            guard let self, !self.started else { return }
+            if self.start(selfTest: selfTest) { self.refresh() } else { self.scheduleRetry(selfTest: selfTest) }
+        }
+    }
+
+    @discardableResult
+    func start(selfTest: Bool) -> Bool {
+        guard !started else { return true }
+        let t0 = CFAbsoluteTimeGetCurrent()
         var st = MIDIClientCreateWithBlock(Self.appName as CFString, &client) { [weak self] note in
             if note.pointee.messageID == .msgSetupChanged {
                 DispatchQueue.main.async { self?.refresh() }
             }
         }
-        guard st == noErr else { NSLog("SEQ3 MIDI client: %d", st); return }
+        let ms = Int((CFAbsoluteTimeGetCurrent() - t0) * 1000)
+        guard st == noErr else {
+            note("client error \(st) after \(ms) ms (try \(retries + 1))")
+            return false
+        }
+        note("client ok after \(ms) ms (try \(retries + 1))")
         started = true
 
         st = MIDIInputPortCreateWithProtocol(client, "in" as CFString, ._1_0, &inPort) { [weak self] list, refCon in
@@ -66,27 +96,34 @@ final class MIDIBridge {
             self.lock.unlock()
             if let id { self.receive(list, id: id) }
         }
-        if st != noErr { NSLog("SEQ3 MIDI in port: %d", st) }
+        if st != noErr { note("in port error \(st)") }
         st = MIDIOutputPortCreate(client, "out" as CFString, &outPort)
-        if st != noErr { NSLog("SEQ3 MIDI out port: %d", st) }
+        if st != noErr { note("out port error \(st)") }
 
         // the app as a device for other apps
         st = MIDIDestinationCreateWithProtocol(client, Self.appName as CFString, ._1_0, &vDst) { [weak self] list, _ in
             self?.receive(list, id: Self.virtualIn)
         }
-        if st != noErr { NSLog("SEQ3 MIDI virtual destination: %d", st) }
+        if st != noErr { note("virtual destination error \(st)") }
         st = MIDISourceCreateWithProtocol(client, Self.appName as CFString, ._1_0, &vSrc)
-        if st != noErr { NSLog("SEQ3 MIDI virtual source: %d", st) }
+        if st != noErr { note("virtual source error \(st)") }
         for e in [vSrc, vDst] where e != 0 { ownIDs.insert(Self.uid(e)) }
 
         if selfTest {
-            MIDISourceCreateWithProtocol(client, Self.testName as CFString, ._1_0, &tSrc)
+            st = MIDISourceCreateWithProtocol(client, Self.testName as CFString, ._1_0, &tSrc)
+            if st != noErr { note("test source error \(st)") }
             MIDIDestinationCreateWithProtocol(client, Self.testName as CFString, ._1_0, &tDst) { [weak self] list, _ in
                 guard let self else { return }
                 let msgs = Self.parse(list)
                 DispatchQueue.main.async { msgs.forEach { self.onTestOut?($0) } }
             }
         }
+        return true
+    }
+
+    private func note(_ s: String) {
+        diag.append(s)
+        NSLog("SEQ3 MIDI: %@", s)
     }
 
     /// Reads the current sources and destinations, connects new sources and tells the page.

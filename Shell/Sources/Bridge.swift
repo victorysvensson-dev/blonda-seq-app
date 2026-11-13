@@ -78,7 +78,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
     await c.close()}catch(e){r.audioErr=String(e)}
   r.midiApi=!!navigator.requestMIDIAccess;
   try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;
-    for(let k=0;k<20&&!(ti&&to);k++){ti=[...a.inputs.values()].find(p=>p.name==='BLONDA TEST');to=[...a.outputs.values()].find(p=>p.name==='BLONDA TEST');if(!(ti&&to))await new Promise(s=>setTimeout(s,100))}
+    for(let k=0;k<100&&!(ti&&to);k++){ti=[...a.inputs.values()].find(p=>p.name==='BLONDA TEST');to=[...a.outputs.values()].find(p=>p.name==='BLONDA TEST');if(!(ti&&to))await new Promise(s=>setTimeout(s,100))}
     r.midiIns=[...a.inputs.values()].map(p=>p.name);r.midiOuts=[...a.outputs.values()].map(p=>p.name);
     if(ti)r.midiIn=await new Promise(res=>{ti.onmidimessage=e=>res(Array.from(e.data));post({t:'test-midi-send'});setTimeout(()=>res('timeout'),3000)});
     if(to){to.send([0x90,64,90]);to.send([0x80,64,0],performance.now()+200);r.midiOutSent=true}
