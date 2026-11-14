@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v250</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v251</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -3659,7 +3659,7 @@ const pc=v=>[String(Math.round(v*100)),'%'],msF=x=>x<1?[String(Math.round(x*1000
 const FM_R=[.5,1,1.5,2,3,3.5,7];
 const ENG={
  msx:{name:'Sample+',tag:'your sampled instruments · multisample',dot:'#EDEBE3',ps:[{k:'att',l:'attack',f:v=>msF(.001+v*v*2)},{k:'dec',l:'decay',f:v=>msF(.02+v*v*4)},{k:'sus',l:'sustain',f:pc},{k:'rel',l:'release',f:v=>msF(.02+v*v*4)}],opts:[]},
- analog:{name:'Analog',tag:'subtraktiv · envelope',dot:'#F2788E'},
+ analog:{name:'Analog',tag:'subtractive · envelope',dot:'#F2788E'},
  enkel:{name:'Enkel',tag:'starterns ljud · enkel synt',ps:[],opts:[]},
  smp:{name:'Sampler',tag:'starterns röst och ljud',ps:[],opts:[]},
  acid:{name:'Acid',tag:'303-bas · resonansfilter',dot:'#C9F23A',ps:[
@@ -8078,7 +8078,8 @@ async function stxRender(bars,bpm,over){const P0=JSON.parse(JSON.stringify(stx()
   for(let g=0;g<n;g++)E.tick(.05+g*sd,g,sd,plan);const buf=await oc.startRendering();return [buf.getChannelData(0),buf.getChannelData(1)]}
 /* test hooks: run engine code against another (offline) context; bris and its presets */
 window.__withCtx=async(c,fn)=>{const o=ctx,oA=A;ctx=c;A=Object.assign({},A);try{return await fn()}finally{ctx=o;A=oA}};
-window.__brisVoice=(...a)=>brisVoice(...a);window.__bris={pre:()=>typeof BR_PRE!=='undefined'?BR_PRE:null,def:()=>BR_DEF,E:()=>engE('bris')};
+window.__brisVoice=(...a)=>brisVoice(...a);/* (v251) added to the Bris card's own (load, step …) instead of replacing it – replacing it meant a preset picked from the full synth, the keyboard or MIDI changed the sound but not the name on the card */
+window.__bris=Object.assign(window.__bris||{},{pre:()=>typeof BR_PRE!=='undefined'?BR_PRE:null,def:()=>BR_DEF,E:()=>engE('bris')});
 window.__stxLoad=id=>stxSmpLoad(id);window.__stx={render:stxRender,STX,stx,PRE:STX_PRE,load:stxLoadPre,planOf:stxPlan,follow:(id,n)=>stxFollow(stx(),id,n),plan:()=>stxPlanCached()};
 /* test only: render with taps before the drive (inS), before the tape (mix) and at the output: peak / rms in dB each */
 window.__stxTap=async(bars,bpm,over)=>{const P0=JSON.parse(JSON.stringify(stx())),P=Object.assign(P0,over||{},{on:1});const sr=48000,sd=60/bpm/4,n=bars*16,len=Math.ceil((n*sd+1)*sr);
@@ -9850,7 +9851,7 @@ const RS_SEC={
   msx:[['envelope',['att','dec','sus','rel']]],
   grime:[['oscillator',['@wave','@oct','uni','ratio','growl','sub']],['växt',['grow','grT','fold']],['filter',['cut','res','env','dec','drive']],['wob',['@shape','wob','rate','amp']],['formant',['form','vowel','talk','trate']],['tonhöjd',['dive','dt','glide']]]};
 const RS_CLONE={mini:'mini',sh101:'sh101',bris:'bris'};
-const RS_WAVE=[['sawtooth','såg'],['square','fyrkant'],['triangle','triangel'],['sine','sinus']];
+const RS_WAVE=[['sawtooth','såg'],['square','fyrkant'],['triangle','triangel'],['sine','sine']];
 const RS={open:false,arm:null,drag:null,id:'bass',e:'analog'};
 /* the param list of an engine: [{k,l,max,step,f}] */
 function rsParams(e){const D=ENG[e]||{},seen=new Set(),out=[];(D.ps||[]).concat(D.adv||[],RS_EXTRA[e]||[]).forEach(q=>{if(!seen.has(q.k)){seen.add(q.k);out.push(q)}});return out}
@@ -10112,9 +10113,34 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     const st=e==='msx'&&window.TEX?((TEX.instruments.get((S.ms||{})[RS.id])||{meta:{name:'–'}}).meta.name):(S.rsPre||{})[e];R.querySelector('.rs-pn').textContent=e==='grime'?(GR_PRE[engE('grime').pre]||['–'])[0]:st||'–';R.querySelector('.rs-mn').textContent=modOf(e).rows.length?modOf(e).rows.length+' länkar':'ingen'}
   selBox.onclick=ev=>{const b=ev.target.closest('[data-e]');if(!b)return;pushHist();S.inst[RS.id]=b.dataset.e;try{refreshInst()}catch(_){}save();build();prevNote()};
   trkBox.onclick=ev=>{const b=ev.target.closest('[data-j]');if(!b)return;try{select(+b.dataset.j)}catch(_){}build()};
+  /* (v251) factory sounds for Acid and Analog (they only had "init" and your own) */
+  const ACID_PRE=[
+    ['Classic 303','bass',{cut:.32,res:.72,env:.6,dec:.3,acc:.6,drive:.35,dtone:.5,st:.2,wave:'sawtooth',slide:0}],
+    ['Squelch','bass',{cut:.22,res:.9,env:.8,dec:.25,acc:.8,drive:.45,dtone:.55,st:.2,wave:'sawtooth',slide:0}],
+    ['Rubber bass','bass',{cut:.18,res:.55,env:.35,dec:.45,acc:.4,drive:.2,dtone:.35,st:.25,wave:'sawtooth',slide:0}],
+    ['Deep acid','bass',{cut:.12,res:.45,env:.3,dec:.6,acc:.3,drive:.12,dtone:.3,st:.3,wave:'sawtooth',slide:0}],
+    ['Square acid','bass',{cut:.3,res:.75,env:.55,dec:.3,acc:.6,drive:.3,dtone:.5,st:.2,wave:'square',slide:0}],
+    ['Hardfloor','lead',{cut:.26,res:.85,env:.75,dec:.35,acc:.7,drive:.65,dtone:.6,st:.22,wave:'sawtooth',slide:0}],
+    ['Screamer','lead',{cut:.4,res:.95,env:.9,dec:.2,acc:.9,drive:.8,dtone:.7,st:.18,wave:'sawtooth',slide:0}],
+    ['Slide line','lead',{cut:.28,res:.8,env:.65,dec:.32,acc:.6,drive:.35,dtone:.5,st:.38,wave:'sawtooth',slide:1}],
+    ['Pluck acid','pluck',{cut:.35,res:.6,env:.7,dec:.12,acc:.5,drive:.3,dtone:.45,st:.15,wave:'sawtooth',slide:0}],
+    ['Square slide','pluck',{cut:.24,res:.7,env:.6,dec:.18,acc:.55,drive:.4,dtone:.5,st:.32,wave:'square',slide:1}]];
+  const ANA_PRE=[
+    ['Saw bass','bass',{wave:'sawtooth',a:.004,d:.22,s:.35,r:.12,cut:.42,res:.35,env:.55}],
+    ['Square bass','bass',{wave:'square',a:.003,d:.3,s:.5,r:.1,cut:.35,res:.25,env:.45}],
+    ['Sine sub','bass',{wave:'sine',a:.005,d:.4,s:.8,r:.15,cut:.5,res:0,env:0}],
+    ['Pluck','keys',{wave:'sawtooth',a:.002,d:.18,s:0,r:.15,cut:.5,res:.45,env:.7}],
+    ['Soft keys','keys',{wave:'triangle',a:.01,d:.8,s:.3,r:.4,cut:.55,res:.1,env:.3}],
+    ['Brass','keys',{wave:'sawtooth',a:.06,d:.4,s:.7,r:.25,cut:.38,res:.2,env:.6}],
+    ['Square lead','lead',{wave:'square',a:.01,d:.3,s:.8,r:.2,cut:.6,res:.3,env:.3}],
+    ['Saw lead','lead',{wave:'sawtooth',a:.008,d:.25,s:.75,r:.25,cut:.65,res:.4,env:.35}],
+    ['Warm pad','pad',{wave:'sawtooth',a:.6,d:1,s:.75,r:1.4,cut:.45,res:.1,env:.2}],
+    ['Glass pad','pad',{wave:'triangle',a:.8,d:1.2,s:.7,r:2,cut:.6,res:.25,env:.15}]];
   function presetList(e){const L=[];if(e==='grime')GR_PRE.forEach((p,i)=>L.push({l:p[0],g:'grime',f:()=>{grimeLoadPre(i);try{refreshInst()}catch(_){}}}));
     if(e==='mini'&&window.__mini)__mini.pre.forEach(p=>L.push({l:p[0],g:'moog',f:()=>__mini.load(p)}));if(e==='sh101'&&window.__sh101&&__sh101.pre)__sh101.pre.forEach(p=>L.push({l:p[0],g:'sh-101',f:()=>__sh101.load(p)}));
     if(e==='bris'&&typeof BR_PRE!=='undefined')BR_PRE.forEach(p=>L.push({l:p[1],g:'bris · '+p[0].toLowerCase(),f:()=>{if(window.__bris&&__bris.load)__bris.load(p);else{Object.assign(engE('bris'),BR_DEF,p[2]);try{brisApplyAll()}catch(_){}}}}));
+    if(e==='acid')ACID_PRE.forEach(p=>L.push({l:p[0],g:'acid · '+p[1],f:()=>{Object.assign(engE('acid'),JSON.parse(JSON.stringify(DEFS.eng.acid)),p[2])}}));
+    if(e==='analog')ANA_PRE.forEach(p=>L.push({l:p[0],g:'analog · '+p[1],f:()=>{const o=S.synth[RS.id];if(o)Object.assign(o,JSON.parse(JSON.stringify(DEFS.synth[RS.id]||DEFS.synth.bass)),p[2])}}));
     if(e==='msx'&&window.TEX&&TEX.list)TEX.list().forEach(I=>L.push({l:I.meta.name,g:I.meta.dev||'sample+',f:()=>TEX.use(RS.id,I.meta.id)}));
     ((S.userPre||{})[e]||[]).forEach(u=>L.push({l:u.n,g:'sparade',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(u.p)));if(u.m)S.mods[e]=JSON.parse(JSON.stringify(u.m));modOf(e)}}));
     L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});
@@ -10732,7 +10758,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v250</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v251</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -14223,7 +14249,13 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   /* ---- the picker ---- */
   let sheet=null,selE=null;
   function closeSheet(){if(sheet){sheet.remove();sheet=null}}
-  function openSheet(){closeSheet();sheet=document.createElement('div');sheet.className='kx-sh';kb.appendChild(sheet);selE=engOf(kTrk());drawSheet()}
+  /* the picker sits over the page above the keyboard, never above the top row or off the screen (phone: the keyboard can be high up) */
+  function placeSheet(){if(!sheet)return;const r=kb.getBoundingClientRect(),hb=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--hdrB'))||8,room=Math.max(160,r.top-hb-8);
+    const lr={position:'fixed',left:(r.left+(innerWidth<=560?6:12))+'px',right:(innerWidth-r.right+(innerWidth<=560?6:12))+'px'};
+    if(r.top-hb-8<260)Object.assign(sheet.style,lr,{top:(hb+4)+'px',bottom:'8px',maxHeight:'none'});/* not enough room above the keys: between the top row and the bottom */
+    else Object.assign(sheet.style,lr,{top:'auto',bottom:(innerHeight-r.top+8)+'px',maxHeight:Math.min(room,560)+'px'})}
+  function openSheet(){closeSheet();sheet=document.createElement('div');sheet.className='kx-sh';kb.appendChild(sheet);selE=engOf(kTrk());drawSheet();placeSheet()}
+  addEventListener('resize',placeSheet);
   function drawSheet(){if(!sheet)return;const i=kTrk(),cur=engOf(i),id=TRACKS[i].id,B=BANKS();
     const eBtn=(e,n)=>`<button class="kx-e${e===selE?' sel':''}${e===cur?' on':''}" data-e="${e}"><i style="--d:${engDot(e)}"></i>${engName(e)}<small>bank ${n}</small></button>`;
     const L=presets(selE,i),pcur=selE===cur?L.findIndex(p=>cur==='msx'?p.ms===S.ms[id]:p.l===presetName(cur,i)):-1;
@@ -14242,13 +14274,18 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   /* ---- MIDI bank select + program change ---- */
   let bankM=null,bankL=null,ft=0;
   function flash(t){midiEl.querySelector('b').textContent=t;midiEl.classList.add('on');clearTimeout(ft);ft=setTimeout(()=>midiEl.classList.remove('on'),2600)}
-  function program(pc){const i=kTrk();if(i<0)return;const B=BANKS();let e=engOf(i);const bank=bankM!=null?bankM:bankL;
+  /* the bank number: MSB (CC 0) – or LSB (CC 32) when a device leaves MSB at 0 and counts in LSB */
+  const bankNo=()=>(bankM||0)>0?bankM:(bankL!=null?bankL:bankM);
+  /* Bank Select on its own moves the keyboard's track to that engine straight away (its sound stays until a Program Change picks one) */
+  function bank(){const i=kTrk();if(i<0)return;const B=BANKS(),n=bankNo();if(n==null)return;if(n>=B.length){flash('bank '+(n+1)+' · none');return}
+    const e=B[n];if(e==='msx'&&!msList().length){flash('Sample+ · no sounds yet');return}if(engOf(i)!==e)setEngine(i,e);flash('bank '+(n+1)+' · '+engName(e))}
+  function program(pc){const i=kTrk();if(i<0)return;const B=BANKS();let e=engOf(i);const bank=bankNo();
     if(bank!=null){if(bank>=B.length){flash('bank '+(bank+1)+' · none');return}e=B[bank]}
     if(e==='msx'&&!msList().length){flash('Sample+ · no sounds yet');return}
     const L=presets(e,i);if(pc>=L.length){flash(engName(e)+' · no program '+(pc+1));toast(engName(e)+' has '+L.length+' sounds');return}
     if(engOf(i)!==e)setEngine(i,e);loadPreset(i,e,pc);flash(engName(e)+' · '+(pc+1)+' '+L[pc].l)}
   window.KEYSX={
-    midi(st,d){const ty=st&0xF0;if(ty===0xB0&&(d[1]===0||d[1]===32)){if(d[1]===0)bankM=d[2];else bankL=d[2];return true}
+    midi(st,d){const ty=st&0xF0;if(ty===0xB0&&(d[1]===0||d[1]===32)){if(d[1]===0)bankM=d[2];else bankL=d[2];bank();return true}
       if(ty===0xC0){program(d[1]);return true}return false},
     rel(i){const e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);if(!o||!E.R)return null;if(e==='analog'||e==='msx'||e==='super'||e==='fm')return Math.min(4,Math.max(.03,E.R[3](o[E.R[0]]??.25)));return null},
     open:openSheet,close:closeSheet,_paint:()=>paint(true),banks:BANKS};
@@ -14283,6 +14320,20 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
 .start .go{margin:30px 0!important}
 .start p{margin:0!important}`;
   document.head.appendChild(css);
+  /* 4. (v251) Fullscreen – a card made big, or the whole synth – starts under the top row, so the menu row is always there,
+     and ends above the keyboard when the keyboard is open.
+     The row's bottom edge is measured (it changes height between phone, iPad and Mac, one or two rows). */
+  const top=document.querySelector('header.top'),root=document.documentElement;
+  const css2=document.createElement('style');css2.id='fullhdr';
+  css2.textContent=`#fullHost,#rs{top:var(--hdrB,0px)!important;bottom:var(--kbB,0px)!important;height:auto!important}
+.fullhost .card[data-card="pads"] .pads{max-width:min(100%,calc((100vh - var(--hdrB,0px) - var(--kbB,0px) - 170px) * 5 / var(--mrows,4)))!important}
+body .fullhost .card[data-card="pads"].pf-on .pads{max-width:min(calc(100% - var(--pfr,100px) * 2),calc((100vh - var(--hdrB,0px) - var(--kbB,0px) - 170px) * 5 / var(--mrows,4)))!important}`;document.head.appendChild(css2);
+  const meas=()=>{if(!top)return;const r=top.getBoundingClientRect(),b=top.offsetParent||getComputedStyle(top).display!=='none'?Math.max(0,Math.round(r.bottom+6)):0;
+    if(root.style.getPropertyValue('--hdrB')!==b+'px')root.style.setProperty('--hdrB',b+'px');
+    /* the keyboard, when it is open, stays playable under a fullscreen card too */
+    const kb=document.getElementById('kb'),kv=kb&&!kb.hidden&&kb.offsetParent?Math.max(0,Math.round(innerHeight-kb.getBoundingClientRect().top+4)):0;
+    if(root.style.getPropertyValue('--kbB')!==kv+'px')root.style.setProperty('--kbB',kv+'px')};
+  if(top){new ResizeObserver(meas).observe(top);const kbe=document.getElementById('kb');if(kbe){new ResizeObserver(meas).observe(kbe);new MutationObserver(()=>{meas();setTimeout(meas,520)}).observe(kbe,{attributes:true,attributeFilter:['hidden']});kbe.addEventListener('animationend',meas)}addEventListener('resize',meas);new MutationObserver(meas).observe(document.body,{attributes:true,attributeFilter:['class']});setInterval(meas,1500);meas()}
 })();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
