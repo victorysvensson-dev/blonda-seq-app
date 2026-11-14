@@ -13523,7 +13523,6 @@ body:not(.topbar) #deckBtn{display:none}`;
   const HITV=['header.top .patseg .pat','#orbTrk button','#gPats button','#synSeg button','.bt .m','.bt .s','.ms .fxb','.gxs-p button'].map(s=>'html.coarse '+s).join(',');
   css.textContent=`
 @media (max-width:359px){body.mhdr .top .brand .ver{display:none}}
-body.mhdr .top .brand{min-width:0;overflow:hidden}
 body.mob-land.kb-open #app#app{grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:"top top" "panes panes" "kb kb" "tabs foot"}
 body.mob-land #kb{grid-area:kb;min-width:0;max-width:100%;box-sizing:border-box;margin:0!important}
 ${HIT},${HITV}{position:relative}
