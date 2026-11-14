@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v251</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v252</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -2973,7 +2973,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
         <div class="cl-body"></div>
       </div>
       <div class="card clone s101 in-pads" data-card="sh101" data-clone="sh101">
-        <div class="cap"><span class="t">SH-101 · <b>monosynt</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="cap"><span class="t">SH-101 · <b>mono synth</b></span><button class="grab" aria-label="Dra kortet"></button></div>
         <div class="cl-body"></div>
       </div>
       <div class="card in-pads in-mix in-live" data-card="scope">
@@ -5749,7 +5749,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
     {t:'vca',cls:'s-vca',rows:[[{t:'sw',k:'vcaMode',l:'mode',labels:['env','gate'],f:v=>['env','gate'][v]},{t:'slide',k:'vol',l:'level',min:0,max:1,f:p10}]]},
     {t:'env',cls:'s-env',rows:[[{t:'slide',k:'A',l:'a',min:0,max:1,f:v=>msF(shT(v,4)).join(' ')},{t:'slide',k:'D',l:'d',min:0,max:1,f:v=>msF(shT(v,10)).join(' ')},{t:'slide',k:'S',l:'s',min:0,max:1,f:p10},{t:'slide',k:'R',l:'r',min:0,max:1,f:v=>msF(shT(v,10)).join(' ')}]]},
     {t:'portamento',cls:'s-port',rows:[[{t:'slide',k:'porta',l:'time',min:0,max:1,f:v=>msF(.004+v*v*1.6).join(' ')},{t:'sw',k:'portaMode',l:'mode',labels:['off','on','auto'],f:v=>['av','på','auto'][v]}]]}],
-    {logo:'SH-101<small>synthesizer · blonda</small>',sub:'monofonisk · 1 vco · 24 dB',first:{n:'101 bas'}});
+    {logo:'SH-101<small>synthesizer · blonda</small>',sub:'monophonic · 1 vco · 24 dB',first:{n:'101 bas'}});
   cloneVis();setInterval(cloneVis,400);
 })();
 
@@ -5988,7 +5988,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
     else{h+=`<div class="st">${ins.length||outs.length?ins.length+' in · '+outs.length+' ut'+(cfg.follow&&extBpm?' · extern klocka <span class="bpmx">'+extBpm.toFixed(1)+'</span> bpm':''):'Inga MIDI-enheter hittades. Koppla in ett keyboard eller slå på IAC-bussen på Macen.'}</div>`;
       h+=`<label>ingång</label><select id="mpIn"><option value="">alla ingångar</option>${ins.map(d=>`<option value="${d.id}"${d.id===cfg.inId?' selected':''}>${esc(d.name)}</option>`).join('')}</select>`;
       h+=`<label>utgång</label><select id="mpOut"><option value="">ingen</option>${outs.map(d=>`<option value="${d.id}"${d.id===cfg.outId?' selected':''}>${esc(d.name)}</option>`).join('')}</select>`;
-      h+=tg('follow','följ extern klocka','tempo, start och stopp från Ableton, OP-XY, EP-133 …');
+      h+=tg('follow','följ extern klocka','tempo, start och stopp från Ableton, OP-XY, EP-133 …');if(cfg.follow&&window.CLK)h+=CLK.panelHTML();
       h+=tg('clockOut','skicka klocka','SEQ.3 styr tempot · start/stopp skickas med');
       h+=tg('notesOut','skicka noter','bass k1 · keys k2 · lead k3 · pad k4 · trummor k10');
       h+=`<button class="tg mlt${window.MLX&&MLX.on?' on':''}" id="mpLearn"><span>midi learn<small>tryck på en ratt här · vrid på din controller</small></span><i></i></button>`;
@@ -5998,7 +5998,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
       if(inN&&outN&&inN===outN)h+=`<div class="note warn">Samma enhet in och ut kan ge eko. Välj olika bussar.</div>`;
       h+=`<div class="note"><b>Med Ableton Live (Mac):</b> slå på IAC-drivern i Ljud-MIDI-inställningar. I Live → Inställningar → Link, Tempo & MIDI: sätt <b>Sync</b> på IAC som utgång om SEQ.3 ska följa Live, eller som ingång om Live ska följa SEQ.3.</div>`}
     h+=`<div class="note"><b>Ableton Link</b> kräver nätverksåtkomst som en webbsida inte får. Det kommer i den riktiga iPhone-appen via Abletons LinkKit. Till dess fungerar MIDI-klockan ovan.</div>`;
-    panelEl.innerHTML=h;$('#mpX').onclick=close;
+    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);
     const si=$('#mpIn'),so=$('#mpOut');if(si)si.onchange=()=>{cfg.inId=si.value;saveCfg();bind()};if(so)so.onchange=()=>{cfg.outId=so.value;saveCfg();bind();paint()};
     const lb=$('#mpLearn');if(lb)lb.onclick=()=>{MLX.toggle();close()};
     panelEl.querySelectorAll('.mlist [data-x]').forEach(b=>b.onclick=()=>{MLX.remove(+b.dataset.x);paint()});const mc=$('#mpClr');if(mc)mc.onclick=()=>{MLX.clear();paint()};
@@ -10758,7 +10758,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v251</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v252</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -14062,14 +14062,31 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
    - The beat: every tick the next step's time is set from that line, converted to the audio clock at the moment the
      sound is heard (getOutputTimestamp), so SEQ.3 is heard together with the instrument and cannot drift away.
    - Start begins on the first tick after Start (as MIDI says); Continue begins at the song position (0xF2).
+   (v252) - The page clock → audio clock step is the median of the last samples: WebKit moves the audio clock in whole
+     buffers, which shook the old average by several ms.
+   - "sync offset" in the MIDI panel moves SEQ.3 earlier or later against the instrument (ms), e.g. for a slow output.
+   - The MIDI panel shows how steady the clock comes in (jitter) and how close SEQ.3 sits on it.
    ================= */
 (()=>{
   const N0=72,MIN=6;
-  const C={t:[],i:[],cnt:0,last:0,b:0,a:0,off:null,run:false,pend:null,base:null,spp:0,bpm:0,applied:0,shown:0,neg:0,pos:0};
-  function toCtx(ms){/* page ms → audio clock seconds (the sample that is heard at that moment) */
-    let o=null;try{const ts=ctx.getOutputTimestamp&&ctx.getOutputTimestamp();if(ts&&ts.performanceTime>0&&ts.contextTime>0)o=ts.contextTime-ts.performanceTime/1000}catch(e){}
-    if(o==null)o=ctx.currentTime-performance.now()/1000-(ctx.outputLatency||ctx.baseLatency||0);
-    C.off=C.off==null||Math.abs(o-C.off)>.25?o:C.off+(o-C.off)*.05;return ms/1000+C.off}
+  const C={t:[],i:[],cnt:0,last:0,b:0,a:0,off:null,run:false,pend:null,base:null,spp:0,bpm:0,applied:0,shown:0,neg:0,pos:0,os:[],jit:0,err:[]};
+  const LSO='blonda.clk.off';let user=0;try{user=+localStorage.getItem(LSO)||0}catch(e){}
+  /* Two kinds of audio clock reading. A real output time stamp (its performanceTime is when that sample is heard, a little
+     in the past): the median of the last readings. A reading that is just "now" (no time stamp, or one that only repeats
+     the present – the audio clock then moves in whole buffers): the highest of the last readings is the one taken right
+     at a buffer edge, and the output latency is taken off so it still means "heard". */
+  function sample(){const now=performance.now();try{const ts=ctx.getOutputTimestamp&&ctx.getOutputTimestamp();
+      if(ts&&ts.performanceTime>0&&ts.contextTime>0&&now-ts.performanceTime>.75)return {o:ts.contextTime-ts.performanceTime/1000,k:'ots'}}catch(e){}
+    return {o:ctx.currentTime-now/1000,k:'now'}}
+  function toCtx(ms){/* page ms → audio clock seconds (the sample that is heard at that moment), plus the sync offset */
+    let r=sample();
+    /* the kind is sticky: one odd reading doesn't switch it (only 24 in a row do) */
+    if(C.ok==='ots'&&r.k==='now'){C.bad=(C.bad||0)+1;if(C.bad<24&&C.off!=null)return ms/1000+C.off+user/1000}else C.bad=0;
+    if(r.k!==C.ok||(C.off!=null&&Math.abs(r.o-(C.raw??r.o))>.25))C.os.length=0;C.ok=r.k;C.raw=r.o;
+    C.os.push(r.o);if(C.os.length>48)C.os.shift();
+    if(r.k==='ots'){const so=C.os.slice().sort((a,b)=>a-b);C.off=so[so.length>>1]}
+    else C.off=Math.max(...C.os)-(ctx.outputLatency||ctx.baseLatency||0);
+    return ms/1000+C.off+user/1000}
   function fit(){const n=C.t.length;if(n<2)return false;let si=0,st=0;for(let k=0;k<n;k++){si+=C.i[k];st+=C.t[k]}const mi=si/n,mt=st/n;let sxx=0,sxy=0;
     for(let k=0;k<n;k++){const di=C.i[k]-mi;sxx+=di*di;sxy+=di*(C.t[k]-mt)}if(!sxx)return false;C.b=sxy/sxx;C.a=mt-C.b*mi;return C.b>0}
   const at=i=>C.a+C.b*i;/* page ms of tick i */
@@ -14081,6 +14098,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
       if(C.pos>=4||C.neg>=4){C.t.splice(0,C.t.length-4);C.i.splice(0,C.i.length-4);C.pos=C.neg=0}}
     C.t.push(ms);C.i.push(C.cnt);if(C.t.length>N0){C.t.shift();C.i.shift()}
     const ok=fit();
+    if(ok&&C.t.length>=MIN){let q=0;const n=Math.min(24,C.t.length);for(let k=C.t.length-n;k<C.t.length;k++){const r=C.t[k]-at(C.i[k]);q+=r*r}C.jit=Math.sqrt(q/n)}
     if(ok&&C.t.length>=MIN){const bpm=60000/(C.b*24);if(bpm>=30&&bpm<=300){C.bpm=bpm;
       if(Math.abs(bpm-S.bpm)>.01){S.bpm=Math.round(bpm*100)/100;const now=performance.now();
         if(Math.round(S.bpm)!==C.shown){C.shown=Math.round(S.bpm);try{setDM($('#bpmNum'),String(C.shown))}catch(e){}}
@@ -14092,6 +14110,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
     if(!ok||!(C.run&&playing&&ctx)||C.t.length<3)return;
     /* the beat: the next step to be planned (gstep) belongs to tick base.cnt + 6 per step */
     const K=C.base.cnt+(gstep-C.base.g)*6,target=toCtx(at(K)),d=target-nextT,sd=stepDur();
+    C.err.push(d*1000);if(C.err.length>48)C.err.shift();
     if(Math.abs(d)<sd*.5){startT+=d;nextT+=d}
     else{startT+=d;nextT=Math.max(target,ctx.currentTime+.003)}}
   /* Start / Continue. The clock usually runs before Start (OP-XY, EP-133 and Ableton all send it), so the tempo is
@@ -14108,8 +14127,18 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
       else if(st===0xF2){C.spp=(d[1]|(d[2]<<7))}
       else if(st===0xFC){C.pend=null;C.run=false;if(playing)stop()}
       return C.bpm},
-    _st:()=>({bpm:C.bpm,n:C.t.length,run:C.run,b:C.b,off:C.off,cnt:C.cnt,base:C.base}),
+    _st:()=>({bpm:C.bpm,n:C.t.length,run:C.run,b:C.b,off:C.off,cnt:C.cnt,base:C.base,jit:C.jit,user}),
+    /* the MIDI panel: sync offset and how it holds */
+    panelHTML(){return `<div class="clk-row"><span>sync offset<small>move SEQ.3 earlier (−) or later (+) against the instrument</small></span><div class="clk-off"><button data-co="-1" aria-label="Earlier">−</button><b id="clkOff">${user>0?'+':''}${user} ms</b><button data-co="1" aria-label="Later">+</button></div></div><div class="clk-st" id="clkSt">${stat()}</div>`},
+    bindPanel(el){el.querySelectorAll('[data-co]').forEach(b=>{let t=0;const go=()=>{user=Math.max(-80,Math.min(80,user+(+b.dataset.co)));try{localStorage.setItem(LSO,String(user))}catch(e){}const o=el.querySelector('#clkOff');if(o)o.textContent=(user>0?'+':'')+user+' ms'};
+      b.onpointerdown=e=>{e.preventDefault();go();clearInterval(t);let n=0;t=setInterval(()=>{if(++n>4)go()},90)};b.onpointerup=b.onpointerleave=b.onpointercancel=()=>clearInterval(t)})},
     _reset(){C.t.length=0;C.i.length=0;C.last=0;C.run=false;C.pend=null}};
+  function stat(){if(!C.bpm||performance.now()-C.last>1000)return 'waiting for clock …';const e=C.err.slice(-24),m=e.length?e.reduce((a,b)=>a+Math.abs(b),0)/e.length:0;
+    return `tempo <b>${C.bpm.toFixed(2)}</b> · clock jitter <b>${C.jit.toFixed(1)} ms</b>${C.run?` · on the beat <b>±${m.toFixed(1)} ms</b>`:''}`}
+  setInterval(()=>{const el=document.getElementById('clkSt');if(el)el.innerHTML=stat()},500);
+  const css=document.createElement('style');css.textContent=`.clk-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 4px}.clk-row span{display:flex;flex-direction:column;gap:2px;font-size:11px}.clk-row small{font-size:9px;opacity:.55}
+.clk-off{display:flex;align-items:center;box-shadow:inset 0 0 0 1px rgba(232,230,220,.18)}.clk-off button{width:30px;height:28px;font-size:14px;color:inherit;background:none;border:0;touch-action:none}.clk-off b{min-width:64px;text-align:center;font:500 11px var(--f-mono)}
+.clk-st{font:10px var(--f-mono);opacity:.7;margin-bottom:6px}.clk-st b{font-weight:500;opacity:1}`;document.head.appendChild(css);
 })();
 
 /* ================= the keyboard's sound strip (v245) =================
@@ -14334,6 +14363,108 @@ body .fullhost .card[data-card="pads"].pf-on .pads{max-width:min(calc(100% - var
     const kb=document.getElementById('kb'),kv=kb&&!kb.hidden&&kb.offsetParent?Math.max(0,Math.round(innerHeight-kb.getBoundingClientRect().top+4)):0;
     if(root.style.getPropertyValue('--kbB')!==kv+'px')root.style.setProperty('--kbB',kv+'px')};
   if(top){new ResizeObserver(meas).observe(top);const kbe=document.getElementById('kb');if(kbe){new ResizeObserver(meas).observe(kbe);new MutationObserver(()=>{meas();setTimeout(meas,520)}).observe(kbe,{attributes:true,attributeFilter:['hidden']});kbe.addEventListener('animationend',meas)}addEventListener('resize',meas);new MutationObserver(meas).observe(document.body,{attributes:true,attributeFilter:['class']});setInterval(meas,1500);meas()}
+})();
+
+/* ================= one look for every synth (v252) =================
+   Bris (was blue metal), Moog (walnut and silkscreen), SH-101 (grey hardware) and the small synth card get the same dark
+   BLONDA look as the rest of the app: flat dark panels with one hairline, square corners, lower-case mono captions,
+   one knob (a ring that fills, a flat cap, a white pointer), one slider, one switch, one preset row (‹ name ›) and one
+   kind of chip for tracks, categories and engines. The controls work exactly as before; only how they look changed.
+   Colour is kept where it carries meaning: each engine's dot, and Bris's display. ================= */
+(()=>{
+  const C={bg:'#1C1E20',bg2:'#141517',bg3:'#0F1011',ln:'#2E3032',ln2:'#3A3C3F',ink:'#E8E6DC',mute:'rgba(232,230,220,.5)',dim:'rgba(232,230,220,.35)',acc:'#F2C318'};
+  const K=`body :is(.card.bris,.card.clone)`;
+  const css=document.createElement('style');css.id='synthskin';
+  css.textContent=`
+/* ---- the cards themselves ---- */
+${K}{background:${C.bg}!important;color:${C.ink}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;padding-left:var(--cardpad,16px)!important;padding-right:var(--cardpad,16px)!important}
+${K} .cap .t{color:${C.mute}!important}${K} .cap .t b{color:${C.ink}!important}
+${K} .grab{background:transparent!important;color:${C.mute}!important}
+${K} .mms :is(.m,.s){border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;color:${C.mute}!important}${K} .mms :is(.m,.s).on{background:${C.ink}!important;color:#141516!important}
+/* ---- head: name, read-out, preset row, tracks ---- */
+${K} .cl-logo{font:300 24px/1 var(--f-linje,var(--f-display))!important;font-style:normal!important;letter-spacing:0!important;color:${C.ink}!important}
+${K} .cl-logo small{display:block;margin-top:4px;font:500 9px var(--f-mono)!important;letter-spacing:.08em!important;text-transform:lowercase!important;color:${C.dim}!important}
+${K} .cl-read{font:500 10px var(--f-mono)!important;color:${C.mute}!important;opacity:1!important}
+${K} :is(.cl-nav,.br-nav){gap:0!important;padding:0!important;border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;min-width:200px}
+${K} :is(.cl-nav,.br-nav) button{width:34px!important;height:34px!important;border-radius:0!important;background:transparent!important;color:${C.ink}!important;font-size:15px!important;flex:none}
+${K} :is(.cl-nav,.br-nav) button:hover{background:rgba(255,255,255,.05)!important}
+${K} :is(.cl-nav,.br-nav) b{flex:1;min-width:0;text-align:center;font:500 12.5px var(--f-mono)!important;letter-spacing:.02em!important;color:${C.ink}!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px}
+${K} :is(.cl-trk,.br-trk,.br-cats){gap:0!important;padding:0!important;border-radius:0!important;background:transparent!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}
+${K} :is(.cl-trk,.br-trk,.br-cats) button{height:26px;padding:0 9px!important;border-radius:0!important;background:transparent!important;color:${C.mute}!important;font:500 10px var(--f-mono)!important;letter-spacing:.03em}
+${K} :is(.cl-trk,.br-trk,.br-cats) button.on{background:${C.ink}!important;color:#141516!important}
+${K} :is(.cl-kb,.br-kb,.br-save){height:26px!important;border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;color:${C.ink}!important;font:500 10px var(--f-mono)!important}
+${K} .br-play,${K} .cl-play{color:${C.mute}!important;font-family:var(--f-mono)!important}
+${K} .cl-play{flex-wrap:wrap;max-width:100%;min-width:0}${K} :is(.cl-trk,.br-trk){max-width:100%;overflow-x:auto;scrollbar-width:none}${K} :is(.cl-trk,.br-trk)::-webkit-scrollbar{display:none}${K} :is(.cl-trk,.br-trk) button{flex:none}
+${K} .cl-led{background:#2A2B2D!important;box-shadow:none!important}${K} .cl-led.on{background:${C.acc}!important;box-shadow:0 0 6px ${C.acc}!important}
+/* ---- panels and sections ---- */
+${K} :is(.cl-panel,.br-grid){gap:0!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}
+${K} :is(.cl-sec,.br-sec){border:0!important;border-radius:0!important;background:transparent!important;box-shadow:inset -1px -1px 0 ${C.ln}!important;padding:12px 12px 14px!important}
+${K} :is(.cl-sec,.br-sec) h5{display:block!important;margin:0 0 12px!important;padding:0!important;border:0!important;background:none!important;text-align:left!important;font:500 9.5px var(--f-mono)!important;letter-spacing:.08em!important;text-transform:lowercase!important;color:${C.mute}!important}
+${K} .br-sec h5::before,${K} .br-sec h5::after{display:none!important}
+${K} .cl-foot{font:500 8.5px var(--f-mono)!important;letter-spacing:.06em!important;text-transform:lowercase!important;color:${C.dim}!important;opacity:1!important}
+${K} :is(.cl-k,.cl-r,.cl-s,.cl-w,.bkn) small{font:500 9px var(--f-mono)!important;letter-spacing:.03em!important;text-transform:lowercase!important;color:${C.mute}!important}
+/* ---- one knob: Bris ---- */
+${K} .bk-sc{background:conic-gradient(from -135deg,${C.ink} 0 calc(var(--v,0)*270deg),rgba(232,230,220,.1) 0 270deg,transparent 0)!important;
+  -webkit-mask:radial-gradient(circle,transparent calc(50% - 4px),#000 calc(50% - 3.5px));mask:radial-gradient(circle,transparent calc(50% - 4px),#000 calc(50% - 3.5px))}
+${K} .bk-sc::after,${K} .bk-sc::before{display:none!important}
+${K} .bk-f{width:36px!important;height:36px!important;filter:none!important;border-radius:50%;background:${C.bg2};box-shadow:inset 0 0 0 1px ${C.ln2}}
+${K} .bk-f::before,${K} .bk-f::after{display:none!important}
+${K} .bk-f i{border-radius:1px!important;box-shadow:none!important;background:${C.ink}!important;width:2px!important;margin-left:-1px!important}
+${K} .bk-f i:first-child{top:3px!important;height:11px!important}${K} .bk-f i+i{display:none!important}
+${K} .bk-c{display:none!important}
+${K} .bkn.big .bk-f{width:54px!important;height:54px!important}${K} .bkn.big .bk-f i:first-child{height:16px!important;top:4px!important}
+${K} .bkn.act .bk-f{box-shadow:inset 0 0 0 1.5px ${C.acc}}
+/* ---- one knob: Moog (the same, drawn from its angle) ---- */
+${K} .cl-kw::before{content:"";position:absolute;inset:6px;border-radius:50%;background:conic-gradient(from -135deg,${C.ink} 0 calc(var(--a,-135deg) + 135deg),rgba(232,230,220,.1) 0 270deg,transparent 0);
+  -webkit-mask:radial-gradient(circle,transparent calc(50% - 4px),#000 calc(50% - 3.5px));mask:radial-gradient(circle,transparent calc(50% - 4px),#000 calc(50% - 3.5px))}
+${K} .cl-sc line{stroke:${C.dim}!important}${K} .cl-sc text{fill:${C.dim}!important;font-family:var(--f-mono)!important}
+${K} .cl-kf{background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln2}!important}
+${K} .cl-kf::after,${K} .cl-kf::before{display:none!important}
+${K} .cl-kf i{background:${C.ink}!important;width:2px!important;margin-left:-1px!important;top:3px!important;height:36%!important;border-radius:1px!important}
+${K} .cl-k.act .cl-kf{box-shadow:inset 0 0 0 1.5px ${C.acc}!important}
+/* ---- one switch ---- */
+${K} .cl-r button{width:20px!important;height:28px!important;border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln2}!important}
+${K} .cl-r button i{left:3px!important;right:3px!important;height:calc(50% - 3px)!important;bottom:3px!important;background:rgba(232,230,220,.22)!important;border-radius:0!important}
+${K} .cl-r.on button i{bottom:calc(50%)!important;background:${C.ink}!important}
+${K} .cl-r em{font:500 8px var(--f-mono)!important;color:${C.dim}!important;opacity:1!important;text-transform:lowercase!important}
+${K} .cl-r.on em{color:${C.ink}!important}
+${K} .br-sw{border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;color:${C.ink}!important}
+${K} .br-sw .led{background:#2A2B2D!important;box-shadow:none!important}${K} .br-sw.on .led{background:${C.acc}!important;box-shadow:0 0 6px ${C.acc}!important}
+${K} .br-sw small{color:${C.mute}!important}${K} .br-sw b{font-family:var(--f-mono)!important;color:${C.ink}!important}
+/* ---- one slider (SH-101) ---- */
+${K} .cl-st::before{width:4px!important;margin-left:-2px!important;border-radius:0!important;background:${C.bg3}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}
+${K} .cl-st::after{content:"";position:absolute;left:50%;width:4px;margin-left:-2px;bottom:4px;height:calc(var(--v,0)*(100% - 16px));background:rgba(232,230,220,.55);pointer-events:none}
+${K} .cl-ticks{opacity:.35}
+${K} .cl-sc2{width:22px!important;height:10px!important;margin-left:-11px!important;border-radius:0!important;background:${C.ink}!important;box-shadow:none!important;z-index:1}
+${K} .cl-sc2::after{background:#141516!important;height:2px!important}
+${K} .cl-s.act .cl-sc2{background:${C.acc}!important}
+${K} .cl-wl{border-radius:0!important;background:${C.bg3}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}
+${K} .cl-wl i{border-radius:0!important;background:${C.ink}!important;height:12px!important}
+${K} .cl-wt span{font:500 9px var(--f-mono)!important;color:${C.dim}!important}${K} .cl-wt span.on{color:${C.ink}!important}
+/* ---- Bris display: kept (it is the engine's face), framed like the others ---- */
+${K} .br-oled{border-radius:0!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;background:${C.bg3}!important}
+/* ---- the small synth card: engines, tracks, choices ---- */
+body .card[data-card="synth"] #engs .eng{border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;color:${C.mute}!important;font:500 10.5px var(--f-mono)!important;letter-spacing:.03em}
+body .card[data-card="synth"] #engs .eng.on{background:${C.ink}!important;color:#141516!important;box-shadow:none!important}
+body .card[data-card="synth"] :is(.eopt){border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;font-family:var(--f-mono)!important}
+body .card[data-card="synth"] .eopt.on{background:${C.ink}!important;color:#141516!important;box-shadow:none!important}
+body .rs-open{border-radius:0!important;background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}
+/* ---- the keyboard's sound strip and picker: the same corners and chips ---- */
+.kx-snd,.kx-env,.kx-midi,.kx-sh{border-radius:0!important}
+.kx-snd,.kx-env{background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}
+.kx-snd .st,.kx-nm{border-radius:0!important}
+.kx-p,.kx-e{border-radius:0!important}.kx-p{background:${C.bg2}!important;box-shadow:inset 0 0 0 1px ${C.ln}!important}.kx-p.on{background:${C.ink}!important}
+.kx-sh{background:${C.bg}!important;box-shadow:inset 0 0 0 1px ${C.ln},0 24px 60px -20px rgba(0,0,0,.8)!important}
+.kx-sh header .x{border-radius:0!important}
+.kb-trk,.kb-oct{border-radius:0!important;background:transparent!important;box-shadow:inset 0 0 0 1px ${C.ln}!important;padding:0!important;gap:0!important}
+.kb-trk button,.kb-oct button{border-radius:0!important}.kb-trk button.on{background:${C.ink}!important}
+.kb-t,.kb-x{border-radius:0!important}
+/* ---- Sampler card and pickers ---- */
+.card.sampler .tx :is(button,select,input){border-radius:0!important}.tx-tabs button{border-radius:0!important}
+.tx-ins,.tx-dev{border-radius:0!important}
+.pk-pop{border-radius:0!important}
+`;
+  document.head.appendChild(css);
 })();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
