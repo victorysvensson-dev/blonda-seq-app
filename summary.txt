@@ -1,0 +1,100 @@
+ipad run 1:
+  ok   no fatal error (None)
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v243
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: recording API present (getUserMedia + the app's input list)
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 148 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 1803 ms (try 1)']
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+ipad run 2:
+  ok   no fatal error (None)
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v243
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: recording API present (getUserMedia + the app's input list)
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 239 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 1576 ms (try 1)']
+  ok   saved data survived a restart
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+iphone run 1:
+  ok   no fatal error (None)
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v243
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: recording API present (getUserMedia + the app's input list)
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 491 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 2287 ms (try 1)']
+  info: iphone iOS 18.5 402x874 body='mob look-studio mhdr' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+iphone run 2:
+  ok   no fatal error (None)
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v243
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: recording API present (getUserMedia + the app's input list)
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 94 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 1365 ms (try 1)']
+  ok   saved data survived a restart
+  info: iphone iOS 18.5 402x874 body='look-studio mob mhdr' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+
+ALL OK
