@@ -1,0 +1,80 @@
+2026-11-14 13:16:09.326 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:09.456 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:09.537 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=14 playing=1
+2026-11-14 13:16:09.591 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:09.707 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:09.845 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:09.975 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.036 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=2 playing=1
+2026-11-14 13:16:10.109 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.228 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.362 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.493 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.536 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=6 playing=1
+2026-11-14 13:16:10.622 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.725 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.858 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:10.993 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.036 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=10 playing=1
+2026-11-14 13:16:11.106 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.244 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.378 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.501 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.540 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=14 playing=1
+2026-11-14 13:16:11.626 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.758 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:11.895 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.009 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.036 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=2 playing=1
+2026-11-14 13:16:12.150 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.274 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.373 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.508 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.536 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=6 playing=1
+2026-11-14 13:16:12.646 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.758 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:12.907 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.030 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.044 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=10 playing=1
+2026-11-14 13:16:13.143 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.275 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.407 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.546 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.550 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=14 playing=1
+2026-11-14 13:16:13.667 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.791 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:13.913 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.046 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.051 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=2 playing=1
+2026-11-14 13:16:14.166 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.299 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.426 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.541 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.543 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=6 playing=1
+2026-11-14 13:16:14.673 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.806 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:14.923 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.036 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=9 playing=1
+2026-11-14 13:16:15.064 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.195 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.332 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.440 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.537 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=13 playing=1
+2026-11-14 13:16:15.569 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.693 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.832 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:15.939 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.038 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=1 playing=1
+2026-11-14 13:16:16.079 E  BLONDA SEQ[42031:1d28a] [com.apple.coreaudio:AMCP]  52747          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-14 13:16:16.088 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.207 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.351 E  BLONDA SEQ[42031:1d28a] [com.apple.coreaudio:AMCP]  52747          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-14 13:16:16.359 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.495 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.536 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=5 playing=1
+2026-11-14 13:16:16.604 E  BLONDA SEQ[42031:1d28a] [com.apple.coreaudio:AMCP]  52747          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-14 13:16:16.627 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.764 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.881 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:16.996 Df BLONDA SEQ[42031:1d272] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-14 13:16:17.042 Df BLONDA SEQ[42031:1d272] (Foundation) BLONDA-DIAG step=9 playing=1
