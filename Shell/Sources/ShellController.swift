@@ -278,6 +278,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     // MARK: - sampling: recording from instruments (USB audio, the mic)
 
     private var routeObserver: NSObjectProtocol?
+    private let recorder = Recorder()
 
     /// The sampler asks for the inputs ("open"), picks one ("select") and lets go ("close"). The list goes back to the
     /// page as __blonda.audioInputs([...]) – again whenever something is plugged in or out while the sampler is open.
@@ -294,7 +295,20 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         case "select":
             let ok = Audio.selectInput(b["uid"] as? String ?? "")
             call("__blonda.audioInputs", Audio.inputs().map { var d = $0; d["selected"] = ok; return d })
+        case "rec":
+            if (b["on"] as? Bool) ?? false {
+                Audio.record(true)
+                recorder.onBlock = { [weak self] b64, sr in
+                    self?.web.evaluateJavaScript("window.__blonda&&__blonda.recData('\(b64)',\(sr))", completionHandler: nil)
+                }
+                recorder.start { [weak self] err, sr in
+                    self?.call("__blonda.recStarted", ["ok": err == nil, "err": err ?? "", "sr": sr])
+                }
+            } else {
+                recorder.stop()
+            }
         case "close":
+            recorder.stop()
             if let o = routeObserver { NotificationCenter.default.removeObserver(o); routeObserver = nil }
             Audio.record(false)
         default:

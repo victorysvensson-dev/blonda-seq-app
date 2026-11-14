@@ -77,6 +77,62 @@ enum Audio {
     }
 }
 
+/// The sampler's recorder in the app. WebKit on the Mac has no recording at all (no getUserMedia), and on iPad it
+/// records through WebKit's own processing, so the app records itself: an input tap on AVAudioEngine, the first two
+/// channels of the chosen input (an OP-XY in 8-channel mode gives its main out), no processing. The tap is called on
+/// AVAudioEngine's own thread (not the real-time audio thread); each block is handed to the page as interleaved
+/// stereo 32-bit float.
+final class Recorder {
+    private var engine: AVAudioEngine?
+    var onBlock: ((String, Double) -> Void)?
+
+    func start(_ done: @escaping (String?, Double) -> Void) {
+        stop()
+        AVCaptureDevice.requestAccess(for: .audio) { granted in
+            DispatchQueue.main.async {
+                guard granted else { done("denied", 0); return }
+                done(self.begin(), self.engine?.inputNode.outputFormat(forBus: 0).sampleRate ?? 0)
+            }
+        }
+    }
+
+    private func begin() -> String? {
+        let e = AVAudioEngine()
+        let input = e.inputNode
+        let fmt = input.outputFormat(forBus: 0)
+        guard fmt.sampleRate > 0, fmt.channelCount > 0 else { return "no input" }
+        input.installTap(onBus: 0, bufferSize: 4096, format: fmt) { [weak self] buf, _ in
+            let n = Int(buf.frameLength), c = Int(buf.format.channelCount)
+            guard n > 0, let ch = buf.floatChannelData else { return }
+            let inter = buf.format.isInterleaved
+            var data = Data(count: n * 8)
+            data.withUnsafeMutableBytes { raw in
+                guard let p = raw.bindMemory(to: Float.self).baseAddress else { return }
+                if inter {
+                    let s = ch[0], r = c > 1 ? 1 : 0
+                    for i in 0..<n { p[2 * i] = s[i * c]; p[2 * i + 1] = s[i * c + r] }
+                } else {
+                    let l = ch[0], r = ch[c > 1 ? 1 : 0]
+                    for i in 0..<n { p[2 * i] = l[i]; p[2 * i + 1] = r[i] }
+                }
+            }
+            let b64 = data.base64EncodedString(), sr = buf.format.sampleRate
+            DispatchQueue.main.async { self?.onBlock?(b64, sr) }
+        }
+        e.prepare()
+        do { try e.start() } catch { input.removeTap(onBus: 0); return String(describing: error) }
+        engine = e
+        return nil
+    }
+
+    func stop() {
+        guard let e = engine else { return }
+        e.inputNode.removeTap(onBus: 0)
+        e.stop()
+        engine = nil
+    }
+}
+
 /// iPad / iPhone: the page goes edge to edge and handles the safe areas itself (notch, home bar).
 /// Mac: the page starts below the window's title bar – edge to edge it slid under it and its top 26 points were hidden.
 struct EdgeToEdge: ViewModifier {

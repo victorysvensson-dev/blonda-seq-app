@@ -72,7 +72,15 @@ N.picked=async(id,files)=>{const inp=N.picks[id];delete N.picks[id];if(!inp||!fi
 /* ---- sampling: the inputs iOS offers (USB instruments, the mic); the page records with getUserMedia ---- */
 {const subs=new Set();let last=[];N.audioInputs=list=>{last=list||[];subs.forEach(f=>{try{f(last)}catch(e){}})};
  N.audioIn={open(){post({t:'audio-in',op:'open'})},select(uid){post({t:'audio-in',op:'select',uid})},close(){post({t:'audio-in',op:'close'})},
-   onInputs(f){subs.add(f);if(last.length)f(last);return()=>subs.delete(f)},get inputs(){return last}}}
+   onInputs(f){subs.add(f);if(last.length)f(last);return()=>subs.delete(f)},get inputs(){return last}};
+ /* the app records itself (WebKit on the Mac cannot record): start(cb) resolves {ok,sr,err}; cb(L,R,sr) gets each block */
+ let cb=null,wait=null;
+ N.audioIn.rec={start(f){cb=f;return new Promise(res=>{wait=res;post({t:'audio-in',op:'rec',on:true});setTimeout(()=>{if(wait===res){wait=null;res({ok:false,err:'timeout'})}},20000)})},
+   stop(){cb=null;post({t:'audio-in',op:'rec',on:false})}};
+ N.recStarted=s=>{const w=wait;wait=null;if(w)w(s||{ok:false})};
+ N.recDecode=b64=>{const s=atob(b64),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);
+   const f=new Float32Array(u.buffer),n=f.length>>1,L=new Float32Array(n),R=new Float32Array(n);for(let i=0;i<n;i++){L[i]=f[2*i];R[i]=f[2*i+1]}return [L,R]};
+ N.recData=(b64,sr)=>{if(!cb)return;const [L,R]=N.recDecode(b64);cb(L,R,sr)}}
 
 /* ---- the screen stays on while playing ---- */
 const watch=()=>{let last=null;const chk=()=>{const p=document.body.classList.contains('playing');if(p!==last){last=p;post({t:'playing',on:p})}};
@@ -131,7 +139,12 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   try{const j=await (await fetch('blonda-pack/pack.json')).json(),its=(j.items||[]).slice(0,2);const inp=document.createElement('input');inp.type='file';inp.accept='audio/*';inp.multiple=true;
     const got=new Promise(res=>{inp.onchange=()=>res([...inp.files].map(f=>f.name+':'+f.size));setTimeout(()=>res('timeout'),5000)});
     const pidT=999999;N.picks[pidT]=inp;await N.picked(pidT,its.map(it=>({u:'blonda-pack/'+it.file,name:it.file.split('/').pop(),type:'audio/wav'})));r.importPipe=await got}catch(e){r.importPipe=String(e)}
-  r.audioInApi=!!(N.audioIn&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+  r.audioInApi=!!(N.audioIn&&N.audioIn.rec&&N.recData);
+  /* one recorded block (L = 1, R = -0.5) decodes to the right samples */
+  try{const d=N.recDecode('AACAPwAAAL8=');r.recBlock=[d[0][0],d[1][0]]}catch(e){r.recBlock=String(e)}
+  /* the recorder for real for a second (simulators: the microphone is granted by CI; the Mac runner would ask) */
+  if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();
+    r.recLive={ok:!!st.ok,err:st.err||'',sr:st.sr||sr,frames:fr}}catch(e){r.recLive=String(e)}
   r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
   r.midiApi=!!navigator.requestMIDIAccess;
   try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;

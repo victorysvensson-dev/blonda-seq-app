@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v243</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v244</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10658,7 +10658,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v243</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v244</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -13619,19 +13619,25 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   let rec=null;/* {ac,stream,node,chunks:[[L,R]],frames,peak} */
   async function recStart(inp){await recStop();
     if(NATIVE&&BLONDA_NATIVE.audioIn&&inp&&inp.uid){BLONDA_NATIVE.audioIn.select(inp.uid);await new Promise(r=>setTimeout(r,250))}
+    /* the app records itself (WebKit on the Mac cannot record; on iPad this skips WebKit's processing) */
+    const NR=NATIVE&&BLONDA_NATIVE.audioIn&&BLONDA_NATIVE.audioIn.rec;
+    if(NR){const R={nat:NR,chunks:[],frames:0,peak:0,lvl:0,sr:48000};const take=mkTake(R);
+      const st=await NR.start((L,Rr,sr)=>{if(sr)R.sr=sr;take(L,Rr)});if(!st||!st.ok){NR.stop();throw new Error(st&&st.err==='denied'?'the microphone is not allowed':'no input'+(st&&st.err&&st.err!=='no input'?' ('+st.err+')':''))}
+      if(st.sr)R.sr=st.sr;rec=R;return R}
     const c={echoCancellation:false,noiseSuppression:false,autoGainControl:false,channelCount:{ideal:2},sampleRate:{ideal:48000}};if(inp&&inp.dev)c.deviceId={exact:inp.dev};
     const stream=await navigator.mediaDevices.getUserMedia({audio:c});
     const AC=window.AudioContext||window.webkitAudioContext,ac=new AC({sampleRate:48000});
     const src=ac.createMediaStreamSource(stream),sink=ac.createGain();sink.gain.value=0;sink.connect(ac.destination);
     /* src and sink are kept on R: a stream source nobody holds on to can be collected and then records silence */
     const R={ac,stream,src,sink,chunks:[],frames:0,peak:0,lvl:0,node:null,sr:ac.sampleRate};
-    const take=(L,Rr)=>{R.chunks.push([L,Rr]);R.frames+=L.length;let m=0;for(let k=0;k<L.length;k+=4){const v=Math.max(Math.abs(L[k]),Math.abs(Rr[k]));if(v>m)m=v}R.lvl=Math.max(m,R.lvl*.9);if(m>R.peak)R.peak=m};
+    const take=mkTake(R);
     try{const u=URL.createObjectURL(new Blob([REC_SRC],{type:'application/javascript'}));await ac.audioWorklet.addModule(u);
       const n=new AudioWorkletNode(ac,'tx-rec',{numberOfInputs:1,numberOfOutputs:1,channelCount:2,channelCountMode:'explicit'});n.port.onmessage=e=>take(e.data[0],e.data[1]);src.connect(n);n.connect(sink);R.node=n}
     catch(e){const n=ac.createScriptProcessor(2048,2,2);n.onaudioprocess=ev=>{const b=ev.inputBuffer;take(b.getChannelData(0).slice(0),(b.numberOfChannels>1?b.getChannelData(1):b.getChannelData(0)).slice(0))};src.connect(n);n.connect(sink);R.node=n}
     if(ac.state!=='running')try{await ac.resume()}catch(e){}
     rec=R;return R}
-  async function recStop(){if(!rec)return;const R=rec;rec=null;try{R.node.port&&R.node.port.postMessage('stop')}catch(e){}try{R.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{await R.ac.close()}catch(e){}}
+  function mkTake(R){return (L,Rr)=>{R.chunks.push([L,Rr]);R.frames+=L.length;let m=0;for(let k=0;k<L.length;k+=4){const v=Math.max(Math.abs(L[k]),Math.abs(Rr[k]));if(v>m)m=v}R.lvl=Math.max(m,R.lvl*.9);if(m>R.peak)R.peak=m}}
+  async function recStop(){if(!rec)return;const R=rec;rec=null;if(R.nat){R.nat.stop();return}try{R.node.port&&R.node.port.postMessage('stop')}catch(e){}try{R.stream.getTracks().forEach(t=>t.stop())}catch(e){}try{await R.ac.close()}catch(e){}}
   function dropBefore(R,frame){/* keep memory small: chunks wholly before frame are dropped (frames stay counted) */let pos=R.base||0;while(R.chunks.length&&pos+R.chunks[0][0].length<frame){pos+=R.chunks[0][0].length;R.chunks.shift()}R.base=pos}
   function grabB(R,from,to){const base=R.base||0;const n=Math.max(0,to-from),L=new Float32Array(n),Rr=new Float32Array(n);let pos=base,w=0;
     for(const [a,b] of R.chunks){const e=pos+a.length;if(e>from&&pos<to){const s=Math.max(from,pos)-pos,z=Math.min(to,e)-pos;L.set(a.subarray(s,z),w);Rr.set(b.subarray(s,z),w);w+=z-s}pos=e;if(pos>=to)break}return [L,Rr]}
@@ -13791,7 +13797,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   function paint(){if(!body)return;const outs=acc?[...acc.outputs.values()]:[],P=profOf((outs.find(o=>o.id===cfg.outId)||{}).name);
     const read=card.querySelector('#txRead');if(read)read.textContent=devs.length?devs.map(d=>d.p.name).join(' · '):'multisample';
     let h=`<div class="tx-tabs">${[['sample','autosample'],['ins','instruments · '+INS.size],['midi','midi channels'],['dev','devices · '+devs.length]].map(([k,l])=>`<button data-tab="${k}" class="${tab===k?'on':''}">${l}</button>`).join('')}</div>`;
-    if(!navigator.requestMIDIAccess||!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))h+=`<p class="tx-note">Sampling needs MIDI and recording: use the SEQ.3 app on iPad or Mac, or Chrome on a computer.</p>`;
+    if(!navigator.requestMIDIAccess||!(canRec()))h+=`<p class="tx-note">Sampling needs MIDI and recording: use the SEQ.3 app on iPad or Mac, or Chrome on a computer.</p>`;
     if(tab==='dev'){
       h+=devs.length?devs.map(d=>`<div class="tx-dev"><b>${esc(d.p.name)}</b><small>${esc(d.p.kind)}</small>
         <div class="tx-dl"><span class="${d.midiOut||d.midiIn?'ok':''}">midi ${d.midiIn&&d.midiOut?'in + out':d.midiOut?'out':d.midiIn?'in':'—'}</span><span class="${d.audio?'ok':''}">audio ${d.audio?'in':'—'}</span></div>
@@ -13852,6 +13858,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   body.addEventListener('input',e=>{if(e.target.dataset.c==='name'){cfg.name=e.target.value;saveCfg()}});
   function preview(id){const I=INS.get(id);if(!I)return;try{initAudio();ctx.resume()}catch(e){}const t=ctx.currentTime+.05,r0=I.regions[0].root,ns=[0,4,7,12].map(x=>r0+12+x);
     ns.forEach((n,k)=>voice(I,t+k*.18,.8,null,A.dry||ctx.destination,n,.5))}
+  function canRec(){return !!((NATIVE&&BLONDA_NATIVE.audioIn&&BLONDA_NATIVE.audioIn.rec)||(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia))}
   async function openInputs(){if(NATIVE&&BLONDA_NATIVE.audioIn){BLONDA_NATIVE.audioIn.open();await sleep(400)}
     else if(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia){try{const s=await navigator.mediaDevices.getUserMedia({audio:true});s.getTracks().forEach(t=>t.stop())}catch(e){toast('Recording is not allowed here')}}
     await audioList();scan();if(!cfg.inId||!inputs.some(x=>x.id===cfg.inId)){const u=inputs.find(x=>profOf(x.name))||inputs.find(x=>x.usb)||inputs[0];if(u)cfg.inId=u.id;saveCfg()}}
@@ -13860,7 +13867,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   /* the level meter while recording */
   setInterval(()=>{if(!rec)return;const m=body.querySelector('.tx-meter i');if(m)m.style.width=Math.min(100,Math.round(Math.sqrt(rec.lvl)*100))+'%'},80);
 
-  window.TEX={_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
+  window.TEX={_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
   const css=document.createElement('style');css.textContent=`
 .card.sampler .tx{display:flex;flex-direction:column;gap:10px;font-family:var(--f-mono);font-size:11px;color:var(--fg)}
 .tx-tabs{display:flex;gap:4px;flex-wrap:wrap}
