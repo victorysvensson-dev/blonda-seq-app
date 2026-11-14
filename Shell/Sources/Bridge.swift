@@ -144,9 +144,6 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   r.audioInApi=!!(N.audioIn&&N.audioIn.rec&&N.recData);
   /* one recorded block (L = 1, R = -0.5) decodes to the right samples */
   try{const d=N.recDecode('AACAPwAAAL8=');r.recBlock=[d[0][0],d[1][0]]}catch(e){r.recBlock=String(e)}
-  /* the recorder for real for a second (simulators: the microphone is granted by CI; the Mac runner would ask) */
-  if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();N.audioIn.close();await new Promise(s=>setTimeout(s,800));/* like the sampler: back to the playing session */
-    r.recLive={ok:!!st.ok,err:st.err||'',sr:st.sr||sr,frames:fr}}catch(e){r.recLive=String(e)}
   r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
   post({t:'step',s:'midi'});
   r.midiApi=!!navigator.requestMIDIAccess;
@@ -163,6 +160,11 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   /* start the sound like a tap on the intro button, so the screenshot shows the app and the page's own audio is checked */
   try{const b=document.getElementById('startBtn');if(b)b.click();await new Promise(s=>setTimeout(s,2500));const st=document.getElementById('start');
     r.started=!!(st&&st.hidden);const A=window.__seq&&__seq.Aref&&__seq.Aref();const c=A&&A.out&&A.out.context;r.pageAudio=c?{state:c.state,sr:c.sampleRate,base:Math.round((c.baseLatency||0)*1000),out:Math.round((c.outputLatency||0)*1000)}:null}catch(e){r.startErr=String(e)}
+  post({t:'step',s:'recLive'});
+  /* last (as in use: the app is started and playing before sampling): the recorder for real for a second (simulators: the microphone is granted by CI; the Mac runner would ask) */
+  if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();N.audioIn.close();await new Promise(s=>setTimeout(s,800));/* like the sampler: back to the playing session */
+    r.recLive={ok:!!st.ok,err:st.err||'',sr:st.sr||sr,frames:fr}}catch(e){r.recLive=String(e)}
+  try{const A=window.__seq&&__seq.Aref&&__seq.Aref(),c=A&&A.out&&A.out.context;r.pageAudioAfterRec=c?c.state:null}catch(e){}
   post({t:'step',s:'report'});
   r.errors=N.errs;
  }catch(e){r.fatal=String(e)}

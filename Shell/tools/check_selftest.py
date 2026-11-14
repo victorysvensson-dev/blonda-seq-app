@@ -29,7 +29,7 @@ def check(dev, run, r):
     need(r.get('audioInApi') is True, 'sampling: the app\'s recorder and input list are present')
     need(r.get('recBlock') == [1, -0.5], f"sampling: a recorded block reaches the page as left/right ({r.get('recBlock')})")
     if 'recLive' in r:
-        lines.append(f"  info: the app's recorder for a second: {r.get('recLive')}")
+        lines.append(f"  info: the app's recorder for a second: {r.get('recLive')}, the page's sound afterwards: {r.get('pageAudioAfterRec')}")
     ip=r.get('importPipe')
     need(isinstance(ip, list) and len(ip) == 2 and all(int(str(x).rsplit(':', 1)[-1] or 0) > 0 for x in ip), f'importing several sounds at once reaches the page ({ip})')
     need(r.get('midiApi') is True, 'Web MIDI API present')
