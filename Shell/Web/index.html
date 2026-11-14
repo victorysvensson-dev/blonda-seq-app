@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v249</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v250</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -9934,6 +9934,65 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
 .rs-ghost{position:fixed;z-index:80;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;box-shadow:0 0 18px currentColor}
 .rs-top{flex-wrap:nowrap}@media (max-width:1600px){.rs-eng-sel{max-width:30vw}.rs-tag{display:none}.rs-name{font-size:28px}}
 @media (max-width:1100px){.rs-top{flex-wrap:wrap}.rs-mod{grid-template-columns:repeat(3,minmax(0,1fr))}.rs-main{grid-template-columns:1fr}.rs{overflow:auto}.rs-main{flex:none}}
+/* ---- (v250) the BLONDA look: the same flat dark cards as the rest of the app (square, one hairline), mono captions,
+   colour only where it means something (each mod source keeps its colour on its dot and its line), one page that scrolls ---- */
+.rs{background:#17181A;padding:14px 18px 22px;gap:12px;overflow:auto;scrollbar-width:thin}
+.rs-top{flex-wrap:wrap;row-gap:10px;min-height:0;padding-bottom:12px;border-bottom:1px solid #2A2B2D}
+.rs-top>div:nth-of-type(1){min-width:0}
+.rs-logo{font:500 10px var(--f-mono);letter-spacing:.24em;color:rgba(232,230,220,.45)}
+.rs-name{font:300 28px/1 var(--f-linje);white-space:nowrap;letter-spacing:0}
+.rs-tag{display:block!important;font-size:9.5px;letter-spacing:.04em;color:rgba(232,230,220,.4);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.rs-eng-sel{order:10;flex:1 1 100%;max-width:none!important;border-radius:0;padding:0;background:none;gap:4px}
+.rs-eng-sel button{height:30px;padding:0 12px;border-radius:0;font-size:10.5px;letter-spacing:.04em;background:#1C1E20;box-shadow:inset 0 0 0 1px #2E3032;color:rgba(232,230,220,.6)}
+.rs-eng-sel button:hover{color:#E8E6DC}.rs-eng-sel button.on{background:#E8E6DC;color:#141516;box-shadow:none}
+.rs-trk{gap:0;box-shadow:inset 0 0 0 1px #2E3032}.rs-trk button{height:30px;padding:0 12px;border-radius:0;box-shadow:none;font-size:10.5px}.rs-trk button.on{background:#E8E6DC;color:#141516}
+.rs-pb,.rs-x{height:34px;padding:0 14px;border-radius:0;box-shadow:inset 0 0 0 1px #2E3032;background:#1C1E20;font-size:10.5px!important;letter-spacing:.04em;white-space:nowrap}
+.rs-pb:hover,.rs-x:hover{background:#232528}.rs-pb small{font-size:8.5px;letter-spacing:.12em;color:rgba(232,230,220,.4)}.rs-pb b{font:500 11px var(--f-mono);letter-spacing:.02em;color:#F2C318;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+.rs-x{background:#E8E6DC;color:#141516;box-shadow:none}.rs-x:hover{background:#fff}
+.rs-main{flex:none;grid-template-columns:minmax(0,1fr) 280px;gap:12px}
+.rs-eng{overflow:visible;gap:12px}
+.rs-sec{background:#1C1E20;border-radius:0;box-shadow:inset 0 0 0 1px #2E3032;padding:12px 14px 14px}
+.rs-sec h5{font:500 9.5px var(--f-mono);letter-spacing:.08em;text-transform:lowercase;color:rgba(232,230,220,.45);margin-bottom:10px}
+.rs-sec h5::before{display:none}
+.rk{border-radius:0}.rk:hover{background:rgba(255,255,255,.025)}
+.rk .tr{stroke:rgba(232,230,220,.09);stroke-width:3}.rk .vl{stroke:#E8E6DC;stroke-width:3}.rk .cap{fill:#141517;stroke:#2E3032}
+.rk b{font:500 12px/1.1 var(--f-mono);letter-spacing:.02em;color:#E8E6DC}.rk b sup{font-size:7.5px}
+.rk small{font-size:9px;letter-spacing:.04em;color:rgba(232,230,220,.45)}
+.rk.drop{background:rgba(255,255,255,.06)}
+.rs-ch .opts button{border-radius:0;background:#141517;box-shadow:inset 0 0 0 1px #2E3032}.rs-ch .opts button.on{background:#E8E6DC;color:#141516;box-shadow:none}
+.rs-side{overflow:visible}
+.rs-mat{background:#1C1E20;border-radius:0;box-shadow:inset 0 0 0 1px #2E3032;padding:12px 14px;gap:8px}
+.rs-mat h5{font:500 9.5px var(--f-mono);letter-spacing:.08em;text-transform:lowercase;color:rgba(232,230,220,.45)}
+.rs-mr{border-radius:0;background:#141517;box-shadow:inset 0 0 0 1px #2A2B2D}.rs-mr .src{border-radius:0}.rs-amt{border-radius:0;background:#0F1011}.rs-amt i{border-radius:0}
+.rs-add{border-radius:0;box-shadow:inset 0 0 0 1px #2E3032;background:#141517}
+.rs-help{font-size:9.5px;line-height:1.6;color:rgba(232,230,220,.42)}
+.rs-mod{flex:none;max-height:none;min-height:0;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:12px}
+.rs-src{background:#1C1E20;border-radius:0;box-shadow:inset 0 0 0 1px #2E3032;padding:12px;gap:8px}
+.rs-src.armed{box-shadow:inset 0 0 0 1.5px var(--c)}
+.rs-sh b{font:500 9.5px var(--f-mono);letter-spacing:.08em;text-transform:lowercase;color:#E8E6DC}
+.rs-sh small{font-size:9px;color:rgba(232,230,220,.4)}
+.rs-grab{width:22px;height:22px;background:radial-gradient(circle,var(--c) 0 4px,transparent 4.5px);box-shadow:inset 0 0 0 1px #3A3C3F}
+.rs-src canvas,.rs-steps{flex:none;height:96px;min-height:0;max-height:none;border-radius:0;background:#0F1011;box-shadow:inset 0 0 0 1px #2A2B2D}
+.rs-steps i{border-radius:0}
+.rs-shp{gap:0;box-shadow:inset 0 0 0 1px #2E3032}.rs-shp button{border-radius:0;height:26px;min-width:0;background:transparent}.rs-shp button.on{background:#E8E6DC;color:#141516}
+.rs-ctl{gap:0;font-size:10px}.rs-ctl>span{min-width:34px;font-size:9px;letter-spacing:.04em}
+.rs-ctl button.st{flex:none;width:26px;height:26px;border-radius:0;box-shadow:inset 0 0 0 1px #2E3032;font-size:12px!important}
+.rs-ctl b{flex:1;min-width:0;height:26px;line-height:26px;font:500 11px/26px var(--f-mono);box-shadow:inset 0 1px 0 #2E3032,inset 0 -1px 0 #2E3032}
+.rs-ctl .tg{flex:none;margin-left:6px;height:26px;border-radius:0;padding:0 9px;box-shadow:inset 0 0 0 1px #2E3032}.rs-ctl .tg.on{background:#E8E6DC;color:#141516}
+.rs-mini .rk{width:auto;flex:1}
+.rs-note{font-size:9.5px;color:rgba(232,230,220,.42);margin:0}
+.rs-eng>.card{border-radius:0!important}
+@media (max-width:900px){.rs-main{grid-template-columns:1fr}}
+.rs .rs-pb{background:#1C1E20}.rs .rs-pb:hover{background:#232528}.rs .rs-x{background:#E8E6DC;color:#141516}.rs .rs-x:hover{background:#fff}
+.rs .rs-eng-sel button.on,.rs .rs-trk button.on,.rs .rs-shp button.on,.rs .rs-ch .opts button.on{background:#E8E6DC;color:#141516}
+.rs-ctl b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}.rs-ctl>span{white-space:nowrap}
+.rs-mini .rk small{font-size:8px;letter-spacing:0}
+.rs-src .rs-ctl>span{display:none}
+.rs-msx{flex:1 1 100%;display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.rs .rs-msx-pick{display:flex;align-items:center;justify-content:space-between;gap:10px;height:40px;padding:0 14px;background:#141517;box-shadow:inset 0 0 0 1px #2E3032;font:500 13px var(--f-mono);color:#E8E6DC;text-align:left}
+.rs .rs-msx-pick span{font-size:10px;color:rgba(232,230,220,.45)}.rs .rs-msx-pick:hover{background:#1A1B1D}
+.rs-msx canvas{width:100%;height:92px;display:block;background:#0F1011;box-shadow:inset 0 0 0 1px #2A2B2D}
+.rs-msx small{font-size:9.5px;color:rgba(232,230,220,.45)}
 `;document.head.appendChild(css);
 
   /* --- the button in the synth card --- */
@@ -9988,6 +10047,11 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     else{const D=ENG[e]||{};(RS_SEC[e]||[['ljud',rsParams(e).map(q=>q.k)]]).forEach(([t,keys])=>{const s=document.createElement('section');s.className='rs-sec';s.innerHTML=`<h5>${t}</h5><div class="rs-row"></div>`;const row=s.querySelector('.rs-row');
       keys.forEach(k=>{if(k[0]==='@'){const kk=k.slice(1),o=e==='analog'&&kk==='wave'?{ch:RS_WAVE}:(D.opts||[]).find(o=>o.k===kk);if(o)row.appendChild(choice(e,kk,{wave:'våg',slide:'slide',duty:'puls',oct:'oktav',arpm:'arpeggio',shape:'wob-form',pre:'förval'}[kk]||kk,o.ch))}
         else{const q=rsQ(e,k);if(q&&typeof rsGet(e,k)==='number')row.appendChild(knob(e,q))}});engBox.appendChild(s)})}
+    /* (v250) Sample+: the sound itself – its sample drawn, and the picker */
+    if(e==='msx'&&window.TEX){const I=TEX.instruments.get((S.ms||{})[RS.id]),L=TEX.list(),s=document.createElement('section');s.className='rs-sec rs-msx';
+      s.innerHTML=`<h5>sound</h5><button class="rs-msx-pick">${I?String(I.meta.name).replace(/</g,'&lt;'):(L.length?'pick a sound':'no sounds yet – autosample one in the Sampler card')}<span>${L.length} ▾</span></button><canvas></canvas><small>${I?I.regions.length+' notes'+(I.meta.loop?' · loop':'')+(I.meta.dev?' · '+String(I.meta.dev).replace(/</g,'&lt;'):''):''}</small>`;
+      engBox.prepend(s);const b=s.querySelector('.rs-msx-pick');b.onclick=()=>{if(!L.length||!window.pickShow)return;pickShow(b,L.map(x=>x.meta.name),L.findIndex(x=>x===I),k=>{TEX.use(RS.id,L[k].meta.id);build();prevNote()},L.map(x=>x.meta.dev||'sample+'))};
+      requestAnimationFrame(()=>{const cv=s.querySelector('canvas'),w=cv.clientWidth,h=cv.clientHeight;if(!w)return;const dpr=devicePixelRatio||1;cv.width=w*dpr;cv.height=h*dpr;const c=cv.getContext('2d');c.scale(dpr,dpr);TEX.draw(c,w,h,-1,'#E8E6DC','#F2C318',RS.id)})}
     /* efter: on every engine */
     const s=document.createElement('section');s.className='rs-sec rs-x-sec';s.innerHTML=`<h5>efter · filter · drive · pan · nivå</h5><div class="rs-row"></div>`;MOD_X.forEach(q=>s.querySelector('.rs-row').appendChild(knob(e,q)));engBox.appendChild(s)}
 
@@ -10045,7 +10109,7 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
   function header(e){const D=ENG[e]||{};R.querySelector('.rs-name').textContent=e==='analog'?'Analog':D.name||e;R.querySelector('.rs-tag').textContent=D.tag||'';R.style.setProperty('--ac',D.dot||'#B8F23A');
     selBox.innerHTML=ENG_ORDER.map(k=>`<button data-e="${k}" class="${k===e?'on':''}"><i style="--d:${ENG[k].dot}"></i>${ENG[k].name}</button>`).join('');
     trkBox.innerHTML=[6,7,8,9].map(j=>`<button data-j="${j}" class="${TRACKS[j].id===RS.id?'on':''}">${TRACKS[j].id}</button>`).join('');
-    const st=(S.rsPre||{})[e];R.querySelector('.rs-pn').textContent=e==='grime'?(GR_PRE[engE('grime').pre]||['–'])[0]:st||'–';R.querySelector('.rs-mn').textContent=modOf(e).rows.length?modOf(e).rows.length+' länkar':'ingen'}
+    const st=e==='msx'&&window.TEX?((TEX.instruments.get((S.ms||{})[RS.id])||{meta:{name:'–'}}).meta.name):(S.rsPre||{})[e];R.querySelector('.rs-pn').textContent=e==='grime'?(GR_PRE[engE('grime').pre]||['–'])[0]:st||'–';R.querySelector('.rs-mn').textContent=modOf(e).rows.length?modOf(e).rows.length+' länkar':'ingen'}
   selBox.onclick=ev=>{const b=ev.target.closest('[data-e]');if(!b)return;pushHist();S.inst[RS.id]=b.dataset.e;try{refreshInst()}catch(_){}save();build();prevNote()};
   trkBox.onclick=ev=>{const b=ev.target.closest('[data-j]');if(!b)return;try{select(+b.dataset.j)}catch(_){}build()};
   function presetList(e){const L=[];if(e==='grime')GR_PRE.forEach((p,i)=>L.push({l:p[0],g:'grime',f:()=>{grimeLoadPre(i);try{refreshInst()}catch(_){}}}));
@@ -10053,7 +10117,11 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     if(e==='bris'&&typeof BR_PRE!=='undefined')BR_PRE.forEach(p=>L.push({l:p[1],g:'bris · '+p[0].toLowerCase(),f:()=>{if(window.__bris&&__bris.load)__bris.load(p);else{Object.assign(engE('bris'),BR_DEF,p[2]);try{brisApplyAll()}catch(_){}}}}));
     if(e==='msx'&&window.TEX&&TEX.list)TEX.list().forEach(I=>L.push({l:I.meta.name,g:I.meta.dev||'sample+',f:()=>TEX.use(RS.id,I.meta.id)}));
     ((S.userPre||{})[e]||[]).forEach(u=>L.push({l:u.n,g:'sparade',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(u.p)));if(u.m)S.mods[e]=JSON.parse(JSON.stringify(u.m));modOf(e)}}));
-    L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});return L}
+    L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});
+    /* (v250) a preset is the whole sound: a factory preset starts with no modulation (the LFOs, envelope and steps of the
+       sound before don't stay on); a saved sound brings its own; a Sample+ sound brings what it was last played with */
+    L.forEach(x=>{if(x.g==='sparade'||x.g==='grund'||e==='msx')return;const f=x.f;x.f=()=>{f();if(!S.mods||typeof S.mods!=='object')S.mods={};S.mods[e]=null;modOf(e)}});
+    return L}
   /* (v245) the keyboard's sound picker and MIDI program change use the same list, for any synth track */
   window.__rsPresets=(e,id)=>presetList(e).map(x=>({l:x.l,g:x.g,f:()=>{const o=RS.id;RS.id=id||o;if(!S.mods)S.mods={};try{x.f()}finally{RS.id=o}}}));
   R.querySelector('.rs-top').addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,e=RS.e;
@@ -10664,7 +10732,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v249</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v250</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -13745,9 +13813,12 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   const list=()=>[...INS.values()].sort((a,b)=>(a.meta.t||0)-(b.meta.t||0));/* oldest first: program numbers stay put */
   function play(id,t,v,p,out,n,len,vc){const I=INS.get(S.ms&&S.ms[id]);if(!I||n==null)return;const env=envOf(engE('msx'));
     const offs=Array.isArray(vc)&&vc.length?vc:[0];for(const o of offs)try{voice(I,t,v/(offs.length>1?Math.sqrt(offs.length):1),p,out,n+o,len,env)}catch(e){console.warn(e)}}
-  function keepEnv(id){const I=INS.get(id);if(!I)return;const E=engE('msx');I.meta.env={att:E.att,dec:E.dec,sus:E.sus,rel:E.rel};saveMeta(id)}
+  /* each Sample+ sound keeps its envelope and its modulation (LFOs, mod envelope, steps, links) */
+  function keepEnv(id){const I=INS.get(id);if(!I)return;const E=engE('msx');I.meta.env={att:E.att,dec:E.dec,sus:E.sus,rel:E.rel};
+    try{const M=S.mods&&S.mods.msx;I.meta.mods=M?JSON.parse(JSON.stringify(M)):null}catch(e){}saveMeta(id)}
   function use(trk,id){if(!trk)return;S.ms=S.ms||{};const prev=S.ms[trk];if(prev&&prev!==id)keepEnv(prev);
-    if(id){S.ms[trk]=id;S.inst[trk]='msx';const I=INS.get(id);if(I&&I.meta.env)Object.assign(engE('msx'),I.meta.env)}
+    if(id){S.ms[trk]=id;S.inst[trk]='msx';const I=INS.get(id);if(I&&I.meta.env)Object.assign(engE('msx'),I.meta.env);
+      if(I&&prev!==id){if(!S.mods||typeof S.mods!=='object')S.mods={};S.mods.msx=I.meta.mods?JSON.parse(JSON.stringify(I.meta.mods)):null;try{modOf('msx')}catch(e){}}}
     else{delete S.ms[trk];if(S.inst[trk]==='msx')S.inst[trk]=(typeof DEF_INST!=='undefined'&&DEF_INST[trk])||'analog'}
     try{save()}catch(e){}try{refreshInst()}catch(e){}try{window.rsPaint&&rsPaint()}catch(e){}paint()}
   /* the synth card: the instrument picker under the knobs, and a drawing of the sample */
