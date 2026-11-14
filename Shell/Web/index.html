@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v241</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v242</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10657,7 +10657,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v241</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v242</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -12855,12 +12855,19 @@ body.mob .card[data-card="pads"] .pad{justify-content:space-between!important}`;
   const rateTargets=()=>{const h=(window.padRepHeld?padRepHeld():[]).filter(i=>!TRACKS[i].mel||true);return h.length?h:[sel()]};
   const rIdx=id=>{const v=padRepEff(id);const k=RATES.findIndex(r=>r[0]===v);return k<0?0:k};
   /* drag: the value follows the finger, straight from where it touches */
-  function drag(f,set,end){const tr=f.querySelector('.pf-tr');let on=null;
+  function drag(f,set,end,lite){const tr=f.querySelector('.pf-tr');let on=null;
     const at=e=>{const r=tr.getBoundingClientRect();return Math.max(0,Math.min(1,1-(e.clientY-r.top)/r.height))};
-    tr.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(on!==null)return;on=e.pointerId;try{tr.setPointerCapture(e.pointerId)}catch(_){}try{pushHist()}catch(_){}f.classList.add('drag');set(at(e),true);paint()});
-    tr.addEventListener('pointermove',e=>{if(e.pointerId!==on)return;set(at(e),false);paint()});
+    tr.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();if(on!==null)return;on=e.pointerId;try{tr.setPointerCapture(e.pointerId)}catch(_){}try{pushHist()}catch(_){}f.classList.add('drag');set(at(e),true);if(!lite)paint()});
+    tr.addEventListener('pointermove',e=>{if(e.pointerId!==on)return;set(at(e),false);if(!lite)paint()});
     const up=e=>{if(e.pointerId!==on)return;on=null;f.classList.remove('drag');if(end)end();try{save()}catch(_){}paint()};tr.addEventListener('pointerup',up);tr.addEventListener('pointercancel',up)}
-  drag(FV,u=>{const i=sel(),id=TRACKS[i].id;S.params[id].level=+(u*u).toFixed(4);try{applyTrack(i)}catch(e){}try{renderSnd();renderDial()}catch(e){}});
+  /* (v242) the volume follows the finger smoothly: while dragging only the level and the track's gain change, once per frame
+     (the gain glides to it); the sound and dial cards behind the full-screen view are redrawn when the finger lets go.
+     Redrawing them on every move (under the blurred full screen) is what made the fader stutter on the iPad. */
+  let volU=null,volRaf=0,volDirty=false;
+  const volApply=()=>{volRaf=0;if(volU===null)return;const i=sel(),id=TRACKS[i].id,lv=+(volU*volU).toFixed(4);volU=null;if(S.params[id].level===lv)return;
+    S.params[id].level=lv;volDirty=true;try{const c=A.ch[i];if(ctx&&c&&c.g)c.g.gain.setTargetAtTime(isMuted(i)?0:lv,ctx.currentTime,.012);else applyTrack(i)}catch(e){try{applyTrack(i)}catch(_){}}paint()};
+  drag(FV,u=>{volU=u;if(!volRaf)volRaf=requestAnimationFrame(volApply)},()=>{if(volRaf){cancelAnimationFrame(volRaf);volApply()}
+    if(volDirty){volDirty=false;try{applyTrack(sel())}catch(e){}try{renderSnd();renderDial()}catch(e){}}},true);
   /* the rate fader. A pad whose note repeat is turned on with the dots: the fader changes its rate and it stays.
      A pad without: the fader plays it in note repeat only while the fader is touched; let go and the pad has no note repeat again.
      Which kind a pad is, is decided the first time the fader reaches it in a touch (pads you press while holding the fader count too). */
@@ -12901,6 +12908,8 @@ body.mob .card[data-card="pads"] .pad{justify-content:space-between!important}`;
 .pfad .pf-tr{position:relative;flex:1;width:100%;border-radius:12px;background:rgba(232,230,220,.045);box-shadow:inset 0 0 0 1px rgba(232,230,220,.1);touch-action:none;cursor:ns-resize;overflow:hidden}
 .pfad .pf-fill{position:absolute;left:0;right:0;bottom:0;height:var(--pf,0%);background:linear-gradient(to top,color-mix(in srgb,var(--pc) 34%,transparent),color-mix(in srgb,var(--pc) 14%,transparent));transition:height .06s linear}
 .pfad .pf-cap{position:absolute;left:8px;right:8px;bottom:calc(var(--pf,0%) - 2px);height:4px;border-radius:2px;background:var(--pc);box-shadow:0 0 10px color-mix(in srgb,var(--pc) 45%,transparent);transition:bottom .06s linear}
+.pfad.drag .pf-fill,.pfad.drag .pf-cap{transition:none}
+.pfad .pf-fill,.pfad .pf-cap{will-change:height,bottom}
 .pfad.drag .pf-tr{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--pc) 60%,transparent)}
 .pfad .pf-ticks{position:absolute;inset:14px 0;pointer-events:none}
 .pfad .pf-ticks i{position:absolute;left:0;right:0;height:0}

@@ -203,6 +203,12 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
                       delayMs: (b["dl"] as? NSNumber)?.doubleValue ?? 0)
         case "save":
             save(b)
+        case "pick-audio":
+            pickAudio(id: (b["id"] as? NSNumber)?.intValue ?? 0, multi: (b["multi"] as? Bool) ?? true)
+        case "pick-done":
+            if let id = (b["id"] as? NSNumber)?.intValue {
+                try? FileManager.default.removeItem(at: BundleScheme.importRoot.appendingPathComponent("\(id)", isDirectory: true))
+            }
         case "playing":
             UIApplication.shared.isIdleTimerDisabled = (b["on"] as? Bool) ?? false
         case "log":
@@ -257,8 +263,75 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         present(picker, animated: true)
     }
 
-    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) { finishSave(ok: true) }
-    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) { finishSave(ok: false) }
+    func documentPicker(_ controller: UIDocumentPickerViewController, didPickDocumentsAt urls: [URL]) {
+        if controller === importPicker { finishPick(urls); return }
+        finishSave(ok: true)
+    }
+    func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
+        if controller === importPicker { finishPick([]); return }
+        finishSave(ok: false)
+    }
+
+    // MARK: - importing sounds (several files or whole folders at once)
+
+    /// The page's "add sounds" buttons open the app's own picker instead of WebKit's: it goes straight to Files, lets you
+    /// pick several sounds at once (Select) and also whole folders – every sound in a folder (and its subfolders) is
+    /// imported. The picked files are copied to a temporary folder the page reads from; the page then hands them to its
+    /// own import, exactly as if they had been picked in the browser.
+    private var importPicker: UIDocumentPickerViewController?
+    private var importId = 0
+    static let audioExt: Set<String> = ["wav", "wave", "aif", "aiff", "aifc", "mp3", "m4a", "aac", "flac", "ogg", "caf"]
+
+    private func pickAudio(id: Int, multi: Bool) {
+        if let old = importPicker { old.dismiss(animated: false); finishPick([]) }
+        importId = id
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.audio, .folder], asCopy: false)
+        picker.allowsMultipleSelection = multi
+        picker.shouldShowFileExtensions = true
+        picker.delegate = self
+        importPicker = picker
+        present(picker, animated: true)
+    }
+
+    private func finishPick(_ urls: [URL]) {
+        let id = importId
+        importPicker = nil
+        if urls.isEmpty { call("__blonda.picked", ["id": id, "files": [Any]()]); return }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            let files = Self.collectAudio(urls, into: BundleScheme.importRoot.appendingPathComponent("\(id)", isDirectory: true), id: id)
+            DispatchQueue.main.async { self?.call("__blonda.picked", ["id": id, "files": files]) }
+        }
+    }
+
+    /// Copies the picked sounds (and every sound inside picked folders) to the import folder. At most 500 files.
+    static func collectAudio(_ urls: [URL], into dir: URL, id: Int) -> [[String: Any]] {
+        let fm = FileManager.default
+        try? fm.removeItem(at: dir)
+        try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        var out: [[String: Any]] = []
+        func add(_ src: URL) {
+            guard out.count < 500, audioExt.contains(src.pathExtension.lowercased()) else { return }
+            let n = out.count
+            let dst = dir.appendingPathComponent("\(n).\(src.pathExtension.lowercased())")
+            do { try fm.copyItem(at: src, to: dst) } catch { return }
+            let size = (try? fm.attributesOfItem(atPath: dst.path)[.size] as? NSNumber)?.intValue ?? 0
+            out.append(["u": "__import/\(id)/\(dst.lastPathComponent)", "name": src.lastPathComponent,
+                        "type": BundleScheme.mime(src.pathExtension), "size": size])
+        }
+        for url in urls {
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            var isDir: ObjCBool = false
+            if fm.fileExists(atPath: url.path, isDirectory: &isDir), isDir.boolValue {
+                let items = fm.enumerator(at: url, includingPropertiesForKeys: [.isRegularFileKey], options: [.skipsHiddenFiles])?
+                    .compactMap { $0 as? URL }.sorted { $0.path.localizedStandardCompare($1.path) == .orderedAscending } ?? []
+                items.forEach(add)
+            } else {
+                add(url)
+            }
+        }
+        return out
+    }
 
     private func finishSave(ok: Bool) {
         guard let p = pendingSave else { return }

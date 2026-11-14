@@ -59,6 +59,16 @@ const DL={save({filename,data}={}){return new Promise((res,rej)=>{try{
   fr.readAsDataURL(blob)}catch(e){rej({code:'failed',message:String(e)})}})}};
 if(!window.claude)Object.defineProperty(window,'claude',{configurable:true,value:Object.freeze({use:n=>Promise.resolve(n==='downloads'?DL:null)})});
 
+/* ---- importing sounds: the app's own picker (several files at once, whole folders too) ---- */
+N.picks={};let pid=0;
+const audioInput=el=>el&&el.type==='file'&&/audio|\.wav|\.aif|\.mp3/i.test(el.accept||'');
+const nativeClick=HTMLInputElement.prototype.click;
+HTMLInputElement.prototype.click=function(){if(!audioInput(this))return nativeClick.call(this);const id=++pid;N.picks[id]=this;post({t:'pick-audio',id,multi:true})};
+N.picked=async(id,files)=>{const inp=N.picks[id];delete N.picks[id];if(!inp||!files||!files.length){post({t:'pick-done',id});return}
+  try{const list=[];for(const f of files){try{const b=await (await fetch(f.u)).blob();list.push(new File([b],f.name,{type:f.type||b.type||'audio/wav'}))}catch(e){}}
+    if(list.length){const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));inp.files=dt.files;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}}
+  finally{post({t:'pick-done',id})}};
+
 /* ---- the screen stays on while playing ---- */
 const watch=()=>{let last=null;const chk=()=>{const p=document.body.classList.contains('playing');if(p!==last){last=p;post({t:'playing',on:p})}};
   new MutationObserver(chk).observe(document.body,{attributes:true,attributeFilter:['class']});chk()};
@@ -113,6 +123,9 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
     await c.close()}catch(e){r.audioErr=String(e)}
   try{const j=await (await fetch('blonda-pack/pack.json')).json(),it=(j.items||[])[0];r.packItems=(j.items||[]).length;
     if(it){const b=await (await fetch('blonda-pack/'+it.file)).arrayBuffer(),C=new OfflineAudioContext(1,1,48000);r.packDecoded=(await C.decodeAudioData(b)).duration>0}}catch(e){r.packErr=String(e)}
+  try{const j=await (await fetch('blonda-pack/pack.json')).json(),its=(j.items||[]).slice(0,2);const inp=document.createElement('input');inp.type='file';inp.accept='audio/*';inp.multiple=true;
+    const got=new Promise(res=>{inp.onchange=()=>res([...inp.files].map(f=>f.name+':'+f.size));setTimeout(()=>res('timeout'),5000)});
+    const pidT=999999;N.picks[pidT]=inp;await N.picked(pidT,its.map(it=>({u:'blonda-pack/'+it.file,name:it.file.split('/').pop(),type:'audio/wav'})));r.importPipe=await got}catch(e){r.importPipe=String(e)}
   r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
   r.midiApi=!!navigator.requestMIDIAccess;
   try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;

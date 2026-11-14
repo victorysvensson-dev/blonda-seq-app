@@ -10,6 +10,9 @@ final class BundleScheme: NSObject, WKURLSchemeHandler {
     static let startURL = URL(string: "blonda://seq3/index.html")!
 
     private let root = Bundle.main.resourceURL!.appendingPathComponent("Web", isDirectory: true).standardizedFileURL
+    /// Sounds picked with the app's own file picker (several files or whole folders at once) are copied here and the page
+    /// reads them as blonda://seq3/__import/… – then they are deleted again.
+    static let importRoot = FileManager.default.temporaryDirectory.appendingPathComponent("imports", isDirectory: true).standardizedFileURL
 
     func webView(_ webView: WKWebView, start task: WKURLSchemeTask) {
         guard let url = task.request.url else {
@@ -18,9 +21,12 @@ final class BundleScheme: NSObject, WKURLSchemeHandler {
         }
         var path = url.path
         if path.isEmpty || path == "/" { path = "/index.html" }
-        let file = root.appendingPathComponent(String(path.dropFirst())).standardizedFileURL
-        // only files inside Web/ – never anything else in the bundle
-        guard file.path.hasPrefix(root.path + "/"), let data = try? Data(contentsOf: file) else {
+        let isImport = path.hasPrefix("/__import/")
+        let base = isImport ? Self.importRoot : root
+        let rel = isImport ? String(path.dropFirst("/__import/".count)) : String(path.dropFirst())
+        let file = base.appendingPathComponent(rel).standardizedFileURL
+        // only files inside Web/ (or the picked sounds) – never anything else in the bundle
+        guard file.path.hasPrefix(base.path + "/"), let data = try? Data(contentsOf: file) else {
             let r = HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: ["Content-Type": "text/plain"])!
             task.didReceive(r)
             task.didReceive(Data("not found".utf8))
