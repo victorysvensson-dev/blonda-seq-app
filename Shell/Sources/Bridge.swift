@@ -31,7 +31,7 @@ class Port{constructor(o,type){this.id=o.id;this.name=o.name;this.manufacturer=o
   open(){return Promise.resolve(this)}close(){return Promise.resolve(this)}}
 class Input extends Port{constructor(o){super(o,'input');this.onmidimessage=null;this._l=new Set()}
   addEventListener(t,f){if(t==='midimessage'&&f)this._l.add(f)}removeEventListener(t,f){if(t==='midimessage')this._l.delete(f)}
-  _fire(b){const ev={type:'midimessage',data:new Uint8Array(b),timeStamp:performance.now(),target:this,currentTarget:this};
+  _fire(b,ts){const ev={type:'midimessage',data:new Uint8Array(b),timeStamp:ts==null?performance.now():ts,target:this,currentTarget:this};
     if(this.onmidimessage)try{this.onmidimessage(ev)}catch(e){console.error(e)}this._l.forEach(f=>{try{f(ev)}catch(e){console.error(e)}})}}
 class Output extends Port{constructor(o){super(o,'output')}
   send(data,ts){const d=Array.from(data,x=>x&255);if(!d.length)return;const dl=ts==null?0:Math.max(0,ts-performance.now());post({t:'midi-out',id:this.id,d,dl})}
@@ -43,7 +43,10 @@ N.midiPorts=list=>{const sync=(map,arr,C)=>{const seen=new Set();for(const o of 
   sync(ins,list.ins,Input);sync(outs,list.outs,Output);
   if(!access)access=mkAccess();else{const ev={type:'statechange',port:null,target:access};if(access.onstatechange)try{access.onstatechange(ev)}catch(e){console.error(e)}access._l.forEach(f=>{try{f(ev)}catch(e){}})}
   waiting.splice(0).forEach(r=>r(access))};
-N.midiBatch=arr=>{for(const [id,b] of arr){const p=ins.get(id);if(p)p._fire(b)}};
+/* each message carries CoreMIDI's arrival time (host clock, ms); the page's clock differs by a fixed amount, found as the
+   smallest gap seen (the fastest a message got here). So MIDI clock keeps its real timing even though messages come in batches. */
+let hostOff=null;N.midiTime=ms=>{if(ms==null)return performance.now();const o=performance.now()-ms;if(hostOff===null||o<hostOff||o-hostOff>1000)hostOff=o;return ms+hostOff};
+N.midiBatch=arr=>{for(const [id,b,ms] of arr){const p=ins.get(id);if(p)p._fire(b,N.midiTime(ms))}};
 Object.defineProperty(navigator,'requestMIDIAccess',{configurable:true,value:function(){return new Promise(res=>{if(access){res(access);return}waiting.push(res);post({t:'midi-open'})})}});
 /* the page asks whether MIDI is already allowed before connecting by itself – in the app it always is */
 try{const P=navigator.permissions;if(P&&P.query){const q=P.query.bind(P);P.query=d=>d&&d.name==='midi'?Promise.resolve({name:'midi',state:'granted',onchange:null}):q(d)}

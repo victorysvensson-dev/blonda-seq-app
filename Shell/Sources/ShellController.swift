@@ -61,7 +61,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             self?.call("__blonda.midiPorts", ["ins": enc(ins), "outs": enc(outs)])
         }
         midi.onInput = { [weak self] batch in
-            self?.call("__blonda.midiBatch", batch.map { [$0.0, $0.1.map { Int($0) }] as [Any] })
+            self?.call("__blonda.midiBatch", batch.map { [$0.0, $0.1.map { Int($0) }, $0.2] as [Any] })
         }
         midi.onTestOut = { [weak self] bytes in self?.testOut.append(bytes) }
     }

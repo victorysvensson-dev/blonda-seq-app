@@ -13,8 +13,10 @@ final class MIDIBridge {
 
     /// The port lists changed (or were asked for). Main thread.
     var onPorts: (([Port], [Port]) -> Void)?
-    /// Incoming messages: (port id, bytes). Main thread.
-    var onInput: (([(String, [UInt8])]) -> Void)?
+    /// Incoming messages: (port id, bytes, arrival time in ms on the host clock). Main thread.
+    /// The arrival time is CoreMIDI's own timestamp of the message, so the page can follow MIDI clock exactly even
+    /// though the messages reach it a little later and in batches.
+    var onInput: (([(String, [UInt8], Double)]) -> Void)?
     /// Self-test only: what arrived at the test destination. Main thread.
     var onTestOut: (([UInt8]) -> Void)?
 
@@ -39,14 +41,22 @@ final class MIDIBridge {
     // id strings for incoming messages, looked up on CoreMIDI's thread by index (refCon = index + 1)
     private let lock = NSLock()
     private var srcTable: [String] = []
-    private var pending: [(String, [UInt8])] = []
+    private var pending: [(String, [UInt8], Double)] = []
     private var flushQueued = false
 
-    private lazy var timebase: mach_timebase_info_data_t = {
+    // read once, up front: it is used on CoreMIDI's thread too
+    private static let timebase: mach_timebase_info_data_t = {
         var t = mach_timebase_info_data_t()
         mach_timebase_info(&t)
         return t
     }()
+    private var timebase: mach_timebase_info_data_t { Self.timebase }
+
+    /// Host time → ms (0 = "now").
+    static func hostMs(_ ts: MIDITimeStamp) -> Double {
+        let t = ts == 0 ? mach_absolute_time() : ts
+        return Double(t) * Double(timebase.numer) / Double(timebase.denom) / 1_000_000
+    }
 
     /// What happened when CoreMIDI was started (for the log and the self-test).
     private(set) var diag: [String] = []
@@ -184,10 +194,10 @@ final class MIDIBridge {
     // MARK: - receiving
 
     private func receive(_ list: UnsafePointer<MIDIEventList>, id: String) {
-        let msgs = Self.parse(list)
+        let msgs = Self.parseTimed(list)
         guard !msgs.isEmpty else { return }
         lock.lock()
-        for m in msgs { pending.append((id, m)) }
+        for m in msgs { pending.append((id, m.0, Self.hostMs(m.1))) }
         let queue = !flushQueued
         flushQueued = true
         lock.unlock()
@@ -206,10 +216,14 @@ final class MIDIBridge {
     }
 
     /// Universal MIDI packets (MIDI 1.0 protocol) → classic MIDI bytes. System exclusive is left out (the page doesn't use it).
-    static func parse(_ list: UnsafePointer<MIDIEventList>) -> [[UInt8]] {
-        var out: [[UInt8]] = []
+    static func parse(_ list: UnsafePointer<MIDIEventList>) -> [[UInt8]] { parseTimed(list).map { $0.0 } }
+
+    /// The same, with each message's timestamp (that of its packet).
+    static func parseTimed(_ list: UnsafePointer<MIDIEventList>) -> [([UInt8], MIDITimeStamp)] {
+        var out: [([UInt8], MIDITimeStamp)] = []
         for packet in list.unsafeSequence() {
             let count = Int(packet.pointee.wordCount)
+            let ts = packet.pointee.timeStamp
             withUnsafeBytes(of: packet.pointee.words) { raw in
                 let w = raw.bindMemory(to: UInt32.self)
                 var i = 0
@@ -219,13 +233,13 @@ final class MIDIBridge {
                     let st = UInt8((word >> 16) & 0xFF), d1 = UInt8((word >> 8) & 0x7F), d2 = UInt8(word & 0x7F)
                     if mt == 0x1 {
                         switch st {
-                        case 0xF1, 0xF3: out.append([st, d1])
-                        case 0xF2: out.append([st, d1, d2])
-                        default: out.append([st])
+                        case 0xF1, 0xF3: out.append(([st, d1], ts))
+                        case 0xF2: out.append(([st, d1, d2], ts))
+                        default: out.append(([st], ts))
                         }
                     } else if mt == 0x2 {
                         let hi = st & 0xF0
-                        out.append(hi == 0xC0 || hi == 0xD0 ? [st, d1] : [st, d1, d2])
+                        out.append((hi == 0xC0 || hi == 0xD0 ? [st, d1] : [st, d1, d2], ts))
                     }
                     i += umpWords(mt)
                 }
