@@ -1,0 +1,2 @@
+cpu fast: 115.0 %
+cpu slow: 116.6 %
