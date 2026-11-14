@@ -1,0 +1,75 @@
+{
+  "audio" : {
+    "sr" : 48000,
+    "state" : "suspended",
+    "worklet" : true,
+    "workletOk" : true
+  },
+  "audioInApi" : false,
+  "body" : "look-studio topbar",
+  "errors" : [
+
+  ],
+  "height" : 653,
+  "idb" : true,
+  "idbMs" : 25,
+  "importPipe" : [
+    "b-kick-context.wav:92104",
+    "b-kick-cross.wav:37576"
+  ],
+  "lang" : "en",
+  "ls" : true,
+  "lsPrev" : null,
+  "midiApi" : true,
+  "midiIn" : [
+    144,
+    60,
+    100
+  ],
+  "midiIns" : [
+    "BLONDA SEQ3 (virtual)",
+    "BLONDA TEST"
+  ],
+  "midiMs" : 0,
+  "midiNative" : [
+    "client ok after 648 ms (try 1)"
+  ],
+  "midiOutReceived" : [
+    [
+      144,
+      64,
+      90
+    ],
+    [
+      128,
+      64,
+      0
+    ]
+  ],
+  "midiOuts" : [
+    "BLONDA SEQ3 (virtual)",
+    "BLONDA TEST"
+  ],
+  "midiOutSent" : true,
+  "noZoom" : true,
+  "origin" : "blonda:\/\/seq3",
+  "packDecoded" : true,
+  "packItems" : 232,
+  "pageAudio" : {
+    "base" : 3,
+    "out" : 0,
+    "sr" : 48000,
+    "state" : "running"
+  },
+  "platform" : "mac",
+  "project" : true,
+  "save" : true,
+  "saveBytes" : 17,
+  "secure" : true,
+  "started" : true,
+  "syncPill" : "local",
+  "system" : "iPadOS 18.8",
+  "title" : "BLONDA SEQ.3 Glass",
+  "ver" : "v243",
+  "width" : 1024
+}
