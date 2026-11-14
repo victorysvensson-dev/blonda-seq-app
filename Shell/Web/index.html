@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v247</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v248</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -3304,7 +3304,7 @@ const TRACKS=[
  {id:'syn8', name:'Acid', sub:'303',    hex:'#C6E85A', mel:true, x:1},
 ];
 /* melodic channels are named after what is actually loaded on them */
-const ROLE={grime:'Grime',analog:'Synth',acid:'Acid',sub:'808',fm:'FM',pluck:'Pluck',super:'Pad',sh101:'101',mini:'Moog',chip:'Chip',bris:'Bris',smp:'Sampler'},DEF_INST={bass:'analog',keys:'analog',lead:'pluck',pad:'super',syn5:'bris',syn6:'fm',syn7:'sh101',syn8:'acid'};
+const ROLE={grime:'Grime',analog:'Synth',acid:'Acid',sub:'808',fm:'FM',pluck:'Pluck',super:'Pad',sh101:'101',mini:'Moog',chip:'Chip',bris:'Bris',smp:'Sampler',msx:'Sample+'},DEF_INST={bass:'analog',keys:'analog',lead:'pluck',pad:'super',syn5:'bris',syn6:'fm',syn7:'sh101',syn8:'acid'};
 let _mnKey='',_mn={};
 function melNames(){let inst;try{inst=S.inst}catch(e){return null}if(!inst)return null;const k=JSON.stringify(inst);if(k===_mnKey)return _mn;_mnKey=k;_mn={};const used={};
   TRACKS.forEach(t=>{if(!t.mel)used[t.base.toLowerCase()]=1});
@@ -3424,7 +3424,7 @@ const DEFS={
         lead:{wave:'square',a:.005,d:.3,s:.5,r:.2,cut:.55,res:.25,env:.4},pad:{wave:'sawtooth',a:.6,d:1,s:.7,r:1.2,cut:.45,res:.1,env:.2},
         syn5:{wave:'sawtooth',a:.012,d:.7,s:.25,r:.35,cut:.5,res:.12,env:.35},syn6:{wave:'square',a:.005,d:.3,s:.5,r:.2,cut:.55,res:.25,env:.4},syn7:{wave:'sawtooth',a:.004,d:.22,s:.35,r:.12,cut:.42,res:.35,env:.55},syn8:{wave:'sawtooth',a:.004,d:.22,s:.35,r:.12,cut:.42,res:.35,env:.55}},
  inst:{bass:'analog',keys:'analog',lead:'pluck',pad:'super',syn5:'bris',syn6:'fm',syn7:'sh101',syn8:'acid'},
- eng:{acid:{cut:.32,res:.72,env:.6,dec:.3,acc:.6,drive:.35,dtone:.5,st:.2,wave:'sawtooth',slide:0},fm:{ratio:3,index:.42,decay:.4,bell:.3,rel:.25,bright:.6},
+ eng:{msx:{att:.03,dec:.5,sus:1,rel:.25},acid:{cut:.32,res:.72,env:.6,dec:.3,acc:.6,drive:.35,dtone:.5,st:.2,wave:'sawtooth',slide:0},fm:{ratio:3,index:.42,decay:.4,bell:.3,rel:.25,bright:.6},
       sub:{decay:.5,punch:.45,drive:.3,tone:.5,glide:.2,click:.4},pluck:{damp:.55,bright:.6,body:.35,len:.45,width:.5,drive:.2},
       super:{detune:.45,attack:.3,release:.5,bright:.5,width:.75,air:.4},
       sh101:{lfoR:.45,lfoW:0,vcoMod:0,range:1,pw:.35,pwmSrc:0,pulse:.55,saw:.7,sub:.45,subMode:0,noise:0,cut:.35,res:.45,env:.5,vcfMod:0,kybd:.5,vcaMode:0,A:.02,D:.35,S:.3,R:.18,porta:.2,portaMode:2,vol:.8},
@@ -3658,6 +3658,7 @@ function scaleChord(n){let i=SCALE.indexOf(n);if(i<0)i=SCALE.findIndex(x=>x>=n);
 const pc=v=>[String(Math.round(v*100)),'%'],msF=x=>x<1?[String(Math.round(x*1000)),'ms']:[x.toFixed(2),'s'];
 const FM_R=[.5,1,1.5,2,3,3.5,7];
 const ENG={
+ msx:{name:'Sample+',tag:'your sampled instruments · multisample',dot:'#EDEBE3',ps:[{k:'att',l:'attack',f:v=>msF(.001+v*v*2)},{k:'dec',l:'decay',f:v=>msF(.02+v*v*4)},{k:'sus',l:'sustain',f:pc},{k:'rel',l:'release',f:v=>msF(.02+v*v*4)}],opts:[]},
  analog:{name:'Analog',tag:'subtraktiv · envelope',dot:'#F2788E'},
  enkel:{name:'Enkel',tag:'starterns ljud · enkel synt',ps:[],opts:[]},
  smp:{name:'Sampler',tag:'starterns röst och ljud',ps:[],opts:[]},
@@ -3700,7 +3701,7 @@ const ENG={
 function engOvf(){const e=document.getElementById('engs');if(e)e.classList.toggle('ovf',e.scrollWidth>e.clientWidth+2)}
 addEventListener('resize',()=>{engOvf();requestAnimationFrame(()=>{try{renderLens()}catch(e){}})});
 try{stateHealEng()}catch(e){console.error('stateHealEng',e)}healNote();
-const ENG_ORDER=['analog','bris','acid','sh101','mini','grime','sub','fm','pluck','chip','super'];
+const ENG_ORDER=['analog','bris','acid','sh101','mini','grime','sub','fm','pluck','chip','super','msx'];
 let GL=null;
 function glideOsc(prm,f0,t){if(!GL)return;let last=f0;for(const g of GL.list){const tt=t+g.at*GL.sd,f=f0*Math.pow(2,(g.n-GL.n0)/12);
   prm.setValueAtTime(last,Math.max(t+.002,tt-GL.gt));prm.exponentialRampToValueAtTime(f,tt);last=f}}
@@ -3712,7 +3713,7 @@ const dCurve=a=>{const k=Math.round(a*20);if(!dcCache.has(k))dcCache.set(k,drive
 let VOIC1=false;
 function melVoice(id,t,v,p,out,note,len){const e=S.inst[id]||'analog',vc=(VOIC1||(S.chord&&S.chord[id]===0))?[0]:id==='pad'?scaleChord(note):VOIC[id];
   switch(e){case 'acid':acidVoice(id,t,v,p,out,note,len);break;case 'sub':subVoice(id,t,v,p,out,note,len);break;case 'fm':fmVoice(t,v,p,out,note,len,vc);break;
-    case 'pluck':pluckVoice(t,v,p,out,note,len,vc);break;case 'sh101':sh101Voice(id,t,v,p,out,note,len);break;case 'mini':miniVoice(id,t,v,p,out,note,len);break;case 'chip':chipVoice(t,v,p,out,note,len,vc);break;case 'bris':brisVoice(id,t,v,p,out,note,len,vc);break;case 'grime':grimeVoice(id,t,v,p,out,note,len);break;case 'super':superVoice(t,v,p,out,note,len,vc);break;case 'enkel':if(window.enkelVoice)enkelVoice(id,t,v,p,out,note,len,vc);break;case 'smp':if(window.smpVoice2)smpVoice2(id,t,v,p,out,note,len);break;
+    case 'pluck':pluckVoice(t,v,p,out,note,len,vc);break;case 'sh101':sh101Voice(id,t,v,p,out,note,len);break;case 'mini':miniVoice(id,t,v,p,out,note,len);break;case 'chip':chipVoice(t,v,p,out,note,len,vc);break;case 'bris':brisVoice(id,t,v,p,out,note,len,vc);break;case 'grime':grimeVoice(id,t,v,p,out,note,len);break;case 'super':superVoice(t,v,p,out,note,len,vc);break;case 'enkel':if(window.enkelVoice)enkelVoice(id,t,v,p,out,note,len,vc);break;case 'smp':if(window.smpVoice2)smpVoice2(id,t,v,p,out,note,len);break;case 'msx':if(window.TEX&&TEX.play)TEX.play(id,t,v,p,out,note,len,vc);break;
     default:synthVoice(t,v,p,out,note,len,S.synth[id],vc,id==='bass')}}
 function acidVoice(id,t,v,p,out,note,len){const E=S.eng.acid,fr=hz(note+p.tune),acc=v>=.95,last=acidLast[id],o=ctx.createOscillator();o.type=E.wave;
   if(E.slide&&last&&t>last.t&&t-last.t<len*1.6){o.frequency.setValueAtTime(last.f,t);o.frequency.exponentialRampToValueAtTime(fr,t+.02+E.st*.28)}else o.frequency.setValueAtTime(fr,t);acidLast[id]={t,f:fr};glideOsc(o.frequency,fr,t);
@@ -5094,6 +5095,7 @@ function refreshInst(){setTimeout(engOvf,30);const id=TRACKS[synT].id,e=S.inst[i
 const rgba=(hex,a)=>{const h=hex.replace('#','');if(h.length<6)return `rgba(255,255,255,${a})`;return `rgba(${parseInt(h.slice(0,2),16)},${parseInt(h.slice(2,4),16)},${parseInt(h.slice(4,6),16)},${a})`};
 function drawEng(now){const id=TRACKS[synT].id,e=S.inst[id];if(e==='analog')return;const f=fit($('#engCv'));if(!f)return;const {c,w,h}=f,fg=engCol.fg,ac=engCol.acc;
   const hh=hitT.get(synT),el=hh&&ctx?ctx.currentTime-hh.t:99,p=S.params[id],E=S.eng[e],T=now/1000;
+  if(e==='msx'){if(window.TEX&&TEX.draw)TEX.draw(c,w,h,el,fg,ac,id);return}
   if(e==='grime'){grimeDraw(c,w,h,el,E||engE('grime'),fg,ac,T);return}
   if(e==='acid'){const g=[];for(let x=8;x<w;x+=16)for(let y=8;y<h;y+=16)g.push(x,y);dots(c,g,.9,0);c.fillStyle=rgba(ac,.18);c.beginPath();for(let i=0;i<g.length;i+=2){c.moveTo(g[i]+.9,g[i+1]);c.arc(g[i],g[i+1],.9,0,6.2832)}c.fill();
     const acc=hh&&hh.v>=.95,base=Math.min(20000,acidHz(E.cut)*(.6+p.tone*.8)),peak=Math.min(20000,base*(1+E.env*(acc?1+E.acc:1)*14)),dec=(.06+E.dec*.9)*(acc?.7:1);
@@ -9845,6 +9847,7 @@ const RS_SEC={
   pluck:[['sträng',['damp','bright','body']],['kropp',['len','width','drive']]],
   chip:[['puls',['@duty','@oct','crush']],['rörelse',['@arpm','arp','vib','dec']]],
   super:[['oscillatorer',['detune','bright','air']],['form',['attack','release','width']]],
+  msx:[['envelope',['att','dec','sus','rel']]],
   grime:[['oscillator',['@wave','@oct','uni','ratio','growl','sub']],['växt',['grow','grT','fold']],['filter',['cut','res','env','dec','drive']],['wob',['@shape','wob','rate','amp']],['formant',['form','vowel','talk','trate']],['tonhöjd',['dive','dt','glide']]]};
 const RS_CLONE={mini:'mini',sh101:'sh101',bris:'bris'};
 const RS_WAVE=[['sawtooth','såg'],['square','fyrkant'],['triangle','triangel'],['sine','sinus']];
@@ -10048,6 +10051,7 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
   function presetList(e){const L=[];if(e==='grime')GR_PRE.forEach((p,i)=>L.push({l:p[0],g:'grime',f:()=>{grimeLoadPre(i);try{refreshInst()}catch(_){}}}));
     if(e==='mini'&&window.__mini)__mini.pre.forEach(p=>L.push({l:p[0],g:'moog',f:()=>__mini.load(p)}));if(e==='sh101'&&window.__sh101&&__sh101.pre)__sh101.pre.forEach(p=>L.push({l:p[0],g:'sh-101',f:()=>__sh101.load(p)}));
     if(e==='bris'&&typeof BR_PRE!=='undefined')BR_PRE.forEach(p=>L.push({l:p[1],g:'bris · '+p[0].toLowerCase(),f:()=>{if(window.__bris&&__bris.load)__bris.load(p);else{Object.assign(engE('bris'),BR_DEF,p[2]);try{brisApplyAll()}catch(_){}}}}));
+    if(e==='msx'&&window.TEX&&TEX.list)TEX.list().forEach(I=>L.push({l:I.meta.name,g:I.meta.dev||'sample+',f:()=>TEX.use(RS.id,I.meta.id)}));
     ((S.userPre||{})[e]||[]).forEach(u=>L.push({l:u.n,g:'sparade',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(u.p)));if(u.m)S.mods[e]=JSON.parse(JSON.stringify(u.m));modOf(e)}}));
     L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});return L}
   /* (v245) the keyboard's sound picker and MIDI program change use the same list, for any synth track */
@@ -10660,7 +10664,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v247</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v248</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -13706,7 +13710,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   /* the takes of one autosample run → a stored instrument; the card shows it under instruments */
   async function build(takes,sr){const P=profOf(((acc&&[...acc.outputs.values()].find(o=>o.id===cfg.outId))||{}).name);
     const rec=await store(cfg.name||((P?P.name+' ':'')+'multisample'),P?P.name:'',sr,takes,!!cfg.loop);
-    tab=cfg.tab='ins';saveCfg();toast(rec.name+' · '+rec.regions.length+' notes – pick a track under “plays on”, or on the keyboard: sound › sampled');return rec}
+    tab=cfg.tab='ins';cfg.insSel=rec.id;saveCfg();toast(rec.name+' · '+rec.regions.length+' notes – a new sound in Sample+');return rec}
   async function store(name,dev,sr,takes,loop){/* level all notes together (their balance stays), loops, store */
     let pk=0;takes.forEach(t=>pk=Math.max(pk,t.peak));const g=pk>0?Math.pow(10,-1/20)/pk:1;
     takes.forEach(t=>{for(const c of [t.L,t.R])if(c)for(let k=0;k<c.length;k++)c[k]*=g;if(loop)addLoop(t,sr)});
@@ -13716,25 +13720,53 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   async function load(rec){const AC=window.OfflineAudioContext||window.webkitOfflineAudioContext,mk=(len,ch,sr)=>new AC(ch,Math.max(1,len),sr).createBuffer(ch,Math.max(1,len),sr);
     const regions=rec.regions.map(r=>{const b=mk(r.len,r.ch,r.sr);b.getChannelData(0).set(i2f(r.L));if(r.ch>1)b.getChannelData(1).set(i2f(r.R));return {root:r.root,lo:r.lo,hi:r.hi,buf:b,loopS:r.loopS,loopE:r.loopE,sr:r.sr}});
     INS.set(rec.id,{meta:rec,regions});return INS.get(rec.id)}
-  async function loadAll(){const all=await dbDo('readonly',st=>st.getAll())||[];for(const r of all)if(!INS.has(r.id))try{await load(r)}catch(e){}paint()}
-  async function remove(id){await dbDo('readwrite',st=>st.delete(id));INS.delete(id);if(S.ms)for(const k in S.ms)if(S.ms[k]===id)delete S.ms[k];try{save()}catch(e){}paint()}
+  async function loadAll(){const all=await dbDo('readonly',st=>st.getAll())||[];for(const r of all)if(!INS.has(r.id))try{await load(r)}catch(e){}
+    if(S.ms)for(const k in S.ms){if(!INS.has(S.ms[k]))delete S.ms[k];else if(S.inst[k]!=='msx')S.inst[k]='msx'}try{refreshInst()}catch(e){}paint()}
+  async function remove(id){await dbDo('readwrite',st=>st.delete(id));INS.delete(id);if(S.ms)for(const k in S.ms)if(S.ms[k]===id)use(k,null);if(cfg.insSel===id)cfg.insSel='';try{save()}catch(e){}paint()}
   async function rename(id,name){const I=INS.get(id);if(!I)return;I.meta.name=name;await dbDo('readwrite',st=>st.put(I.meta));paint()}
   /* the voice: same call as the synth engines (sequencer, piano and MIDI in all play through it) */
-  function voice(I,t,v,p,out,n,len){const R=I.regions.find(r=>n>=r.lo&&n<=r.hi)||I.regions[0];if(!R)return;
+  /* Sample+ envelope: knob 0..1 → seconds (the same curves the engine's knobs show) */
+  const ENVT={att:v=>.001+v*v*2,dec:v=>.02+v*v*4,rel:v=>.02+v*v*4};
+  const MSX_DEF={att:.03,dec:.5,sus:1,rel:.25};
+  const envOf=E=>({att:ENVT.att(E.att??MSX_DEF.att),dec:ENVT.dec(E.dec??MSX_DEF.dec),sus:E.sus??1,rel:ENVT.rel(E.rel??MSX_DEF.rel)});
+  function voice(I,t,v,p,out,n,len,env){const R=I.regions.find(r=>n>=r.lo&&n<=r.hi)||I.regions[0];if(!R)return;
     const src=ctx.createBufferSource(),g=ctx.createGain(),tune=(p&&p.tune)||0;src.buffer=R.buf;src.playbackRate.value=Math.pow(2,(n-R.root+tune)/12);
     const loop=I.meta.loop&&R.loopE>R.loopS+64;if(loop){src.loop=true;src.loopStart=R.loopS/R.sr;src.loopEnd=R.loopE/R.sr}
-    const lv=Math.max(.05,v)*1.1,att=I.meta.att||.002,rel=I.meta.rel||.25,L=Math.max(.02,len||.25),end=t+L;
-    /* envelope (the keyboard's A·D·S·R knobs): attack, decay to the sustain level, release after the note */
-    const sus=I.meta.sus==null?1:Math.max(0,Math.min(1,I.meta.sus)),dec=Math.max(.005,I.meta.dec==null?1:I.meta.dec);
+    const ev=env||envOf(I.meta.env||MSX_DEF),lv=Math.max(.05,v)*1.1,att=ev.att,rel=ev.rel,L=Math.max(.02,len||.25),end=t+L;
+    /* envelope: attack, decay to the sustain level, release after the note */
+    const sus=Math.max(0,Math.min(1,ev.sus)),dec=Math.max(.005,ev.dec);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(lv,t+att);
     if(sus<1&&end>t+att){g.gain.setTargetAtTime(lv*sus,t+att,dec/3);g.gain.cancelAndHoldAtTime?g.gain.cancelAndHoldAtTime(end):g.gain.setValueAtTime(lv*sus,end)}else g.gain.setValueAtTime(lv,end);
     g.gain.setTargetAtTime(0,end,rel/4);
     src.connect(g);g.connect(out);src.start(t);const stopAt=loop?end+rel*2:Math.min(end+rel*2,t+R.buf.duration/src.playbackRate.value+.02);src.stop(stopAt)}
-  /* the synth tracks: a track with an instrument plays it, every other track its own engine as before */
-  const wrapped=new Set();
-  function wrap(){TRACKS.forEach(tr=>{if(!tr.mel||wrapped.has(tr.id)||typeof VOICE[tr.id]!=='function')return;const orig=VOICE[tr.id];wrapped.add(tr.id);
-    VOICE[tr.id]=function(t,v,p,out,x,n,len){const id=S.ms&&S.ms[tr.id],I=id&&INS.get(id);if(I&&n!=null){try{voice(I,t,v,p,out,n,len)}catch(e){console.warn(e)}return}return orig.apply(this,arguments)}})}
-  function assign(trk,id){S.ms=S.ms||{};if(id)S.ms[trk]=id;else delete S.ms[trk];try{save()}catch(e){}paint();toast(id?'Plays on '+trk:trk+' plays its own synth again')}
+  /* Sample+: an engine among the others (melVoice → TEX.play). Each synth track on Sample+ plays the instrument picked for
+     it (S.ms[track]); the instrument is the engine's "preset". The envelope knobs belong to the engine, and each instrument
+     remembers the envelope it was last played with. */
+  const list=()=>[...INS.values()].sort((a,b)=>(a.meta.t||0)-(b.meta.t||0));/* oldest first: program numbers stay put */
+  function play(id,t,v,p,out,n,len,vc){const I=INS.get(S.ms&&S.ms[id]);if(!I||n==null)return;const env=envOf(engE('msx'));
+    const offs=Array.isArray(vc)&&vc.length?vc:[0];for(const o of offs)try{voice(I,t,v/(offs.length>1?Math.sqrt(offs.length):1),p,out,n+o,len,env)}catch(e){console.warn(e)}}
+  function keepEnv(id){const I=INS.get(id);if(!I)return;const E=engE('msx');I.meta.env={att:E.att,dec:E.dec,sus:E.sus,rel:E.rel};saveMeta(id)}
+  function use(trk,id){if(!trk)return;S.ms=S.ms||{};const prev=S.ms[trk];if(prev&&prev!==id)keepEnv(prev);
+    if(id){S.ms[trk]=id;S.inst[trk]='msx';const I=INS.get(id);if(I&&I.meta.env)Object.assign(engE('msx'),I.meta.env)}
+    else{delete S.ms[trk];if(S.inst[trk]==='msx')S.inst[trk]=(typeof DEF_INST!=='undefined'&&DEF_INST[trk])||'analog'}
+    try{save()}catch(e){}try{refreshInst()}catch(e){}try{window.rsPaint&&rsPaint()}catch(e){}paint()}
+  /* the synth card: the instrument picker under the knobs, and a drawing of the sample */
+  {const _ri=refreshInst;refreshInst=function(){const r=_ri.apply(this,arguments);try{cardPick()}catch(e){console.warn(e)}return r}}
+  function cardPick(){const id=TRACKS[synT].id;if((S.inst[id]||'analog')!=='msx')return;const ob=document.getElementById('engOpts');if(!ob)return;
+    const I=INS.get(S.ms&&S.ms[id]),L=list();ob.hidden=false;ob.innerHTML='';const b=document.createElement('button');b.className='eopt on tx-cp';
+    b.textContent=I?'sound · '+I.meta.name+' ▾':(L.length?'pick a sound ▾':'no sounds yet · open the Sampler card');
+    b.onclick=()=>{if(!L.length){const c=document.querySelector('.card[data-card="sampler"]');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});return}
+      if(window.pickShow)pickShow(b,L.map(x=>x.meta.name),L.findIndex(x=>x.meta.id===(S.ms&&S.ms[id])),k=>{use(id,L[k].meta.id);try{synPreview()}catch(e){}},L.map(x=>x.meta.dev||'sampled'))};ob.appendChild(b)}
+  const peaks=new Map();
+  function draw(c,w,h,el,fg,ac,id){const I=INS.get(S.ms&&S.ms[id]);c.fillStyle=fg;c.globalAlpha=.5;c.font='10px '+getComputedStyle(document.body).getPropertyValue('--f-mono');
+    if(!I){c.fillText(INS.size?'pick a sound below':'sample an instrument in the Sampler card',10,h/2);c.globalAlpha=1;return}
+    const R=I.regions[Math.floor(I.regions.length/2)],key=I.meta.id+':'+R.root,N=Math.max(24,Math.floor(w/4));let pk=peaks.get(key);
+    if(!pk||pk.length!==N){const d=R.buf.getChannelData(0),step=d.length/N;pk=new Float32Array(N);for(let k=0;k<N;k++){let m=0;const a=Math.floor(k*step),z=Math.min(d.length,Math.floor((k+1)*step));for(let j=a;j<z;j+=4)m=Math.max(m,Math.abs(d[j]));pk[k]=m}peaks.set(key,pk)}
+    const mid=h/2,ph=el>=0&&el<R.buf.duration?el/R.buf.duration:-1;c.globalAlpha=1;
+    for(let k=0;k<N;k++){const x=k*(w/N)+2,a=pk[k]*(h*.42),on=ph>=0&&k/N<=ph;c.fillStyle=on?ac:fg;c.globalAlpha=on?.95:.35;for(let y=-a;y<=a;y+=4){c.beginPath();c.arc(x,mid+y,1.1,0,6.2832);c.fill()}}
+    if(I.meta.loop&&R.loopE>R.loopS){c.globalAlpha=.6;c.fillStyle=ac;const x1=R.loopS/R.buf.length*w,x2=R.loopE/R.buf.length*w;c.fillRect(x1,h-6,Math.max(2,x2-x1),2)}
+    c.globalAlpha=1}
+  function assign(trk,id){use(trk,id);toast(id?'Sample+ on '+trk:trk+' plays its own synth again')}
 
   /* ---------------- 6. saving for teenage engineering ---------------- */
   async function resample(I,sr){const AC=window.OfflineAudioContext||window.webkitOfflineAudioContext;
@@ -13819,13 +13851,15 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
         <p class="tx-note">Used when <b>send notes</b> is on in the MIDI panel${P2?' · '+esc(P2.name)+': '+esc(P2.routeName):''}. On the device, set each track to listen on its channel.</p>`}
       else h+=`<p class="tx-note">Pick a setup to send each track on a channel of its own.</p>`;
       h+=`<button class="tx-mp" data-a="midipanel">open the MIDI panel</button>`}
-    else if(tab==='ins'){
-      const list=[...INS.values()].sort((a,b)=>b.meta.t-a.meta.t);
-      h+=list.length?list.map(I=>{const m=I.meta,on=Object.keys(S.ms||{}).filter(k=>S.ms[k]===m.id);return `<div class="tx-ins" data-id="${m.id}">
-        <div class="tx-ih"><input value="${esc(m.name)}" data-rn="${m.id}" aria-label="Name"><small>${I.regions.length} notes · ${nname(I.regions[0].root)}–${nname(I.regions[I.regions.length-1].root)}${m.loop?' · loop':''}${m.dev?' · '+esc(m.dev):''}</small></div>
-        <div class="tx-ia"><label>plays on</label><select data-as="${m.id}">${opt('','—',on[0]||'')}${TRACKS.filter(t=>t.mel).map(t=>opt(t.id,t.name.toLowerCase(),on[0]||'')).join('')}</select>
-          <button data-pv="${m.id}">play</button><button data-xy="${m.id}">OP-XY</button><button data-o1="${m.id}">OP-1</button><button data-od="${m.id}">OP-1 drum</button><button data-del="${m.id}" class="x" aria-label="Delete">×</button></div></div>`}).join('')
-        :`<p class="tx-note">No instruments yet. Autosample one, then play it on a synth track and save it for OP-XY or OP-1.</p>`}
+    else if(tab==='ins'){/* one instrument at a time (a list of 100 would fill the screen): pick it, then play, use or export it */
+      const L=list().slice().reverse(),I=INS.get(cfg.insSel)||L[0];
+      if(!I)h+=`<p class="tx-note">No instruments yet. Autosample one – it becomes a sound of the <b>Sample+</b> synth, which you pick like any other synth on a synth track or the keyboard.</p>`;
+      else{const m=I.meta,on=Object.keys(S.ms||{}).filter(k=>S.ms[k]===m.id&&S.inst[k]==='msx');
+        h+=`<div class="tx-row"><label>sound</label><select data-sel>${L.map(x=>opt(x.meta.id,x.meta.name+(x.meta.dev?' · '+x.meta.dev:''),m.id)).join('')}</select></div>
+        <div class="tx-ins"><div class="tx-ih"><input value="${esc(m.name)}" data-rn="${m.id}" aria-label="Name"><small>${I.regions.length} notes · ${nname(I.regions[0].root)}–${nname(I.regions[I.regions.length-1].root)}${m.loop?' · loop':''}${m.dev?' · '+esc(m.dev):''}${on.length?' · on '+on.map(k=>esc(k)).join(', '):''}</small></div>
+        <div class="tx-ia"><button data-pv="${m.id}">play</button><label>Sample+ on</label><select data-as="${m.id}">${opt('','—',on[0]||'')}${TRACKS.filter(t=>t.mel).map(t=>opt(t.id,t.name.toLowerCase(),on[0]||'')).join('')}</select></div>
+        <div class="tx-ia"><label>save for</label><button data-xy="${m.id}">OP-XY</button><button data-o1="${m.id}">OP-1</button><button data-od="${m.id}">OP-1 drum</button><button data-del="${m.id}" class="x" aria-label="Delete">×</button></div></div>
+        <p class="tx-note">${L.length} sound${L.length===1?'':'s'} in <b>Sample+</b> – the synth list on a synth track, or the keyboard's sound picker.</p>`}}
     else{
       const n=notesFor().length,ins=inputs;
       h+=`<div class="tx-row"><label>instrument</label><select data-c="outId">${opt('','pick MIDI out …',cfg.outId)}${outs.map(o=>opt(o.id,o.name+(profOf(o.name)?' · teenage engineering':''),cfg.outId)).join('')}</select>
@@ -13860,7 +13894,8 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
     if(el.dataset.c){const k=el.dataset.c;cfg[k]=['outId','inId','name'].includes(k)?el.value:+el.value;saveCfg();paint();return}
     if(el.dataset.ch){cfg.route[el.dataset.ch].ch=+el.value;saveCfg();return}
     if(el.dataset.nt){cfg.route[el.dataset.nt].n=+el.value;saveCfg();return}
-    if(el.dataset.as){const id=el.dataset.as,trk=el.value;if(S.ms)for(const k in S.ms)if(S.ms[k]===id)delete S.ms[k];assign(trk||'',trk?id:null);return}
+    if(el.dataset.sel!=null){cfg.insSel=el.value;saveCfg();paint();return}
+    if(el.dataset.as){const id=el.dataset.as,trk=el.value;if(S.ms)for(const k in S.ms)if(S.ms[k]===id&&k!==trk)use(k,null);if(trk)assign(trk,id);return}
     if(el.dataset.rn){rename(el.dataset.rn,el.value.trim()||'multisample');return}});
   body.addEventListener('input',e=>{if(e.target.dataset.c==='name'){cfg.name=e.target.value;saveCfg()}});
   function preview(id){const I=INS.get(id);if(!I)return;try{initAudio();ctx.resume()}catch(e){}const t=ctx.currentTime+.05,r0=I.regions[0].root,ns=[0,4,7,12].map(x=>r0+12+x);
@@ -13875,7 +13910,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   setInterval(()=>{if(!rec)return;const m=body.querySelector('.tx-meter i');if(m)m.style.width=Math.min(100,Math.round(Math.sqrt(rec.lvl)*100))+'%'},80);
 
   async function saveMeta(id){const I=INS.get(id);if(I)try{await dbDo('readwrite',st=>st.put(I.meta))}catch(e){}}
-  window.TEX={saveMeta,assign,repaint:()=>paint(),_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
+  window.TEX={saveMeta,assign,use,play,draw,list,keepEnv,repaint:()=>paint(),_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
   const css=document.createElement('style');css.textContent=`
 .card.sampler .tx{display:flex;flex-direction:column;gap:10px;font-family:var(--f-mono);font-size:11px;color:var(--fg)}
 .tx-tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -13916,7 +13951,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
 .tx-ih{display:grid;gap:4px}.tx-ih input{font:600 13px var(--f-display)}.tx-ih small{color:var(--mute);font-size:10px}
 .tx-ia{display:flex;gap:6px;flex-wrap:wrap;align-items:center}.tx-ia label{color:var(--mute);font-size:10px}`;document.head.appendChild(css);
   /* start */
-  wrap();loadAll();
+  loadAll();
   if(navigator.requestMIDIAccess&&(NATIVE||cfg.outId))midi().then(()=>{scan();paint()});
   paint();
 })();
@@ -13992,7 +14027,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
    ================= */
 (()=>{
   const kb=document.getElementById('kb'),bar=kb&&kb.querySelector('.kb-bar');if(!kb||!bar)return;
-  const BANKS=()=>ENG_ORDER.concat(['@ms']);/* bank n (1-based) = BANKS()[n-1] */
+  const BANKS=()=>ENG_ORDER.slice();/* bank n (1-based) = BANKS()[n-1]; Sample+ (msx) is the last engine */
   const TS=(t)=>t<1?[String(Math.round(t*1000)),'ms']:[t.toFixed(t<10?2:1),'s'];
   const P=v=>[String(Math.round(v*100)),'%'];
   const sq=(mx)=>({pos:v=>Math.sqrt(Math.max(0,v)/mx),val:p=>p*p*mx});/* raw seconds, knob on a square curve */
@@ -14010,27 +14045,25 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
     sub:{o:()=>engE('sub'),A:null,D:['decay',v=>TS(.1+v*2.5),nrm,v=>.1+v*2.5],S:null,R:null},
     grime:{o:()=>engE('grime'),A:null,D:['dec',v=>TS(.02+v*.5),nrm,v=>.02+v*.5],S:null,R:null},
     chip:{o:()=>engE('chip'),A:null,D:['dec',v=>TS(.05+v*1.4),nrm,v=>.05+v*1.4],S:null,R:null},
-    '@ms':{o:id=>{const I=msOf(id);return I&&I.meta},A:['att',TS,sq(2),v=>v],D:['dec',TS,sq(4),v=>v],S:['sus',P,nrm],R:['rel',TS,sq(4),v=>v]}};
-  const MS_DEF={att:.002,dec:1,sus:1,rel:.25};
+    msx:{o:()=>engE('msx'),A:['att',v=>TS(.001+v*v*2),nrm,v=>.001+v*v*2],D:['dec',v=>TS(.02+v*v*4),nrm,v=>.02+v*v*4],S:['sus',P,nrm],R:['rel',v=>TS(.02+v*v*4),nrm,v=>.02+v*v*4]}};
   /* ---- which track, which sound ---- */
   const kTrk=()=>{const b=kb.querySelector('#kbTrk button.on');const i=b?+b.dataset.i:S.sel;return TRACKS[i]&&TRACKS[i].mel?i:TRACKS.findIndex(t=>t.mel)};
   const msOf=id=>{const m=S.ms&&S.ms[id];return m&&window.TEX&&TEX.instruments.get(m)};
-  const engOf=i=>{const id=TRACKS[i].id;return msOf(id)?'@ms':(S.inst[id]||'analog')};
-  const engName=e=>e==='@ms'?'Sampled':e==='analog'?'Analog':(ENG[e]&&ENG[e].name)||e;
-  const engDot=e=>e==='@ms'?'#EDEBE3':(ENG[e]&&ENG[e].dot)||'#B8F23A';
-  const msList=()=>window.TEX?[...TEX.instruments.values()].sort((a,b)=>(a.meta.t||0)-(b.meta.t||0)):[];
-  const presets=(e,i)=>{if(e==='@ms')return msList().map(I=>({l:I.meta.name,g:I.meta.dev||'sampled',ms:I.meta.id}));return window.__rsPresets?__rsPresets(e,TRACKS[i].id).map(p=>Object.assign(p,{g:{grund:'basic',sparade:'saved'}[p.g]||p.g})):[]};
-  const presetName=(e,i)=>{const id=TRACKS[i].id;if(e==='@ms'){const I=msOf(id);return I?I.meta.name:'–'}if(e==='grime'&&typeof GR_PRE!=='undefined')return (GR_PRE[engE('grime').pre]||['–'])[0];return (S.rsPre||{})[e]||'init'};
+  const engOf=i=>S.inst[TRACKS[i].id]||'analog';
+  const engName=e=>e==='analog'?'Analog':(ENG[e]&&ENG[e].name)||e;
+  const engDot=e=>(ENG[e]&&ENG[e].dot)||'#B8F23A';
+  const msList=()=>window.TEX&&TEX.list?TEX.list():[];
+  const presets=(e,i)=>{if(e==='msx')return msList().map(I=>({l:I.meta.name,g:I.meta.dev||'sampled',ms:I.meta.id}));return window.__rsPresets?__rsPresets(e,TRACKS[i].id).map(p=>Object.assign(p,{g:{grund:'basic',sparade:'saved'}[p.g]||p.g})):[]};
+  const presetName=(e,i)=>{const id=TRACKS[i].id;if(e==='msx'){const I=msOf(id);return I?I.meta.name:'–'}if(e==='grime'&&typeof GR_PRE!=='undefined')return (GR_PRE[engE('grime').pre]||['–'])[0];return (S.rsPre||{})[e]||'init'};
   function after(i){try{refreshInst()}catch(e){}try{window.rsPaint&&rsPaint()}catch(e){}try{save()}catch(e){}paint(true)}
   function setEngine(i,e){const id=TRACKS[i].id;try{__kb.allOff()}catch(_){}try{pushHist()}catch(_){}
-    if(e==='@ms'){const L=msList();if(!L.length){toast('No sampled instruments yet · make one in the Sampler card');return false}const cur=msOf(id);setMs(i,(cur||L[L.length-1]).meta.id);return true}
+    if(e==='msx'){const L=msList();if(!L.length){toast('No sounds in Sample+ yet · autosample one in the Sampler card');return false}const cur=msOf(id);setMs(i,(cur||L[L.length-1]).meta.id);return true}
     if(S.ms&&S.ms[id]){delete S.ms[id];try{TEX.repaint&&TEX.repaint()}catch(_){}}S.inst[id]=e;after(i);return true}
-  function setMs(i,msId){const id=TRACKS[i].id;S.ms=S.ms||{};for(const k in S.ms)if(S.ms[k]===msId&&k!==id){}/* one instrument can play on several tracks */
-    S.ms[id]=msId;const I=msOf(id);if(I)for(const k in MS_DEF)if(I.meta[k]==null)I.meta[k]=MS_DEF[k];try{TEX.repaint&&TEX.repaint()}catch(_){}after(i)}
+  function setMs(i,msId){if(window.TEX&&TEX.use)TEX.use(TRACKS[i].id,msId);paint(true)}
   function loadPreset(i,e,k){const L=presets(e,i),p=L[k];if(!p)return false;try{__kb.allOff()}catch(_){}
-    if(e==='@ms'){setMs(i,p.ms);return true}
+    if(e==='msx'){setMs(i,p.ms);return true}
     if(engOf(i)!==e)setEngine(i,e);try{pushHist()}catch(_){}p.f();if(!S.rsPre)S.rsPre={};S.rsPre[e]=p.l;after(i);return true}
-  function step(d){const i=kTrk(),e=engOf(i),L=presets(e,i);if(!L.length)return;const cur=L.findIndex(p=>e==='@ms'?p.ms===S.ms[TRACKS[i].id]:p.l===presetName(e,i));
+  function step(d){const i=kTrk(),e=engOf(i),L=presets(e,i);if(!L.length)return;const cur=L.findIndex(p=>e==='msx'?p.ms===S.ms[TRACKS[i].id]:p.l===presetName(e,i));
     const k=((cur<0?(d>0?-1:0):cur)+d+L.length)%L.length;loadPreset(i,e,k);flash(engName(e)+' · '+L[k].l)}
   /* ---- the strip ---- */
   const css=document.createElement('style');css.id='keysx';css.textContent=`
@@ -14095,12 +14128,12 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
       const p=Math.max(0,Math.min(1,p0+(y0-ev.clientY)/(ev.shiftKey?600:160)));if(Math.abs(y0-ev.clientY)>2)moved=true;o[sp[0]]=+sp[2].val(p).toFixed(4);liveApply(i,e);paintEnv()});
     const up=()=>{if(y0==null)return;y0=null;const i=kTrk(),e=engOf(i);
       if(!moved){const now=performance.now();if(now-lastTap<320){resetK(i,e,k)}lastTap=now}
-      if(e==='@ms'){const I=msOf(TRACKS[i].id);if(I&&TEX.saveMeta)TEX.saveMeta(I.meta.id)}try{save()}catch(_){}try{window.rsPaint&&rsPaint()}catch(_){}try{refreshInst()}catch(_){}};
+      if(e==='msx'){const I=msOf(TRACKS[i].id);if(I&&TEX.keepEnv)TEX.keepEnv(I.meta.id)}try{save()}catch(_){}try{window.rsPaint&&rsPaint()}catch(_){}try{refreshInst()}catch(_){}};
     el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)});
-  function resetK(i,e,k){const sp=spec(e,k),o=sp&&ENV[e].o(TRACKS[i].id);if(!o)return;const d=e==='@ms'?MS_DEF:e==='analog'?(DEFS.synth[TRACKS[i].id]||DEFS.synth.bass):DEFS.eng[e];if(d&&d[sp[0]]!=null)o[sp[0]]=d[sp[0]];liveApply(i,e);paintEnv()}
+  function resetK(i,e,k){const sp=spec(e,k),o=sp&&ENV[e].o(TRACKS[i].id);if(!o)return;const d=e==='analog'?(DEFS.synth[TRACKS[i].id]||DEFS.synth.bass):DEFS.eng[e];if(d&&d[sp[0]]!=null)o[sp[0]]=d[sp[0]];liveApply(i,e);paintEnv()}
   function liveApply(i,e){if(e==='bris'){try{brisApplyAll()}catch(_){}}}
   function paintEnv(){const i=kTrk(),e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);let segs={A:.004,D:.3,S:1,R:.15};
-    row.querySelectorAll('.kx-k').forEach(el=>{const k=el.dataset.k,sp=E&&E[k];el.classList.toggle('off',!sp||!o);if(!sp||!o)return;const v=o[sp[0]]??(e==='@ms'?MS_DEF[sp[0]]:0);
+    row.querySelectorAll('.kx-k').forEach(el=>{const k=el.dataset.k,sp=E&&E[k];el.classList.toggle('off',!sp||!o);if(!sp||!o)return;const v=o[sp[0]]??0;
       const f=sp[1](v);el.querySelector('b').textContent=f[0]+(f[1]?' '+f[1]:'');el.querySelector('.fg').setAttribute('stroke-dasharray',(51.8*Math.max(0,Math.min(1,sp[2].pos(v)))).toFixed(1)+' 69.1');
       segs[k]=k==='S'?v:sp[3]?sp[3](v):v});
     /* no sustain knob: a sound with a decay dies away (0), one with only attack/release is held (1) */
@@ -14113,7 +14146,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   let sig='';
   function paint(force){const i=kTrk();if(i<0)return;const e=engOf(i),id=TRACKS[i].id,s=[i,e,presetName(e,i),trkCol(i),S.ms&&S.ms[id]].join('|');if(!force&&s===sig)return;sig=s;
     nmB.style.setProperty('--d',engDot(e));nmB.querySelector('small').textContent=engName(e)+' · '+TRACKS[i].name.toLowerCase();nmB.querySelector('b').textContent=presetName(e,i);
-    const L=presets(e,i);const ix=L.findIndex(p=>e==='@ms'?p.ms===S.ms[id]:p.l===presetName(e,i));nmB.querySelector('em').textContent=`bank ${BANKS().indexOf(e)+1} · ${ix>=0?'prog '+(ix+1):L.length+' sounds'}`;
+    const L=presets(e,i);const ix=L.findIndex(p=>e==='msx'?p.ms===S.ms[id]:p.l===presetName(e,i));nmB.querySelector('em').textContent=`bank ${BANKS().indexOf(e)+1} · ${ix>=0?'prog '+(ix+1):L.length+' sounds'}`;
     paintEnv();if(sheet)drawSheet()}
   setInterval(()=>{if(!kb.hidden)paint()},300);
   /* ---- the picker ---- */
@@ -14122,15 +14155,15 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   function openSheet(){closeSheet();sheet=document.createElement('div');sheet.className='kx-sh';kb.appendChild(sheet);selE=engOf(kTrk());drawSheet()}
   function drawSheet(){if(!sheet)return;const i=kTrk(),cur=engOf(i),id=TRACKS[i].id,B=BANKS();
     const eBtn=(e,n)=>`<button class="kx-e${e===selE?' sel':''}${e===cur?' on':''}" data-e="${e}"><i style="--d:${engDot(e)}"></i>${engName(e)}<small>bank ${n}</small></button>`;
-    const L=presets(selE,i),pcur=selE===cur?L.findIndex(p=>cur==='@ms'?p.ms===S.ms[id]:p.l===presetName(cur,i)):-1;
+    const L=presets(selE,i),pcur=selE===cur?L.findIndex(p=>cur==='msx'?p.ms===S.ms[id]:p.l===presetName(cur,i)):-1;
     const ps=L.length?`<div class="kx-ps">${L.map((p,k)=>`<button class="kx-p${k===pcur?' on':''}" data-p="${k}"><small>${k+1} · ${String(p.g||'').replace(/</g,'&lt;')}</small><b>${String(p.l).replace(/</g,'&lt;')}</b></button>`).join('')}</div>`
-      :selE==='@ms'?`<div class="kx-empty">No sampled instruments yet. Open the Sampler card, connect an instrument (OP-XY, OP-1 …) and press autosample – the instrument shows up here.</div>`:`<div class="kx-empty">No presets.</div>`;
+      :selE==='msx'?`<div class="kx-empty">No sounds in Sample+ yet. Open the Sampler card, connect an instrument (OP-XY, OP-1 …) and press autosample – the sound shows up here.</div>`:`<div class="kx-empty">No presets.</div>`;
     const top=sheet.querySelector('.kx-col.ps');const st=top?top.scrollTop:0;
     sheet.innerHTML=`<header><span>sound for</span><b>${TRACKS[i].name.toLowerCase()}</b><span class="hint">· midi: bank picks the engine, program the sound</span><button class="x" aria-label="Close">×</button></header>
-      <div class="kx-cols"><div class="kx-col en"><h6>engines</h6>${B.slice(0,-1).map((e,k)=>eBtn(e,k+1)).join('')}<h6>sampled</h6>${eBtn('@ms',B.length)}</div><div class="kx-col ps">${ps}</div></div>`;
+      <div class="kx-cols"><div class="kx-col en"><h6>engines</h6>${B.map((e,k)=>eBtn(e,k+1)).join('')}</div><div class="kx-col ps">${ps}</div></div>`;
     sheet.querySelector('.kx-col.ps').scrollTop=st;
     sheet.querySelector('.x').onclick=closeSheet;
-    sheet.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{const e=b.dataset.e;selE=e;if(e!==cur&&(e!=='@ms'||msList().length))setEngine(i,e);drawSheet()});
+    sheet.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{const e=b.dataset.e;selE=e;if(e!==cur&&(e!=='msx'||msList().length))setEngine(i,e);drawSheet()});
     sheet.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{loadPreset(i,selE,+b.dataset.p);drawSheet()})}
   addEventListener('pointerdown',ev=>{if(sheet&&!sheet.contains(ev.target)&&!nmB.contains(ev.target))closeSheet()},true);
   addEventListener('keydown',ev=>{if(sheet&&ev.key==='Escape')closeSheet()});
@@ -14140,13 +14173,13 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   function flash(t){midiEl.querySelector('b').textContent=t;midiEl.classList.add('on');clearTimeout(ft);ft=setTimeout(()=>midiEl.classList.remove('on'),2600)}
   function program(pc){const i=kTrk();if(i<0)return;const B=BANKS();let e=engOf(i);const bank=bankM!=null?bankM:bankL;
     if(bank!=null){if(bank>=B.length){flash('bank '+(bank+1)+' · none');return}e=B[bank]}
-    if(e==='@ms'&&!msList().length){flash('sampled · none yet');return}
+    if(e==='msx'&&!msList().length){flash('Sample+ · no sounds yet');return}
     const L=presets(e,i);if(pc>=L.length){flash(engName(e)+' · no program '+(pc+1));toast(engName(e)+' has '+L.length+' sounds');return}
     if(engOf(i)!==e)setEngine(i,e);loadPreset(i,e,pc);flash(engName(e)+' · '+(pc+1)+' '+L[pc].l)}
   window.KEYSX={
     midi(st,d){const ty=st&0xF0;if(ty===0xB0&&(d[1]===0||d[1]===32)){if(d[1]===0)bankM=d[2];else bankL=d[2];return true}
       if(ty===0xC0){program(d[1]);return true}return false},
-    rel(i){const e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);if(!o||!E.R)return null;if(e==='analog'||e==='@ms'||e==='super'||e==='fm')return Math.min(4,Math.max(.03,E.R[3](o[E.R[0]]??.25)));return null},
+    rel(i){const e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);if(!o||!E.R)return null;if(e==='analog'||e==='msx'||e==='super'||e==='fm')return Math.min(4,Math.max(.03,E.R[3](o[E.R[0]]??.25)));return null},
     open:openSheet,close:closeSheet,_paint:()=>paint(true),banks:BANKS};
 })();
 
