@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v245</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v246</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -5797,7 +5797,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
   let single=false;
   function on(n,v,dt){initAudio();ctx.resume();if(n<24||n>96)return;const ex=vc.get(n);if(ex){ex.c++;return}const t=ctx.currentTime+.004+(dt||0);
     const o=voiceStart(n,v,t,60/S.bpm/4*24);o.c=1;vc.set(n,o);mark(n,true);recOn(o.i,n,v,t)}
-  function relTime(i){const e=S.inst[TRACKS[i].id]||'analog';if(e==='bris')return Math.min(3,brT(engE('bris').aR,10));return e==='super'?.35:e==='pluck'||e==='chip'?.05:.12}
+  function relTime(i){if(window.KEYSX){const r=KEYSX.rel(i);if(r!=null)return r}const e=S.inst[TRACKS[i].id]||'analog';if(e==='bris')return Math.min(3,brT(engE('bris').aR,10));return e==='super'?.35:e==='pluck'||e==='chip'?.05:.12}
   function off(n,force){const o=vc.get(n);if(!o)return;if(!force&&--o.c>0)return;vc.delete(n);mark(n,false);const now=ctx.currentTime,rel=relTime(o.i),at=Math.max(now,o.t);
     o.ng.gain.cancelAndHoldAtTime(at);o.ng.gain.setValueAtTime(o.ng.gain.value||1,at);o.ng.gain.setTargetAtTime(0,at,rel/3);setTimeout(()=>{try{o.ng.disconnect()}catch(x){}},(rel*4+.4+(at-now))*1000);recOff(n)}
   function blip(n,v,t,lenS){const o=voiceStart(n,v,t,lenS);const end=t+lenS,rel=relTime(o.i);o.ng.gain.setValueAtTime(1,end);o.ng.gain.setTargetAtTime(0,end,rel/3);
@@ -5962,7 +5962,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
         if(ticks.length>=24){const avg=ticks.reduce((a,b)=>a+b,0)/ticks.length,bpm=60000/(avg*24);extBpm=bpm;if(bpm>=60&&bpm<=180&&Math.abs(bpm-S.bpm)>.08){S.bpm=Math.round(bpm*100)/100;setDM($('#bpmNum'),String(Math.round(S.bpm)));applyMaster()}}}lastTick=now;
     if(extRun&&playing&&ctx){tickN++;if(tickN%24===0){const bd=60/S.bpm,ours=(ctx.currentTime-startT)/bd,ext=tickN/24,err=ours-ext;if(Math.abs(err)<.5&&Math.abs(err)>.004){const d=err*bd*.5;startT+=d;nextT+=d}}}liveDot();return}
     if(st===0xFA||st===0xFB){if(cfg.follow){if(!playing)play();extRun=true;tickN=0}return}if(st===0xFC){extRun=false;if(cfg.follow&&playing)play();return}
-    const ty=st&0xF0;if(ty===0x90&&d[2]>0){window.__kb&&__kb.midiNote(d[1],.25+.75*d[2]/127,true);liveDot()}else if(ty===0x80||(ty===0x90&&d[2]===0)){window.__kb&&__kb.midiNote(d[1],0,false)}
+    if(window.KEYSX&&KEYSX.midi(st,d))return;const ty=st&0xF0;if(ty===0x90&&d[2]>0){window.__kb&&__kb.midiNote(d[1],.25+.75*d[2]/127,true);liveDot()}else if(ty===0x80||(ty===0x90&&d[2]===0)){window.__kb&&__kb.midiNote(d[1],0,false)}
     else if(ty===0xB0){liveDot();if(window.MLX&&MLX.cc(st&15,d[1],d[2]))return;if(d[1]===64)window.__kb&&__kb.sustain(d[2]>=64)}}
   let ld=0;function liveDot(){const b=$('#midiBtn');if(!b)return;b.classList.add('live');clearTimeout(ld);ld=setTimeout(()=>b.classList.remove('live'),400)}
   function status(){const b=$('#midiBtn');if(b)b.classList.toggle('sync',!!(acc&&(cfg.follow||cfg.clockOut)));const kbm=$('#kbMidi');if(kbm)kbm.classList.toggle('on',!!acc)}
@@ -9737,7 +9737,7 @@ window.__gxr={GXR,gxEx,gxrApply};
    · everything else is read when the note starts, so it changes from note to note (the LFOs keep running between notes).
    Free LFOs and the steps follow the song position (from play), so they stay on the grid. */
 const MOD_RATES=[[64,'4 takter'],[32,'2 takter'],[16,'1 takt'],[8,'1/2'],[4,'1/4'],[2,'1/8'],[4/3,'1/8T'],[1,'1/16'],[.5,'1/32']];
-const MOD_SH=['sinus','triangel','såg upp','såg ner','fyrkant','slump','mjuk slump'];
+const MOD_SH=['sine','triangle','saw up','saw down','square','random','smooth random'];
 const MOD_SRC=[['l1','lfo 1','#B8F23A'],['l2','lfo 2','#6FD0C5'],['env','env','#F07AB0'],['stp','steg','#E9C54A'],['rnd','slump','#B9A6FF'],['vel','anslag','#FF8A3D']];
 const MOD_SC=Object.fromEntries(MOD_SRC.map(s=>[s[0],s[2]]));
 /* params that move inside the note (the engine connects the curve itself) */
@@ -10026,7 +10026,7 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
       return `<div class="rs-mr" data-i="${i}" style="--c:${c}"><span data-plist='${JSON.stringify(MOD_SRC.map(s=>s[1]))}' data-pcur="${MOD_SRC.findIndex(s=>s[0]===r.src)}" data-pf="src"><button class="src">${(MOD_SRC.find(s=>s[0]===r.src)||[0,'?'])[1]} ▾</button></span>
         <span data-plist='${JSON.stringify(T.map(k=>rsLabel(e,k))).replace(/'/g,"&#39;")}' data-pcur="${T.indexOf(r.dst)}" data-pf="dst"><button class="dst">→ ${rsLabel(e,r.dst)} ▾</button></span><button class="del" data-del="${i}" aria-label="Ta bort">×</button>
         <div class="rs-amt" data-amt="${i}"><i style="left:${r.amt<0?50-x:50}%;width:${x}%"></i><em>${r.amt>0?'+':''}${Math.round(r.amt*100)}%</em></div></div>`}).join(''):'')
-      +`<p class="rs-help"><b style="color:#EDEBE3">Så länkar du:</b> dra den runda pricken på en källa (lfo, env, steg …) till en ratt. Eller tryck på pricken och dra sedan i valfri ratt – då ställer du hur mycket. Ringen runt ratten visar djupet, den vita pricken var den är just nu.${RS_CLONE[RS.e]?' På Moog-, 101- och Bris-panelen ändras ljudet från ton till ton; i efter-delen rör det sig hela tiden.':RS.e==='grime'?' I grime rör sig cutoff, wob, growl, formant, vokal, drive, fold, sub, nivå och tonhöjd inne i varje ton.':' Motorns rattar ändras från ton till ton; efter-delen rör sig hela tiden.'}</p>`;
+      +`<p class="rs-help"><b style="color:#EDEBE3">How to link:</b> drag the round dot of a source (lfo, env, step …) to a knob. Or press the dot and then drag any knob – that sets how much. The ring around the knob shows the depth, the white dot where it is right now.${RS_CLONE[RS.e]?' On the Moog, 101 and Bris panels the sound changes from note to note; the after part moves all the time.':RS.e==='grime'?' In grime, cutoff, wob, growl, formant, vowel, drive, fold, sub, level and pitch move inside every note.':' The engine\'s knobs change from note to note; the after part moves all the time.'}</p>`;
     mat.querySelector('[data-add]').onclick=()=>{const free=MOD_SRC.find(s=>!M.rows.some(r=>r.src===s[0]))||MOD_SRC[0];M.rows.push({src:free[0],dst:'x.cut',amt:.25});save();paintAll()};
     mat.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{M.rows.splice(+b.dataset.del,1);save();paintAll()});
     mat.querySelectorAll('[data-pf]').forEach(w=>w.addEventListener('pick',ev=>{const i=+w.closest('[data-i]').dataset.i,r=M.rows[i];if(w.dataset.pf==='src')r.src=MOD_SRC[ev.detail][0];else r.dst=T[ev.detail];save();paintAll()}));
@@ -10050,6 +10050,8 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     if(e==='bris'&&typeof BR_PRE!=='undefined')BR_PRE.forEach(p=>L.push({l:p[1],g:'bris · '+p[0].toLowerCase(),f:()=>{if(window.__bris&&__bris.load)__bris.load(p);else{Object.assign(engE('bris'),BR_DEF,p[2]);try{brisApplyAll()}catch(_){}}}}));
     ((S.userPre||{})[e]||[]).forEach(u=>L.push({l:u.n,g:'sparade',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(u.p)));if(u.m)S.mods[e]=JSON.parse(JSON.stringify(u.m));modOf(e)}}));
     L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});return L}
+  /* (v245) the keyboard's sound picker and MIDI program change use the same list, for any synth track */
+  window.__rsPresets=(e,id)=>presetList(e).map(x=>({l:x.l,g:x.g,f:()=>{const o=RS.id;RS.id=id||o;if(!S.mods)S.mods={};try{x.f()}finally{RS.id=o}}}));
   R.querySelector('.rs-top').addEventListener('click',ev=>{const b=ev.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,e=RS.e;
     if(a==='close')close();else if(a==='prev')prevNote();
     else if(a==='pre'){const L=presetList(e);if(window.pickShow)pickShow(b,L.map(x=>x.l),-1,i=>{L[i].f();if(!S.rsPre)S.rsPre={};S.rsPre[e]=L[i].l;save();build();prevNote()},L.map(x=>x.g))}
@@ -10658,7 +10660,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v245</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v246</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -13703,7 +13705,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   /* the takes of one autosample run → a stored instrument; the card shows it under instruments */
   async function build(takes,sr){const P=profOf(((acc&&[...acc.outputs.values()].find(o=>o.id===cfg.outId))||{}).name);
     const rec=await store(cfg.name||((P?P.name+' ':'')+'multisample'),P?P.name:'',sr,takes,!!cfg.loop);
-    tab=cfg.tab='ins';saveCfg();toast(rec.name+' · '+rec.regions.length+' notes – pick a track under “plays on”');return rec}
+    tab=cfg.tab='ins';saveCfg();toast(rec.name+' · '+rec.regions.length+' notes – pick a track under “plays on”, or on the keyboard: sound › sampled');return rec}
   async function store(name,dev,sr,takes,loop){/* level all notes together (their balance stays), loops, store */
     let pk=0;takes.forEach(t=>pk=Math.max(pk,t.peak));const g=pk>0?Math.pow(10,-1/20)/pk:1;
     takes.forEach(t=>{for(const c of [t.L,t.R])if(c)for(let k=0;k<c.length;k++)c[k]*=g;if(loop)addLoop(t,sr)});
@@ -13721,7 +13723,11 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
     const src=ctx.createBufferSource(),g=ctx.createGain(),tune=(p&&p.tune)||0;src.buffer=R.buf;src.playbackRate.value=Math.pow(2,(n-R.root+tune)/12);
     const loop=I.meta.loop&&R.loopE>R.loopS+64;if(loop){src.loop=true;src.loopStart=R.loopS/R.sr;src.loopEnd=R.loopE/R.sr}
     const lv=Math.max(.05,v)*1.1,att=I.meta.att||.002,rel=I.meta.rel||.25,L=Math.max(.02,len||.25),end=t+L;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(lv,t+att);g.gain.setValueAtTime(lv,end);g.gain.setTargetAtTime(0,end,rel/4);
+    /* envelope (the keyboard's A·D·S·R knobs): attack, decay to the sustain level, release after the note */
+    const sus=I.meta.sus==null?1:Math.max(0,Math.min(1,I.meta.sus)),dec=Math.max(.005,I.meta.dec==null?1:I.meta.dec);
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(lv,t+att);
+    if(sus<1&&end>t+att){g.gain.setTargetAtTime(lv*sus,t+att,dec/3);g.gain.cancelAndHoldAtTime?g.gain.cancelAndHoldAtTime(end):g.gain.setValueAtTime(lv*sus,end)}else g.gain.setValueAtTime(lv,end);
+    g.gain.setTargetAtTime(0,end,rel/4);
     src.connect(g);g.connect(out);src.start(t);const stopAt=loop?end+rel*2:Math.min(end+rel*2,t+R.buf.duration/src.playbackRate.value+.02);src.stop(stopAt)}
   /* the synth tracks: a track with an instrument plays it, every other track its own engine as before */
   const wrapped=new Set();
@@ -13867,7 +13873,8 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   /* the level meter while recording */
   setInterval(()=>{if(!rec)return;const m=body.querySelector('.tx-meter i');if(m)m.style.width=Math.min(100,Math.round(Math.sqrt(rec.lvl)*100))+'%'},80);
 
-  window.TEX={_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
+  async function saveMeta(id){const I=INS.get(id);if(I)try{await dbDo('readwrite',st=>st.put(I.meta))}catch(e){}}
+  window.TEX={saveMeta,assign,repaint:()=>paint(),_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
   const css=document.createElement('style');css.textContent=`
 .card.sampler .tx{display:flex;flex-direction:column;gap:10px;font-family:var(--f-mono);font-size:11px;color:var(--fg)}
 .tx-tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -13970,6 +13977,176 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
       return C.bpm},
     _st:()=>({bpm:C.bpm,n:C.t.length,run:C.run,b:C.b,off:C.off,cnt:C.cnt,base:C.base}),
     _reset(){C.t.length=0;C.i.length=0;C.last=0;C.run=false;C.pend=null}};
+})();
+
+/* ================= the keyboard's sound strip (v245) =================
+   Under the keyboard's top row: the sound the keyboard plays (engine + preset, ‹ › steps presets, tap for the picker),
+   its envelope as A·D·S·R knobs with a drawing, and what came in over MIDI.
+   - The picker: every engine and its presets, plus the instruments sampled in the Sampler card ("sampled").
+   - MIDI: Bank Select (CC 0, or CC 32) picks the engine – bank 1 Analog, 2 Bris, 3 Acid … 12 sampled – and
+     Program Change picks the preset in it (program 1 = the first). Always for the track the keyboard plays.
+   - The knobs move the engine's own envelope params (each engine has its own set: Analog A D S R, Bris attack decay
+     sustain release, FM only decay and release …); a knob the engine doesn't have is dimmed. The release also sets how
+     long a key on this keyboard rings after you let go.
+   ================= */
+(()=>{
+  const kb=document.getElementById('kb'),bar=kb&&kb.querySelector('.kb-bar');if(!kb||!bar)return;
+  const BANKS=()=>ENG_ORDER.concat(['@ms']);/* bank n (1-based) = BANKS()[n-1] */
+  const TS=(t)=>t<1?[String(Math.round(t*1000)),'ms']:[t.toFixed(t<10?2:1),'s'];
+  const P=v=>[String(Math.round(v*100)),'%'];
+  const sq=(mx)=>({pos:v=>Math.sqrt(Math.max(0,v)/mx),val:p=>p*p*mx});/* raw seconds, knob on a square curve */
+  const nrm={pos:v=>v,val:p=>p};
+  /* per engine: [param key, show(v), knob mapping, seconds for the drawing] – null = the engine has no such stage */
+  const ENV={
+    analog:{o:id=>S.synth[id],A:['a',TS,sq(1),v=>v],D:['d',TS,sq(2),v=>v],S:['s',P,nrm],R:['r',TS,sq(3),v=>v]},
+    bris:{o:()=>engE('bris'),A:['aA',v=>TS(brT(v,6)),nrm,v=>brT(v,6)],D:['aD',v=>TS(brT(v,10)),nrm,v=>brT(v,10)],S:['aS',P,nrm],R:['aR',v=>TS(brT(v,10)),nrm,v=>brT(v,10)]},
+    sh101:{o:()=>engE('sh101'),A:['A',v=>TS(shT(v,6)),nrm,v=>shT(v,6)],D:['D',v=>TS(shT(v,10)),nrm,v=>shT(v,10)],S:['S',P,nrm],R:['R',v=>TS(shT(v,10)),nrm,v=>shT(v,10)]},
+    mini:{o:()=>engE('mini'),A:['aA',v=>TS(shT(v,6)),nrm,v=>shT(v,6)],D:['aD',v=>TS(shT(v,10)),nrm,v=>shT(v,10)],S:['aS',P,nrm],R:null},
+    super:{o:()=>engE('super'),A:['attack',v=>TS(.01+v*1.5),nrm,v=>.01+v*1.5],D:null,S:null,R:['release',v=>TS(.1+v*3),nrm,v=>.1+v*3]},
+    fm:{o:()=>engE('fm'),A:null,D:['decay',v=>TS(.2+v*2.5),nrm,v=>.2+v*2.5],S:null,R:['rel',v=>TS(.05+v*1.5),nrm,v=>.05+v*1.5]},
+    pluck:{o:()=>engE('pluck'),A:null,D:['len',v=>TS(.4+v*2.6),nrm,v=>.4+v*2.6],S:null,R:null},
+    acid:{o:()=>engE('acid'),A:null,D:['dec',v=>TS(.06+v*.9),nrm,v=>.06+v*.9],S:null,R:null},
+    sub:{o:()=>engE('sub'),A:null,D:['decay',v=>TS(.1+v*2.5),nrm,v=>.1+v*2.5],S:null,R:null},
+    grime:{o:()=>engE('grime'),A:null,D:['dec',v=>TS(.02+v*.5),nrm,v=>.02+v*.5],S:null,R:null},
+    chip:{o:()=>engE('chip'),A:null,D:['dec',v=>TS(.05+v*1.4),nrm,v=>.05+v*1.4],S:null,R:null},
+    '@ms':{o:id=>{const I=msOf(id);return I&&I.meta},A:['att',TS,sq(2),v=>v],D:['dec',TS,sq(4),v=>v],S:['sus',P,nrm],R:['rel',TS,sq(4),v=>v]}};
+  const MS_DEF={att:.002,dec:1,sus:1,rel:.25};
+  /* ---- which track, which sound ---- */
+  const kTrk=()=>{const b=kb.querySelector('#kbTrk button.on');const i=b?+b.dataset.i:S.sel;return TRACKS[i]&&TRACKS[i].mel?i:TRACKS.findIndex(t=>t.mel)};
+  const msOf=id=>{const m=S.ms&&S.ms[id];return m&&window.TEX&&TEX.instruments.get(m)};
+  const engOf=i=>{const id=TRACKS[i].id;return msOf(id)?'@ms':(S.inst[id]||'analog')};
+  const engName=e=>e==='@ms'?'Sampled':e==='analog'?'Analog':(ENG[e]&&ENG[e].name)||e;
+  const engDot=e=>e==='@ms'?'#EDEBE3':(ENG[e]&&ENG[e].dot)||'#B8F23A';
+  const msList=()=>window.TEX?[...TEX.instruments.values()].sort((a,b)=>(a.meta.t||0)-(b.meta.t||0)):[];
+  const presets=(e,i)=>{if(e==='@ms')return msList().map(I=>({l:I.meta.name,g:I.meta.dev||'sampled',ms:I.meta.id}));return window.__rsPresets?__rsPresets(e,TRACKS[i].id).map(p=>Object.assign(p,{g:{grund:'basic',sparade:'saved'}[p.g]||p.g})):[]};
+  const presetName=(e,i)=>{const id=TRACKS[i].id;if(e==='@ms'){const I=msOf(id);return I?I.meta.name:'–'}if(e==='grime'&&typeof GR_PRE!=='undefined')return (GR_PRE[engE('grime').pre]||['–'])[0];return (S.rsPre||{})[e]||'init'};
+  function after(i){try{refreshInst()}catch(e){}try{window.rsPaint&&rsPaint()}catch(e){}try{save()}catch(e){}paint(true)}
+  function setEngine(i,e){const id=TRACKS[i].id;try{__kb.allOff()}catch(_){}try{pushHist()}catch(_){}
+    if(e==='@ms'){const L=msList();if(!L.length){toast('No sampled instruments yet · make one in the Sampler card');return false}const cur=msOf(id);setMs(i,(cur||L[L.length-1]).meta.id);return true}
+    if(S.ms&&S.ms[id]){delete S.ms[id];try{TEX.repaint&&TEX.repaint()}catch(_){}}S.inst[id]=e;after(i);return true}
+  function setMs(i,msId){const id=TRACKS[i].id;S.ms=S.ms||{};for(const k in S.ms)if(S.ms[k]===msId&&k!==id){}/* one instrument can play on several tracks */
+    S.ms[id]=msId;const I=msOf(id);if(I)for(const k in MS_DEF)if(I.meta[k]==null)I.meta[k]=MS_DEF[k];try{TEX.repaint&&TEX.repaint()}catch(_){}after(i)}
+  function loadPreset(i,e,k){const L=presets(e,i),p=L[k];if(!p)return false;try{__kb.allOff()}catch(_){}
+    if(e==='@ms'){setMs(i,p.ms);return true}
+    if(engOf(i)!==e)setEngine(i,e);try{pushHist()}catch(_){}p.f();if(!S.rsPre)S.rsPre={};S.rsPre[e]=p.l;after(i);return true}
+  function step(d){const i=kTrk(),e=engOf(i),L=presets(e,i);if(!L.length)return;const cur=L.findIndex(p=>e==='@ms'?p.ms===S.ms[TRACKS[i].id]:p.l===presetName(e,i));
+    const k=((cur<0?(d>0?-1:0):cur)+d+L.length)%L.length;loadPreset(i,e,k);flash(engName(e)+' · '+L[k].l)}
+  /* ---- the strip ---- */
+  const css=document.createElement('style');css.id='keysx';css.textContent=`
+.kx{display:flex;align-items:stretch;gap:8px;margin:-2px 0 10px;font-family:var(--f-mono);letter-spacing:.04em;color:#F5F5F2}
+.kx-snd{flex:1 1 280px;min-width:0;display:flex;align-items:center;gap:4px;padding:4px;border-radius:16px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.kx-snd .st{width:30px;height:44px;flex:none;border-radius:12px;color:rgba(245,245,242,.6);font-size:15px}.kx-snd .st:active{background:rgba(255,255,255,.12)}
+.kx-nm{flex:1;min-width:0;display:flex;align-items:center;gap:10px;height:44px;padding:0 12px;border-radius:12px;text-align:left;transition:background .2s}
+.kx-nm:hover{background:rgba(255,255,255,.05)}.kx-nm:active{background:rgba(255,255,255,.1)}
+.kx-nm i{width:10px;height:10px;flex:none;border-radius:50%;background:var(--d);box-shadow:0 0 0 3px color-mix(in srgb,var(--d) 22%,transparent),0 0 12px var(--d)}
+.kx-nm span{min-width:0;display:flex;flex-direction:column;gap:3px}
+.kx-nm small{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,242,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kx-nm b{font-weight:500;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kx-nm em{margin-left:auto;font-style:normal;font-size:9px;color:rgba(245,245,242,.4);white-space:nowrap}
+.kx-env{flex:0 1 auto;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;border-radius:16px;background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.kx-env svg.dr{width:92px;height:44px;flex:none}
+.kx-env svg.dr path{fill:none;stroke:var(--kc,#F5F5F2);stroke-width:1.6;stroke-linejoin:round;stroke-linecap:round}
+.kx-env svg.dr path.f{fill:color-mix(in srgb,var(--kc,#F5F5F2) 14%,transparent);stroke:none}
+.kx-k{width:46px;display:flex;flex-direction:column;align-items:center;gap:1px;touch-action:none;cursor:ns-resize;-webkit-user-select:none;user-select:none}
+.kx-k svg{width:28px;height:28px}.kx-k svg circle{fill:none;stroke-width:3}.kx-k .bg{stroke:rgba(255,255,255,.1)}.kx-k .fg{stroke:var(--kc,#F5F5F2);stroke-linecap:round}
+.kx-k b{font-weight:500;font-size:9.5px;line-height:1.1;white-space:nowrap}.kx-k small{font-size:8.5px;letter-spacing:.14em;color:rgba(245,245,242,.45)}
+.kx-k.off{opacity:.28;cursor:default}.kx-k.off b{visibility:hidden}
+.kx-midi{display:none;align-items:center;padding:0 12px;border-radius:16px;background:rgba(255,255,255,.06);font-size:9.5px;color:rgba(245,245,242,.55);white-space:nowrap}
+.kx-midi.on{display:flex}.kx-midi b{color:#F5F5F2;font-weight:500;margin-left:6px}
+.kx-sh{position:absolute;left:12px;right:12px;bottom:calc(100% + 8px);max-height:min(62vh,520px);display:flex;flex-direction:column;border-radius:20px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(38,39,38,.97),rgba(20,21,20,.98));-webkit-backdrop-filter:blur(24px);backdrop-filter:blur(24px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 24px 60px -20px rgba(0,0,0,.8);font-family:var(--f-mono);color:#F5F5F2;animation:kxin .3s var(--spring,ease) both;z-index:5}
+@keyframes kxin{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}
+.kx-sh header{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,242,.55)}
+.kx-sh header b{color:#F5F5F2;font-weight:500}.kx-sh header .x{margin-left:auto;width:28px;height:28px;border-radius:50%;background:rgba(255,255,255,.08);color:#F5F5F2;font-size:13px}
+.kx-cols{display:grid;grid-template-columns:minmax(170px,240px) 1fr;min-height:0;flex:1;border-top:1px solid rgba(255,255,255,.07)}
+.kx-col{overflow:auto;padding:8px;scrollbar-width:thin}.kx-col+.kx-col{border-left:1px solid rgba(255,255,255,.07)}
+.kx-col h6{margin:10px 8px 6px;font-size:9px;font-weight:400;letter-spacing:.16em;text-transform:uppercase;color:rgba(245,245,242,.4)}
+.kx-e{width:100%;display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:12px;font-size:11.5px;text-align:left;color:rgba(245,245,242,.75)}
+.kx-e i{width:8px;height:8px;border-radius:50%;background:var(--d);flex:none}.kx-e small{margin-left:auto;font-size:9px;color:rgba(245,245,242,.35)}
+.kx-e:hover{background:rgba(255,255,255,.05)}.kx-e.sel{background:rgba(255,255,255,.09);color:#F5F5F2}.kx-e.on{color:#F5F5F2}.kx-e.on::after{content:"";width:6px;height:6px;border-radius:50%;background:#F5F5F2;margin-left:6px}
+.kx-ps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.kx-p{display:flex;flex-direction:column;gap:4px;padding:10px 12px;border-radius:12px;text-align:left;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);min-width:0}
+.kx-p small{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(245,245,242,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kx-p b{font-weight:500;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kx-p:hover{background:rgba(255,255,255,.08)}.kx-p.on{background:#F5F5F2;color:#111211}.kx-p.on small{color:rgba(17,18,17,.55)}
+.kx-empty{padding:18px 10px;font-size:10.5px;line-height:1.6;color:rgba(245,245,242,.5)}
+@media (max-width:760px){.kx{flex-wrap:wrap}.kx-snd{flex-basis:100%}.kx-env{flex:1 1 auto;justify-content:space-between}.kx-env svg.dr{width:72px}}
+@media (max-width:560px){.kx-sh header .hint{display:none}.kx-sh header{white-space:nowrap}.kb-trk{max-width:100%;overflow-x:auto;scrollbar-width:none}.kb-trk::-webkit-scrollbar{display:none}.kx-cols{grid-template-columns:1fr;grid-template-rows:auto 1fr}.kx-col+.kx-col{border-left:0;border-top:1px solid rgba(255,255,255,.07)}
+  .kx-col.en{display:flex;gap:4px;overflow-x:auto;padding:8px}.kx-col.en h6{display:none}.kx-col.en .kx-e{width:auto;flex:none;padding:8px 11px;white-space:nowrap}.kx-col.en .kx-e small{display:none}
+  .kx-ps{grid-template-columns:1fr 1fr}.kx-k{width:40px}.kx-sh{left:6px;right:6px}}
+@media (max-height:520px){.kx-sh{max-height:calc(100vh - 40px)}}`;
+  document.head.appendChild(css);
+  const row=document.createElement('div');row.className='kx';
+  row.innerHTML=`<div class="kx-snd"><button class="st" data-st="-1" aria-label="Previous sound">‹</button><button class="kx-nm" aria-label="Pick the sound"><i></i><span><small></small><b></b></span><em></em></button><button class="st" data-st="1" aria-label="Next sound">›</button></div>
+<div class="kx-env"><svg class="dr" viewBox="0 0 92 44" aria-hidden="true"><path class="f"/><path class="l"/></svg>${['A','D','S','R'].map(k=>`<div class="kx-k" data-k="${k}" title="${{A:'attack',D:'decay',S:'sustain',R:'release'}[k]} · drag up or down"><svg viewBox="0 0 28 28"><circle class="bg" cx="14" cy="14" r="11" stroke-dasharray="51.8 69.1" transform="rotate(135 14 14)"/><circle class="fg" cx="14" cy="14" r="11" stroke-dasharray="0 69.1" transform="rotate(135 14 14)"/></svg><b>–</b><small>${k}</small></div>`).join('')}</div>
+<div class="kx-midi"><span>midi</span><b></b></div>`;
+  bar.after(row);
+  const nmB=row.querySelector('.kx-nm'),midiEl=row.querySelector('.kx-midi');
+  row.querySelectorAll('[data-st]').forEach(b=>b.onclick=()=>step(+b.dataset.st));
+  nmB.onclick=()=>sheet?closeSheet():openSheet();
+  /* knobs: drag up/down, double tap = the engine's default */
+  const spec=(e,k)=>{const E=ENV[e];return E&&E[k]?E[k]:null};
+  row.querySelectorAll('.kx-k').forEach(el=>{const k=el.dataset.k;let y0=null,p0=0,moved=false,lastTap=0;
+    el.addEventListener('pointerdown',ev=>{const i=kTrk(),e=engOf(i),sp=spec(e,k),o=sp&&ENV[e].o(TRACKS[i].id);if(!sp||!o)return;ev.preventDefault();el.setPointerCapture(ev.pointerId);
+      y0=ev.clientY;p0=sp[2].pos(o[sp[0]]??0);moved=false;try{pushHist()}catch(_){}});
+    el.addEventListener('pointermove',ev=>{if(y0==null)return;const i=kTrk(),e=engOf(i),sp=spec(e,k),o=sp&&ENV[e].o(TRACKS[i].id);if(!sp||!o)return;
+      const p=Math.max(0,Math.min(1,p0+(y0-ev.clientY)/(ev.shiftKey?600:160)));if(Math.abs(y0-ev.clientY)>2)moved=true;o[sp[0]]=+sp[2].val(p).toFixed(4);liveApply(i,e);paintEnv()});
+    const up=()=>{if(y0==null)return;y0=null;const i=kTrk(),e=engOf(i);
+      if(!moved){const now=performance.now();if(now-lastTap<320){resetK(i,e,k)}lastTap=now}
+      if(e==='@ms'){const I=msOf(TRACKS[i].id);if(I&&TEX.saveMeta)TEX.saveMeta(I.meta.id)}try{save()}catch(_){}try{window.rsPaint&&rsPaint()}catch(_){}try{refreshInst()}catch(_){}};
+    el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up)});
+  function resetK(i,e,k){const sp=spec(e,k),o=sp&&ENV[e].o(TRACKS[i].id);if(!o)return;const d=e==='@ms'?MS_DEF:e==='analog'?(DEFS.synth[TRACKS[i].id]||DEFS.synth.bass):DEFS.eng[e];if(d&&d[sp[0]]!=null)o[sp[0]]=d[sp[0]];liveApply(i,e);paintEnv()}
+  function liveApply(i,e){if(e==='bris'){try{brisApplyAll()}catch(_){}}}
+  function paintEnv(){const i=kTrk(),e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);let segs={A:.004,D:.3,S:1,R:.15};
+    row.querySelectorAll('.kx-k').forEach(el=>{const k=el.dataset.k,sp=E&&E[k];el.classList.toggle('off',!sp||!o);if(!sp||!o)return;const v=o[sp[0]]??(e==='@ms'?MS_DEF[sp[0]]:0);
+      const f=sp[1](v);el.querySelector('b').textContent=f[0]+(f[1]?' '+f[1]:'');el.querySelector('.fg').setAttribute('stroke-dasharray',(51.8*Math.max(0,Math.min(1,sp[2].pos(v)))).toFixed(1)+' 69.1');
+      segs[k]=k==='S'?v:sp[3]?sp[3](v):v});
+    /* no sustain knob: a sound with a decay dies away (0), one with only attack/release is held (1) */
+    if(!E||!E.S)segs.S=E&&E.D?0:1;
+    /* the drawing: times on a square-root scale so short and long both show */
+    const w=92,h=44,pad=3,tm=x=>Math.sqrt(Math.max(0,x));const a=tm(segs.A),d=tm(segs.D),r=tm(segs.R),hold=.55,tot=a+d+hold+r||1,sx=(w-2*pad)/tot;
+    const y=v=>h-pad-v*(h-2*pad),x1=pad+a*sx,x2=x1+d*sx,x3=x2+hold*sx,x4=x3+r*sx,sl=Math.max(0,Math.min(1,segs.S));
+    const pth=`M${pad} ${y(0)} L${x1.toFixed(1)} ${y(1)} L${x2.toFixed(1)} ${y(sl).toFixed(1)} L${x3.toFixed(1)} ${y(sl).toFixed(1)} L${x4.toFixed(1)} ${y(0)}`;
+    row.querySelector('path.l').setAttribute('d',pth);row.querySelector('path.f').setAttribute('d',pth+` Z`)}
+  let sig='';
+  function paint(force){const i=kTrk();if(i<0)return;const e=engOf(i),id=TRACKS[i].id,s=[i,e,presetName(e,i),trkCol(i),S.ms&&S.ms[id]].join('|');if(!force&&s===sig)return;sig=s;
+    nmB.style.setProperty('--d',engDot(e));nmB.querySelector('small').textContent=engName(e)+' · '+TRACKS[i].name.toLowerCase();nmB.querySelector('b').textContent=presetName(e,i);
+    const L=presets(e,i);const ix=L.findIndex(p=>e==='@ms'?p.ms===S.ms[id]:p.l===presetName(e,i));nmB.querySelector('em').textContent=`bank ${BANKS().indexOf(e)+1} · ${ix>=0?'prog '+(ix+1):L.length+' sounds'}`;
+    paintEnv();if(sheet)drawSheet()}
+  setInterval(()=>{if(!kb.hidden)paint()},300);
+  /* ---- the picker ---- */
+  let sheet=null,selE=null;
+  function closeSheet(){if(sheet){sheet.remove();sheet=null}}
+  function openSheet(){closeSheet();sheet=document.createElement('div');sheet.className='kx-sh';kb.appendChild(sheet);selE=engOf(kTrk());drawSheet()}
+  function drawSheet(){if(!sheet)return;const i=kTrk(),cur=engOf(i),id=TRACKS[i].id,B=BANKS();
+    const eBtn=(e,n)=>`<button class="kx-e${e===selE?' sel':''}${e===cur?' on':''}" data-e="${e}"><i style="--d:${engDot(e)}"></i>${engName(e)}<small>bank ${n}</small></button>`;
+    const L=presets(selE,i),pcur=selE===cur?L.findIndex(p=>cur==='@ms'?p.ms===S.ms[id]:p.l===presetName(cur,i)):-1;
+    const ps=L.length?`<div class="kx-ps">${L.map((p,k)=>`<button class="kx-p${k===pcur?' on':''}" data-p="${k}"><small>${k+1} · ${String(p.g||'').replace(/</g,'&lt;')}</small><b>${String(p.l).replace(/</g,'&lt;')}</b></button>`).join('')}</div>`
+      :selE==='@ms'?`<div class="kx-empty">No sampled instruments yet. Open the Sampler card, connect an instrument (OP-XY, OP-1 …) and press autosample – the instrument shows up here.</div>`:`<div class="kx-empty">No presets.</div>`;
+    const top=sheet.querySelector('.kx-col.ps');const st=top?top.scrollTop:0;
+    sheet.innerHTML=`<header><span>sound for</span><b>${TRACKS[i].name.toLowerCase()}</b><span class="hint">· midi: bank picks the engine, program the sound</span><button class="x" aria-label="Close">×</button></header>
+      <div class="kx-cols"><div class="kx-col en"><h6>engines</h6>${B.slice(0,-1).map((e,k)=>eBtn(e,k+1)).join('')}<h6>sampled</h6>${eBtn('@ms',B.length)}</div><div class="kx-col ps">${ps}</div></div>`;
+    sheet.querySelector('.kx-col.ps').scrollTop=st;
+    sheet.querySelector('.x').onclick=closeSheet;
+    sheet.querySelectorAll('[data-e]').forEach(b=>b.onclick=()=>{const e=b.dataset.e;selE=e;if(e!==cur&&(e!=='@ms'||msList().length))setEngine(i,e);drawSheet()});
+    sheet.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{loadPreset(i,selE,+b.dataset.p);drawSheet()})}
+  addEventListener('pointerdown',ev=>{if(sheet&&!sheet.contains(ev.target)&&!nmB.contains(ev.target))closeSheet()},true);
+  addEventListener('keydown',ev=>{if(sheet&&ev.key==='Escape')closeSheet()});
+  new MutationObserver(()=>{if(kb.hidden)closeSheet();else paint(true)}).observe(kb,{attributes:true,attributeFilter:['hidden']});
+  /* ---- MIDI bank select + program change ---- */
+  let bankM=null,bankL=null,ft=0;
+  function flash(t){midiEl.querySelector('b').textContent=t;midiEl.classList.add('on');clearTimeout(ft);ft=setTimeout(()=>midiEl.classList.remove('on'),2600)}
+  function program(pc){const i=kTrk();if(i<0)return;const B=BANKS();let e=engOf(i);const bank=bankM!=null?bankM:bankL;
+    if(bank!=null){if(bank>=B.length){flash('bank '+(bank+1)+' · none');return}e=B[bank]}
+    if(e==='@ms'&&!msList().length){flash('sampled · none yet');return}
+    const L=presets(e,i);if(pc>=L.length){flash(engName(e)+' · no program '+(pc+1));toast(engName(e)+' has '+L.length+' sounds');return}
+    if(engOf(i)!==e)setEngine(i,e);loadPreset(i,e,pc);flash(engName(e)+' · '+(pc+1)+' '+L[pc].l)}
+  window.KEYSX={
+    midi(st,d){const ty=st&0xF0;if(ty===0xB0&&(d[1]===0||d[1]===32)){if(d[1]===0)bankM=d[2];else bankL=d[2];return true}
+      if(ty===0xC0){program(d[1]);return true}return false},
+    rel(i){const e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);if(!o||!E.R)return null;if(e==='analog'||e==='@ms'||e==='super'||e==='fm')return Math.min(4,Math.max(.03,E.R[3](o[E.R[0]]??.25)));return null},
+    open:openSheet,close:closeSheet,_paint:()=>paint(true),banks:BANKS};
 })();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================

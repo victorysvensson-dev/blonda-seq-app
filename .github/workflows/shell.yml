@@ -115,6 +115,8 @@ jobs:
               # a fresh start every run: a run-1 app that is still alive would otherwise just come to the front and not test again
               # (a launch that hangs past its time limit must not end the whole step: the shell runs with -e)
               rc=0; T 120 xcrun simctl launch --terminate-running-process $U se.blonda.seq3 -selftest > ../shell-out/${n}_launch_$k.txt 2>&1 || rc=$?; echo "launch exit $rc" >> ../shell-out/${n}_launch_$k.txt
+              # a launch that hung (the simulator, not the app) gets one more try
+              if [ $rc -ne 0 ]; then rc=0; T 120 xcrun simctl launch --terminate-running-process $U se.blonda.seq3 -selftest >> ../shell-out/${n}_launch_$k.txt 2>&1 || rc=$?; echo "second launch exit $rc" >> ../shell-out/${n}_launch_$k.txt; fi
               # wait for the app's report (the simulators here have no GPU, so the animated app is slow – give it time)
               for i in $(seq 1 150); do [ -f "$D/Documents/selftest.json" ] && break; sleep 2; done
               T 20 xcrun simctl spawn $U launchctl list 2>/dev/null | grep -i seq3 >> ../shell-out/${n}_launch_$k.txt || echo "app process: not running" >> ../shell-out/${n}_launch_$k.txt
