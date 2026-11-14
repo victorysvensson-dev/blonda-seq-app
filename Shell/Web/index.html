@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v238</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v239</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -5261,7 +5261,7 @@ function updPhBand(){if(!playing||curStep<0||!gridEl.offsetParent){if(phb.style.
 
 /* ---------------- master deck ---------------- */
 const deck=$('#deck'),scrim=$('#deckScrim');let deckOpen=false;const hist=[];
-function setDeck(o){deckOpen=o;deck.classList.toggle('open',o);scrim.classList.toggle('on',o);deck.setAttribute('aria-hidden',o?'false':'true');deck.style.transform=''}
+window.__setDeck=o=>setDeck(o);function setDeck(o){deckOpen=o;deck.classList.toggle('open',o);scrim.classList.toggle('on',o);deck.setAttribute('aria-hidden',o?'false':'true');deck.style.transform=''}
 (()=>{const tp=document.querySelector('.transport');let y0=null;
   tp.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;y0=e.clientY;tp.setPointerCapture(e.pointerId)});
   tp.addEventListener('pointermove',e=>{if(y0!==null&&e.clientY-y0<-28){y0=null;setDeck(true)}});
@@ -10657,7 +10657,7 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v238</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v239</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -13351,19 +13351,112 @@ body.mob .seqlite.dotm .bigsteps .bs > i{font-size:9.5px!important;letter-spacin
 (()=>{let t=0;addEventListener('resize',()=>{try{if(typeof playing==='undefined'||!playing)return;
     if(!t&&window.__schedAhead){try{__schedAhead(2)}catch(e){}}clearTimeout(t);
     t=setTimeout(()=>{t=0},700)}catch(e){}},true)})();
-/* (v238) the bottom bar keeps its full width but is much lower: smaller clock, step dots and buttons, so the panels
-   get the room. Phones keep their own bar (body.mob / body.mob-land). */
-(()=>{const css=document.createElement('style');css.id='tbar';css.textContent=`
-body:not(.mob):not(.mob-land) .app .transport{padding-top:8px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px));min-height:0;gap:12px;border-radius:18px 18px 0 0}
-body:not(.mob):not(.mob-land) .transport::before{top:3px;height:3px;width:32px;margin-left:-16px}
-body:not(.mob):not(.mob-land) .transport .clock{width:auto;height:auto}
-body:not(.mob):not(.mob-land) .transport #clock svg{height:20px;width:auto}
-body:not(.mob):not(.mob-land) .transport #pos{display:none}
-body:not(.mob):not(.mob-land) .transport .bar16 i{width:5px;height:5px}
-body:not(.mob):not(.mob-land) .transport .tr-r{gap:6px}
-body:not(.mob):not(.mob-land) .transport .tr-r button{width:32px;height:32px}
-body:not(.mob):not(.mob-land) .transport .tr-r button svg{width:14px;height:14px}
-body:not(.mob):not(.mob-land) .transport #recBtn i{width:9px;height:9px}`;document.head.appendChild(css)})();
+/* (v239) one fixed top row, no bar at the bottom: the clock, the step dots, the piano, rec and play buttons move up
+   next to the name (without the yellow), a yellow dots button opens the yellow master deck over the screen, swing and
+   bpm get smaller, everything in the row shares one height and centre line, and a faint line under the row marks it
+   as its own fixed row. Phones keep their own layout (body.mob / body.mob-land). */
+(()=>{const top=document.querySelector('header.top'),tr=document.querySelector('.app > .transport'),hxw=top&&top.querySelector('.hxw'),
+    brand=top&&top.querySelector('.brand'),trr=tr&&tr.querySelector('.tr-r'),app=document.getElementById('app');
+  if(!top||!tr||!hxw||!brand||!trr||!app)return;
+  const css=document.createElement('style');css.id='topbar';
+  const D='body.topbar:not(.mob):not(.mob-land)';
+  css.textContent=`
+${D} header.top{position:relative;display:flex!important;flex-wrap:wrap;align-items:center!important;justify-content:flex-start!important;
+  column-gap:10px!important;row-gap:10px!important;padding:0 4px 12px!important;height:auto!important;margin-bottom:2px}
+${D} header.top::after{content:"";position:absolute;left:-14px;right:-14px;bottom:0;height:1px;background:rgba(232,230,220,.09);pointer-events:none}
+${D} header.top .brand{align-self:center!important;margin:0 6px 0 0!important}
+${D} header.top .hxw{display:contents!important}
+${D} header.top .hxw > *{align-self:center!important;margin-top:0!important;margin-bottom:0!important}
+${D} header.top .tb-br{display:none;flex-basis:100%;height:0;order:4}
+${D} header.top.tb2 .tb-br{display:block}
+/* the order: name · clock · steps · patterns · views · menu · swing · bpm ……… master · piano · rec · play */
+${D} header.top .brand{order:0}
+${D} header.top > .transport{display:contents!important}
+${D} header.top > .transport .clock{order:1}
+${D} header.top > .transport .bar16{order:2}
+${D} header.top .hxw > #pats{order:5}
+${D} header.top .hxw > .hx{order:6}
+${D} header.top .hxw > #menuBtn{order:7}
+${D} header.top .hxw > .bpm.swp{order:8}
+${D} header.top .hxw > .bpm:not(.swp){order:9}
+${D} header.top > .transport .tr-r{order:10;margin-left:auto!important}
+${D} header.top.tb2 > .transport .tr-r{order:3}
+${D} header.top.tb2 .hxw > .bpm.swp{margin-left:auto!important}
+/* one height for everything in the row: 32 */
+${D} header.top .hxw .patseg{height:32px!important;padding:3px!important;box-sizing:border-box;gap:2px!important}
+${D} header.top .hxw .patseg .pat,${D} header.top .hxw .patseg .pind{width:26px!important;height:26px!important}
+${D} header.top .hxw .patseg .pat svg{height:11px!important;width:auto!important}
+${D} header.top .hxw .gbtn{height:32px!important;min-height:0!important;box-sizing:border-box}
+${D} header.top .hxw .gbtn.ic{width:32px!important;padding:0!important;justify-content:center}
+${D} header.top .hxw .hx-b,${D} header.top .hxw #menuBtn{height:32px!important;min-height:0!important;box-sizing:border-box}
+${D} header.top .hxw .hx-b:not(.hx-daw){min-width:32px!important}
+${D} header.top .hxw .ux button{width:28px!important;height:28px!important}
+${D} header.top .hxw .ux{height:32px!important;align-items:center}
+${D} header.top > .transport{position:static;margin:0!important;padding:0!important;background:none!important;border-radius:0!important;
+  box-shadow:none!important;outline:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;filter:none!important;min-height:0!important;height:34px;
+  gap:10px;color:#E8E6DC;z-index:auto}
+${D} header.top > .transport::before{display:none}
+${D} .app{padding-bottom:14px!important}
+${D} header.top > .transport .clock{width:auto;height:auto;align-items:center}
+${D} header.top > .transport #clock svg{height:18px;width:auto}
+${D} header.top > .transport #pos{display:none}
+${D} header.top > .transport .bar16{gap:3px;width:max-content!important;flex:none;grid-template-columns:repeat(16,4px)!important}
+${D} header.top > .transport .bar16 i{width:4px;height:4px;border-radius:50%;background:rgba(232,230,220,.18)!important}
+${D} header.top > .transport .bar16 i.on{background:rgba(232,230,220,.75)!important}
+${D} header.top > .transport .tr-r{gap:4px;margin-top:0!important;margin-bottom:0!important}
+${D} header.top > .transport .tr-r button{width:32px;height:32px;border-radius:50%;background:rgba(232,230,220,.08)!important;color:#E8E6DC!important;
+  box-shadow:none!important;border:0!important}
+${D} header.top > .transport .tr-r button svg{width:15px;height:15px}
+${D} header.top > .transport .tr-r button:hover{background:rgba(232,230,220,.16)!important}
+${D} header.top > .transport #recBtn i{width:10px;height:10px;background:#E5484D!important}
+${D} header.top > .transport #recBtn.on,${D} header.top > .transport #recBtn.armed,${D} header.top > .transport #recBtn.rec-on{background:rgba(229,72,77,.22)!important}
+${D} header.top > .transport #kbBtn.on{background:#E8E6DC!important;color:#111211!important}
+${D} header.top > .transport #deckBtn{background:#F2C318!important;color:#111211!important;display:grid;place-items:center;padding:0}
+${D} header.top > .transport #deckBtn:hover{background:#FFD43A!important}
+${D} header.top > .transport #deckBtn svg{width:14px;height:14px}
+${D} header.top .hxw .bpm{height:32px!important;padding:3px!important;gap:2px!important;box-sizing:border-box}
+${D} header.top .hxw .bpm button{width:24px!important;height:24px!important}
+${D} header.top .hxw .bpm button svg{width:11px!important;height:11px!important}
+${D} header.top .hxw .bpm .num svg{height:12px!important;width:auto!important}
+${D} header.top .hxw .bpm .bpmv{padding:0 4px!important}
+${D} header.top .hxw .bpm .bpmv small,${D} header.top .hxw .bpm .bpmv span:not(.num){font-size:8px!important}
+${D} header.top .hxw .patseg,${D} header.top .hxw .gbtn,${D} header.top .hxw .hx-b,${D} header.top .hxw .ux{align-self:center}
+body:not(.topbar) #deckBtn{display:none}`;
+  document.head.appendChild(css);
+  /* the yellow dots button: opens the master deck (it used to come up from the bottom bar) */
+  const db=document.createElement('button');db.id='deckBtn';db.type='button';db.title='Master · scopes, meters and the song';db.setAttribute('aria-label','Master');
+  db.innerHTML='<svg viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">'+[2,7,12].map(y=>[2,7,12].map(x=>`<circle cx="${x}" cy="${y}" r="1.6"/>`).join('')).join('')+'</svg>';
+  db.onclick=()=>{if(window.__setDeck)__setDeck(true)};
+  trr.insertBefore(db,trr.firstChild);
+  /* where the controls go to their own row when the top row is too narrow for everything */
+  const br=document.createElement('i');br.className='tb-br';br.setAttribute('aria-hidden','true');hxw.insertBefore(br,hxw.firstChild);
+  /* the bar's own swipe/tap that opened the deck does not belong in the top row */
+  top.addEventListener('pointerdown',e=>{if(tr.contains(e.target)&&!e.target.closest('button'))e.stopPropagation()},true);
+  const home=tr.nextSibling,parent=tr.parentNode;
+  const desk=()=>!document.body.classList.contains('mob')&&!document.body.classList.contains('mob-land');
+  /* one row when it fits (brand + bar + controls), otherwise the controls go to a second row. The widths are the
+     contents' own (children and gaps), so the answer does not depend on which layout is showing – no back and forth. */
+  const inner=el=>{const k=[...el.children].filter(c=>getComputedStyle(c).display!=='none');const g=parseFloat(getComputedStyle(el).columnGap)||0;
+    return k.reduce((a,c)=>a+c.getBoundingClientRect().width,0)+g*Math.max(0,k.length-1)};
+  /* the controls: groups that are rows of their own (patterns, views) counted by their contents, never their stretched box */
+  const deep=el=>{const k=[...el.children].filter(c=>!c.matches('.tb-br')&&getComputedStyle(c).display!=='none');const g=10;
+    return k.reduce((a,c)=>a+(/flex/.test(getComputedStyle(c).display)&&c.children.length>1&&!c.matches('.bpm,.patseg')?inner(c):c.getBoundingClientRect().width),0)+g*Math.max(0,k.length-1)};
+  let mine=null;
+  function fit(){const on=desk();document.body.classList.toggle('topbar',on);
+    if(on&&tr.parentNode!==top)top.insertBefore(tr,hxw);
+    if(!on&&tr.parentNode!==parent)parent.insertBefore(tr,home&&home.parentNode===parent?home:null);
+    if(!on){mine=null;return}
+    const cs=getComputedStyle(top),W=top.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight),
+      items=[brand,...tr.children,...[...hxw.children].filter(c=>!c.matches('.tb-br'))].filter(c=>getComputedStyle(c).display!=='none'),
+      need=items.reduce((t,c)=>t+(/flex/.test(getComputedStyle(c).display)&&c.children.length>1&&!c.matches('.bpm,.patseg,.tr-r,.clock')?inner(c):c.getBoundingClientRect().width),0)+10*(items.length-1)+6+16;
+    mine=need>W;top.classList.toggle('tb2',mine);if(top.classList.contains('tw'))top.classList.remove('tw')}
+  /* the header's own fit sets .tw (its old two-part layout, which also reshapes the controls) – not used with this row */
+  new MutationObserver(()=>{if(mine!==null&&top.classList.contains('tw'))top.classList.remove('tw')}).observe(top,{attributes:true,attributeFilter:['class']});
+  {let lastMob=null;new MutationObserver(()=>{const m=!desk();if(m!==lastMob){lastMob=m;fit()}}).observe(document.body,{attributes:true,attributeFilter:['class']})}
+  addEventListener('resize',()=>requestAnimationFrame(fit));
+  if(window.ResizeObserver){const ro=new ResizeObserver(()=>requestAnimationFrame(fit));[...hxw.children,brand].forEach(e=>ro.observe(e))}
+  fit();setTimeout(fit,150);setTimeout(fit,800);document.fonts&&document.fonts.ready.then(()=>setTimeout(fit,80));
+})();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
    The page is first drawn in its plain form (the glass look, the intro in Swedish) and only then gets your saved look and
