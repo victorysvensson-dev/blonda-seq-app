@@ -69,6 +69,11 @@ N.picked=async(id,files)=>{const inp=N.picks[id];delete N.picks[id];if(!inp||!fi
     if(list.length){const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));inp.files=dt.files;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}}
   finally{post({t:'pick-done',id})}};
 
+/* ---- sampling: the inputs iOS offers (USB instruments, the mic); the page records with getUserMedia ---- */
+{const subs=new Set();let last=[];N.audioInputs=list=>{last=list||[];subs.forEach(f=>{try{f(last)}catch(e){}})};
+ N.audioIn={open(){post({t:'audio-in',op:'open'})},select(uid){post({t:'audio-in',op:'select',uid})},close(){post({t:'audio-in',op:'close'})},
+   onInputs(f){subs.add(f);if(last.length)f(last);return()=>subs.delete(f)},get inputs(){return last}}}
+
 /* ---- the screen stays on while playing ---- */
 const watch=()=>{let last=null;const chk=()=>{const p=document.body.classList.contains('playing');if(p!==last){last=p;post({t:'playing',on:p})}};
   new MutationObserver(chk).observe(document.body,{attributes:true,attributeFilter:['class']});chk()};
@@ -126,6 +131,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   try{const j=await (await fetch('blonda-pack/pack.json')).json(),its=(j.items||[]).slice(0,2);const inp=document.createElement('input');inp.type='file';inp.accept='audio/*';inp.multiple=true;
     const got=new Promise(res=>{inp.onchange=()=>res([...inp.files].map(f=>f.name+':'+f.size));setTimeout(()=>res('timeout'),5000)});
     const pidT=999999;N.picks[pidT]=inp;await N.picked(pidT,its.map(it=>({u:'blonda-pack/'+it.file,name:it.file.split('/').pop(),type:'audio/wav'})));r.importPipe=await got}catch(e){r.importPipe=String(e)}
+  r.audioInApi=!!(N.audioIn&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
   r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
   r.midiApi=!!navigator.requestMIDIAccess;
   try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;

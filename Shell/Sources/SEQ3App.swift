@@ -41,6 +41,40 @@ enum Audio {
             NSLog("SEQ3 audio session: %@", String(describing: error))
         }
     }
+
+    /// Sampling: the session records too (USB instruments such as OP-XY / OP-1 field, the built-in mic), in "measurement"
+    /// mode so iOS adds no processing (no gain control, no noise suppression) – the sample is what the instrument plays.
+    /// Back to plain playback when the sampler is closed.
+    static func record(_ on: Bool) {
+        let s = AVAudioSession.sharedInstance()
+        do {
+            if on {
+                try s.setCategory(.playAndRecord, mode: .measurement, options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
+            } else {
+                try s.setCategory(.playback, mode: .default, options: [])
+            }
+            try? s.setPreferredSampleRate(48_000)
+            try s.setActive(true)
+        } catch {
+            NSLog("SEQ3 audio session (record %@): %@", on ? "on" : "off", String(describing: error))
+        }
+    }
+
+    /// The inputs iOS offers right now (USB instruments show up here as "USB audio").
+    static func inputs() -> [[String: Any]] {
+        let s = AVAudioSession.sharedInstance()
+        let cur = s.currentRoute.inputs.first?.uid
+        return (s.availableInputs ?? []).map { p in
+            ["uid": p.uid, "name": p.portName, "type": p.portType.rawValue, "usb": p.portType == .usbAudio,
+             "channels": p.channels?.count ?? 0, "current": p.uid == cur]
+        }
+    }
+
+    static func selectInput(_ uid: String) -> Bool {
+        let s = AVAudioSession.sharedInstance()
+        guard let p = s.availableInputs?.first(where: { $0.uid == uid }) else { return false }
+        do { try s.setPreferredInput(p); return true } catch { return false }
+    }
 }
 
 /// iPad / iPhone: the page goes edge to edge and handles the safe areas itself (notch, home bar).

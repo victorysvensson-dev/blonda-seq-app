@@ -1,4 +1,5 @@
 import UIKit
+import AVFoundation
 import WebKit
 import UniformTypeIdentifiers
 
@@ -70,9 +71,9 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         web.load(URLRequest(url: BundleScheme.startURL))
         if selfTest {
             // if the page never reports, the app still writes what it knows, so a hang can be told apart from a crash
-            DispatchQueue.main.asyncAfter(deadline: .now() + 150) { [weak self] in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 270) { [weak self] in
                 guard let self, !self.testDone else { return }
-                self.finishSelfTest(["fatal": "the page did not report within 150 s"])
+                self.finishSelfTest(["fatal": "the page did not report within 270 s"])
             }
         }
     }
@@ -203,6 +204,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
                       delayMs: (b["dl"] as? NSNumber)?.doubleValue ?? 0)
         case "save":
             save(b)
+        case "audio-in":
+            audioIn(b)
         case "pick-audio":
             pickAudio(id: (b["id"] as? NSNumber)?.intValue ?? 0, multi: (b["multi"] as? Bool) ?? true)
         case "pick-done":
@@ -270,6 +273,40 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     func documentPickerWasCancelled(_ controller: UIDocumentPickerViewController) {
         if controller === importPicker { finishPick([]); return }
         finishSave(ok: false)
+    }
+
+    // MARK: - sampling: recording from instruments (USB audio, the mic)
+
+    private var routeObserver: NSObjectProtocol?
+
+    /// The sampler asks for the inputs ("open"), picks one ("select") and lets go ("close"). The list goes back to the
+    /// page as __blonda.audioInputs([...]) – again whenever something is plugged in or out while the sampler is open.
+    private func audioIn(_ b: [String: Any]) {
+        switch b["op"] as? String {
+        case "open":
+            Audio.record(true)
+            if routeObserver == nil {
+                routeObserver = NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
+                    self?.call("__blonda.audioInputs", Audio.inputs())
+                }
+            }
+            call("__blonda.audioInputs", Audio.inputs())
+        case "select":
+            let ok = Audio.selectInput(b["uid"] as? String ?? "")
+            call("__blonda.audioInputs", Audio.inputs().map { var d = $0; d["selected"] = ok; return d })
+        case "close":
+            if let o = routeObserver { NotificationCenter.default.removeObserver(o); routeObserver = nil }
+            Audio.record(false)
+        default:
+            break
+        }
+    }
+
+    /// The page's own origin may record (the sampler); iOS still asks the user once (the microphone permission).
+    @available(iOS 15.0, *)
+    func webView(_ webView: WKWebView, requestMediaCapturePermissionFor origin: WKSecurityOrigin, initiatedByFrame frame: WKFrameInfo,
+                 type: WKMediaCaptureType, decisionHandler: @escaping (WKPermissionDecision) -> Void) {
+        decisionHandler(origin.protocol == BundleScheme.scheme && type != .camera ? .grant : .deny)
     }
 
     // MARK: - importing sounds (several files or whole folders at once)

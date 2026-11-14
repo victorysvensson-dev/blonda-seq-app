@@ -24,6 +24,7 @@ def check(dev, run, r):
     need(bool(a.get('workletOk')), f"Web Audio + AudioWorklet (sr {a.get('sr')}, state {a.get('state')}{', ' + r['audioErr'] if r.get('audioErr') else ''})")
     need((r.get('packItems') or 0) > 200 and r.get('packDecoded') is True, f"BLONDA sound pack built in ({r.get('packItems')} sounds, decoded {r.get('packDecoded')}{', ' + r['packErr'] if r.get('packErr') else ''})")
     need(r.get('noZoom') is True, 'the app cannot be pinch-zoomed (viewport user-scalable=no)')
+    need(r.get('audioInApi') is True, 'sampling: recording API present (getUserMedia + the app\'s input list)')
     ip=r.get('importPipe')
     need(isinstance(ip, list) and len(ip) == 2 and all(int(str(x).rsplit(':', 1)[-1] or 0) > 0 for x in ip), f'importing several sounds at once reaches the page ({ip})')
     need(r.get('midiApi') is True, 'Web MIDI API present')
