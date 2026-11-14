@@ -143,7 +143,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   /* one recorded block (L = 1, R = -0.5) decodes to the right samples */
   try{const d=N.recDecode('AACAPwAAAL8=');r.recBlock=[d[0][0],d[1][0]]}catch(e){r.recBlock=String(e)}
   /* the recorder for real for a second (simulators: the microphone is granted by CI; the Mac runner would ask) */
-  if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();
+  if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();N.audioIn.close();await new Promise(s=>setTimeout(s,800));/* like the sampler: back to the playing session */
     r.recLive={ok:!!st.ok,err:st.err||'',sr:st.sr||sr,frames:fr}}catch(e){r.recLive=String(e)}
   r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
   r.midiApi=!!navigator.requestMIDIAccess;
