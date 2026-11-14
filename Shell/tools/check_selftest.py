@@ -15,6 +15,8 @@ def check(dev, run, r):
         need(False, 'self-test result missing (the app did not report)')
         return
     need(not r.get('fatal'), f"no fatal error ({r.get('fatal')})")
+    if r.get('lastStep') or r.get('webCrashes'):
+        lines.append(f"  info: last self-test step {r.get('lastStep')}, page process ended at {r.get('webCrashes')}")
     need(r.get('secure') is True, f"secure context ({r.get('origin')})")
     need(str(r.get('ver', '')).startswith('v'), f"page loaded, version {r.get('ver')}")
     need(r.get('lang') == 'en', f"English ({r.get('lang')})")

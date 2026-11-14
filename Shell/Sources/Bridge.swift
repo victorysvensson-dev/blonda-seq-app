@@ -129,6 +129,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   r.body=document.body.className;r.width=innerWidth;r.height=innerHeight;
   try{const k='blonda-selftest';r.lsPrev=localStorage.getItem(k);localStorage.setItem(k,String(Date.now()));r.ls=localStorage.getItem(k)!=null}catch(e){r.ls=String(e)}
   r.project=!!localStorage.getItem('blonda-seq3-glass');
+  post({t:'step',s:'begin'});
   {const t0=performance.now();r.idb=await tmo(new Promise(res=>{try{const q=indexedDB.open('blonda-selftest',1);q.onsuccess=()=>{q.result.close();res(true)};q.onerror=()=>res(String(q.error))}catch(e){res(String(e))}}),15000).catch(e=>String(e));r.idbMs=Math.round(performance.now()-t0)}
   try{const AC=window.AudioContext||window.webkitAudioContext,c=new AC();r.audio={sr:c.sampleRate,state:c.state,worklet:!!c.audioWorklet};
     if(c.audioWorklet){const u=URL.createObjectURL(new Blob(["registerProcessor('t',class extends AudioWorkletProcessor{process(){return true}})"],{type:'application/javascript'}));
@@ -139,6 +140,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   try{const j=await (await fetch('blonda-pack/pack.json')).json(),its=(j.items||[]).slice(0,2);const inp=document.createElement('input');inp.type='file';inp.accept='audio/*';inp.multiple=true;
     const got=new Promise(res=>{inp.onchange=()=>res([...inp.files].map(f=>f.name+':'+f.size));setTimeout(()=>res('timeout'),5000)});
     const pidT=999999;N.picks[pidT]=inp;await N.picked(pidT,its.map(it=>({u:'blonda-pack/'+it.file,name:it.file.split('/').pop(),type:'audio/wav'})));r.importPipe=await got}catch(e){r.importPipe=String(e)}
+  post({t:'step',s:'rec'});
   r.audioInApi=!!(N.audioIn&&N.audioIn.rec&&N.recData);
   /* one recorded block (L = 1, R = -0.5) decodes to the right samples */
   try{const d=N.recDecode('AACAPwAAAL8=');r.recBlock=[d[0][0],d[1][0]]}catch(e){r.recBlock=String(e)}
@@ -146,6 +148,7 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();N.audioIn.close();await new Promise(s=>setTimeout(s,800));/* like the sampler: back to the playing session */
     r.recLive={ok:!!st.ok,err:st.err||'',sr:st.sr||sr,frames:fr}}catch(e){r.recLive=String(e)}
   r.noZoom=/user-scalable=no/.test((document.querySelector('meta[name=viewport]')||{}).content||'');
+  post({t:'step',s:'midi'});
   r.midiApi=!!navigator.requestMIDIAccess;
   try{const t0=performance.now();const a=await tmo(navigator.requestMIDIAccess(),15000);r.midiMs=Math.round(performance.now()-t0);let ti=null,to=null;
     for(let k=0;k<100&&!(ti&&to);k++){ti=[...a.inputs.values()].find(p=>p.name==='BLONDA TEST');to=[...a.outputs.values()].find(p=>p.name==='BLONDA TEST');if(!(ti&&to))await new Promise(s=>setTimeout(s,100))}
@@ -153,11 +156,14 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
     if(ti)r.midiIn=await new Promise(res=>{ti.onmidimessage=e=>res(Array.from(e.data));post({t:'test-midi-send'});setTimeout(()=>res('timeout'),3000)});
     if(to){to.send([0x90,64,90]);to.send([0x80,64,0],performance.now()+200);r.midiOutSent=true}
   }catch(e){r.midiErr=String(e)}
+  post({t:'step',s:'save'});
   try{const dl=await window.claude.use('downloads');await tmo(dl.save({filename:'selftest.blonda.json',data:'{"blonda":"seq3"}'}),3000);r.save=true}catch(e){r.save=String(e&&e.message||e)}
+  post({t:'step',s:'start'});
   r.syncPill=(document.querySelector('#syncPill span')||{}).textContent||null;
   /* start the sound like a tap on the intro button, so the screenshot shows the app and the page's own audio is checked */
   try{const b=document.getElementById('startBtn');if(b)b.click();await new Promise(s=>setTimeout(s,2500));const st=document.getElementById('start');
     r.started=!!(st&&st.hidden);const A=window.__seq&&__seq.Aref&&__seq.Aref();const c=A&&A.out&&A.out.context;r.pageAudio=c?{state:c.state,sr:c.sampleRate,base:Math.round((c.baseLatency||0)*1000),out:Math.round((c.outputLatency||0)*1000)}:null}catch(e){r.startErr=String(e)}
+  post({t:'step',s:'report'});
   r.errors=N.errs;
  }catch(e){r.fatal=String(e)}
  post({t:'selftest',r})},3500));

@@ -222,6 +222,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             if (b["p"] as? String) == "begin" { cpuMeter.begin(b["name"] as? String ?? "?") } else { Diagnostics.log(cpuMeter.end()) }
         case "test-midi-send":
             if selfTest { midi.sendTest() }
+        case "step":
+            testStep = b["s"] as? String ?? "?"
         case "selftest":
             if selfTest { finishSelfTest(b["r"] as? [String: Any] ?? [:]) }
         default:
@@ -424,6 +426,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     /// saved by the page itself, so it comes back where it was.
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
         NSLog("SEQ3: web content process ended – reloading")
+        testCrashes.append(testStep)
         Diagnostics.log("web content process ended – reloading")
         webView.load(URLRequest(url: BundleScheme.startURL))
     }
@@ -469,6 +472,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     // MARK: - self-test
 
     private var testDone = false
+    private var testStep = "start"          // the self-test's last step, and where the page's process ended (if it did)
+    private var testCrashes: [String] = []
 
     private func finishSelfTest(_ page: [String: Any]) {
         guard !testDone else { return }
@@ -481,6 +486,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             r["midiOutReceived"] = testOut.map { $0.map { Int($0) } }
             r["saveBytes"] = testSaveBytes
             r["midiNative"] = midi.diag
+            r["lastStep"] = testStep
+            r["webCrashes"] = testCrashes
             let data = (try? JSONSerialization.data(withJSONObject: r, options: [.prettyPrinted, .sortedKeys])) ?? Data()
             let text = String(data: data, encoding: .utf8) ?? "{}"
             let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
