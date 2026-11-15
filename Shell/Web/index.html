@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v254</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v255</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10810,11 +10810,65 @@ body:has(>.duo.box:not([hidden])) .duo-veil{display:block}
 .duo.box.boxw .d-play{width:64px;height:64px}.duo.box.boxw .d-mem button{height:48px}
 .duo.box .d-pre .nm{max-width:min(30vw,280px)}
 `;document.head.appendChild(css2);
+/* ================= (v255) idea in the BLONDA look + the out module =================
+   Drums and Starter chips, the big buttons, memories, undo and tempo get the app's straight corners and hairline edges
+   (like the track tags under the orbit), the window and panel lose their big rounding. On iPad and computer the empty top
+   of the right panel holds "out · level": the output as a dot waveform (as the app's out card), the peak in dB and a dot
+   meter for left and right. */
+const css3=document.createElement('style');css3.id='duoblonda';css3.textContent=`
+body .duo .d-chip{border-radius:3px!important;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);justify-content:flex-start;padding:0 9px;gap:7px;font-weight:500;letter-spacing:.03em}
+body .duo .d-chip i{width:7px!important;height:7px!important;border-radius:1px!important}
+body .duo .d-chip.d-press{background:rgba(255,255,255,.12)}
+body .duo .d-chip.off,body .duo .d-chip.mut,body .duo .d-chip.tom{background:transparent;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+body .duo .d-chip.d-flash{background:color-mix(in srgb,var(--c) 30%,#1d1c1a);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--c) 70%,transparent)}
+body .duo .d-big button{border-radius:4px!important;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1);font-weight:600}
+body .duo .d-big .idea{border-radius:4px!important;background:#FF8A3D;box-shadow:none}
+body .duo .d-mem button{border-radius:3px!important}
+body .duo .d-bot .u{border-radius:4px!important;background:rgba(255,255,255,.04);box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+body .duo .d-tempo button{border-radius:4px!important}body .duo .d-tempo .d-key2{border-radius:4px!important}
+body .duo .d-fx{border-radius:4px!important}
+body .duo .d-lb{letter-spacing:.14em;font-weight:500}
+.duo.box{border-radius:14px!important}
+.duo.box.boxw.boxw>.d-panel,.duo>.d-panel{border-radius:6px!important;background:rgba(255,255,255,.025)!important}
+.duo .d-out{display:none}
+.duo.box.boxw.boxw{grid-template-rows:auto minmax(0,1fr) auto auto auto auto auto auto auto 14px!important}
+.duo.box.boxw.boxw>.d-out{display:flex;flex-direction:column;grid-column:2;grid-row:2;min-height:0;margin:26px 0 20px;gap:10px}
+.duo .d-oh{display:flex;align-items:flex-end;justify-content:space-between;font:500 8.5px/1 var(--f-mono,monospace);letter-spacing:.14em;text-transform:uppercase;color:rgba(236,232,220,.4)}
+.duo .d-oh b{color:rgba(236,232,220,.75);font-weight:500}
+.duo .d-oh em{font-style:normal;display:flex;align-items:baseline;gap:5px;letter-spacing:0}
+.duo .d-oh .d-db{font:400 26px/1 var(--f-dot,monospace);color:#ECE8DC;letter-spacing:.02em}.duo .d-oh small{font:500 9px/1 var(--f-mono,monospace);text-transform:none;color:rgba(236,232,220,.45)}
+.duo .d-oc{flex:1;min-height:0;width:100%;display:block;border-radius:3px;background:rgba(0,0,0,.18);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.duo .d-om{display:grid;gap:5px}.duo .d-om i{display:block;height:6px;position:relative;
+  background:radial-gradient(circle,rgba(236,232,220,.13) 1.3px,transparent 1.6px) 0 50%/6px 6px repeat-x}
+.duo .d-om i::before{content:attr(data-ch);position:absolute;left:-12px;top:-1px;font:500 7px/8px var(--f-mono,monospace);color:rgba(236,232,220,.4)}
+.duo .d-om i::after{content:"";position:absolute;inset:0;width:var(--v,0%);background:radial-gradient(circle,#ECE8DC 1.3px,transparent 1.6px) 0 50%/6px 6px repeat-x}
+.duo .d-om i.hot::after{background:radial-gradient(circle,#FF8A3D 1.3px,transparent 1.6px) 0 50%/6px 6px repeat-x}
+.duo .d-om{padding-left:12px}
+@media (max-width:600px){body .duo .d-chip{justify-content:center;padding:0 3px;gap:5px;letter-spacing:0}}
+@media (max-height:700px){.duo.box.boxw.boxw>.d-out{margin:20px 0 14px}.duo .d-oh .d-db{font-size:20px}}
+`;document.head.appendChild(css3);
+const OUT={buf:null,lb:null,rb:null,pk:0,lv:[0,0],t:0};
+function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetParent)return;const cv=box.querySelector('canvas'),r=cv.getBoundingClientRect();if(r.width<10||r.height<10)return;
+  const dpr=Math.min(2,devicePixelRatio||1),W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);const w=r.width,h=r.height;g.clearRect(0,0,w,h);
+  /* the faint dot grid behind, as in the app's cards */
+  g.fillStyle='rgba(236,232,220,.07)';for(let y=8;y<h;y+=10)for(let x=8;x<w;x+=10){g.fillRect(x-.6,y-.6,1.2,1.2)}
+  const an=window.A&&A.an||(typeof A!=='undefined'?A.an:null);let pk=0;
+  if(typeof ctx!=='undefined'&&ctx&&an){if(!OUT.buf||OUT.buf.length!==an.fftSize)OUT.buf=new Float32Array(an.fftSize);an.getFloatTimeDomainData(OUT.buf);
+    const N=Math.max(24,Math.floor(w/6)),L=Math.min(1024,OUT.buf.length);g.fillStyle='rgba(236,232,220,.92)';
+    for(let x=0;x<N;x++){const v=OUT.buf[Math.floor(x/N*L)]||0;pk=Math.max(pk,Math.abs(v));g.beginPath();g.arc(3+x/(N-1)*(w-6),h*.5-v*h*.42,1.5,0,6.283);g.fill()}
+    for(let i=0;i<OUT.buf.length;i+=4)pk=Math.max(pk,Math.abs(OUT.buf[i]));
+    const side=[A.anL,A.anR];side.forEach((a,j)=>{let p=pk;if(a){if(!OUT['b'+j]||OUT['b'+j].length!==a.fftSize)OUT['b'+j]=new Float32Array(a.fftSize);a.getFloatTimeDomainData(OUT['b'+j]);p=0;const b=OUT['b'+j];for(let i=0;i<b.length;i+=2)p=Math.max(p,Math.abs(b[i]))}
+      OUT.lv[j]=Math.max(p,OUT.lv[j]*.86)})}
+  else{g.fillStyle='rgba(236,232,220,.35)';const N=Math.max(24,Math.floor(w/6));for(let x=0;x<N;x++){g.beginPath();g.arc(3+x/(N-1)*(w-6),h*.5,1.2,0,6.283);g.fill()}OUT.lv=[OUT.lv[0]*.86,OUT.lv[1]*.86]}
+  OUT.pk=Math.max(pk,OUT.pk*.9);const now=performance.now();
+  if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
+  box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v254</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v255</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
-  <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
+  <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
   <div class="d-big"><button class="idea" data-a="idea">ny idé<small class="d-sty">trummor + starter</small></button><button data-a="ch">nya ackord<small>keeps the drums</small></button><button data-a="gr">nytt groove<small>bara trummor</small></button><button data-a="snd">nya ljud<small>kit + starter</small></button></div>
   <div class="d-bot"><button class="u" data-u="u" aria-label="Ångra">↶</button><button class="d-play" aria-label="Spela"></button><button class="u" data-u="r" aria-label="Gör om">↷</button><div class="d-mem">${[0,1,2,3].map(i=>`<button data-m="${i}" title="Minne ${i+1}: tryck = spara / hämta · håll = spara över"><b>${i+1}</b><small>tom</small></button>`).join('')}</div></div>
   <div class="d-note">tryck en trumma = av/på · håll = nytt mönster · tryck i mitten = spela/stoppa · håll ny idé = välj stil · dina egna syntmönster är tysta här</div>
@@ -11235,7 +11289,7 @@ trkBox.addEventListener('wheel',e=>{const c=e.target.closest('.sc.k-st');if(!c)r
   if(!trkBox._wp){push();trkBox._wp=1}trkBox._w=setTimeout(()=>{trkBox._wp=0},500);
   if(l==='klo'){P.ed.klo[q]=stepScale(P,ev.klo.n,d)}else{const ch=stxChords(P),ci=ev.ci!=null?ev.ci:ciAt(q,ch.length),c=ch[ci],lo=P.subLo??33,e0=(P.ed.sub||{})[ci],cur=e0&&e0.nm===c.name?e0.n:lo+(((c.r-lo)%12)+12)%12;P.ed.sub[ci]={nm:c.name,n:stepScale(P,cur,d)}}
   commit();trkPaint(true)},{passive:false});
-function loop(){if(!DUO.open)return;requestAnimationFrame(loop);const vg=window.__visG?__visG():-1;if(vg>=0){HG=vg}const k=[playing?HG:-1,playing].join('|');if(k!==lastK){lastK=k;trkPaint();draw();$d('.d-play').innerHTML=playing?PAUSE:PLAY}}
+function loop(){if(!DUO.open)return;requestAnimationFrame(loop);try{outDraw()}catch(e){}const vg=window.__visG?__visG():-1;if(vg>=0){HG=vg}const k=[playing?HG:-1,playing].join('|');if(k!==lastK){lastK=k;trkPaint();draw();$d('.d-play').innerHTML=playing?PAUSE:PLAY}}
 let HG=0;const hG=()=>playing?(window.__visG&&__visG()>=0?__visG():HG):-1;
 function open(){if(DUO.open)return;DUO.open=true;boxMode();if(el.classList.contains('box')&&TRK.on){TRK.on=false;el.classList.remove('trk')}el.hidden=false;initAudio();
   const P=stx();if(!P.on){P.on=1;try{stxEnsure()}catch(e){}commit()}
@@ -14565,6 +14619,13 @@ body .daw .dw-top .dw-len{font:500 9.5px var(--f-mono)!important;color:rgba(245,
 `;
   document.head.appendChild(css);
 })();
+
+/* ================= steady card dragging (v255) =================
+   A card being dragged follows the finger with a stiff spring (k 900, damping 50). The springs were stepped once per
+   frame; when the frame rate drops (while playing, everything draws) a frame is up to 33 ms, and at that step the stiff
+   spring is unstable – it overshoots more every frame, so the card shook and zoomed wildly. Now each frame is split into
+   steps of at most 4 ms, where both springs are steady (checked: the step's growth factor stays well under 1). ================= */
+(()=>{try{const one=stepSprings;stepSprings=function(dt){const n=Math.max(1,Math.ceil(dt/.004)),h=dt/n;for(let i=0;i<n;i++)one(h)}}catch(e){console.warn('dragfix',e)}})();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
    The page is first drawn in its plain form (the glass look, the intro in Swedish) and only then gets your saved look and
