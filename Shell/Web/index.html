@@ -2880,7 +2880,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v253</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v254</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10647,6 +10647,9 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 .duo .d-tempo .d-lk{width:34px;height:26px;border-radius:13px;margin-top:6px;display:grid;place-items:center;background:rgba(255,255,255,.05);color:rgba(236,232,220,.5)}
 .duo .d-tempo .d-lk svg{width:13px;height:13px}
 .duo .d-tempo .d-lk.d-on{background:#FF8A3D;color:#1A0E07}
+.duo .d-tempo .d-key2{min-width:34px;height:38px;padding:0 6px;border-radius:13px;margin-top:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:rgba(255,255,255,.05);color:rgba(236,232,220,.75)}
+.duo .d-tempo .d-key2 b{font:400 12px/1 var(--f-dot,monospace);padding:0;white-space:nowrap}.duo .d-tempo .d-key2 small{font-size:7px}
+.duo .d-tempo .d-key2.d-on{background:#FF8A3D;color:#1A0E07}.duo .d-tempo .d-key2.d-on small{color:rgba(26,14,7,.6)}
 .duo .d-tempo b{font:400 15px/1 var(--f-dot,monospace);padding:3px 0}.duo .d-tempo small{font:500 8px/1 var(--f-mono,monospace);letter-spacing:.14em;color:rgba(236,232,220,.45)}
 .duo .d-key{position:absolute;left:0;top:0;display:flex;flex-direction:column;gap:3px}
 .duo .d-key small{font:500 8px/1 var(--f-mono,monospace);letter-spacing:.14em;color:rgba(236,232,220,.45);text-transform:uppercase}.duo .d-key b{font:400 15px/1 var(--f-dot,monospace)}
@@ -10769,8 +10772,8 @@ body:has(>.duo:not([hidden])) .pk-pop{z-index:7100}
 @media (orientation:portrait) and (min-aspect-ratio:2/3) and (max-width:599px){.duo{gap:6px}.duo .d-chip{height:31px}.duo .d-big button{height:46px}.duo .d-big .idea{height:52px}.duo .d-play{width:54px;height:54px}.duo .d-bot .u{width:36px;height:36px;line-height:36px}.duo .d-mem button{height:38px}}
 `;document.head.appendChild(css);
 /* ---------- (v253) iPad and computer: the idea screen is a window over the app, the app blurred behind it ----------
-   The tracker lies as a faint layer behind the window's contents and runs with the music – you see the ideas being
-   written. "tracker" (T) brings it forward in the circle's place; T again sends it back. Phones keep the full screen. */
+   "tracker" (T) puts the tracker in the circle's place; T again brings the circle back. Phones keep the full screen.
+   (v254) The panel on the right is as tall as the circle / tracker beside it. */
 const css2=document.createElement('style');css2.textContent=`
 .duo-veil{position:fixed;inset:0;z-index:6999;display:none;background:rgba(10,10,9,.34);-webkit-backdrop-filter:blur(22px) saturate(.8);backdrop-filter:blur(22px) saturate(.8);animation:duoVeil .3s ease both}
 @keyframes duoVeil{from{opacity:0}to{opacity:1}}
@@ -10784,14 +10787,10 @@ body:has(>.duo.box:not([hidden])) .duo-veil{display:block}
 .duo.box .d-tb{display:block;height:34px;padding:0 14px;border-radius:17px;background:rgba(255,255,255,.07);font:500 11px/34px var(--f-mono,monospace);color:rgba(236,232,220,.65);margin-right:4px}
 .duo.box.trk .d-tb{background:rgba(255,138,61,.18);color:#FF9A57;box-shadow:inset 0 0 0 1px rgba(255,138,61,.5)}
 .duo.box .d-keys{display:none!important}
-/* the faint tracker behind everything */
-.duo.box>.d-trk{display:flex!important;position:absolute!important;inset:64px 18px 14px!important;z-index:0;opacity:.12;pointer-events:none;background:none!important;box-shadow:none!important;padding:0 6px!important;
-  grid-column:auto!important;grid-row:auto!important;height:auto!important;width:auto!important;-webkit-mask:linear-gradient(180deg,transparent,#000 12%,#000 82%,transparent);mask:linear-gradient(180deg,transparent,#000 12%,#000 82%,transparent);transition:opacity .4s}
-.duo.box:not(.trk)>.d-trk :is(.d-th,.d-tf){display:none}
-.duo.box:not(.trk)>.d-trk .d-r.pl{background:rgba(255,138,61,.3)!important}
+.duo.box:not(.trk)>.d-trk{display:none!important}
 /* the tracker in front, in the circle's place */
 .duo.box.trk>.d-ring{display:none!important}
-.duo.box.trk>.d-trk{position:relative!important;inset:auto!important;opacity:1;pointer-events:auto;z-index:1;-webkit-mask:none;mask:none;padding:14px 12px 10px!important;background:rgba(0,0,0,.24)!important;border-radius:20px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)!important}
+.duo.box.trk>.d-trk{display:flex!important;position:relative!important;inset:auto!important;opacity:1;pointer-events:auto;z-index:1;-webkit-mask:none;mask:none;padding:14px 12px 10px!important;background:rgba(0,0,0,.24)!important;border-radius:20px!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)!important}
 .duo.box:not(.boxw).trk>.d-trk{flex:1;min-height:0}
 /* a wide window: the circle (or the tracker) on the left, the controls in a panel on the right */
 .duo.box.boxw.boxw{display:grid!important;width:min(1180px,90vw);height:min(760px,86vh);grid-template-columns:minmax(0,1fr) clamp(370px,38%,440px)!important;
@@ -10799,7 +10798,8 @@ body:has(>.duo.box:not([hidden])) .duo-veil{display:block}
 .duo.box.boxw.boxw>.d-top{grid-column:1/-1;grid-row:1;padding-bottom:6px}
 .duo.box.boxw.boxw>.d-ring{display:flex;grid-column:1;grid-row:2/-1;width:auto!important;height:auto!important;aspect-ratio:auto!important;align-self:stretch!important;justify-self:stretch!important;max-height:none!important}
 .duo.box.boxw.boxw.trk>.d-trk{grid-column:1!important;grid-row:2/-1!important;align-self:stretch;justify-self:stretch;width:auto!important;height:auto!important;margin:8px 0 0}
-.duo.box.boxw.boxw>.d-panel{display:block;grid-column:2;grid-row:3/10;margin:-18px -18px;border-radius:22px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.duo.box.boxw.boxw>.d-ring{margin-top:8px}
+.duo.box.boxw.boxw>.d-panel{display:block;grid-column:2;grid-row:2/-1;margin:8px -18px 0;border-radius:22px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
 .duo.box.boxw.boxw>.d-lb{display:block;grid-column:2;font:600 8.5px/1 var(--f-mono,monospace);letter-spacing:.2em;text-transform:uppercase;color:rgba(236,232,220,.4);padding:0 2px 9px}
 .duo.box.boxw.boxw>.d-lb[data-l="dr"]{grid-row:3}.duo.box.boxw.boxw>.d-chips[data-g="dr"]{grid-row:4;grid-column:2}
 .duo.box.boxw.boxw>.d-lb[data-l="st"]{grid-row:5;padding-top:16px}.duo.box.boxw.boxw>.d-chips[data-g="st"]{grid-row:6;grid-column:2}
@@ -10811,11 +10811,11 @@ body:has(>.duo.box:not([hidden])) .duo-veil{display:block}
 .duo.box .d-pre .nm{max-width:min(30vw,280px)}
 `;document.head.appendChild(css2);
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v253</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v254</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
-  <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button></div></div>
+  <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
-  <div class="d-big"><button class="idea" data-a="idea">ny idé<small class="d-sty">trummor + starter</small></button><button data-a="ch">nya ackord<small>samma groove</small></button><button data-a="gr">nytt groove<small>bara trummor</small></button><button data-a="snd">nya ljud<small>kit + starter</small></button></div>
+  <div class="d-big"><button class="idea" data-a="idea">ny idé<small class="d-sty">trummor + starter</small></button><button data-a="ch">nya ackord<small>keeps the drums</small></button><button data-a="gr">nytt groove<small>bara trummor</small></button><button data-a="snd">nya ljud<small>kit + starter</small></button></div>
   <div class="d-bot"><button class="u" data-u="u" aria-label="Ångra">↶</button><button class="d-play" aria-label="Spela"></button><button class="u" data-u="r" aria-label="Gör om">↷</button><div class="d-mem">${[0,1,2,3].map(i=>`<button data-m="${i}" title="Minne ${i+1}: tryck = spara / hämta · håll = spara över"><b>${i+1}</b><small>tom</small></button>`).join('')}</div></div>
   <div class="d-note">tryck en trumma = av/på · håll = nytt mönster · tryck i mitten = spela/stoppa · håll ny idé = välj stil · dina egna syntmönster är tysta här</div>
   <div class="d-keys"><span><b>mellanslag</b>spela</span><span><b>enter</b>ny idé</span><span><b>C</b>ackord</span><span><b>G</b>groove</span><span><b>S</b>ljud</span><span><b>← →</b>stil</span><span><b>1–4</b>minnen</span><span><b>Q · W</b>håll = halv · stutter</span><span><b>⌘Z</b>ångra</span><span><b>T</b>tracker</span><span><b>esc</b>stäng</span></div>`;
@@ -10932,6 +10932,14 @@ Object.assign(STY,{
     kit:{kick:['','thump'],snare:['909',''],hat:['','909'],perc:['','tom']},eng:{bass:['sub','grime','mini'],keys:['bris','fm'],lead:['pluck','bris'],pad:['super','bris']}}});
 ['garage','afro','lofi','synthwave','drill','dnb'].forEach(k=>{if(!STY_K.includes(k))STY_K.push(k)});
 const BPMR={house:[118,126],techno:[124,134],hiphop:[84,96],electro:[108,126],trap:[130,150],disco:[112,122],brk:[126,140],garage:[130,136],afro:[120,124],lofi:[76,88],synthwave:[96,108],drill:[138,146],dnb:[170,176]};
+/* (v254) the key of new ideas: any (as before), or locked to one key, or to minor / major only */
+let keyLock=(()=>{try{const k=JSON.parse(localStorage.getItem('blonda.duo.key')||'null');return k&&typeof k.r==='number'?k:{r:-1,m:'any'}}catch(e){return {r:-1,m:'any'}}})();
+const KEYN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const keyLbl=()=>keyLock.r<0?(keyLock.m==='any'?'any':keyLock.m==='moll'?'any m':'any maj'):KEYN[keyLock.r]+(keyLock.m==='moll'?'m':keyLock.m==='dur'?'':'');
+/* set right after the key is chosen and before rhythm, top line and sounds are made, so all of them are made in the locked key */
+function applyKey(P,R0){if(keyLock.r>=0)P.root=keyLock.r;if(keyLock.m==='any'||P.mode===keyLock.m)return;P.mode=keyLock.m;
+  if(R0){P.custom={mode:P.mode,ch:styChords(R0,P.mode),nm:R0.nm};return}
+  if(P.custom)P.custom={mode:P.mode,ch:stxRoll(P)};else P.prog=Math.floor(Math.random()*STX_BANK[P.mode].length)}
 let bpmLock=(()=>{try{return localStorage.getItem('blonda.duo.bpmlock')==='1'}catch(e){return false}})();
 const LK_ON='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>',LK_OFF='<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3" y="7" width="10" height="7" rx="1.5"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5-.6"/></svg>';
 function bpmNew(){if(bpmLock)return '';const st=(S.dice&&S.dice.style)||'house',r=BPMR[st]||[100,128];const v=Math.round(r[0]+Math.random()*(r[1]-r[0]));S.bpm=v;try{setBpm(v)}catch(e){}return ' · '+v+' bpm'}
@@ -11034,7 +11042,7 @@ if(P.k){if(Math.random()<(core?.45:.3)){P.k.atm=+(.2+Math.random()*.25).toFixed(
   /* voice and sound (v212): the style's own sample slots stay on; otherwise a voice chop in about 4 of 10 ideas, a sound in about 1 of 4 */
   smpIdea(P,own);if(P.mel&&P.mel.dens>.7)P.mel.dens=.7;if(P.ls&&P.ls.ack&&P.ls.ack.arp&&P.ls.ack.arp.on&&P.lay.klo&&Math.random()<.5)P.ls.ack.arp.on=0}
 function styleIdea(si){const R0=STX_PRE[si];styGroove(si);melClear();const P=stx();stxLoadPre(P,si);P.on=1;P.pre=-1;P.styNm=R0.nm;
-  P.root=((R0.root+sRi(11)-5)%12+12)%12;P.seed=sRi(1e6);P.custom={mode:P.mode,ch:styChords(R0,P.mode),nm:R0.nm};P.prog=0;
+  P.root=((R0.root+sRi(11)-5)%12+12)%12;P.seed=sRi(1e6);P.custom={mode:P.mode,ch:styChords(R0,P.mode),nm:R0.nm};P.prog=0;applyKey(P,R0);
   styRhythm(P);styKlo(P);if(P.mel&&P.mel.dens!=null)P.mel.dens=+Math.max(.15,Math.min(.9,P.mel.dens+(sRnd()*2-1)*.12)).toFixed(2);
   stySounds(P,R0,false);styJitter(P);calm(P,R0);kitFor(PDR[R0.nm]||'house');stmIdea(PDR[R0.nm]||'house');proMix(PDR[R0.nm]||'house');
   let b='';if(!bpmLock){const v=R0.bpm+sRi(7)-3;S.bpm=v;try{setBpm(v)}catch(e){}b=' · '+v+' bpm'}
@@ -11045,9 +11053,16 @@ function clarity(P){const k=P.k;k.drv=Math.min(k.drv,.3);k.tejp=Math.min(k.tejp,
 function pickStyle(){if(typeof DUO.pre==='number')return DUO.pre;if(DUO.pre==='fri')return null;const last=S.dice&&S.dice.si,cn=styCoreN();let i;
   /* "alla stilar": mostly the Komorebi / Hanz x Sem0r styles the Starter was built on, now and then one of the genre styles */
   do{i=sRnd()<.72?sRi(cn):cn+sRi(STX_PRE.length-cn)}while(i===last&&STX_PRE.length>1);return i}
-const act={idea:()=>{const si=pickStyle();if(si!=null)return styleIdea(si);const n=grooveNew();if(S.dice)delete S.dice.si;melClear();const P=stx();stxDiceAll(P);P.on=1;P.styNm='';const big=fatten(P,S.dice.style);clarity(P);calm(P);kitFor(S.dice.style);stmIdea(S.dice.style);proMix(S.dice.style);const b=bpmNew();return 'Ny idé · '+n+' · '+STX_NN[P.root]+' '+P.mode+b+(big.length?' · '+big.map(e=>STX_ENGN[e]||e).join(' + '):'')},
-  ch:()=>{const si=curSty();if(si!=null){melClear();const P=stx(),R0=STX_PRE[si];P.custom={mode:P.mode,ch:styChords({...R0,ch:(P.custom&&P.custom.ch)||R0.ch},P.mode),nm:R0.nm};P.prog=0;if(sRnd()<.5)P.root=((P.root+sPk([-2,2,5,7]))%12+12)%12;P.ed={klo:{},ack:{},sub:{},luft:{}};return 'Nya ackord · stil '+R0.nm}
-    melClear();const b=document.querySelector('#stBox [data-x="ch"]');if(b)b.click();else{const P=stx();P.prog=(P.prog+1)%8}return 'Nya ackord'},
+const act={idea:()=>{const si=pickStyle();if(si!=null)return styleIdea(si);const n=grooveNew();if(S.dice)delete S.dice.si;melClear();const P=stx();stxDiceAll(P);applyKey(P,null);P.on=1;P.styNm='';const big=fatten(P,S.dice.style);clarity(P);calm(P);kitFor(S.dice.style);stmIdea(S.dice.style);proMix(S.dice.style);const b=bpmNew();return 'Ny idé · '+n+' · '+STX_NN[P.root]+' '+P.mode+b+(big.length?' · '+big.map(e=>STX_ENGN[e]||e).join(' + '):'')},
+  /* (v254) new chords = a whole new Starter (style, key, chords, rhythm, top line, sounds) – the drums stay as they are */
+  ch:()=>{const si=pickStyle();
+    if(si!=null){const R0=STX_PRE[si];melClear();const P=stx();stxLoadPre(P,si);P.on=1;P.pre=-1;P.styNm=R0.nm;
+      P.root=((R0.root+sRi(11)-5)%12+12)%12;P.seed=sRi(1e6);P.custom={mode:P.mode,ch:styChords(R0,P.mode),nm:R0.nm};P.prog=0;applyKey(P,R0);
+      styRhythm(P);styKlo(P);if(P.mel&&P.mel.dens!=null)P.mel.dens=+Math.max(.15,Math.min(.9,P.mel.dens+(sRnd()*2-1)*.12)).toFixed(2);
+      stySounds(P,R0,false);styJitter(P);calm(P,R0);stmIdea(PDR[R0.nm]||'house');if(S.dice)S.dice.si=si;
+      return 'Nya ackord · stil '+R0.nm+' · '+STX_NN[P.root]+(P.mode==='moll'?'m':'')+' · drums kept'}
+    melClear();const P=stx(),st=(S.dice&&S.dice.style)||'house';stxDiceAll(P);applyKey(P,null);P.on=1;P.styNm='';fatten(P,st);clarity(P);calm(P);stmIdea(st);
+    return 'Nya ackord · '+STX_NN[P.root]+' '+P.mode+' · drums kept'},
   gr:()=>'Nytt groove · '+grooveNew(),
   snd:()=>{const si=curSty();if(si!=null){kitFor(PDR[STX_PRE[si].nm]||'house');stySounds(stx(),STX_PRE[si],true);styJitter(stx());stmIdea(PDR[STX_PRE[si].nm]||'house');proMix(PDR[STX_PRE[si].nm]||'house');return 'Nya ljud · stil '+STX_PRE[si].nm}
     soundsNew();stmIdea((S.dice&&S.dice.style)||'house');proMix((S.dice&&S.dice.style)||'house');const P=stx(),e=[...new Set(Object.values(P.ls).filter(L=>L.snd&&L.snd.startsWith('e:')).map(L=>STX_ENGN[L.snd.slice(2)]||L.snd.slice(2)))];return 'Nya ljud'+(e.length?' · '+e.join(' + '):'')}};
@@ -11061,6 +11076,11 @@ DUO.sty=(()=>{try{const v=localStorage.getItem('blonda.duo.sty');return v&&STY[v
 el.querySelectorAll('[data-u]').forEach(b=>b.onclick=()=>{const u=b.dataset.u==='u',from=u?DUO.hist:DUO.redo,to=u?DUO.redo:DUO.hist;if(!from.length){toast(u?'Inget att ångra':'Inget att göra om');return}to.push(snapI());loadI(from.pop());toast(u?'Ångrat':'Gjort om')});
 $d('.d-play').onclick=()=>{initAudio();ctx.resume();play();paint()};
 $d('.d-x').onclick=()=>close();
+$d('.d-key2').onclick=()=>{const L=['any key (as before)','any minor key','any major key'],V=[{r:-1,m:'any'},{r:-1,m:'moll'},{r:-1,m:'dur'}],G=['any','any','any'];
+  for(const m of ['moll','dur'])KEYN.forEach((n,r)=>{L.push(n+(m==='moll'?' minor':' major'));V.push({r,m});G.push(m==='moll'?'minor':'major')});
+  const cur=V.findIndex(v=>v.r===keyLock.r&&v.m===keyLock.m);
+  const go=k=>{keyLock=V[k];try{localStorage.setItem('blonda.duo.key',JSON.stringify(keyLock))}catch(e){}paint();toast(keyLock.r<0&&keyLock.m==='any'?'Key: new ideas pick freely':'Key: new ideas in '+L[k])};
+  if(window.pickShow)pickShow($d('.d-key2'),L,cur,go,G);else go((cur+1)%V.length)};
 $d('.d-lk').onclick=()=>{bpmLock=!bpmLock;try{localStorage.setItem('blonda.duo.bpmlock',bpmLock?'1':'0')}catch(e){}paint();toast(bpmLock?'Tempot är låst · ny idé behåller '+S.bpm+' bpm':'Tempot är öppet · ny idé väljer tempo efter stilen')};
 /* iPhone: a long press on these must not zoom, select or open a menu (they use pointer events, not click) */
 el.addEventListener('touchstart',e=>{if(e.target.closest('.d-chip,.d-mem button,.d-fx'))e.preventDefault()},{passive:false});
@@ -11096,7 +11116,7 @@ function paint(){if(!DUO.open)return;const P=stx();
   [...stC.children].forEach((b,k)=>{const l=DLAY[k][0];const on=l[0]==='s'&&l.length===2?!!(P.smp[+l[1]]&&P.smp[+l[1]].on):!!P.lay[l];b.classList.toggle('off',!on||!P.on)});
   $d('[data-pl]').textContent=preName(DUO.pre);
   {const y=$d('.d-sty');if(y)y.textContent=typeof DUO.pre==='number'?'i stilen '+preName(DUO.pre):DUO.pre==='fri'?'helt fri slump':'en ny stil varje gång'}
-  $d('.t').textContent=S.bpm;{const lk=$d('.d-lk');lk.classList.toggle('d-on',bpmLock);lk.innerHTML=bpmLock?LK_ON:LK_OFF;lk.title=bpmLock?'Tempot är låst – tryck för att öppna':'Tempot är öppet – ny idé väljer tempo · tryck för att låsa'}$d('.d-play').innerHTML=playing?PAUSE:PLAY;
+  $d('.t').textContent=S.bpm;{const kb=$d('.d-key2');kb.querySelector('b').textContent=keyLbl();kb.classList.toggle('d-on',!(keyLock.r<0&&keyLock.m==='any'))}{const lk=$d('.d-lk');lk.classList.toggle('d-on',bpmLock);lk.innerHTML=bpmLock?LK_ON:LK_OFF;lk.title=bpmLock?'Tempot är låst – tryck för att öppna':'Tempot är öppet – ny idé väljer tempo · tryck för att låsa'}$d('.d-play').innerHTML=playing?PAUSE:PLAY;
   el.querySelectorAll('[data-m]').forEach((b,i)=>{const m=S.duoMem[i];b.classList.toggle('full',!!m);b.classList.toggle('cur',i===memCur&&!!m);b.querySelector('small').textContent=m?m.l:'tom'});draw();try{trkPaint()}catch(e){}}
 /* v212: the ring's box size is kept by a ResizeObserver instead of being measured every frame (that forced a layout 60 times a second) */
 const RB={w:0,h:0,ro:null};function ringBox(box){if(!RB.ro&&window.ResizeObserver){RB.ro=new ResizeObserver(es=>{for(const e of es){const r=e.contentRect;RB.w=Math.round(r.width);RB.h=Math.round(r.height)}fitC._k=null;if(DUO.open&&RB.w)requestAnimationFrame(()=>{try{draw()}catch(e){}})});RB.ro.observe(box)}
@@ -11149,7 +11169,7 @@ const trkBox=$d('.d-tr'),trkHead=$d('.d-tc');
 const nName=n=>STX_NN[((n%12)+12)%12]+(Math.floor(n/12)-1);
 const DAB=['BD','SD','CP','HH','OH','PC'];
 trkHead.innerHTML='<span></span>'+DR.map((i,k)=>`<span style="--c:${DC[i]}" title="${TRACKS[i].name}"><i></i>${DAB[k]}</span>`).join('')+[['ack','ackord'],['sub','sub'],['klo','topp']].map(([l,n])=>`<span style="--c:${LC[l]}"><i></i>${n}</span>`).join('');
-const trkVis=()=>DUO.open&&(TRK.on||el.classList.contains('box'))&&getComputedStyle($d('.d-trk')).display!=='none';
+const trkVis=()=>TRK.on&&DUO.open&&getComputedStyle($d('.d-trk')).display!=='none';
 function trkSet(on){TRK.on=on;try{localStorage.setItem('blonda.duo.trk',on?'1':'0')}catch(e){}el.classList.toggle('trk',on);TRK.key='';draw();trkPaint(true)}
 el.classList.toggle('trk',TRK.on);
 $d('[data-trk]').onclick=()=>trkSet(!TRK.on);
@@ -11245,7 +11265,7 @@ DUO.big={engLoad,bigSounds,fatten,BIG,BIG_LV,BIG_OCT,octOf,ROLE_TRK,engRefresh};
     else if(mod)return;
     else if(k===' ')click('.d-play');
     else if(k==='Enter'||lk==='n'){if(!e.repeat)click('[data-a="idea"]')}
-    else if(lk==='c'){if(!e.repeat)click('[data-a="ch"]')}else if(lk==='g'){if(!e.repeat)click('[data-a="gr"]')}else if(lk==='s'){if(!e.repeat)click('[data-a="snd"]')}
+    else if(lk==='c'){if(!e.repeat)click('[data-a="ch"]')}else if(lk==='g'){if(!e.repeat)click('[data-a="gr"]')}else if(lk==='s'){if(!e.repeat)click('[data-a="snd"]')}else if(lk==='k'){if(!e.repeat)click('.d-key2')}
     else if(k==='ArrowLeft')click('[data-pp="-1"]');else if(k==='ArrowRight')click('[data-pp="1"]');
     else if(/^[1-4]$/.test(k)){if(!e.repeat){const b=$d('[data-m="'+(+k-1)+'"]');ptr(b,'pointerdown');ptr(b,'pointerup')}}
     else if(lk==='q'||lk==='w'){if(!held[lk]){held[lk]=1;ptr($d(lk==='q'?'.d-fx.l':'.d-fx.r'),'pointerdown')}}
