@@ -14758,17 +14758,6 @@ body.mob .card[data-card="tracks"].mhero .orb{max-width:min(420px,100%,var(--orb
   try{const src='let t=null;onmessage=e=>{clearInterval(t);if(e.data)t=setInterval(()=>postMessage(0),25)}';const w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
     w.onmessage=()=>{if(playing&&ctx&&performance.now()-last>30)schedule()};let was=false;
     setInterval(()=>{if(playing!==was){was=playing;w.postMessage(!!playing)}},50)}catch(e){/* no workers: the page timer alone, as before */}
-  /* 3: what is on screen */
-  const seen=new WeakMap(),io=new IntersectionObserver(es=>es.forEach(e=>seen.set(e.target,e.isIntersecting)),{rootMargin:'40px'});
-  const on=el=>{if(!el)return false;if(!seen.has(el)){seen.set(el,true);io.observe(el)}return seen.get(el)};
-  const $id=id=>document.getElementById(id);
-  {const f=drawOrbit;drawOrbit=function(){if(on($id('orbC')))return f.apply(this,arguments)}}
-  {const f=drawSnd;drawSnd=function(){if(on($id('sdChart')))return f.apply(this,arguments);sndTint()}}
-  {const f=drawDial;drawDial=function(){if(on($id('dlRulerC')))return f.apply(this,arguments)}}
-  {const f=drawSynth;drawSynth=function(){if(on($id('synCv')))return f.apply(this,arguments)}}
-  {const f=perfFrame;perfFrame=function(dt){if(on(xyc))return f.apply(this,arguments);
-    /* off screen: only the tape stop (it bends the pitch of what plays) */
-    if(tapeStop)tapeRate=Math.max(.12,tapeRate*Math.pow(.07,dt));else if(tapeRate<1&&!window.__half)tapeRate=Math.min(1,tapeRate+dt*5);gTune=tapeRate<.999?12*Math.log2(tapeRate):0}}
 }catch(e){console.warn('loadfix',e)}})();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
