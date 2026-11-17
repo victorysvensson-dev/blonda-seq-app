@@ -1,0 +1,44 @@
+ipad run 1:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v258
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': '', 'frames': 52800, 'ok': True, 'sr': 48000}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 123 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 1750 ms (try 1)']
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+ipad run 2:
+  (could not read shell-out/ipad_selftest_2.json: [Errno 2] No such file or directory: 'shell-out/ipad_selftest_2.json')
+  FAIL self-test result missing (the app did not report)
+iphone run 1:
+  (could not read shell-out/iphone_selftest_1.json: [Errno 2] No such file or directory: 'shell-out/iphone_selftest_1.json')
+  FAIL self-test result missing (the app did not report)
+iphone run 2:
+  (could not read shell-out/iphone_selftest_2.json: [Errno 2] No such file or directory: 'shell-out/iphone_selftest_2.json')
+  FAIL self-test result missing (the app did not report)
+
+3 FAILED:
+  ipad run 2: self-test result missing (the app did not report)
+::error::ipad run 2: self-test result missing (the app did not report)
+  iphone run 1: self-test result missing (the app did not report)
+::error::iphone run 1: self-test result missing (the app did not report)
+  iphone run 2: self-test result missing (the app did not report)
+::error::iphone run 2: self-test result missing (the app did not report)
