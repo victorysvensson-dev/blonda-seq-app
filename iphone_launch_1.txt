@@ -1,0 +1,5 @@
+/Users/runner/work/_temp/20036704-f49a-48d6-a839-fdbeaf59b552.sh: line 2: 19900 Alarm clock: 14         perl -e 'alarm shift; exec @ARGV' "$@"
+launch exit 142
+se.blonda.seq3: 31466
+second launch exit 0
+31466	0	UIKitApplication:se.blonda.seq3[6a1e][rb-legacy]
