@@ -14751,8 +14751,6 @@ body.mob .card[data-card="tracks"].mhero .orb{max-width:min(420px,100%,var(--orb
       the synth curve and the perform pad were drawn even when scrolled away). What they do besides drawing (the tape-stop
       slowdown, the sound card's tint) still runs. ================= */
 (()=>{try{
-  /* 1: muted tracks make no voices (their MIDI still goes out when MIDI out is on) */
-  const tg=trigger;trigger=function(i,t,vel,note,ls){try{if(ctx&&TRACKS[i]&&isMuted(i)){if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,60/S.bpm/4*(ls||1));return}}catch(e){}return tg.apply(this,arguments)};
   /* 2: a worker clock */
   let last=0;{const sch=schedule;schedule=function(){last=performance.now();return sch.apply(this,arguments)}}
   try{const src='let t=null;onmessage=e=>{clearInterval(t);if(e.data)t=setInterval(()=>postMessage(0),25)}';const w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
