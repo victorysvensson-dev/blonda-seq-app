@@ -1,0 +1,147 @@
+ipad run 1:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v258
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': 'timeout', 'frames': 0, 'ok': False, 'sr': 0}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 255 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 1642 ms (try 1)']
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+ipad run 2:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v258
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': 'timeout', 'frames': 0, 'ok': False, 'sr': 0}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 18 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 21932 ms (try 1)']
+  ok   saved data survived a restart
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+iphone run 1:
+  FAIL no fatal error (the page did not report within 270 s)
+  info: last self-test step start, page process ended at []
+  FAIL secure context (None)
+  FAIL page loaded, version None
+  FAIL English (None)
+  FAIL localStorage works
+  FAIL IndexedDB works (None)
+  FAIL Web Audio + AudioWorklet (sr None, state None)
+  FAIL BLONDA sound pack built in (None sounds, decoded None)
+  FAIL the app cannot be pinch-zoomed (viewport user-scalable=no)
+  FAIL sampling: the app's recorder and input list are present
+  FAIL sampling: a recorded block reaches the page as left/right (None)
+  FAIL importing several sounds at once reaches the page (None)
+  FAIL Web MIDI API present
+  FAIL MIDI in: test note reached the page (None)
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  FAIL saving a file (None, 17 bytes)
+  FAIL library says local (None)
+  FAIL intro tapped, app shown ()
+  FAIL the page's own sound is running ({})
+  ok   no page errors 
+  time: IndexedDB None ms, MIDI access None ms
+  CoreMIDI: ['client ok after 2225 ms (try 1)']
+  info: iphone iOS 18.5 NonexNone body='None' ins=None outs=None
+iphone run 2:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v258
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (232 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': '', 'frames': 57600, 'ok': True, 'sr': 48000}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   no page errors 
+  time: IndexedDB 77 ms, MIDI access 1 ms
+  CoreMIDI: ['client ok after 936 ms (try 1)']
+  ok   saved data survived a restart
+  info: iphone iOS 18.5 402x874 body='look-studio mob mhdr' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+
+18 FAILED:
+  iphone run 1: no fatal error (the page did not report within 270 s)
+::error::iphone run 1: no fatal error (the page did not report within 270 s)
+  iphone run 1: secure context (None)
+::error::iphone run 1: secure context (None)
+  iphone run 1: page loaded, version None
+::error::iphone run 1: page loaded, version None
+  iphone run 1: English (None)
+::error::iphone run 1: English (None)
+  iphone run 1: localStorage works
+::error::iphone run 1: localStorage works
+  iphone run 1: IndexedDB works (None)
+::error::iphone run 1: IndexedDB works (None)
+  iphone run 1: Web Audio + AudioWorklet (sr None, state None)
+::error::iphone run 1: Web Audio + AudioWorklet (sr None, state None)
+  iphone run 1: BLONDA sound pack built in (None sounds, decoded None)
+::error::iphone run 1: BLONDA sound pack built in (None sounds, decoded None)
+  iphone run 1: the app cannot be pinch-zoomed (viewport user-scalable=no)
+::error::iphone run 1: the app cannot be pinch-zoomed (viewport user-scalable=no)
+  iphone run 1: sampling: the app's recorder and input list are present
+::error::iphone run 1: sampling: the app's recorder and input list are present
+  iphone run 1: sampling: a recorded block reaches the page as left/right (None)
+::error::iphone run 1: sampling: a recorded block reaches the page as left/right (None)
+  iphone run 1: importing several sounds at once reaches the page (None)
+::error::iphone run 1: importing several sounds at once reaches the page (None)
+  iphone run 1: Web MIDI API present
+::error::iphone run 1: Web MIDI API present
+  iphone run 1: MIDI in: test note reached the page (None)
+::error::iphone run 1: MIDI in: test note reached the page (None)
+  iphone run 1: saving a file (None, 17 bytes)
+::error::iphone run 1: saving a file (None, 17 bytes)
+  iphone run 1: library says local (None)
+::error::iphone run 1: library says local (None)
+  iphone run 1: intro tapped, app shown ()
+::error::iphone run 1: intro tapped, app shown ()
+  iphone run 1: the page's own sound is running ({})
+::error::iphone run 1: the page's own sound is running ({})

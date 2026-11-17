@@ -1,0 +1,25 @@
+{
+  "fatal" : "the page did not report within 270 s",
+  "lastStep" : "start",
+  "midiNative" : [
+    "client ok after 2225 ms (try 1)"
+  ],
+  "midiOutReceived" : [
+    [
+      144,
+      64,
+      90
+    ],
+    [
+      128,
+      64,
+      0
+    ]
+  ],
+  "platform" : "iphone",
+  "saveBytes" : 17,
+  "system" : "iOS 18.5",
+  "webCrashes" : [
+
+  ]
+}

@@ -1,0 +1,100 @@
+2026-11-17 13:24:06.532 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardSceneDelegate] _inputViewsForResponder, disableAutomaticKeyboardUI return empty
+2026-11-17 13:24:06.627 Df SEQ3[8061:722b] [com.apple.UIKit:InputWindowController] Change from input view set: (null)
+2026-11-17 13:24:06.628 Df SEQ3[8061:722b] [com.apple.UIKit:InputWindowController] Change to input view set: (null)
+2026-11-17 13:24:06.706 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardUI] -[_UIKeyboardStateManager initWithPresentationDelegateView:forCustomInputView:] UIDevice.currentDevice._hardwareKeyboardAvailable = YES
+2026-11-17 13:24:06.707 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: YES
+2026-11-17 13:24:06.731 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] connected: (
+2026-11-17 13:24:06.731 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: NO
+2026-11-17 13:24:06.731 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] disconnected: (
+2026-11-17 13:24:07.053 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x103811fa0] activating connection: mach=true listener=false peer=false name=com.apple.TextInput
+2026-11-17 13:24:07.055 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: YES
+2026-11-17 13:24:07.057 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] connected: (
+2026-11-17 13:24:07.057 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: NO
+2026-11-17 13:24:07.058 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] disconnected: (
+2026-11-17 13:24:07.159 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: YES
+2026-11-17 13:24:07.159 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] connected: (
+2026-11-17 13:24:07.159 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: NO
+2026-11-17 13:24:07.159 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] disconnected: (
+2026-11-17 13:24:07.164 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: YES
+2026-11-17 13:24:07.165 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] connected: (
+2026-11-17 13:24:07.165 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: NO
+2026-11-17 13:24:07.165 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] disconnected: (
+2026-11-17 13:24:07.188 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: YES
+2026-11-17 13:24:07.189 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] connected: (
+2026-11-17 13:24:07.189 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] currently observing: NO
+2026-11-17 13:24:07.189 Df SEQ3[8061:722b] [com.apple.BackBoard:Keyboard] disconnected: (
+2026-11-17 13:24:07.189 Df SEQ3[8061:722b] [com.apple.UIKit:InputSessionChange] -_teardownExistingDelegate:(nil) forSetDelegate:<WKContentView: 0x10483b000> force:NO delayEndInputSession:YES
+2026-11-17 13:24:07.192 Df SEQ3[8061:722b] [com.apple.UIKit:InputSessionChange] endInputSession completion is disabled
+2026-11-17 13:24:07.196 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardSceneDelegate] [Interface Orientation] was:Interface Unknown now:UIInterfaceOrientationPortrait reason:Using key window scene
+2026-11-17 13:24:07.211 Df SEQ3[8061:722b] [com.apple.UIKit:SmartReply] Handling responseContextDidChange - existing: (null), new: (null)
+2026-11-17 13:24:07.515 Df SEQ3[8061:722b] [PrototypeTools:domain] Not observing PTDefaults on customer install.
+2026-11-17 13:24:07.516 Df SEQ3[8061:723b] [com.apple.calls.callkit:Default] Call host has no calls
+2026-11-17 13:24:07.559 Df SEQ3[8061:723b] [com.apple.xpc:connection] [0x600003d23480] activating connection: mach=true listener=false peer=false name=com.apple.SystemConfiguration.NetworkInformation_sim
+2026-11-17 13:24:07.719 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardUI] Creating a new RTI client
+2026-11-17 13:24:07.722 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x102f3ebf0] activating connection: mach=false listener=false peer=false name=(anonymous)
+2026-11-17 13:24:07.733 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardUI] creating new AutofillUI connection
+2026-11-17 13:24:07.737 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x1038274b0] activating connection: mach=true listener=false peer=false name=com.apple.rti-screencontinuity
+2026-11-17 13:24:07.737 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x1038274b0] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-11-17 13:24:07.737 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x1038274b0] invalidated after a failed init
+2026-11-17 13:24:07.737 Df SEQ3[8061:7239] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _configureConnection:withMachName:]_block_invoke_2  Client connection to service was invalidated: <NSXPCConnection: 0x6000033095e0> connection to service named com.apple.rti-screencontinuity
+2026-11-17 13:24:07.737 Df SEQ3[8061:722b] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient beginAllowingRemoteTextInput:]  Begin allowing remote text input: 395814A0-5FD6-400C-81AA-8E6869FFA224
+2026-11-17 13:24:07.796 Df SEQ3[8061:7239] [com.apple.FrontBoard:Common] Creating service facility connection with <BSServiceConnectionEndpoint: 0x60000174c340; target: com.apple.frontboard.systemappservices; service: com.apple.frontboard.system-service>
+2026-11-17 13:24:07.799 Df SEQ3[8061:722b] [com.apple.UIKit:UIPeripheralHost] endPlacementForInputViewSet: <<UIInputViewSet: 0x6000035004d0>; (empty)> windowScene: <UIWindowScene: 0x102f10390; role: UIWindowSceneSessionRoleApplication; persistentIdentifier: AEEF716E-0301-4910-81B6-FA68170524BD; activationState: UISceneActivationStateForegroundInactive>
+2026-11-17 13:24:07.803 Df SEQ3[8061:7239] [com.apple.FrontBoard:Common] [FBSSystemService][0xd613] Sending request to open "com.apple.iMessageAppsViewService"
+2026-11-17 13:24:07.803 Df SEQ3[8061:7239] [com.apple.FrontBoard:Common] [FBSSystemAppProxy:0x60000293ab50] Service facility connection invalidated
+2026-11-17 13:24:07.819 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardArbiterClientLog] -[_UIRemoteKeyboards prepareToMoveKeyboard:withIAV:isIAVRelevant:showing:notifyRemote:forScene:] position: {{0, 0}, {0, 0}} visible: 0; notifyRemote: 1; isMinimized: NO
+2026-11-17 13:24:07.821 Df SEQ3[8061:722b] [com.apple.UIKit:KeyboardVisualMode] Show keyboard with visual mode windowed (0)
+2026-11-17 13:24:07.845 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x1120015f0 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'Client navigation'
+2026-11-17 13:24:07.907 Df SEQ3[8061:723b] [com.apple.FrontBoard:Common] [FBSSystemService][0xd613] Request successful: <BSProcessHandle: 0x600000c68e70; iMessageAppsVie:4634; valid: YES>
+2026-11-17 13:24:07.935 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] 0x10404ae00 (pageProxyID=10) -[WKWebView _didCommitLayerTree:] - received a commit (2) while deferring visible content rect updates (dynamicViewportUpdateMode 0, needsResetViewStateAfterCommitLoadForMainFrame 1 (wants commit 2), sizeChangedSinceLastVisibleContentRectUpdate 0, [_scrollView isZoomBouncing] 0, currentlyAdjustingScrollViewInsetsForKeyboard 0)
+2026-11-17 13:24:07.936 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] -[WKWebView 0x10404ae00 _scheduleVisibleContentRectUpdateAfterScrollInView]: hasScheduledVisibleRectUpdate is true but haven't updated visible content rects for 1.58s (last update was 28.77s ago) - valid 1
+2026-11-17 13:24:07.936 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] -[WKWebView 0x10404ae00 _scheduleVisibleContentRectUpdateAfterScrollInView]: hasScheduledVisibleRectUpdate is true but haven't updated visible content rects for 1.58s (last update was 28.77s ago) - valid 1
+2026-11-17 13:24:07.936 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] -[WKWebView 0x10404ae00 _scheduleVisibleContentRectUpdateAfterScrollInView]: hasScheduledVisibleRectUpdate is true but haven't updated visible content rects for 1.58s (last update was 28.77s ago) - valid 1
+2026-11-17 13:24:07.963 Df SEQ3[8061:7236] [com.apple.xpc:connection] [0x102f3f930] activating connection: mach=true listener=false peer=false name=com.apple.iMessageAppsViewService.warmup-connection
+2026-11-17 13:24:07.970 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001530 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:08.023 Df SEQ3[8061:722b] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient beginRemoteTextInputSessionWithID:options:documentTraits:initialDocumentState:]_block_invoke  Connection to service with mach name com.apple.rti-screencontinuity was invalidated. Attempting to create a new connection.
+2026-11-17 13:24:08.023 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x103813430] activating connection: mach=true listener=false peer=false name=com.apple.rti-screencontinuity
+2026-11-17 13:24:08.023 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x103813430] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-11-17 13:24:08.023 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x103813430] invalidated after a failed init
+2026-11-17 13:24:08.023 Df SEQ3[8061:723f] [com.apple.RemoteTextInput:InputSessionChange] -[RTIInputSystemClient _configureConnection:withMachName:]_block_invoke_2  Client connection to service was invalidated: <NSXPCConnection: 0x600003309860> connection to service named com.apple.rti-screencontinuity
+2026-11-17 13:24:08.024 Df SEQ3[8061:722b] [com.apple.WebKit:TextInput] Stopped deferring input view updates (01)
+2026-11-17 13:24:08.037 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] 0x10404ae00 (pageProxyID=10) -[WKWebView _updateVisibleContentRects:] - performing first visible content rect update after deferring updates
+2026-11-17 13:24:08.037 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] 0x10404ae00 -[WKWebView _updateVisibleContentRects:] finally ran 1.68s after being scheduled
+2026-11-17 13:24:08.348 E  SEQ3[8061:723b] [com.apple.TextInputUI:CandidateGeneration] Result accumulator timeout: 0.250000, exceeded.
+2026-11-17 13:24:08.589 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001530 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:08.671 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001530 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:09.013 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001530 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:09.023 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001530 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:09.043 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001590 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:09.328 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x1120049b0 NavigationState is releasing background process assertion because a page load completed
+2026-11-17 13:24:09.329 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112003fa0 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::invalidate: Ending background activity / 'Page Load'
+2026-11-17 13:24:09.667 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001590 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-17 13:24:09.764 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112000e00 - [PID=8067] WebProcessProxy::updateAudibleMediaAssertions: Taking MediaPlayback assertion for WebProcess
+2026-11-17 13:24:09.765 Df SEQ3[8061:722b] [com.apple.WebKit:Process] AssertionCapability::AssertionCapability: taking assertion MediaPlayback
+2026-11-17 13:24:09.766 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x11201c2d0 - ProcessAssertion() Failed to create capability MediaPlayback
+2026-11-17 13:24:09.768 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x10404ce08 - WebProcessPool::updateAudibleMediaAssertions: The number of processes playing audible media is now greater than zero. Taking UI process assertion.
+2026-11-17 13:24:09.768 Df SEQ3[8061:722b] [com.apple.WebKit:Process] AssertionCapability::AssertionCapability: taking assertion MediaPlayback
+2026-11-17 13:24:09.768 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x11201c380 - ProcessAssertion() Failed to create capability MediaPlayback
+2026-11-17 13:24:09.768 Df SEQ3[8061:722b] [com.apple.WebKit:ViewState] 0x10404ae00 PageClientImplCocoa::hasActiveNowPlayingSessionChanged 1
+2026-11-17 13:24:09.769 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x10482c418 - [pageProxyID=10, webPageID=11, PID=8067] WebPageProxy::updateThrottleState: UIProcess is taking a foreground assertion because we are playing audio
+2026-11-17 13:24:09.770 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x112001560 - [PID=8067, throttler=0x112000e90] ProcessThrottler::Activity::Activity: Starting foreground activity / 'View is playing audio'
+2026-11-17 13:24:09.771 Df SEQ3[8061:723f] [com.apple.WebKit:ProcessSuspension] 0x11201c2d0 - ProcessAssertion::acquireSync Trying to take RBS assertion 'WebKit Media Playback' for process with PID=8067
+2026-11-17 13:24:09.832 E  SEQ3[8061:723f] [com.apple.runningboard:assertion] Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 "(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)" UserInfo={NSLocalizedFailureReason=(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)}>
+2026-11-17 13:24:09.832 E  SEQ3[8061:723f] [com.apple.WebKit:ProcessSuspension] 0x11201c2d0 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'WebKit Media Playback' for process with PID=8067, error: Error Domain=RBSServiceErrorDomain Code=1 "(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)" UserInfo={NSLocalizedFailureReason=(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)}
+2026-11-17 13:24:09.832 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x11201c2d0 - ProcessAssertion::processAssertionWasInvalidated() PID=8067
+2026-11-17 13:24:09.833 Df SEQ3[8061:723f] [com.apple.WebKit:ProcessSuspension] 0x11201c380 - ProcessAssertion::acquireSync Trying to take RBS assertion 'WebKit Media Playback' for process with PID=8068
+2026-11-17 13:24:09.835 E  SEQ3[8061:723f] [com.apple.runningboard:assertion] Error acquiring assertion: <Error Domain=RBSServiceErrorDomain Code=1 "(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)" UserInfo={NSLocalizedFailureReason=(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)}>
+2026-11-17 13:24:09.835 E  SEQ3[8061:723f] [com.apple.WebKit:ProcessSuspension] 0x11201c380 - ProcessAssertion::acquireSync Failed to acquire RBS assertion 'WebKit Media Playback' for process with PID=8068, error: Error Domain=RBSServiceErrorDomain Code=1 "(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)" UserInfo={NSLocalizedFailureReason=(originator doesn't have entitlement com.apple.runningboard.assertions.webkit AND originator doesn't have entitlement com.apple.multitasking.systemappassertions)}
+2026-11-17 13:24:09.836 Df SEQ3[8061:722b] [com.apple.WebKit:ProcessSuspension] 0x11201c380 - ProcessAssertion::processAssertionWasInvalidated() PID=8068
+2026-11-17 13:24:12.170 Df SEQ3[8061:722b] [com.apple.coreaudio:as_client] AVAudioSessionImpl_Simulator.mm:109   Set volume on device 80 to 0.60
+2026-11-17 13:24:12.170 Df SEQ3[8061:722b] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:978   PrimarySessionActiveWithInputEnabled 0 -> 1
+2026-11-17 13:24:12.221 Df SEQ3[8061:722b] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:644   Built valid aggregate 112
+2026-11-17 13:24:12.231 A  SEQ3[8061:722b] (TCC) tcc_send_request_authorization() IPC
+2026-11-17 13:24:12.231 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x600003d083c0] activating connection: mach=true listener=false peer=false name=com.apple.tccd
+2026-11-17 13:24:12.244 Df SEQ3[8061:722b] [com.apple.xpc:connection] [0x600003d083c0] invalidated after the last release of the connection object
+2026-11-17 13:24:12.244 A  SEQ3[8061:722b] (TCC) tcc_send_request_authorization() IPC
+2026-11-17 13:24:12.244 Df SEQ3[8061:7236] [com.apple.xpc:connection] [0x600003d01fe0] activating connection: mach=true listener=false peer=false name=com.apple.tccd
+2026-11-17 13:24:12.325 Df SEQ3[8061:722b] [com.apple.KeyboardArbiter:Client] RX sceneBecameFocused:(null)
+2026-11-17 13:24:33.383 Df SEQ3[8061:722b] [com.apple.coreaudio:as_client] AVAudioSessionImpl_Simulator.mm:109   Set volume on device 80 to 0.60
+2026-11-17 13:24:33.385 Df SEQ3[8061:722b] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:978   PrimarySessionActiveWithInputEnabled 1 -> 0
+2026-11-17 13:24:33.422 Df SEQ3[8061:722b] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:644   Built valid aggregate 118
