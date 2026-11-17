@@ -1,0 +1,120 @@
+2026-11-17 13:33:49.014 Df BLONDA SEQ[33041:165ad] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:se.blonda.seq-default  persistentID: A2EE59EC-47C3-4292-B6F3-EBBFD9C2EC9F
+2026-11-17 13:33:49.015 Df BLONDA SEQ[33041:165ad] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:se.blonda.seq-default  persistentID: A2EE59EC-47C3-4292-B6F3-EBBFD9C2EC9F
+2026-11-17 13:33:49.015 Df BLONDA SEQ[33041:165ad] [com.apple.KeyboardArbiter:Client] handleKeyboardChange: set currentKeyboard:N (wasKeyboard:N)
+2026-11-17 13:33:49.016 Df BLONDA SEQ[33041:165ad] [com.apple.UIKit:KeyboardSceneDelegate] forceReloadInputViews
+2026-11-17 13:33:49.016 Df BLONDA SEQ[33041:165ad] [com.apple.UIKit:KeyboardSceneDelegate] Reloading input views for: <(null): 0x0; > force: 1
+2026-11-17 13:33:49.018 Df BLONDA SEQ[33041:165ad] [com.apple.UIKit:KeyboardArbiterClientLog] isWritingToolsHandlingKeyboardTracking:Y (WT ready:Y, Arbiter ready:Y)
+2026-11-17 13:33:49.070 Df BLONDA SEQ[33041:165ad] [com.apple.network:activity] <nw_activity 50:1 [FE8B0A33-D0F7-4B75-98A0-B6435BC94C87] (global parent) (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 1226ms
+2026-11-17 13:33:49.070 Df BLONDA SEQ[33041:165ad] [com.apple.network:activity] <nw_activity 50:2 [91DF1AA0-A490-40CF-9EA8-B4E52E94B99A] (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 1226ms
+2026-11-17 13:33:49.070 Df BLONDA SEQ[33041:165ad] [com.apple.network:activity] Unsetting the global parent activity <nw_activity 50:1 [FE8B0A33-D0F7-4B75-98A0-B6435BC94C87] (global parent) (reporting strategy default) complete (reason success)>
+2026-11-17 13:33:49.070 Df BLONDA SEQ[33041:165ad] [com.apple.network:activity] Unset the global parent activity
+2026-11-17 13:33:49.388 A  BLONDA SEQ[33041:165b2] (RunningBoardServices) didChangeInheritances
+2026-11-17 13:33:49.495 A  BLONDA SEQ[33041:165b2] (RunningBoardServices) didChangeInheritances
+2026-11-17 13:33:50.040 Df BLONDA SEQ[33041:165ad] [com.apple.FrontBoard:SceneClient] [(FBSceneManager):sceneID:se.blonda.seq-default] Sending action(s): BLSInvalidateFrameSpecifiersAction
+2026-11-17 13:33:52.104 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:52.477 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:52.829 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.123 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.384 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.566 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.739 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.812 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.925 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:54.944 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.322 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.529 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.671 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.768 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.769 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.810 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.872 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:55.949 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.026 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.402 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.402 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.467 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.487 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.601 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.601 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.670 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.715 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:56.993 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.122 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.166 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.263 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.295 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.402 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.415 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.567 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.567 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:57.612 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:58.081 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:58.114 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:58.166 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:58.167 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:58.545 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:33:58.717 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:00.050 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:00.958 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:01.374 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:02.972 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:03.147 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:03.534 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:04.323 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:04.506 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:05.158 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:06.448 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:06.845 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:07.358 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:07.822 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:09.455 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:09.612 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:10.275 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:10.560 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:11.322 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:11.888 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:11.994 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.063 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.184 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.185 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.393 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.506 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.636 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.726 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:12.766 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.070 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.365 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.426 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.447 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.529 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.529 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.554 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.620 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.681 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.681 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.789 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.851 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:13.891 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.023 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.079 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.119 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.177 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.197 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.580 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.629 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.905 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:14.927 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:15.066 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:15.569 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:15.944 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:16.275 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:16.891 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:17.280 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:17.474 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:17.668 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:17.987 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:18.544 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:18.590 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:19.743 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:20.137 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:34:20.173 E  BLONDA SEQ[33041:165c4] [com.apple.coreaudio:AMCP]  49931          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
