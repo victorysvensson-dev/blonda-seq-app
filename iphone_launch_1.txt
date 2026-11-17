@@ -1,0 +1,3 @@
+se.blonda.seq3: 11059
+launch exit 0
+11059	0	UIKitApplication:se.blonda.seq3[de75][rb-legacy]
