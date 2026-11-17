@@ -14753,11 +14753,6 @@ body.mob .card[data-card="tracks"].mhero .orb{max-width:min(420px,100%,var(--orb
 (()=>{try{
   /* 1: muted tracks make no voices (their MIDI still goes out when MIDI out is on) */
   const tg=trigger;trigger=function(i,t,vel,note,ls){try{if(ctx&&TRACKS[i]&&isMuted(i)){if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,60/S.bpm/4*(ls||1));return}}catch(e){}return tg.apply(this,arguments)};
-  /* 2: a worker clock */
-  let last=0;{const sch=schedule;schedule=function(){last=performance.now();return sch.apply(this,arguments)}}
-  try{const src='let t=null;onmessage=e=>{clearInterval(t);if(e.data)t=setInterval(()=>postMessage(0),25)}';const w=new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
-    w.onmessage=()=>{if(playing&&ctx&&performance.now()-last>30)schedule()};let was=false;
-    setInterval(()=>{if(playing!==was){was=playing;w.postMessage(!!playing)}},50)}catch(e){/* no workers: the page timer alone, as before */}
   /* 3: what is on screen */
   const seen=new WeakMap(),io=new IntersectionObserver(es=>es.forEach(e=>seen.set(e.target,e.isIntersecting)),{rootMargin:'40px'});
   const on=el=>{if(!el)return false;if(!seen.has(el)){seen.set(el,true);io.observe(el)}return seen.get(el)};
