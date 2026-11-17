@@ -1,0 +1,1 @@
+/Users/runner/work/_temp/59875939-10bc-430b-9de0-5e5889ff4011.sh: line 2: 36568 Alarm clock: 14         perl -e 'alarm shift; exec @ARGV' "$@"
