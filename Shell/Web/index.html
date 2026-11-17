@@ -2893,7 +2893,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v258</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v259</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -10878,7 +10878,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v258</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v259</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -14738,6 +14738,31 @@ body.mob .card[data-card="tracks"].mhero .orb{max-width:min(420px,100%,var(--orb
       const mx=Math.max(150,Math.round(room));const v=mx+'px';if(oc.style.getPropertyValue('--moH')!==v)oc.style.setProperty('--moH',v)}}}
   if(panes){new ResizeObserver(fit).observe(panes);addEventListener('resize',fit);new MutationObserver(()=>requestAnimationFrame(fit)).observe(document.getElementById('app'),{attributes:true,attributeFilter:['data-v','class']});document.querySelectorAll('#panes .card[data-card="tracks"],#panes .card[data-card="pads"]').forEach(c=>new MutationObserver(()=>requestAnimationFrame(fit)).observe(c,{attributes:true,attributeFilter:['class']}));setInterval(fit,1500);fit()}
 })();
+
+/* ================= less work while playing (v259) =================
+   Measured while a song plays (Chrome's own traces of the audio thread and the page):
+   1. A muted (or soloed-away) track still made every note: its voices were built, played and thrown away behind the
+      channel's closed fader. Now a muted track makes no sound at all – exactly what is heard, for less work.
+   2. Canvases scrolled out of sight are no longer drawn 60 times a second (the orbit, the sound chart, the dial ruler,
+      the synth curve and the perform pad were drawn even when scrolled away). What they do besides drawing (the tape-stop
+      slowdown, the sound card's tint) still runs.
+   (v258 also had a second clock in a worker; on the iPhone and iPad simulators the page then stopped answering after the
+   sound started, so it is left out.) ================= */
+(()=>{try{
+  /* 1: muted tracks make no voices (their MIDI still goes out when MIDI out is on) */
+  const tg=trigger;trigger=function(i,t,vel,note,ls){try{if(ctx&&TRACKS[i]&&isMuted(i)){if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,60/S.bpm/4*(ls||1));return}}catch(e){}return tg.apply(this,arguments)};
+  /* 2: what is on screen */
+  const seen=new WeakMap(),io=new IntersectionObserver(es=>es.forEach(e=>seen.set(e.target,e.isIntersecting)),{rootMargin:'40px'});
+  const on=el=>{if(!el)return false;if(!seen.has(el)){seen.set(el,true);io.observe(el)}return seen.get(el)};
+  const $id=id=>document.getElementById(id);
+  {const f=drawOrbit;drawOrbit=function(){if(on($id('orbC')))return f.apply(this,arguments)}}
+  {const f=drawSnd;drawSnd=function(){if(on($id('sdChart')))return f.apply(this,arguments);sndTint()}}
+  {const f=drawDial;drawDial=function(){if(on($id('dlRulerC')))return f.apply(this,arguments)}}
+  {const f=drawSynth;drawSynth=function(){if(on($id('synCv')))return f.apply(this,arguments)}}
+  {const f=perfFrame;perfFrame=function(dt){if(on(xyc))return f.apply(this,arguments);
+    /* off screen: only the tape stop (it bends the pitch of what plays) */
+    if(tapeStop)tapeRate=Math.max(.12,tapeRate*Math.pow(.07,dt));else if(tapeRate<1&&!window.__half)tapeRate=Math.min(1,tapeRate+dt*5);gTune=tapeRate<.999?12*Math.log2(tapeRate):0}}
+}catch(e){console.warn('loadfix',e)}})();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
    The page is first drawn in its plain form (the glass look, the intro in Swedish) and only then gets your saved look and
