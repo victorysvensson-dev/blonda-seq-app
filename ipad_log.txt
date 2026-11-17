@@ -1,0 +1,3 @@
+2026-11-17 13:31:27.981 E  SEQ3[7664:7b71] [com.apple.coreaudio:AMCP]  79467          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-17 13:32:13.879 Df SEQ3[7664:8e5c] [com.apple.FrontBoard:Common] [FBSSystemService][0xd649] Request successful: <BSProcessHandle: 0x600000c34780; iMessageAppsVie:12763; valid: YES>
+2026-11-17 13:32:13.891 Df SEQ3[7664:9929] [com.apple.xpc:connection] [0x103419f70] activating connection: mach=true listener=false peer=false name=com.apple.iMessageAppsViewService.warmup-connection
