@@ -2893,7 +2893,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v260</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v261</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -9689,6 +9689,46 @@ body.dw-dragging,body.dw-dragging *{cursor:inherit!important;user-select:none!im
     new ResizeObserver(placeV).observe(T);addEventListener('resize',placeV);
     new MutationObserver(()=>setTimeout(placeV,20)).observe(D,{attributes:true,attributeFilter:['class']});
     apply()}
+  /* ================= (v261) touch keys: on the iPad (no keyboard) a tap on a cell opens a small pad at the bottom of the
+     tracker with what that column takes – notes (one octave + OFF), volume (0–F), hit, ratchet/chance, glitch 1–7 – and the
+     arrows and delete. Each button sends the same key the tracker already understands, so it does exactly what the keyboard does. ================= */
+  {const PCSS=document.createElement('style');PCSS.textContent=`
+.tq-pad{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;border-top:1px solid rgba(var(--dk-ink),.1);background:var(--dk-p1);font-family:var(--f-mono)}
+.tq-pad[hidden]{display:none}
+.tq-pad .tp-row{display:flex;gap:5px;align-items:stretch;min-width:0}
+.tq-pad button{flex:1 1 0;min-width:0;height:40px;padding:0 4px;border-radius:var(--dk-r);font-size:12px!important;background:var(--dk-p2)!important;box-shadow:inset 0 0 0 1px rgba(var(--dk-ink),.16);color:rgb(var(--dk-ink));touch-action:manipulation;-webkit-user-select:none;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tq-pad button:active{background:var(--dk-p4)!important}
+.tq-pad button.bk{background:rgba(0,0,0,.42)!important}
+.tq-pad button.bk:active{background:rgba(0,0,0,.25)!important}
+.tq-pad button.w2{flex-grow:1.6}
+.tq-pad .tp-lab{flex:none;align-self:center;font-size:9px;letter-spacing:.08em;color:rgba(var(--dk-ink),.45);text-transform:uppercase;min-width:40px}
+.tq-pad .tp-oct{flex:none;align-self:center;min-width:22px;text-align:center;font:400 13px var(--f-linje)}
+.tq-top button.tq-kb.on{box-shadow:inset 0 0 0 1px rgba(var(--dk-acc-rgb),.7)}
+html:not(.coarse) .tq-top button.tq-kb{display:none}`;document.head.appendChild(PCSS);
+    const pad=document.createElement('div');pad.className='tq-pad';pad.hidden=true;T.appendChild(pad);
+    const kb=document.createElement('button');kb.className='tq-kb';kb.title='Touch keys';kb.textContent='keys';const tt=T.querySelector('.tq-top b.tq-ttl');if(tt)tt.after(kb);
+    const NN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],NK=['KeyZ','KeyS','KeyX','KeyD','KeyC','KeyV','KeyG','KeyB','KeyH','KeyN','KeyJ','KeyM'];
+    const HX=['Digit0','Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','KeyA','KeyB','KeyC','KeyD','KeyE','KeyF'];
+    const send=(code,key)=>{T.dispatchEvent(new KeyboardEvent('keydown',{code,key:key||'',bubbles:true,cancelable:true}));paint()};
+    const B=(lab,code,key,cls)=>`<button data-c="${code}" data-k="${key||''}"${cls?' class="'+cls+'"':''}>${lab}</button>`;
+    let last='';
+    function paint(){if(pad.hidden)return;const i=cur.t,k=(COLS(i)[cur.c])||'';let row='';
+      if(i===GXT){row=cur.c===0?'<span class="tp-lab">glitch</span>'+GX_NAMES.map((n,j)=>B((j+1)+' '+n,'Digit'+(j+1))).join(''):'<span class="tp-lab">value</span>'+[1,2,3,4,5].map(n=>B(n,'Digit'+n)).join('')}
+      else if(k[0]==='n')row='<span class="tp-lab">note</span>'+B('−','NumpadDivide','','')+'<span class="tp-oct">'+oct+'</span>'+B('+','NumpadMultiply','','')+NN.map((n,j)=>B(n,NK[j],'',n.length>1?'bk':'')).join('')+B('OFF','KeyA','','w2');
+      else if(k[0]==='v')row='<span class="tp-lab">volume</span>'+HX.map((c,j)=>B(j.toString(16).toUpperCase(),c)).join('');
+      else if(k==='h')row='<span class="tp-lab">hit</span>'+B('hit','KeyZ','','w2');
+      else if(k==='x')row='<span class="tp-lab">fx</span>'+B('ratchet','KeyR','','w2')+B('chance','KeyP','','w2');
+      const nav='<span class="tp-lab">move</span>'+B('←','ArrowLeft','ArrowLeft')+B('↑','ArrowUp','ArrowUp')+B('↓','ArrowDown','ArrowDown')+B('→','ArrowRight','ArrowRight')+B('delete','Delete','Delete','w2')+'<button data-x class="w2">close</button>';
+      const h='<div class="tp-row">'+row+'</div><div class="tp-row">'+nav+'</div>';if(h!==last){last=h;pad.innerHTML=h}}
+    const show=on=>{pad.hidden=!on;kb.classList.toggle('on',on);last='';paint();try{fit()}catch(e){}try{render()}catch(e){}};
+    /* keep the tracker's focus (and the cursor) while pressing the pad */
+    pad.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation()});pad.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation()});
+    pad.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;e.stopPropagation();if(b.dataset.x!=null){show(false);return}send(b.dataset.c,b.dataset.k)});
+    kb.addEventListener('click',e=>{e.stopPropagation();show(pad.hidden)});
+    /* a finger (or pencil) on a cell opens the pad; the mouse never does */
+    T.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||!e.target.closest('.tq-r span[data-k]'))return;if(pad.hidden)show(true);setTimeout(paint,0)},true);
+    T.addEventListener('mousedown',e=>{if(!pad.hidden&&e.target.closest('.tq-r span[data-k]'))setTimeout(paint,0)});
+    T.addEventListener('keydown',()=>setTimeout(paint,0))}
   setMode(mode);window.__trk={cur,render,T,gxOf,gxS,GFX}})();
 
 /* ================= What goes through glitch. S.gxEx = {trackId:1, '@stx':1, '@lp':1} keeps that sound out of it.
@@ -10887,7 +10927,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v260</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v261</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
