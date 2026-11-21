@@ -2893,7 +2893,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v259</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v260</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -7448,6 +7448,10 @@ const STX_FORMN=Object.keys(STX_FORM);
 const stxFormOn=(P,gs,l)=>{const F=STX_FORM[P.form];if(!F)return true;const m=F[((Math.floor(gs/16)%16)+16)%16]||'';return m.includes({sub:'s',klo:'k',ack:'a',luft:'l',v:'v'}[l])};
 /* the factory samples (in the sound pack): Victory's voice and one-shot. Your own sounds go in the same two slots */
 var STX_FABSMP=['kit:vox','b-stx-stop-low-e'];
+/* (v260) the sounds slot 2 picks from in a new idea: the synth stop (E) and wubbas, a wobble bass (C) */
+var STX_SNDSMP=['b-stx-stop-low-e','b-stx-wubbas-c'];
+/* the library gets a bass tab for it */
+try{if(!PACK_GROUPS.hit.some(g=>g[0]==='bass'))PACK_GROUPS.hit.splice(PACK_GROUPS.hit.findIndex(g=>g[0]==='fill'),0,['bass','bass'])}catch(e){}
 /* the voice kit: chops cut offline at the notes (zero-crossing cuts, short fades), each with its measured pitch (MIDI, cents) */
 var STX_VOXN={"b-stx-vox-hotel-1":65.73,"b-stx-vox-hotel-2":64.18,"b-stx-vox-hotel-3":65.63,"b-stx-vox-hotel-4":66.98,"b-stx-vox-hotel-5":65.88,"b-stx-vox-hotel-6":64.08,"b-stx-vox-hotel-8":64.08,"b-stx-vox-hotel-10":58.88,"b-stx-vox-hotel-11":59.08,"b-stx-vox-hotel-12":59.88,"b-stx-vox-hotel-13":58.98,"b-stx-vox-hotel-14":59.98,"b-stx-vox-hotel-15":61.98,"b-stx-vox-hotel-17":58.98,"b-stx-vox-hotel-18":58.28,"b-stx-vox-aa-1":56.98,"b-stx-vox-hi-1":79.18,"b-stx-vox-hi-2":80.18,"b-stx-vox-hi-3":80.78,"b-stx-vox-grace-2":73.48,"b-stx-vox-grace-3":73.83,"b-stx-vox-woo-hel":79.98,"b-stx-vox-aa-hel":56.98,"b-stx-vox-grace-hel":73.38};
 function stx(){if(!S.stx||typeof S.stx!=='object')S.stx=STX_DEF();const d=STX_DEF(),P=S.stx;for(const k in d)if(P[k]==null)P[k]=d[k];
@@ -7835,7 +7839,7 @@ function stxEngine(c,dest){const E={c,vo:{ack:[],klo:[],sub:[],luft:[],sw:[]},fx
     E.sDin=G();E.sDin.connect(hp);hp.connect(dl);dl.connect(lp);lp.connect(dr);dr.connect(fb);fb.connect(dl);dl.connect(mg,0,0);dr.connect(mg,0,1);mg.connect(eo);eo.connect(E.out);E.sDl=dl;E.sDr=dr;
     const L=Math.round(sr*2.4),b=c.createBuffer(2,L,sr);for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);let lp2=0;for(let i=0;i<L;i++){const t=i/sr,w=Math.random()*2-1;lp2+=(w-lp2)*.55;d[i]=(w-lp2*.6)*Math.exp(-t/.55)*(t<.008?t/.008:1)}}
     const cv=c.createConvolver();cv.normalize=true;cv.buffer=b;E.sCv=cv;E.sRin=G();const ro=G(.55),rh=c.createBiquadFilter();rh.type='highpass';rh.frequency.value=350;E.sRin.connect(rh);rh.connect(cv);cv.connect(ro);ro.connect(E.out)}
-  E.sx=[0,1].map(k=>{const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=150;hp.Q.value=.6;const dS=G(0),rS=G(0);E.lg['s'+k].connect(lane('s'+k,hp));hp.connect(E.mix);hp.connect(dS);hp.connect(rS);dS.connect(E.sDin);rS.connect(E.sRin);return {dS,rS}});
+  E.sx=[0,1].map(k=>{const hp=c.createBiquadFilter();hp.type='highpass';hp.frequency.value=150;hp.Q.value=.6;const dS=G(0),rS=G(0);E.lg['s'+k].connect(lane('s'+k,hp));hp.connect(E.mix);hp.connect(dS);hp.connect(rS);dS.connect(E.sDin);rS.connect(E.sRin);return {dS,rS,hp}});
   /* a sample slot: the slice (or the one-shot) pitched to the chord — playbackRate, so it gets shorter going up, like a sampler */
   E.smpPlay=(t,k,ev,sd,plan)=>{const Q=E.P.smp&&E.P.smp[k],D=Q&&STX.sb[Q.id];if(!D||!D.sl||!D.sl.length)return;const ch=plan.ch[ev.ci]||plan.ch[0];
     const shiftTo=(own,tg)=>{let bd=99;for(const pc of tg){let d=((pc-own)%12+12)%12;if(d>6)d-=12;if(Math.abs(d)<Math.abs(bd))bd=d}return bd};
@@ -7848,7 +7852,10 @@ function stxEngine(c,dest){const E={c,vo:{ack:[],klo:[],sub:[],luft:[],sw:[]},fx
     const play=(t0,len,rev)=>{const src=c.createBufferSource(),g=G(0);src.buffer=rev?REV:BUF;src.playbackRate.value=rate;const off=rev?BUF.duration-sl.b+Math.max(0,(sl.b-sl.a)-len*rate):sl.a;
       src.connect(g);g.connect(E.lg['s'+k]);const pk=D.norm*.78;g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(pk,t0+.003);g.gain.setValueAtTime(pk,t0+Math.max(.004,len-.016));g.gain.linearRampToValueAtTime(0,t0+len);src.start(t0,Math.max(0,off),len*rate+.01);src.stop(t0+len+.02)};
     /* the samples' own fx: a bit of echo and room always (the fx knob), and now and then a throw — the echo or the room opened wide for this one */
-    const X=E.sx[k],fx=Q.fx??.5,eT=ev.thr!=null&&ev.thr<fx*.55,rT=ev.rv!=null&&ev.rv<fx*.3,eB=fx*.32,rB=fx*.36;
+    const X=E.sx[k];
+    /* (v260) a bass sample (wubbas) keeps its low end: the slot's highpass opens down to 30 Hz for it, 150 Hz for everything else as before */
+    {let sm=null;try{sm=typeof SMP!=='undefined'?SMP.get(Q.id):null}catch(e){}X.hp.frequency.setValueAtTime(sm&&sm.group==='bass'?30:150,t)}
+    const fx=Q.fx??.5,eT=ev.thr!=null&&ev.thr<fx*.55,rT=ev.rv!=null&&ev.rv<fx*.3,eB=fx*.32,rB=fx*.36;
     X.dS.gain.cancelAndHoldAtTime(t);X.rS.gain.cancelAndHoldAtTime(t);X.dS.gain.setValueAtTime(eT?.95:eB,t);X.rS.gain.setValueAtTime(rT?.85:rB,t);
     X.dS.gain.setValueAtTime(eB,t+dur+.01);X.rS.gain.setValueAtTime(rB,t+dur+.01);
     if(ev.stu){const q=sd/2;for(let i=0;i<3;i++)play(t+i*q,q*.9,false);play(t+3*q,Math.max(.03,dur-3*q),false)}else play(t,dur,!!ev.rev)};
@@ -7957,7 +7964,9 @@ function stxEngine(c,dest){const E={c,vo:{ack:[],klo:[],sub:[],luft:[],sw:[]},fx
     let x=null,bd=99;const pool=D.kit?D.kit.filter(q=>dur>=.5||!q.whole):D.sl;const cand=(pool.length?pool:D.sl).map(q=>({q,d:n-q.n})).sort((a,b2)=>Math.abs(a.d)-Math.abs(b2.d));
     if(!cand.length)return null;const near=cand.filter(o=>Math.abs(o.d)<=1.5),pk=near.length>1?near[Math.floor(((n*7919+Math.round(t*1000))%near.length+near.length)%near.length)]:cand[0];x=pk.q;bd=pk.d;
     const buf=D.kit?x.buf:D.buf,a0=D.kit?0:x.a,b1=D.kit?x.buf.duration:x.b,rate=Math.pow(2,bd/12),len=Math.min((b1-a0)/rate,dur+(Q.mode==='ett'?.25:0));if(len<.02)return null;
-    const src=c.createBufferSource(),g=G(0),hp=c.createBiquadFilter(),ck=G(1);hp.type='highpass';hp.frequency.value=150;hp.Q.value=.6;src.buffer=buf;src.playbackRate.value=rate;
+    const src=c.createBufferSource(),g=G(0),hp=c.createBiquadFilter(),ck=G(1);hp.type='highpass';
+    /* (v260) a bass sample (wubbas) keeps its low end: 30 Hz highpass for it, 150 Hz for the rest as before */
+    {let sm=null;try{sm=typeof SMP!=='undefined'?SMP.get(Q.id):null}catch(e){}hp.frequency.value=sm&&sm.group==='bass'?30:150}hp.Q.value=.6;src.buffer=buf;src.playbackRate.value=rate;
     src.connect(g);g.connect(hp);hp.connect(ck);ck.connect(dest);const pv=(D.norm||1)*.78*Math.pow((Q.lv??.7)/.75,2)*Math.min(1,vel/.85);
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(pv,t+.003);g.gain.setValueAtTime(pv,t+Math.max(.004,len-.016));g.gain.linearRampToValueAtTime(0,t+len);src.start(t,Math.max(0,a0),len*rate+.01);src.stop(t+len+.02);return {ck,t0:t,end:t+len+.02}};
   /* a layer played by one of the app's synth channels (live only): the channel's own engine, one voice per note */
@@ -8154,7 +8163,7 @@ window.__stxTap=async(bars,bpm,over)=>{const P0=JSON.parse(JSON.stringify(stx())
   box.querySelector('[data-adv]').onclick=()=>{advOpen=!advOpen;try{localStorage.setItem('blonda.stx.adv',advOpen?'1':'0')}catch(e){}paint()};
   /* sample slots: a voice to chop (röst) and a one-shot (ljud) from the library — pick from the list, or drop a file on the row */
   const smpRows=[...box.querySelectorAll('.sx-sr')];
-  const smpList=()=>typeof SMP==='undefined'?[]:[...SMP.values()].filter(x=>x.kind==='loop'||x.kind==='hit').sort((a,b)=>(STX_FABSMP.includes(b.id)?2:0)-(STX_FABSMP.includes(a.id)?2:0)||(b.pack?0:1)-(a.pack?0:1)||(b.t||0)-(a.t||0));
+  const smpList=()=>typeof SMP==='undefined'?[]:[...SMP.values()].filter(x=>x.kind==='loop'||x.kind==='hit').sort((a,b)=>(STX_FABSMP.includes(b.id)||STX_SNDSMP.includes(b.id)?2:0)-(STX_FABSMP.includes(a.id)||STX_SNDSMP.includes(a.id)?2:0)||(b.pack?0:1)-(a.pack?0:1)||(b.t||0)-(a.t||0));
   const setSmp=(k,id)=>{const Q=stx().smp[k];Q.id=id;Q.on=id?1:0;if(id!=='kit:vox')delete STX.sb[id];stxSmpLoad(id);commit(true);const sm=id==='kit:vox'?{name:'röster · inbyggda'}:SMP.get(id);if(sm)toast((k?'Ljud':'Röst')+' · '+sm.name)};
   smpRows.forEach(row=>{const k=+row.dataset.s,pick=row.querySelector('.sx-pick');
     row.querySelector('[data-so]').onclick=()=>{const Q=stx().smp[k];if(!Q.id){row.querySelector('[data-sp]').click();return}Q.on=Q.on?0:1;commit(true)};
@@ -10878,7 +10887,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v259</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v260</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -11090,8 +11099,10 @@ const proMix=g=>{try{if(window.__mix)__mix.mixFor(g)}catch(e){}};
 const stmIdea=g=>{try{return window.__stm&&__stm.idea?__stm.idea(g):''}catch(e){return ''}};
 function smpIdea(P,own){const Q=P.smp;if(!Array.isArray(Q))return;const R=Math.random,rg=(a,b)=>+(a+R()*(b-a)).toFixed(2);
   Q.forEach((q,k)=>{if(!q)return;if(!q.id)q.id=STX_FABSMP[k];const mine=!!own[k];q.on=mine||R()<(k?.25:.4)?1:0;
+    /* (v260) slot 2: the synth stop or wubbas, half each (a sample you picked yourself stays) */
+    if(k===1&&!mine&&STX_SNDSMP.includes(q.id))q.id=STX_SNDSMP[Math.floor(R()*STX_SNDSMP.length)];
     if(!q.on)return;if(k===0){q.mode='klipp';q.amt=mine?Math.min(.5,Math.max(.34,q.amt||.4)):rg(.32,.5);q.lv=rg(.5,.6);q.fx=rg(.3,.55);q.oct=R()<.2?1:0}
-    else{q.mode=R()<.75?'ett':'klipp';q.amt=rg(.28,.42);q.lv=rg(.45,.55);q.fx=rg(.25,.45);q.oct=R()<.3?-1:0}});
+    else{const wub=q.id==='b-stx-wubbas-c';q.mode=wub||R()<.75?'ett':'klipp';q.amt=rg(.28,.42);q.lv=rg(.45,.55);q.fx=rg(.25,.45);q.oct=wub?0:R()<.3?-1:0}});
   /* both at once: a little less of each, so they don't fight */
   if(Q[0]&&Q[1]&&Q[0].on&&Q[1].on){Q[0].amt=+(Q[0].amt*.85).toFixed(2);Q[1].amt=+(Q[1].amt*.8).toFixed(2)}
   Q.forEach(q=>{if(q&&q.on)try{if(q.id!=='kit:vox')delete STX.sb[q.id];stxSmpLoad(q.id)}catch(e){}})}
