@@ -1754,6 +1754,11 @@ body{font-feature-settings:"ss01","cv11";-webkit-font-smoothing:antialiased;-moz
 .kc-bank{display:flex;align-items:center;flex:none;gap:2px;padding:3px;border-radius:999px;background:rgba(255,255,255,.07);color:#F5F5F2}
 .kc-bank button{width:26px;height:26px;border-radius:50%;font-size:14px;color:#F5F5F2}.kc-bank button:active{background:rgba(255,255,255,.15)}
 .kc-bank b{font-weight:500;white-space:nowrap;padding:0 6px;min-width:96px;text-align:center}.kc-bank b i{font-style:normal;color:#E9C54A;margin-right:6px}
+.kc-bank button.kc-ed{width:auto;min-width:44px;padding:0 12px;border-radius:999px;font-size:11px;letter-spacing:.04em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+.kc-bank button.kc-ed.on{background:#E9C54A;color:#17181A;box-shadow:none}
+@keyframes cpPulse{0%,100%{box-shadow:inset 0 0 0 1px rgba(233,197,74,.25)}50%{box-shadow:inset 0 0 0 2px rgba(233,197,74,.95),0 0 14px rgba(233,197,74,.35)}}
+.kb.own-edit .cp:not(.empty){animation:cpPulse 1.1s ease-in-out infinite}
+.kb.own-edit .cp.empty{opacity:.35}
 .kc-p{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:58px;height:38px;padding:0 9px;border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.12);
   color:#F5F5F2;cursor:ew-resize;touch-action:none;-webkit-user-select:none;user-select:none}
 .kc-p small{font-size:8.5px;color:rgba(245,245,242,.5);letter-spacing:.06em;white-space:nowrap}.kc-p b{font-weight:500;font-size:11px;white-space:nowrap}
@@ -2893,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v261</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v262</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -5847,7 +5852,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
     if(kind==='m'||kind==='M'){const mi=kind==='m',sev=K().ch.sev,pc=((n%12)+12)%12,iv=mi?[0,3,7]:[0,4,7];if(sev)iv.push(mi?10:11);
       return {notes:iv.map(x=>n+x),name:PN[pc]+(mi?'m':'')+(sev?(mi?'7':'maj7'):''),scale:new Set((mi?[0,2,3,5,7,8,10]:[0,2,4,5,7,9,11]).map(x=>(pc+x)%12))}}
     if(kind==='p'){const C=K().ch,slot=+el.dataset.s;if(C.mode==='egen'){const o=K().own[slot];return o&&o.length?{notes:o.slice(),name:nameOf(o)}:null}return fromSym(BANKS[C.bank][1][slot],48)}return null}
-  function press(id,el,v){if(!el)return;if(learn){learnTap(el);return}const kind=el.dataset.k;
+  function press(id,el,v){if(!el)return;if(learn){learnTap(el);return}const kind=el.dataset.k;if(editOwn&&kind==='p'&&K().ch.mode==='egen'){editOwn=false;startLearn(+el.dataset.s);return}
     if(hold&&![...held.keys()].some(k=>k!==id&&!latched.has(k))){latched.forEach(k=>dropHeld(k));latched.clear()}
     if(kind==='n'){let n=+el.dataset.n;if(K().ch.on&&K().ch.mode==='split')n=snap(n);single=true;on(n,v);single=false;held.set(id,{notes:[n],chord:false});if(!K().ch.on)nowShowQuiet(n);}
     else{const ch=chordFor(el);if(!ch){if(K().ch.mode==='egen'&&kind==='p')startLearn(+el.dataset.s);return}playChord(id,ch,v)}
@@ -5858,7 +5863,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
   function release(id){if(!held.has(id))return;if(latched.has(id))return;dropHeld(id)}
   function allOff(){[...held.keys()].forEach(dropHeld);latched.clear();[...vc.keys()].forEach(n=>off(n,true));if(arpT){clearInterval(arpT);arpT=0}}
   /* ---------------- learn (egen) ---------------- */
-  let learn=null;
+  let learn=null,editOwn=false;
   function startLearn(slot){allOff();learn={slot,notes:new Set(K().own[slot]||[])};layout();paintCtl()}
   function learnTap(el){if(el.dataset.k==='p')return;const n=+el.dataset.n;if(learn.notes.has(n))learn.notes.delete(n);else{learn.notes.add(n);single=true;blip(n,.8,ctx.currentTime+.005,.35);single=false}paintLearn()}
   function learnMidi(n){if(!learn)return false;learn.notes.add(n);paintLearn();return true}
@@ -5866,7 +5871,7 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
   /* ---------------- drawing ---------------- */
   let keyEls=new Map();
   function pcDots(notes,root){const set=new Set(notes.map(n=>((n%12)+12)%12));let h='<span class="pc">';for(let p=0;p<12;p++)h+=`<i class="${set.has(p)?(p===root?'on rt':'on'):''}"></i>`;return h+'</span>'}
-  function layout(){if(!open)return;const i=kTrack(),col=trkCol(i),w=keysEl.clientWidth,k=K(),C=k.ch,sc=!!k.scale,chOn=!!C.on&&!learn;kb.classList.toggle('sc',sc&&!(chOn&&(C.mode==='palett'||C.mode==='egen')));kb.style.setProperty('--kc',col);
+  function layout(){if(!open)return;const i=kTrack(),col=trkCol(i),w=keysEl.clientWidth,k=K(),C=k.ch,sc=!!k.scale,chOn=!!C.on&&!learn;kb.classList.toggle('sc',sc&&!(chOn&&(C.mode==='palett'||C.mode==='egen')));kb.style.setProperty('--kc',col);kb.classList.toggle('own-edit',!!editOwn&&chOn&&C.mode==='egen');
     keysEl.innerHTML='';keyEls=new Map();keysEl.style.height='';const base=12*(oct()+1);
     const mk=(cls,x,wd,html,ds)=>{const d=document.createElement('div');d.className=cls;d.style.left=x+'px';d.style.width=wd+'px';Object.assign(d.dataset,ds);d.innerHTML=html;keysEl.appendChild(d);return d};
     if(chOn&&(C.mode==='palett'||C.mode==='egen')){const cols=w<520?6:12,rows=Math.ceil(24/cols),gap=5,pw=(w-gap*(cols-1))/cols;if(w<520)keysEl.style.height=(rows*46+gap*(rows-1))+'px';const H=keysEl.clientHeight||150,ph=(H-gap*(rows-1))/rows;
@@ -5906,15 +5911,15 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
   const DIAL_ORDER=[0,7,2,9,4,11,6,1,8,3,10,5];
   const PARAMS=[['strum','strum',[0,10,20,35,60,90,120],v=>v+' ms'],['inv','omvänd',[0,1,2,3],v=>String(v)],['oct','oktav',[-2,-1,0,1,2],v=>(v>0?'+':'')+v],['sev','7:a',[0,1],v=>v?'på':'av'],
     ['dir','riktning',['upp','ner','upp-ner','slump'],v=>v],['arp','arp',['av','1/8','1/16','1/32','1/16T'],v=>v],['fol','melodi följer',['av','ackord','skala'],v=>v]];
-  function paintCtl(){const C=K().ch;if(!C.on){kc.hidden=true;return}kc.hidden=false;
+  function paintCtl(){const C=K().ch;if(!C.on||C.mode!=='egen')editOwn=false;if(!C.on){kc.hidden=true;return}kc.hidden=false;
     let dial='<div class="kc-dial" id="kcDial"><span>c</span>';DIAL_ORDER.forEach((pc,j)=>{const a=j/12*6.2832-1.5708;dial+=`<i data-pc="${pc}" style="left:${50+Math.cos(a)*40}%;top:${50+Math.sin(a)*40}%"></i>`});dial+='</div>';
     let h=`<div class="kc-now"><div><small>spelas nu</small><b id="kcName">–</b><em id="kcNotes">välj ett ackord</em></div>${dial}</div><div class="kc-ctl">`;
     if(learn){h+=`<div class="kc-learn"><span>lär ${learn.slot+1} · <span id="kcLearnTxt"></span></span><button class="go" id="kcSave">spara</button><button id="kcClr">töm</button><button id="kcCancel">avbryt</button></div>`}
     else{h+='<div class="kc-seg" id="kcMode">'+['noter','palett','split','egen'].map(m=>`<button data-m="${m}" class="${C.mode===m?'on':''}">${m}</button>`).join('')+'</div>';
       if(C.mode==='palett')h+=`<div class="kc-bank"><button id="kcPrev" aria-label="Föregående bank">‹</button><b><i>${C.bank+1}</i>${BANKS[C.bank][0]}</b><button id="kcNext" aria-label="Nästa bank">›</button></div>`;
-      if(C.mode==='egen')h+=`<div class="kc-bank"><b><i>✎</i>tryck + för att lära</b></div>`;
+      if(C.mode==='egen')h+=`<div class="kc-bank"><b><i>✎</i>${editOwn?'tap a chord to edit it':'tryck + för att lära'}</b><button class="kc-ed${editOwn?' on':''}" id="kcEdit" title="Edit a saved chord">${editOwn?'done':'edit'}</button></div>`;
       PARAMS.forEach(([k,l,vals,f])=>{h+=`<div class="kc-p${(k==='arp'&&C.arp!=='av')||(k==='fol'&&C.fol!=='av')||(k==='sev'&&C.sev)?' hot':''}" data-p="${k}" title="Tryck eller dra i sidled"><small>${l}</small><b>${f(C[k])}</b></div>`})}
-    kc.innerHTML=h+'</div>';paintNow();
+    kc.innerHTML=h+'</div>';paintNow();{const eb=document.getElementById('kcEdit');if(eb)eb.onclick=()=>{editOwn=!editOwn;layout();paintCtl()}}
     if(learn){paintLearn();$('#kcSave').onclick=()=>{const ns=[...learn.notes].sort((a,b)=>a-b);K().own[learn.slot]=ns.length?ns:null;learn=null;save();layout();paintCtl();if(ns.length)toast('Sparat · '+nameOf(ns))};
       $('#kcClr').onclick=()=>{learn.notes.clear();paintLearn()};$('#kcCancel').onclick=()=>{learn=null;layout();paintCtl()};return}
     kc.querySelectorAll('#kcMode button').forEach(b=>b.onclick=()=>{allOff();C.mode=b.dataset.m;S.kb.ch=C;save();layout();paintCtl()});
@@ -5933,13 +5938,13 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
   const velOf=(k,y)=>{const r=k.getBoundingClientRect();return clamp(.4+.6*(y-r.top)/r.height,.3,1)};
   const pEl=new Map();let lpT=0;
   keysEl.addEventListener('pointerdown',e=>{const k=keyAt(e.clientX,e.clientY);if(!k)return;e.preventDefault();keysEl.setPointerCapture(e.pointerId);pEl.set(e.pointerId,k);press('p'+e.pointerId,k,velOf(k,e.clientY));
-    clearTimeout(lpT);if(K().ch.on&&K().ch.mode==='egen'&&k.dataset.k==='p'&&!learn){const slot=+k.dataset.s;lpT=setTimeout(()=>{if(pEl.get(e.pointerId)===k){release('p'+e.pointerId);startLearn(slot)}},600)}});
+    clearTimeout(lpT)});
   keysEl.addEventListener('pointermove',e=>{const id='p'+e.pointerId;if(!pEl.has(e.pointerId)||learn)return;const k=keyAt(e.clientX,e.clientY);if(!k||k===pEl.get(e.pointerId))return;clearTimeout(lpT);
     if(latched.has(id))return;release(id);pEl.set(e.pointerId,k);press(id,k,velOf(k,e.clientY))});
   const pUp=e=>{clearTimeout(lpT);if(!pEl.has(e.pointerId))return;pEl.delete(e.pointerId);release('p'+e.pointerId)};keysEl.addEventListener('pointerup',pUp);keysEl.addEventListener('pointercancel',pUp);keysEl.addEventListener('lostpointercapture',pUp);
   keysEl.addEventListener('contextmenu',e=>e.preventDefault());
   /* ---------------- controls ---------------- */
-  function setOpen(v){open=v;kb.hidden=!v;btn.classList.toggle('on',v);document.body.classList.toggle('kb-open',v);if(v){requestAnimationFrame(()=>{layout();paintCtl()})}else{allOff();learn=null}}
+  function setOpen(v){open=v;kb.hidden=!v;btn.classList.toggle('on',v);document.body.classList.toggle('kb-open',v);if(v){requestAnimationFrame(()=>{layout();paintCtl()})}else{allOff();learn=null;editOwn=false}}
   btn.onclick=()=>{setOpen(!open);if(open)toast('Klaviatur · '+TRACKS[kTrack()].name+(matchMedia('(pointer:fine)').matches?' · tangenterna A–L spelar':''))};$('#kbX').onclick=()=>setOpen(false);
   const shift=d=>{const id=TRACKS[kTrack()].id,o=clamp(oct()+d,1,6);K().oct[id]=o;allOff();layout();save()};$('#kbDn').onclick=()=>shift(-1);$('#kbUp').onclick=()=>shift(1);
   $('#kbScale').onclick=()=>{K().scale=K().scale?0:1;allOff();layout();save()};
@@ -10927,7 +10932,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v261</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v262</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
