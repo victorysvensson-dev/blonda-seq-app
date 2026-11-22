@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v263</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v264</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -9427,10 +9427,10 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
   const scene=()=>clp().sc[Math.max(0,Math.min(7,CLX.sel.r|0))];
   const pOf=i=>scene().c[i];
   const R_=(p,i)=>{const id=TRACKS[i].id;if(!S.roll[p])S.roll[p]={};if(!Array.isArray(S.roll[p][id]))S.roll[p][id]=[];return S.roll[p][id]};
-  /* note columns: every note gets a column (keeps the one it had when there is room), so chords spread out side by side */
+  /* note columns: every note gets a column (keeps the one it had when there is room), so chords spread out side by side (v264: up to 8) */
   function lay(p,i){const R=R_(p,i),ord=R.map((n,k)=>k).sort((a,b)=>R[a].s-R[b].s||R[a].n-R[b].n),end=[],col=new Array(R.length);
     ord.forEach(k=>{const n=R[k],free=c=>(end[c]==null||end[c]<=n.s+1e-6);let c=(n.tc!=null&&free(n.tc))?n.tc:-1;if(c<0){c=0;while(!free(c))c++}col[k]=c;end[c]=Math.max(end[c]||0,n.s+Math.max(.01,n.l));n.tc=c});
-    const used=end.length;return {R,col,subs:Math.min(4,Math.max(1,used)+(used&&used<4&&i===cur.t?1:0))}}
+    const used=end.length;return {R,col,subs:Math.min(8,Math.max(1,used)+(used&&used<8&&i===cur.t?1:0))}}
   /* what each row shows in a note column */
   function melRows(p,i){const L=lay(p,i),rows=[];for(let r=0;r<16;r++)rows.push(new Array(L.subs).fill(null));
     for(let c=0;c<L.subs;c++){const ns=L.R.map((n,k)=>({n,k})).filter(o=>L.col[o.k]===c).sort((a,b)=>a.n.s-b.n.s);
@@ -9512,7 +9512,7 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
       /* the glitch card follows the tracker only when you move or change something in the tracker's glitch column, not on every redraw:
          otherwise picking D in the card jumped straight back to the scene's pattern, and edits landed in that one */
       if(window.GXC&&isCur){const at=gxAt(cur.r),k=cur.r+':'+g.p+':'+g.len+':'+(CLX.sel.r|0);if(at.q>=0&&k!==gxSyncK){gxSyncK=k;window.GXC.p=at.q}}else gxSyncK=''}
-    body.innerHTML=h;fit();hdBuild();live(true);/* v216: the view only follows the cursor when the cursor moved – a redraw (a new bar, a change elsewhere) keeps where you scrolled */const cuK=cur.t+':'+cur.c+':'+cur.r+':'+(CLX.sel.r|0),cu=cuK!==render._cuK?body.querySelector('span.cu'):null;render._cuK=cuK;if(cu){const a=cu.getBoundingClientRect(),b=sc.getBoundingClientRect(),nw=(body.querySelector('.tq-num')||{}).offsetWidth||0;if(a.left<b.left+nw)sc.scrollLeft-=b.left+nw-a.left+8;else if(a.right>b.right)sc.scrollLeft+=a.right-b.right+8;if(a.top<b.top+32)sc.scrollTop-=b.top+32-a.top;else if(a.bottom>b.bottom)sc.scrollTop+=a.bottom-b.bottom}}
+    body.innerHTML=h;fit();hdBuild();live(true);/* v216: the view only follows the cursor when the cursor moved – a redraw (a new bar, a change elsewhere) keeps where you scrolled */const cuK=cur.t+':'+cur.c+':'+cur.r+':'+(CLX.sel.r|0),cu=cuK!==render._cuK?body.querySelector('span.cu'):null;render._cuK=cuK;if(cu){const a=cu.getBoundingClientRect(),b=sc.getBoundingClientRect(),nw=(body.querySelector('.tq-num')||{}).offsetWidth||0;if(a.left<b.left+nw)sc.scrollLeft-=b.left+nw-a.left+8;else if(a.right>b.right)sc.scrollLeft+=a.right-b.right+8;if(a.top<b.top+32)sc.scrollTop-=b.top+32-a.top;else if(a.bottom>b.bottom-(T._padRes||0))sc.scrollTop+=a.bottom-b.bottom+(T._padRes||0)}}
   /* rows as tall as the space allows (16 rows + header), between 14 and 22 px */
   const fit=()=>{const H=sc.clientHeight;if(!H)return;const full=D.classList.contains('tqfull'),rh=bars>1?Math.max(full?15:14,Math.min(full?20:17,Math.floor((H-32)/NR()))):Math.max(14,Math.min(22,Math.floor((H-32)/16)));body.style.setProperty('--rh',rh+'px')};
   /* the play line: per track, only when the track plays this very clip */
@@ -9699,41 +9699,60 @@ body.dw-dragging,body.dw-dragging *{cursor:inherit!important;user-select:none!im
     new ResizeObserver(placeV).observe(T);addEventListener('resize',placeV);
     new MutationObserver(()=>setTimeout(placeV,20)).observe(D,{attributes:true,attributeFilter:['class']});
     apply()}
-  /* ================= (v261) touch keys: on the iPad (no keyboard) a tap on a cell opens a small pad at the bottom of the
-     tracker with what that column takes – notes (one octave + OFF), volume (0–F), hit, ratchet/chance, glitch 1–7 – and the
-     arrows and delete. Each button sends the same key the tracker already understands, so it does exactly what the keyboard does. ================= */
+  /* ================= (v264) touch keys: on the iPad (no keyboard) a tap on a cell opens two small panels over the bottom corners of
+     the tracker, like a game controller – the arrows, delete and close to the left, and to the right what the column takes: a real
+     piano (one octave, octave −/+, OFF, chord), volume 0–F, hit, ratchet/chance, glitch 1–7. Each button sends the key the tracker
+     already understands, so it does exactly what the keyboard does. "chord" keeps the row: every note goes into the next free
+     column of the same row (up to 8), and ↓ then goes to the next step's first column. ================= */
   {const PCSS=document.createElement('style');PCSS.textContent=`
-.tq-pad{flex:none;display:flex;flex-direction:column;gap:6px;padding:8px 10px 10px;border-top:1px solid rgba(var(--dk-ink),.1);background:var(--dk-p1);font-family:var(--f-mono)}
+.tq{position:relative}
+.tq-pad{position:absolute;left:10px;right:10px;bottom:10px;z-index:80;display:flex;justify-content:space-between;align-items:flex-end;gap:10px;pointer-events:none;font-family:var(--f-mono)}
 .tq-pad[hidden]{display:none}
-.tq-pad .tp-row{display:flex;gap:5px;align-items:stretch;min-width:0}
-.tq-pad button{flex:1 1 0;min-width:0;height:40px;padding:0 4px;border-radius:var(--dk-r);font-size:12px!important;background:var(--dk-p2)!important;box-shadow:inset 0 0 0 1px rgba(var(--dk-ink),.16);color:rgb(var(--dk-ink));touch-action:manipulation;-webkit-user-select:none;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tq-pad .tp-p{pointer-events:auto;display:grid;gap:4px;padding:8px;border-radius:16px;background:color-mix(in srgb,var(--dk-p1) 90%,transparent);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:0 10px 28px rgba(0,0,0,.4),inset 0 0 0 1px rgba(var(--dk-ink),.1)}
+.tq-pad button{min-width:0;height:auto;padding:0 3px;border-radius:var(--dk-r);font-size:12px!important;background:var(--dk-p2)!important;box-shadow:inset 0 0 0 1px rgba(var(--dk-ink),.16);color:rgb(var(--dk-ink));touch-action:manipulation;-webkit-user-select:none;user-select:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tq-pad button:active{background:var(--dk-p4)!important}
-.tq-pad button.bk{background:rgba(0,0,0,.42)!important}
-.tq-pad button.bk:active{background:rgba(0,0,0,.25)!important}
-.tq-pad button.w2{flex-grow:1.6}
-.tq-pad .tp-lab{flex:none;align-self:center;font-size:9px;letter-spacing:.08em;color:rgba(var(--dk-ink),.45);text-transform:uppercase;min-width:40px}
-.tq-pad .tp-oct{flex:none;align-self:center;min-width:22px;text-align:center;font:400 13px var(--f-linje)}
+.tq-pad button.bk{background:rgba(0,0,0,.42)!important}.tq-pad button.bk:active{background:rgba(0,0,0,.25)!important}
+.tq-pad button.sm{font-size:10px!important;letter-spacing:.03em}
+.tq-pad button.on{background:#E9C54A!important;color:#17181A;box-shadow:none}
+.tq-pad .tp-nav{grid-template-columns:repeat(3,44px) 62px;grid-template-rows:40px 40px}
+.tq-pad .tp-nav [data-c=ArrowUp]{grid-area:1/2}.tq-pad .tp-nav [data-c=ArrowLeft]{grid-area:2/1}.tq-pad .tp-nav [data-c=ArrowDown]{grid-area:2/2}.tq-pad .tp-nav [data-c=ArrowRight]{grid-area:2/3}
+.tq-pad .tp-nav [data-c=Delete]{grid-area:1/4}.tq-pad .tp-nav [data-x]{grid-area:2/4}.tq-pad .tp-nav [data-c^=Arrow]{font-size:16px!important}
+.tq-pad .tp-pno{grid-template-columns:46px repeat(14,21px) 56px;grid-template-rows:42px 42px}
+.tq-pad .tp-grid{grid-template-columns:repeat(var(--n,8),44px);grid-auto-rows:40px}
+.tq-pad .tp-grid.wide{grid-template-columns:repeat(var(--n,2),88px)}
 .tq-top button.tq-kb.on{box-shadow:inset 0 0 0 1px rgba(var(--dk-acc-rgb),.7)}
 html:not(.coarse) .tq-top button.tq-kb{display:none}`;document.head.appendChild(PCSS);
     const pad=document.createElement('div');pad.className='tq-pad';pad.hidden=true;T.appendChild(pad);
     const kb=document.createElement('button');kb.className='tq-kb';kb.title='Touch keys';kb.textContent='keys';const tt=T.querySelector('.tq-top b.tq-ttl');if(tt)tt.after(kb);
-    const NN=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'],NK=['KeyZ','KeyS','KeyX','KeyD','KeyC','KeyV','KeyG','KeyB','KeyH','KeyN','KeyJ','KeyM'];
+    /* the piano: white keys on the lower row, black keys between them above (half-width columns), octave to the left, chord to the right */
+    const PK=[['C','KeyZ',2,2],['C#','KeyS',1,3],['D','KeyX',2,4],['D#','KeyD',1,5],['E','KeyC',2,6],['F','KeyV',2,8],['F#','KeyG',1,9],['G','KeyB',2,10],['G#','KeyH',1,11],['A','KeyN',2,12],['A#','KeyJ',1,13],['B','KeyM',2,14]];
     const HX=['Digit0','Digit1','Digit2','Digit3','Digit4','Digit5','Digit6','Digit7','Digit8','Digit9','KeyA','KeyB','KeyC','KeyD','KeyE','KeyF'];
-    const send=(code,key)=>{T.dispatchEvent(new KeyboardEvent('keydown',{code,key:key||'',bubbles:true,cancelable:true}));paint()};
-    const B=(lab,code,key,cls)=>`<button data-c="${code}" data-k="${key||''}"${cls?' class="'+cls+'"':''}>${lab}</button>`;
-    let last='';
-    function paint(){if(pad.hidden)return;const i=cur.t,k=(COLS(i)[cur.c])||'';let row='';
-      if(i===GXT){row=cur.c===0?'<span class="tp-lab">glitch</span>'+GX_NAMES.map((n,j)=>B((j+1)+' '+n,'Digit'+(j+1))).join(''):'<span class="tp-lab">value</span>'+[1,2,3,4,5].map(n=>B(n,'Digit'+n)).join('')}
-      else if(k[0]==='n')row='<span class="tp-lab">note</span>'+B('−','NumpadDivide','','')+'<span class="tp-oct">'+oct+'</span>'+B('+','NumpadMultiply','','')+NN.map((n,j)=>B(n,NK[j],'',n.length>1?'bk':'')).join('')+B('OFF','KeyA','','w2');
-      else if(k[0]==='v')row='<span class="tp-lab">volume</span>'+HX.map((c,j)=>B(j.toString(16).toUpperCase(),c)).join('');
-      else if(k==='h')row='<span class="tp-lab">hit</span>'+B('hit','KeyZ','','w2');
-      else if(k==='x')row='<span class="tp-lab">fx</span>'+B('ratchet','KeyR','','w2')+B('chance','KeyP','','w2');
-      const nav='<span class="tp-lab">move</span>'+B('←','ArrowLeft','ArrowLeft')+B('↑','ArrowUp','ArrowUp')+B('↓','ArrowDown','ArrowDown')+B('→','ArrowRight','ArrowRight')+B('delete','Delete','Delete','w2')+'<button data-x class="w2">close</button>';
-      const h='<div class="tp-row">'+row+'</div><div class="tp-row">'+nav+'</div>';if(h!==last){last=h;pad.innerHTML=h}}
-    const show=on=>{pad.hidden=!on;kb.classList.toggle('on',on);last='';paint();try{fit()}catch(e){}try{render()}catch(e){}};
+    let chord=false,last='';
+    const B=(lab,code,key,cls,st)=>`<button data-c="${code}" data-k="${key||''}"${cls?' class="'+cls+'"':''}${st?' style="'+st+'"':''}>${lab}</button>`;
+    const send=(code,key)=>{T.dispatchEvent(new KeyboardEvent('keydown',{code,key:key||'',bubbles:true,cancelable:true}))};
+    const kind=()=>{const i=cur.t;if(i===GXT)return cur.c===0?'g':'w';return (COLS(i)[cur.c])||''};
+    function paint(){if(pad.hidden)return;const k=kind();let right='';
+      if(k==='g')right=`<div class="tp-p tp-grid" style="--n:4">${GX_NAMES.map((n,j)=>B((j+1)+' '+n,'Digit'+(j+1),'','sm')).join('')}</div>`;
+      else if(k==='w')right=`<div class="tp-p tp-grid" style="--n:5">${[1,2,3,4,5].map(n=>B(n,'Digit'+n)).join('')}</div>`;
+      else if(k[0]==='n')right=`<div class="tp-p tp-pno">${B('oct +','NumpadMultiply','','sm','grid-area:1/1')}${B('oct −','NumpadDivide','','sm','grid-area:2/1')}${PK.map(([n,c,r,col])=>B(n,c,'',r===1?'bk':'','grid-area:'+r+'/'+col+'/'+(r+1)+'/'+(col+2))).join('')}${B('OFF','KeyA','','sm','grid-area:1/7/2/9')}<button class="sm${chord?' on':''}" data-ch style="grid-area:1/16/3/17">chord</button></div>`;
+      else if(k[0]==='v')right=`<div class="tp-p tp-grid" style="--n:8">${HX.map((c,j)=>B(j.toString(16).toUpperCase(),c)).join('')}</div>`;
+      else if(k==='h')right=`<div class="tp-p tp-grid wide" style="--n:1">${B('hit','KeyZ')}</div>`;
+      else if(k==='x')right=`<div class="tp-p tp-grid wide" style="--n:2">${B('ratchet','KeyR')}${B('chance','KeyP')}</div>`;
+      const nav=`<div class="tp-p tp-nav">${B('↑','ArrowUp','ArrowUp')}${B('←','ArrowLeft','ArrowLeft')}${B('↓','ArrowDown','ArrowDown')}${B('→','ArrowRight','ArrowRight')}${B('delete','Delete','Delete','sm')}<button class="sm" data-x>close</button></div>`;
+      const h=nav+right;if(h!==last){last=h;pad.innerHTML=h}
+      /* the rows under the panels can be scrolled up into view, and the cursor is kept above them */
+      const ph=Math.max(0,...[...pad.children].map(c=>c.offsetHeight))+14;if(T._padRes!==ph){T._padRes=ph;body.style.paddingBottom=ph+'px'}}
+    const show=on=>{pad.hidden=!on;kb.classList.toggle('on',on);last='';if(!on){T._padRes=0;body.style.paddingBottom=''}paint();try{fit()}catch(e){}try{render()}catch(e){}};
     /* keep the tracker's focus (and the cursor) while pressing the pad */
     pad.addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation()});pad.addEventListener('mousedown',e=>{e.preventDefault();e.stopPropagation()});
-    pad.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;e.stopPropagation();if(b.dataset.x!=null){show(false);return}send(b.dataset.c,b.dataset.k)});
+    pad.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;e.stopPropagation();
+      if(b.dataset.x!=null){show(false);return}
+      if(b.dataset.ch!=null){chord=!chord;last='';paint();return}
+      const c=b.dataset.c,k=kind(),i=cur.t;
+      /* chord: a note stays on its row and the cursor goes on to the next note column; ↓ goes to the next step's first column */
+      if(chord&&k[0]==='n'&&/^Key[ZSXDCVGBHNJM]$/.test(c)){const r0=cur.r,c0=cur.c;send(c,b.dataset.k);cur.r=r0;const cs=COLS(i);cur.c=Math.min(cs.length-2,c0+2);try{render()}catch(_){}paint();return}
+      if(chord&&k[0]==='n'&&c==='ArrowDown'){send(c,b.dataset.k);cur.c=0;try{render()}catch(_){}paint();return}
+      send(c,b.dataset.k);paint()});
     kb.addEventListener('click',e=>{e.stopPropagation();show(pad.hidden)});
     /* a finger (or pencil) on a cell opens the pad; the mouse never does */
     T.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'||!e.target.closest('.tq-r span[data-k]'))return;if(pad.hidden)show(true);setTimeout(paint,0)},true);
@@ -10937,7 +10956,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v263</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v264</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
