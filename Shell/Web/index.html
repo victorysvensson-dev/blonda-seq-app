@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v266</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v267</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -3544,8 +3544,8 @@ try{stateHeal()}catch(e){console.error('stateHeal',e)}
 if((S.mixV||0)<2){S.params=JSON.parse(JSON.stringify(DEF_P));S.master={filter:0,echo:.38,space:.4,drive:.12,pump:.4,swing:.12,vol:.75};S.world=0;S.mixV=2}
 try{stateHeal()}catch(e){console.error('stateHeal',e)}
 function notesAt(R,st){return R.filter(n=>Math.floor(n.s+1e-6)===st)}
-function clrStep(c){c.v=0;delete c.r;delete c.p;delete c.vel;delete c.o;delete c.c;return c}
-function tidyRow(row){row.forEach(c=>{if(!c.v&&(c.r||c.p!=null||c.vel!=null||c.o!=null))clrStep(c)})}
+function clrStep(c){c.v=0;delete c.r;delete c.p;delete c.vel;delete c.o;delete c.c;delete c.so;delete c.rv;delete c.pt;delete c.gl;return c}
+function tidyRow(row){row.forEach(c=>{if(!c.v&&(c.r||c.p!=null||c.vel!=null||c.o!=null||c.so||c.rv||c.pt||c.gl))clrStep(c)})}
 function syncCells(pi,ti){const id=TRACKS[ti].id,R=S.roll[pi][id],row=S.pats[pi][ti];for(let st=0;st<16;st++){const ns=notesAt(R,st);if(!ns.length){clrStep(row[st]);continue}
   row[st].v=ns.some(n=>n.v>=.95)?2:1;row[st].n=Math.min(...ns.map(n=>n.n))}}
 function reconcile(pi,ti){const id=TRACKS[ti].id,R=S.roll[pi][id],row=S.pats[pi][ti];
@@ -3955,7 +3955,7 @@ const hitT=new (class extends Map{
   get(i){const a=this._q&&this._q.get(i);if(!a||!a.length)return undefined;this._trim(a);return a[0]}
   forEach(cb,th){super.forEach((_,i)=>cb.call(th,this.get(i),i,this))}})();window.__hitT=hitT;
 function trigger(i,t,vel,note,ls){return window.__trgCap?__trgCap(t,()=>trigger0(i,t,vel,note,ls)):trigger0(i,t,vel,note,ls)}
-function trigger0(i,t,vel,note,ls){if(!ctx)return;const tr=TRACKS[i],p0=S.params[tr.id],p=gTune?Object.assign({},p0,{tune:p0.tune+gTune}):p0,out=ckOut(i,t,A.ch[i].inp||A.ch[i].g),len=60/S.bpm/4*(ls||1);
+function trigger0(i,t,vel,note,ls){if(!ctx)return;const tr=TRACKS[i],p0=S.params[tr.id],sp=!tr.mel&&typeof SFX!=='undefined'&&SFX&&SFX.pt?SFX.pt:0,p=gTune||sp?Object.assign({},p0,{tune:p0.tune+gTune+sp}):p0,out=ckOut(i,t,A.ch[i].inp||A.ch[i].g),len=60/S.bpm/4*(ls||1);
   if(tr.id==='kick'&&isMuted(i))return;
   const dkk=tr.id==='ohat'?'hat':tr.id,dm=S.dk&&S.dk[tr.id],alt=dm&&DKV[dkk]&&DKV[dkk][dm];
   if(dm&&dm.startsWith('smp:'))smpVoice(dm.slice(4),t,vel,p,out,tr.id);else if(alt)alt(t,vel,p,out,tr.id==='ohat');else if(tr.id==='hat')VOICE.hat(t,vel,p,out,false);else if(tr.id==='ohat')VOICE.hat(t,vel,p,out,true);else VOICE[tr.id](t,vel,p,out,null,note,len);
@@ -3980,7 +3980,7 @@ function schedule(){SCHED=1;try{while(nextT<ctx.currentTime+(window.__LA||.12)){
         for(const nt of RR){if(!pass||Math.floor(nt.s+1e-6)!==q||tg.has(nt))continue;const tt=Math.max(ctx.currentTime,t+(nt.s-q+(cl.o||0))*sd),chain=[];let cur=nt,end=nt.s+nt.l,guard=0;
           while(cur.g&&guard++<16){const nx=byId.get(cur.g);if(!nx||nx.s<=cur.s)break;chain.push({at:nx.s-nt.s,n:nx.n});end=nx.s+nx.l;cur=nx}
           if(rr>1&&!chain.length){for(let k=0;k<rr;k++)trigger(i,tt+k*sd/rr,nt.v*(k?.82:1),nt.n,nt.l/rr)}else{GL=chain.length?{list:chain,sd:sd,n0:nt.n,gt:glideTime(tr.id)}:null;trigger(i,tt,nt.v,nt.n,end-nt.s);GL=null}actT[i][q]={t:tt,v:nt.v>=.95?2:1}}continue}
-      const st=pat[i][q];if(st.v&&Math.random()<(st.p??1)){const vel=st.vel??(st.v===2?1:.72),rr=st.r||1;const tn=Math.max(ctx.currentTime,t+(st.o||0)*sd);for(let k=0;k<rr;k++){CHOPK=st.c!=null?st.c:q;trigger(i,tn+k*sd/rr,vel*(k?.8:1),st.n);CHOPK=null}actT[i][q]={t:tn,v:st.v}}}
+      const st=pat[i][q];if(st.v&&Math.random()<(st.p??1)){const vel=st.vel??(st.v===2?1:.72),rr=st.r||1;const tn=Math.max(ctx.currentTime,t+(st.o||0)*sd);for(let k=0;k<rr;k++){CHOPK=st.c!=null?st.c:q;SFX=st;trigger(i,tn+k*sd/rr,vel*(k?.8:1),st.n);SFX=null;CHOPK=null}actT[i][q]={t:tn,v:st.v}}}
     if(fill){trigger(1,t,.28+.67*(step/15),0);if(step%2)trigger(5,t,.5,0);if(step%4===2)trigger(2,t,.6,0)}
     if(window.MIDIX)MIDIX.step(nextT,sd);visQ.push({t:nextT,step:ps,bar,g:gstep});beatPump(nextT,step);nextT+=sd;step=(step+1)%16;gstep++;if(step===0)bar++}}finally{SCHED=0}}
 function play(){initAudio();ctx.resume();if(playing){stop();return}
@@ -4524,7 +4524,7 @@ function drawDie(n){const d=$('#dieFace');if(!d)return;if(!d.children.length)for
 const rnd=Math.random,chance=p=>rnd()<p,pickA=a=>a[Math.floor(rnd()*a.length)];
 const ROOTS=SCALE.filter(n=>n%12===9);
 function scaleNear(n,k){let i=SCALE.indexOf(n);if(i<0)i=SCALE.findIndex(x=>x>=n);return SCALE[clamp(i+k,0,SCALE.length-1)]}
-function cellsClear(row){row.forEach(c=>{c.v=0;delete c.r;delete c.p;delete c.vel})}
+function cellsClear(row){row.forEach(c=>{c.v=0;delete c.r;delete c.p;delete c.vel;delete c.so;delete c.rv;delete c.pt;delete c.gl})}
 /* --- musical dice: every throw picks a coherent style + a chord progression in A minor, and every part follows it --- */
 const DG={g:.32,o:.58};
 function put(row,str){if(!str)return;for(let s=0;s<16;s++){const ch=str[s];if(!ch||ch==='.')continue;row[s].v=ch==='X'?2:1;if(DG[ch])row[s].vel=DG[ch]}}
@@ -6428,6 +6428,9 @@ function seZero(sm,t){const b=sm.buf,sr=b.sampleRate,d=b.getChannelData(0),i0=Ma
 /* chop: a sample cut into up to 16 slices; a step plays slice st.c (or its own step number), pads play any slice */
 if(!S.chop)S.chop={};
 let CHOPK=null;
+/* (v267) the step being played, while it plays: its sample fx – so = start 0–15 (sixteenths of the sound), rv = reverse,
+   pt = pitch in semitones (works on every drum, see trigger0), gl = glide: the pitch slides by gl semitones over the sound */
+let SFX=null;
 function chopOf(tid){const c=S.chop[tid];return c&&c.sid===seCur(tid)&&c.cuts&&c.cuts.length?c:null}
 function chopAuto(sm,mode){const d=sm.buf.duration;let cuts;
   if(mode==='slag'){const o=seOnsets(sm).filter(t=>t>.01);cuts=[0];o.forEach(t=>{if(cuts.length<16)cuts.push(seZero(sm,Math.max(0,t-.002))/d)})}
@@ -6450,17 +6453,20 @@ smpVoice=function(id,t,v,p,out,tid){const sm=SMP.get(id);if(!sm||!sm.buf){ensure
   const E=seGet(tid),D=sm.buf.duration,CC=chopOf(tid);let st,en,ck=CHOPK;CHOPK=null;
   if(CC){const n=CC.cuts.length;ck=(((ck|0)%n)+n)%n;st=CC.cuts[ck]*D;en=Math.max(st+.002,(ck+1<n?CC.cuts[ck+1]:1)*D);if(SE.open&&SE.tid===tid)SE.lastK={k:ck,t:ctx.currentTime}}
   else{st=clamp(E.st,0,1)*D;en=Math.max(st+.002,clamp(E.en,0,1)*D)}
-  const buf=E.rev?revBuf(sm):sm.buf,off=E.rev?D-en:st;
-  const rate=Math.pow(2,p.tune/12),len=(en-st)/rate,src=ctx.createBufferSource(),g=ctx.createGain(),lp=ctx.createBiquadFilter(),hp=ctx.createBiquadFilter();
+  /* the step's start position skips into the sound the way it plays (forwards from the start, backwards from the end) */
+  const fx=SFX,skip=fx&&fx.so?(en-st)*Math.min(15,fx.so)/16:0;
+  const rv=!!E.rev!==!!(fx&&fx.rv),buf=rv?revBuf(sm):sm.buf,off=(rv?D-en:st)+skip;
+  const rate=Math.pow(2,p.tune/12),len=(en-st-skip)/rate,src=ctx.createBufferSource(),g=ctx.createGain(),lp=ctx.createBiquadFilter(),hp=ctx.createBiquadFilter();
   src.buffer=buf;src.playbackRate.value=rate;lp.type='lowpass';hp.type='highpass';const tn=p.tone;
   lp.frequency.value=tn>=.5?20000:180*Math.pow(110,tn*2);hp.frequency.value=tn<=.5?18:18*Math.pow(45,(tn-.5)*2);
   const end=p.decay>=.97?len:Math.min(len,.025+Math.pow(p.decay,1.7)*2.6),lv=v*(sm.norm||1)*.95*Math.pow(10,(E.g||0)/20),fi=Math.min(end*.9,(E.fi||0)/1000/rate),fo=Math.min(end-fi,Math.max(CC?.003:0,(E.fo||0)/1000)/rate);
   if(fi>.0005){g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(lv,t+fi)}else g.gain.setValueAtTime(lv,t);
   if(fo>.0005){g.gain.setValueAtTime(lv,t+end-fo);g.gain.linearRampToValueAtTime(0,t+end)}
   else{g.gain.setValueAtTime(lv,Math.max(t+fi,t+end*.55));g.gain.exponentialRampToValueAtTime(.0001,t+end)}
+  if(fx&&fx.gl){src.playbackRate.setValueAtTime(rate,t);src.playbackRate.exponentialRampToValueAtTime(rate*Math.pow(2,clamp(fx.gl,-24,24)/12),t+Math.max(.03,end))}
   src.connect(lp);lp.connect(hp);hp.connect(g);g.connect(out);src.start(t,Math.max(0,off));src.stop(t+end+.02);
   if(tid==='hat'||tid==='ohat')hatChoke(g,tid==='ohat',t);if(tid==='kick')pump(t);
-  if(SE.open&&SE.tid===tid)SE.play={t,rate,st,en,end,rev:E.rev}};
+  if(SE.open&&SE.tid===tid)SE.play={t,rate,st,en,end,rev:rv}};
 
 const SE={open:false,i:-1,tid:'',sm:null,v0:0,v1:1,drag:null,play:null,raf:0};
 (()=>{const box=document.createElement('div');box.className='sed';box.id='sed';box.hidden=true;box.setAttribute('role','dialog');box.setAttribute('aria-label','Sampeleditor');
@@ -9339,7 +9345,7 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
 .tq-r.out{opacity:.25}
 .tq-num .tq-r{color:rgba(var(--dk-ink),.38);font-size:10px}.tq-num .tq-r.b4{color:rgba(var(--dk-ink),.7)}
 .tq-r span{display:inline-block;text-align:left;border-radius:var(--dk-r2);cursor:text}
-.tq-r .n{width:3ch}.tq-r .v{width:2ch;color:#7FB7E8}.tq-r .x{width:3ch;color:#D6A6F0}.tq-r .h{width:3ch;font-weight:500}
+.tq-r .n{width:3ch}.tq-r .v{width:2ch;color:#7FB7E8}.tq-r .x{width:3ch;color:#D6A6F0}.tq-r .s{width:5ch;color:#8FE3C7}.tq-r .h{width:3ch;font-weight:500}
 .tq-r .e{color:rgba(var(--dk-ink),.16)}
 .tq-r .h:not(.e){color:var(--h)}.tq-r .h.acc{text-shadow:0 0 6px var(--h)}
 .tq-r .n:not(.e):not(.off){color:rgb(var(--dk-ink))}.tq-r .off{color:rgba(var(--dk-ink),.38)}
@@ -9387,7 +9393,7 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
       <span class="tq-lab">steg</span><button data-e="-1" title="Hur många rader markören hoppar efter en not">−</button><em class="tq-st">1</em><button data-e="1">+</button>
       <span class="tq-lab">visa</span><span class="tq-seg"><button data-b="1" title="Bara mönstret (16 steg)">1 takt</button><button data-b="4" title="Fyra takter: mönstret loopar, det som följer Startern syns hela vägen">4 takter</button></span>
       <button class="tq-fol" data-f title="Rulla med när det spelar">följ</button><button data-sxo title="Visa Startern ensam i mitten">starter ◎</button><button class="tq-fs" data-fs title="Trackern på hela skärmen (esc = tillbaka)">⤢ hela skärmen</button>
-      <span class="tq-hint">Z–M · Q–P = noter · A = OFF · Del = ta bort · 0–F i vol · R / P i fx = ratchet / chans · pilar = flytta</span></div>
+      <span class="tq-hint">Z–M · Q–P = notes · A = OFF · Del = delete · 0–F in vol · R / P in fx = ratchet / chance · sample column: R reverse · 0–F start · − + pitch · [ ] glide · arrows = move</span></div>
     <div class="tq-hs"></div><div class="tq-sc"><div class="tq-body"></div></div>`;
   main.insertBefore(T,main.firstChild);
   const body=T.querySelector('.tq-body'),sc=T.querySelector('.tq-sc'),hs=T.querySelector('.tq-hs');
@@ -9466,7 +9472,7 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
         if(e){const ns=e.ns?e.ns.slice().sort((a,b)=>a-b):null;A[k][g]={t:'n',txt:k==='ack'?((pl.ch[ev.ci]||{}).name||'chd'):nName(e.n!=null?e.n:(ns?ns[0]:60)),ns};if(ns)A.mx[k]=Math.max(A.mx[k],ns.length);end=g+Math.max(1,e.l||1)}else if(g<end)A[k][g]={t:'tie'}}});/* the two sample slots (voice, one-shot): where the Starter drops them; ◀ = reversed, ≋ = stutter */
     [0,1].forEach(k=>{const by=pl.sx&&pl.sx[k],a=new Array(64).fill(null);let end=-1;if(by)for(let g=0;g<64;g++){const e=by[g];if(e){a[g]={t:'n',txt:'■'+(e.rev?'◀':'')+(e.stu?'≋':'')};end=g+Math.max(1,e.l||1)}else if(g<end)a[g]={t:'tie'}}A['s'+k]=a});
     return A};
-  const COLS=i=>{if(i===GXT)return ['g','w'];if(i===SXT)return [];if(!TRACKS[i].mel)return ['h','v','x'];const p=pOf(i),s=p>=0?lay(p,i).subs:1,a=[];for(let k=0;k<s;k++)a.push('n'+k,'v'+k);return a};
+  const COLS=i=>{if(i===GXT)return ['g','w'];if(i===SXT)return [];if(!TRACKS[i].mel)return ['h','v','x','s'];const p=pOf(i),s=p>=0?lay(p,i).subs:1,a=[];for(let k=0;k<s;k++)a.push('n'+k,'v'+k);return a};
 
   function render(){if(!ARR.open||!D.classList.contains('clipv')||mode!=='tracker')return;
     const sn=scene();T.querySelector('.tq-ttl').textContent='scen '+((CLX.sel.r|0)+1);T.querySelector('.tq-oct').textContent=oct;T.querySelector('.tq-st').textContent=estep;T.querySelectorAll('.tq-seg button').forEach(b=>b.classList.toggle('on',+b.dataset.b===bars));T.querySelector('.tq-fol').classList.toggle('on',!!follow);T.querySelector('.tq-fol').style.display=bars>1?'':'none';
@@ -9482,7 +9488,9 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
           cells+=`<span class="h${on?'':' e'}${on&&c.v===2?' acc':''}${cu('h')}" data-k="h">${on?(DRN[tr.id]||'HT')+(c.v===2?'!':'·'):'---'}</span>`;
           cells+=`<span class="v${on?'':' e'}${cu('v')}" data-k="v">${on?hex((c.vel??(c.v===2?1:.72))*127):'..'}</span>`;
           let fx='...';if(on&&(c.r||1)>1)fx='R'+(c.r|0)+' ';else if(on&&(c.p??1)<1)fx='?'+String(Math.round((c.p)*100)).padStart(2,'0');
-          cells+=`<span class="x${fx==='...'?' e':''}${cu('x')}" data-k="x">${fx}</span>`}
+          cells+=`<span class="x${fx==='...'?' e':''}${cu('x')}" data-k="x">${fx}</span>`;
+          /* (v267) sample fx: R = reverse · start 0–F · pitch ±semitones · glide / up or \\ down */
+          const sx=on?sxTxt(c):'.....';cells+=`<span class="s${sx==='.....'?' e':''}${cu('s')}" data-k="s">${sx}</span>`}
         else{const subs=M?M.subs:1;for(let k=0;k<subs;k++){const o=M?M.rows[q][k]:null;if(k)cells+='<i class="sub"></i>';
             let nt='---',cl=' e',vv='..',vcl=' e';if(o&&o.t==='n'){nt=nName(o.n.n);cl='';vv=hex(o.n.v*127);vcl=''}else if(o&&o.t==='off'){nt='OFF';cl=' off'}else if(o&&o.t==='tie'){nt=' | ';cl=' tie'}
             cells+=`<span class="n${cl}${cu('n'+k)}" data-k="n${k}">${nt}</span>`;
@@ -9556,7 +9564,7 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
     const here=inCol.find(m=>Math.floor(m.s+1e-6)===r);if(here){R.splice(R.indexOf(here),1);syncStep(p,i,r)}
     const prev=inCol.filter(m=>m!==here&&m.s<r&&m.s+m.l>r+1e-6).pop();if(prev)prev.l=r-prev.s;move(estep);done();return true}
   function del(){const i=cur.t,tr=TRACKS[i],k=COLS(i)[cur.c]||'',p=pOf(i);if(p<0)return true;try{pushHist()}catch(e){}
-    if(!tr.mel){const c=S.pats[p][i][sr()];if(k==='h'){c.v=0}else if(k==='v'){delete c.vel}else if(k==='x'){delete c.r;delete c.p}move(estep);done();return true}
+    if(!tr.mel){const c=S.pats[p][i][sr()];if(k==='h'){c.v=0}else if(k==='v'){delete c.vel}else if(k==='x'){delete c.r;delete c.p}else if(k==='s'){delete c.so;delete c.rv;delete c.pt;delete c.gl}move(estep);done();return true}
     const col=+k.slice(1),Lw=lay(p,i),R=Lw.R,r=sr(),inCol=R.filter((m,j)=>Lw.col[j]===col).sort((a,b)=>a.s-b.s),here=inCol.find(m=>Math.floor(m.s+1e-6)===r);
     if(k[0]==='v'){if(here)here.v=.8}
     else if(here){R.splice(R.indexOf(here),1);syncStep(p,i,r)}
@@ -9568,6 +9576,17 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
     if(!tr.mel){const c=S.pats[p][i][sr()];if(!c.v)return true;try{pushHist()}catch(e){}c.vel=fold(c.vel??(c.v===2?1:.72))/127;done();return true}
     const col=+k.slice(1),Lw=lay(p,i),here=Lw.R.find((m,j)=>Lw.col[j]===col&&Math.floor(m.s+1e-6)===sr());if(!here)return true;try{pushHist()}catch(e){}
     here.v=Math.max(.05,fold(here.v)/127);lastVel=here.v;syncStep(p,i,sr());done();return true}
+  /* (v267) sample fx on a drum step: start position (0–F = sixteenths of the sound), reverse, pitch and glide (semitones) */
+  const H1=x=>Math.abs(x).toString(16).toUpperCase();
+  function sxTxt(c){if(!(c.so||c.rv||c.pt||c.gl))return '.....';return (c.rv?'R':'.')+(c.so?H1(c.so):'.')+(c.pt?(c.pt>0?'+':'-')+H1(Math.min(15,Math.abs(c.pt))):'..')+(c.gl?(c.gl>0?'/':'\\'):'.')}
+  function sIn(what,d){const i=cur.t,tr=TRACKS[i],k=COLS(i)[cur.c]||'';if(tr.mel||k!=='s')return false;const p=pOf(i);if(p<0)return true;const c=S.pats[p][i][sr()];if(!c.v){toast('Put a hit on the step first');return true}try{pushHist()}catch(e){}
+    const smp=S.dk&&S.dk[tr.id]&&String(S.dk[tr.id]).startsWith('smp:');
+    if(what==='rv'){if(c.rv)delete c.rv;else c.rv=1}else if(what==='so'){if(d)c.so=d;else delete c.so}
+    else if(what==='pt'){const n=Math.max(-12,Math.min(12,(c.pt||0)+d));if(n)c.pt=n;else delete c.pt;toast('pitch '+(n>0?'+':'')+n+' st')}
+    else if(what==='gl'){const n=Math.max(-12,Math.min(12,(c.gl||0)+d));if(n)c.gl=n;else delete c.gl;toast('glide '+(n>0?'+':'')+n+' st')}
+    if(!smp&&what!=='pt')toast('Start, reverse and glide work when the drum plays a sample · pitch works on all');
+    try{const sp=S.dk&&S.dk[tr.id];if(sp&&String(sp).startsWith('smp:')){initAudio();ctx.resume();SFX=c;trigger(i,ctx.currentTime+.005,c.vel??(c.v===2?1:.72),c.n);SFX=null}else if(what==='pt'){initAudio();ctx.resume();SFX=c;trigger(i,ctx.currentTime+.005,c.vel??.72,c.n);SFX=null}}catch(e){SFX=null}
+    done();return true}
   function fxIn(key){const i=cur.t,tr=TRACKS[i],k=COLS(i)[cur.c]||'';if(tr.mel||k!=='x')return false;const p=pOf(i);if(p<0)return true;const c=S.pats[p][i][sr()];if(!c.v)return true;try{pushHist()}catch(e){}
     if(key==='r'){const n=((c.r||1)%4)+1;if(n>1)c.r=n;else delete c.r}else{const L=[1,.75,.5,.25],j=L.indexOf(c.p??1),n=L[(j+1)%L.length];if(n<1)c.p=n;else delete c.p}done();return true}
   /* glitch: 1–7 = stutter roll rev stop halv crush gate; the same number on the next row makes the block longer; Del removes */
@@ -9621,6 +9640,11 @@ body.look-dots .daw .tq-r.pl.hit span:not(.e):not(.tie){color:#111211!important;
     else if(e.key==='Delete'||e.key==='Backspace'){del();e.preventDefault();e.stopPropagation();return}
     else if(k[0]==='v'&&(/^Digit[0-9]$/.test(e.code)||/^Numpad[0-9]$/.test(e.code)||HEXK[e.code]!=null)){const d=HEXK[e.code]!=null?HEXK[e.code]:+e.code.slice(-1);volIn(d)}
     else if(k==='x'&&(e.code==='KeyR'||e.code==='KeyP')){fxIn(e.code==='KeyR'?'r':'p')}
+    else if(k==='s'&&e.code==='KeyR'){sIn('rv')}
+    else if(k==='s'&&(/^(Digit|Numpad)[0-9]$/.test(e.code)||HEXK[e.code]!=null)){sIn('so',HEXK[e.code]!=null?HEXK[e.code]:+e.code.slice(-1))}
+    else if(k==='s'&&(e.code==='Minus'||e.code==='NumpadSubtract'||e.code==='Equal'||e.code==='NumpadAdd')){sIn('pt',e.code==='Minus'||e.code==='NumpadSubtract'?-1:1)}
+    else if(k==='s'&&(e.code==='BracketLeft'||e.code==='BracketRight')){sIn('gl',e.code==='BracketLeft'?-1:1)}
+    else if(k==='s'){ok=true}
     else if(e.code==='KeyA'||e.code==='CapsLock'){if(!offIn())ok=false}
     else if(KEYS[e.code]!=null&&!e.repeat){if(!noteIn(Math.max(24,Math.min(96,(oct+1)*12+KEYS[e.code]))))ok=false}
     else if(KEYS[e.code]!=null&&e.repeat){}
@@ -9722,6 +9746,7 @@ body.dw-dragging,body.dw-dragging *{cursor:inherit!important;user-select:none!im
 .tq-pad .tp-pno{grid-template-columns:46px repeat(14,21px) 56px;grid-template-rows:42px 42px}
 .tq-pad .tp-grid{grid-template-columns:repeat(var(--n,8),44px);grid-auto-rows:40px}
 .tq-pad .tp-grid.wide{grid-template-columns:repeat(var(--n,2),88px)}
+.tq-pad .tp-grid.tp-sx{grid-template-columns:repeat(8,52px)}.tq-pad .tp-sx button.sm{font-size:10px!important;padding:0 2px}
 .tq-top button.tq-kb.on{box-shadow:inset 0 0 0 1px rgba(var(--dk-acc-rgb),.7)}
 html:not(.coarse) .tq-top button.tq-kb{display:none}`;document.head.appendChild(PCSS);
     const pad=document.createElement('div');pad.className='tq-pad';pad.hidden=true;T.appendChild(pad);
@@ -9740,6 +9765,7 @@ html:not(.coarse) .tq-top button.tq-kb{display:none}`;document.head.appendChild(
       else if(k[0]==='v')right=`<div class="tp-p tp-grid" style="--n:8">${HX.map((c,j)=>B(j.toString(16).toUpperCase(),c)).join('')}</div>`;
       else if(k==='h')right=`<div class="tp-p tp-grid wide" style="--n:1">${B('hit','KeyZ')}</div>`;
       else if(k==='x')right=`<div class="tp-p tp-grid wide" style="--n:2">${B('ratchet','KeyR')}${B('chance','KeyP')}</div>`;
+      else if(k==='s')right=`<div class="tp-p tp-grid tp-sx" style="--n:8">${B('reverse','KeyR','','sm','grid-column:span 2')}${B('pitch −','Minus','','sm')}${B('pitch +','Equal','','sm')}${B('glide ↓','BracketLeft','','sm')}${B('glide ↑','BracketRight','','sm')}<span class="tp-lab2" style="grid-column:span 2;align-self:center;font-size:9px;letter-spacing:.06em;opacity:.55;text-align:center">START</span>${HX.map((c,j)=>B(j.toString(16).toUpperCase(),c,'',j?'':'sm')).join('')}</div>`;
       const nav=`<div class="tp-p tp-nav">${B('↑','ArrowUp','ArrowUp')}${B('←','ArrowLeft','ArrowLeft')}${B('↓','ArrowDown','ArrowDown')}${B('→','ArrowRight','ArrowRight')}${B('delete','Delete','Delete','sm')}<button class="sm" data-x>close</button></div>`;
       const h=nav+right;if(h!==last){last=h;pad.innerHTML=h}
       /* the rows under the panels can be scrolled up into view, and the cursor is kept above them */
@@ -10958,7 +10984,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v266</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v267</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
