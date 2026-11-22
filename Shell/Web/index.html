@@ -1862,7 +1862,7 @@ html.coarse :is(.knob,.bkn,.cl-k,.cl-st,.edial,.snd-tile,.dl-disc,.dl-it,.syn-bi
 .srail{position:fixed;z-index:57;width:22px;display:none;touch-action:none;-webkit-user-select:none;user-select:none;opacity:.5;transition:opacity .35s}
 html.coarse .srail.can{display:block}
 .srail.l{left:max(0px,calc(env(safe-area-inset-left,0px) - 22px))}.srail.r{right:max(0px,calc(env(safe-area-inset-right,0px) - 22px))}
-.srail.live,.srail.on{opacity:1}
+.srail.live,.srail.on{opacity:1} .srail.m{pointer-events:none}
 .srail .tr,.srail .th{position:absolute;left:50%;width:6px;margin-left:-3px;border-radius:3px;
   background:radial-gradient(circle,currentColor 1.15px,transparent 1.65px) center top/6px 7px repeat-y}
 .srail .tr{top:0;bottom:0;color:rgba(255,255,255,.2)}
@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v262</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v263</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -6118,20 +6118,20 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
   const _spc=Element.prototype.setPointerCapture;Element.prototype.setPointerCapture=function(id){try{return _spc.call(this,id)}catch(e){}};
   /* rails: a dotted strip in each side margin; drag it like a scrollbar */
   const panes=$('#panes'),pl=document.querySelector('.pane.left'),pr=document.querySelector('.pane.right'),fh=$('#fullHost');
-  const tgt=side=>{const fc=fh&&!fh.hidden&&fh.querySelector('.card');if(fc)return fc;if(FOLD.matches)return panes;return side==='l'?pl:pr};
-  const rails=['l','r'].map(side=>{const r=document.createElement('div');r.className='srail '+side;r.innerHTML='<i class="tr"></i><i class="th"></i>';r.setAttribute('aria-hidden','true');document.body.appendChild(r);
+  const tgt=side=>{const fc=fh&&!fh.hidden&&fh.querySelector('.card');if(fc)return fc;if(FOLD.matches)return side==='m'?null:panes;const c3=panes&&panes.classList.contains('c3');if(side==='m')return c3?pr:null;if(side==='r'&&c3){const x=document.querySelector('.pane.extra');if(x)return x}return side==='l'?pl:pr};
+  const rails=['l','r','m'].map(side=>{const r=document.createElement('div');r.className='srail '+side;r.innerHTML='<i class="tr"></i><i class="th"></i>';r.setAttribute('aria-hidden','true');document.body.appendChild(r);
     const o={side,r,th:r.querySelector('.th'),el:null,drag:null,live:0};
     r.addEventListener('pointerdown',e=>{const el=tgt(side);if(!el)return;e.preventDefault();e.stopPropagation();r.setPointerCapture(e.pointerId);o.el=el;
       const tb=o.th.getBoundingClientRect(),inThumb=e.clientY>=tb.top-10&&e.clientY<=tb.bottom+10;o.drag={grab:inThumb?e.clientY-tb.top:tb.height/2};r.classList.add('on');move(e)});
     const move=e=>{if(!o.drag)return;const el=o.el,rb=r.getBoundingClientRect(),th=o.th.offsetHeight,span=Math.max(1,rb.height-th),f=clamp((e.clientY-rb.top-o.drag.grab)/span,0,1);
       el.scrollTop=f*(el.scrollHeight-el.clientHeight);place(o)};
     r.addEventListener('pointermove',move);const up=()=>{o.drag=null;r.classList.remove('on')};r.addEventListener('pointerup',up);r.addEventListener('pointercancel',up);return o});
-  function place(o){const el=tgt(o.side);o.el=el;if(!el){o.r.classList.remove('can');return}const b=el.getBoundingClientRect(),sh=el.scrollHeight,ch=el.clientHeight,can=sh>ch+4&&b.height>120;
-    o.r.classList.toggle('can',can);if(!can)return;const top=Math.max(b.top,0)+8,bot=Math.min(b.bottom,innerHeight)-8,h=bot-top;o.r.style.top=top+'px';o.r.style.height=h+'px';
+  function place(o){const el=tgt(o.side);o.el=el;if(!el){o.r.classList.remove('can');return}const b=el.getBoundingClientRect(),sh=el.scrollHeight,ch=el.clientHeight;let can=sh>ch+4&&b.height>120;
+    if(o.side==='m'){const h2=document.querySelector('#panes>.hinge.h2'),hb=h2&&h2.getBoundingClientRect();if(!hb||!hb.width)can=false;else o.r.style.left=Math.round(hb.left+hb.width/2-11)+'px'}o.r.classList.toggle('can',can);if(!can)return;const top=Math.max(b.top,0)+8,bot=Math.min(b.bottom,innerHeight)-8,h=bot-top;o.r.style.top=top+'px';o.r.style.height=h+'px';
     const thH=Math.max(28,Math.round(h*ch/sh/7)*7),y=(h-thH)*(el.scrollTop/Math.max(1,sh-ch));o.th.style.height=thH+'px';o.th.style.transform=`translateY(${Math.round(y)}px)`}
   let liveT=0;const all=()=>rails.forEach(place);
   const onScroll=e=>{all();rails.forEach(o=>{if(o.el===e.target)o.r.classList.add('live')});clearTimeout(liveT);liveT=setTimeout(()=>rails.forEach(o=>o.r.classList.remove('live')),900)};
-  [panes,pl,pr].forEach(el=>el&&el.addEventListener('scroll',onScroll,{passive:true}));fh&&fh.addEventListener('scroll',onScroll,{passive:true,capture:true});
+  [panes,pl,pr].forEach(el=>el&&el.addEventListener('scroll',onScroll,{passive:true}));setTimeout(()=>{const x=document.querySelector('.pane.extra');x&&x.addEventListener('scroll',onScroll,{passive:true})},400);fh&&fh.addEventListener('scroll',onScroll,{passive:true,capture:true});
   addEventListener('resize',all);setInterval(()=>{if(CO.matches)all()},300);all();
   /* intent gate: on touch, a swipe that starts on a control scrolls the page; a short hold (or a sideways drag on sideways controls) grabs the control */
   const GV='.knob,.bkn,.cl-k,.cl-st,.edial,.snd-tile:not(.wide),.dl-disc,.dl-it,.syn-big,.syn-sm,.pnum,.ms .fd,.orb-ctl b,.xy,.syn-cv',GH='.cells,.bigsteps,.snd-hero,.snd-tile.wide,.dl-ruler,.sins-vel,.lp .vol,.ms .pn,.orb',GA=GV+','+GH,HOLD=160,SLOP=7;
@@ -8662,10 +8662,15 @@ setTimeout(()=>colsApply(true),50);
   panes.addEventListener('pointerdown',e=>{const h=e.target.closest('.panes>.hinge');if(!h||innerWidth<720||!panes.classList.contains('c3'))return;e.preventDefault();const ps=vis(),n=ps.length;
     const a=h.previousElementSibling,b=h.nextElementSibling;if(!a||!b||!a.classList.contains('pane')||!b.classList.contains('pane'))return;
     const ws=ps.map(p=>p.getBoundingClientRect().width),tot=ws.reduce((x,y)=>x+y,0),ia=ps.indexOf(a),ib=ps.indexOf(b),x0=e.clientX,wa=ws[ia],wb=ws[ib],min=Math.max(260,tot*.14);
+    /* (v263) on a touch screen the right seam carries the middle column's dotted scroll rail: drag up/down = scroll the middle
+       column, sideways = make the columns wider or narrower (decided by the first few pixels) */
+    const rail=h.classList.contains('h2')&&e.pointerType!=='mouse'?document.querySelector('.srail.m.can'):null,y0=e.clientY,st0=a.scrollTop;let mode=rail?0:1;h._g=null;
     h.classList.add('drag');try{h.setPointerCapture(e.pointerId)}catch(_){}
-    const mv=ev=>{const dx=ev.clientX-x0;let na=wa+dx,nb=wb-dx;if(na<min){nb-=min-na;na=min}if(nb<min){na-=min-nb;nb=min}const nw=ws.slice();nw[ia]=na;nw[ib]=nb;const g=nw.map(v=>+(v/tot*n).toFixed(4));
+    const mv=ev=>{if(mode===0){const ax=Math.abs(ev.clientX-x0),ay=Math.abs(ev.clientY-y0);if(ax<7&&ay<7)return;mode=ay>ax?2:1;if(mode===2){rail.classList.add('on');h.classList.remove('drag')}}
+      if(mode===2){const H=Math.max(60,rail.getBoundingClientRect().height);a.scrollTop=st0+(ev.clientY-y0)*a.scrollHeight/H;return}
+      const dx=ev.clientX-x0;let na=wa+dx,nb=wb-dx;if(na<min){nb-=min-na;na=min}if(nb<min){na-=min-nb;nb=min}const nw=ws.slice();nw[ia]=na;nw[ib]=nb;const g=nw.map(v=>+(v/tot*n).toFixed(4));
       ps.forEach((p,i)=>p.style.flex=g[i]+' 1 0%');h._g=g;dispatchEvent(new Event('resize'))};
-    const up=()=>{h.classList.remove('drag');h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);if(h._g){try{localStorage.setItem(KEY(n),JSON.stringify(h._g))}catch(_){}}try{renderAll()}catch(_){}};
+    const up=()=>{h.classList.remove('drag');if(rail)rail.classList.remove('on');h.removeEventListener('pointermove',mv);h.removeEventListener('pointerup',up);h.removeEventListener('pointercancel',up);if(h._g){try{localStorage.setItem(KEY(n),JSON.stringify(h._g))}catch(_){}}try{renderAll()}catch(_){}};
     h.addEventListener('pointermove',mv);h.addEventListener('pointerup',up);h.addEventListener('pointercancel',up)});
   panes.addEventListener('dblclick',e=>{const h=e.target.closest('.panes>.hinge');if(!h||!panes.classList.contains('c3'))return;const n=vis().length;try{localStorage.removeItem(KEY(n))}catch(_){}apply();dispatchEvent(new Event('resize'));toast('Kolumnerna lika breda igen')});
   setTimeout(apply,80);{let t=0;addEventListener('resize',()=>{clearTimeout(t);t=setTimeout(apply,200)})}})();
@@ -10932,7 +10937,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v262</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v263</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
