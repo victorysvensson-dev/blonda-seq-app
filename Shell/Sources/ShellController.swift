@@ -207,7 +207,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         case "audio-in":
             audioIn(b)
         case "pick-audio":
-            pickAudio(id: (b["id"] as? NSNumber)?.intValue ?? 0, multi: (b["multi"] as? Bool) ?? true)
+            pickAudio(id: (b["id"] as? NSNumber)?.intValue ?? 0, multi: (b["multi"] as? Bool) ?? true,
+                      json: (b["json"] as? Bool) ?? false, audio: (b["audio"] as? Bool) ?? true)
         case "pick-done":
             if let id = (b["id"] as? NSNumber)?.intValue {
                 try? FileManager.default.removeItem(at: BundleScheme.importRoot.appendingPathComponent("\(id)", isDirectory: true))
@@ -335,10 +336,17 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     private var importId = 0
     static let audioExt: Set<String> = ["wav", "wave", "aif", "aiff", "aifc", "mp3", "m4a", "aac", "flac", "ogg", "caf"]
 
-    private func pickAudio(id: Int, multi: Bool) {
+    /// What the page's file input takes: sounds, and/or .json (BLONDA SAMPLER instruments, BLONDA SYNTHS presets).
+    private var importJson = false, importAudio = true
+
+    private func pickAudio(id: Int, multi: Bool, json: Bool = false, audio: Bool = true) {
         if let old = importPicker { old.dismiss(animated: false); finishPick([]) }
         importId = id
-        let picker = UIDocumentPickerViewController(forOpeningContentTypes: [.audio, .folder], asCopy: false)
+        importJson = json; importAudio = audio || !json
+        var types: [UTType] = [.folder]
+        if importAudio { types.insert(.audio, at: 0) }
+        if importJson { types.insert(.json, at: 0) }
+        let picker = UIDocumentPickerViewController(forOpeningContentTypes: types, asCopy: false)
         picker.allowsMultipleSelection = multi
         picker.shouldShowFileExtensions = true
         picker.delegate = self
@@ -350,20 +358,21 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         let id = importId
         importPicker = nil
         if urls.isEmpty { call("__blonda.picked", ["id": id, "files": [Any]()]); return }
+        let ext = (importAudio ? Self.audioExt : []).union(importJson ? ["json"] : [])
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let files = Self.collectAudio(urls, into: BundleScheme.importRoot.appendingPathComponent("\(id)", isDirectory: true), id: id)
+            let files = Self.collectAudio(urls, into: BundleScheme.importRoot.appendingPathComponent("\(id)", isDirectory: true), id: id, ext: ext)
             DispatchQueue.main.async { self?.call("__blonda.picked", ["id": id, "files": files]) }
         }
     }
 
     /// Copies the picked sounds (and every sound inside picked folders) to the import folder. At most 500 files.
-    static func collectAudio(_ urls: [URL], into dir: URL, id: Int) -> [[String: Any]] {
+    static func collectAudio(_ urls: [URL], into dir: URL, id: Int, ext: Set<String> = audioExt) -> [[String: Any]] {
         let fm = FileManager.default
         try? fm.removeItem(at: dir)
         try? fm.createDirectory(at: dir, withIntermediateDirectories: true)
         var out: [[String: Any]] = []
         func add(_ src: URL) {
-            guard out.count < 500, audioExt.contains(src.pathExtension.lowercased()) else { return }
+            guard out.count < 500, ext.contains(src.pathExtension.lowercased()) else { return }
             let n = out.count
             let dst = dir.appendingPathComponent("\(n).\(src.pathExtension.lowercased())")
             do { try fm.copyItem(at: src, to: dst) } catch { return }

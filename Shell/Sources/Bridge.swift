@@ -64,11 +64,11 @@ if(!window.claude)Object.defineProperty(window,'claude',{configurable:true,value
 
 /* ---- importing sounds: the app's own picker (several files at once, whole folders too) ---- */
 N.picks={};let pid=0;
-const audioInput=el=>el&&el.type==='file'&&/audio|\.wav|\.aif|\.mp3/i.test(el.accept||'');
+const audioInput=el=>el&&el.type==='file'&&/audio|\.wav|\.aif|\.mp3|json/i.test(el.accept||'');
 const nativeClick=HTMLInputElement.prototype.click;
-HTMLInputElement.prototype.click=function(){if(!audioInput(this))return nativeClick.call(this);const id=++pid;N.picks[id]=this;post({t:'pick-audio',id,multi:true})};
+HTMLInputElement.prototype.click=function(){if(!audioInput(this))return nativeClick.call(this);const id=++pid;N.picks[id]=this;post({t:'pick-audio',id,multi:true,json:/json/i.test(this.accept||''),audio:/audio|\.wav|\.aif|\.mp3/i.test(this.accept||'')})};
 N.picked=async(id,files)=>{const inp=N.picks[id];delete N.picks[id];if(!inp||!files||!files.length){post({t:'pick-done',id});return}
-  try{const list=[];for(const f of files){try{const b=await (await fetch(f.u)).blob();list.push(new File([b],f.name,{type:f.type||b.type||'audio/wav'}))}catch(e){}}
+  try{const list=[];for(const f of files){try{const b=await (await fetch(f.u)).blob();list.push(new File([b],f.name,{type:f.type||b.type||(/\.json$/i.test(f.name)?'application/json':'audio/wav')}))}catch(e){}}
     if(list.length){const dt=new DataTransfer();list.forEach(f=>dt.items.add(f));inp.files=dt.files;inp.dispatchEvent(new Event('input',{bubbles:true}));inp.dispatchEvent(new Event('change',{bubbles:true}))}}
   finally{post({t:'pick-done',id})}};
 
