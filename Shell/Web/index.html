@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v265</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v266</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -3879,7 +3879,7 @@ function chipVoice(t,v,p,out,note,len,vc){const E=engE('chip'),gate=Math.max(.05
   if(ARP.length===1)glideOsc(o.frequency,hz(base),t);
   if(E.vib>0){const l=ctx.createOscillator(),lg=ctx.createGain();l.frequency.value=5.5;lg.gain.setValueAtTime(0,t);lg.gain.linearRampToValueAtTime(E.vib*30,t+.18);l.connect(lg);lg.connect(o.detune);l.start(t);l.stop(end)}
   q.curve=crushCurve(Math.round(8-E.crush*5));
-  const lvl=v*.42;g.gain.setValueAtTime(lvl,t);const steps=8;for(let i=1;i<=steps;i++)g.gain.setValueAtTime(lvl*Math.max(.25,1-i/steps*(1-Math.exp(-gate/dec))),t+gate*i/steps);
+  const lvl=v*.42;g.gain.setValueAtTime(lvl,t);const steps=Math.max(8,Math.min(64,Math.ceil(gate/.03)));for(let i=1;i<=steps;i++)g.gain.setValueAtTime(lvl*Math.max(.25,Math.exp(-(gate*i/steps)/dec)),t+gate*i/steps);
   g.gain.setValueAtTime(lvl*.25,t+gate);g.gain.linearRampToValueAtTime(0,t+gate+.03);
   o.connect(q);q.connect(g);g.connect(out);o.start(t);o.stop(end)}
 
@@ -10958,7 +10958,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v265</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v266</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -14394,9 +14394,9 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
     super:{o:()=>engE('super'),A:['attack',v=>TS(.01+v*1.5),nrm,v=>.01+v*1.5],D:null,S:null,R:['release',v=>TS(.1+v*3),nrm,v=>.1+v*3]},
     fm:{o:()=>engE('fm'),A:null,D:['decay',v=>TS(.2+v*2.5),nrm,v=>.2+v*2.5],S:null,R:['rel',v=>TS(.05+v*1.5),nrm,v=>.05+v*1.5]},
     pluck:{o:()=>engE('pluck'),A:null,D:['len',v=>TS(.4+v*2.6),nrm,v=>.4+v*2.6],S:null,R:null},
-    acid:{o:()=>engE('acid'),A:null,D:['dec',v=>TS(.06+v*.9),nrm,v=>.06+v*.9],S:null,R:null},
+    acid:{o:()=>engE('acid'),A:null,D:['dec',v=>TS(.06+v*.9),nrm,v=>.06+v*.9,'filter decay (the 303 decay shapes the filter, the volume stays)'],S:null,R:null,held:1},
     sub:{o:()=>engE('sub'),A:null,D:['decay',v=>TS(.1+v*2.5),nrm,v=>.1+v*2.5],S:null,R:null},
-    grime:{o:()=>engE('grime'),A:null,D:['dec',v=>TS(.02+v*.5),nrm,v=>.02+v*.5],S:null,R:null},
+    grime:{o:()=>engE('grime'),A:null,D:['dec',v=>TS(.02+v*.5),nrm,v=>.02+v*.5,'filter decay (shapes the filter sweep, the volume stays)'],S:null,R:null,held:1},
     chip:{o:()=>engE('chip'),A:null,D:['dec',v=>TS(.05+v*1.4),nrm,v=>.05+v*1.4],S:null,R:null},
     msx:{o:()=>engE('msx'),A:['att',v=>TS(.001+v*v*2),nrm,v=>.001+v*v*2],D:['dec',v=>TS(.02+v*v*4),nrm,v=>.02+v*v*4],S:['sus',P,nrm],R:['rel',v=>TS(.02+v*v*4),nrm,v=>.02+v*v*4]}};
   /* ---- which track, which sound ---- */
@@ -14486,11 +14486,11 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   function resetK(i,e,k){const sp=spec(e,k),o=sp&&ENV[e].o(TRACKS[i].id);if(!o)return;const d=e==='analog'?(DEFS.synth[TRACKS[i].id]||DEFS.synth.bass):DEFS.eng[e];if(d&&d[sp[0]]!=null)o[sp[0]]=d[sp[0]];liveApply(i,e);paintEnv()}
   function liveApply(i,e){if(e==='bris'){try{brisApplyAll()}catch(_){}}}
   function paintEnv(){const i=kTrk(),e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);let segs={A:.004,D:.3,S:1,R:.15};
-    row.querySelectorAll('.kx-k').forEach(el=>{const k=el.dataset.k,sp=E&&E[k];el.classList.toggle('off',!sp||!o);if(!sp||!o)return;const v=o[sp[0]]??0;
+    row.querySelectorAll('.kx-k').forEach(el=>{const k=el.dataset.k,sp=E&&E[k];el.title=((sp&&sp[4])||{A:'attack',D:'decay',S:'sustain',R:'release'}[k])+(sp?' · drag up or down':' · this sound has none');el.classList.toggle('off',!sp||!o);if(!sp||!o)return;const v=o[sp[0]]??0;
       const f=sp[1](v);el.querySelector('b').textContent=f[0]+(f[1]?' '+f[1]:'');el.querySelector('.fg').setAttribute('stroke-dasharray',(51.8*Math.max(0,Math.min(1,sp[2].pos(v)))).toFixed(1)+' 69.1');
       segs[k]=k==='S'?v:sp[3]?sp[3](v):v});
     /* no sustain knob: a sound with a decay dies away (0), one with only attack/release is held (1) */
-    if(!E||!E.S)segs.S=E&&E.D?0:1;
+    if(!E||!E.S)segs.S=E&&E.D&&!E.held?0:1;
     /* the drawing: times on a square-root scale so short and long both show */
     const w=92,h=44,pad=3,tm=x=>Math.sqrt(Math.max(0,x));const a=tm(segs.A),d=tm(segs.D),r=tm(segs.R),hold=.55,tot=a+d+hold+r||1,sx=(w-2*pad)/tot;
     const y=v=>h-pad-v*(h-2*pad),x1=pad+a*sx,x2=x1+d*sx,x3=x2+hold*sx,x4=x3+r*sx,sl=Math.max(0,Math.min(1,segs.S));
@@ -14543,7 +14543,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   window.KEYSX={
     midi(st,d){const ty=st&0xF0;if(ty===0xB0&&(d[1]===0||d[1]===32)){if(d[1]===0)bankM=d[2];else bankL=d[2];bank();return true}
       if(ty===0xC0){program(d[1]);return true}return false},
-    rel(i){const e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);if(!o||!E.R)return null;if(e==='analog'||e==='msx'||e==='super'||e==='fm')return Math.min(4,Math.max(.03,E.R[3](o[E.R[0]]??.25)));return null},
+    rel(i){const e=engOf(i),E=ENV[e],o=E&&E.o(TRACKS[i].id);if(!o||!E.R)return null;/* (v266) every engine with a release knob uses it on the keyboard (SH-101's R did nothing there) */return Math.min(4,Math.max(.03,E.R[3](o[E.R[0]]??.25)))},
     open:openSheet,close:closeSheet,_paint:()=>paint(true),banks:BANKS};
 })();
 
