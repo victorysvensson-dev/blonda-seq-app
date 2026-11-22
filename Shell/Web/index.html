@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v264</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v265</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -9699,7 +9699,7 @@ body.dw-dragging,body.dw-dragging *{cursor:inherit!important;user-select:none!im
     new ResizeObserver(placeV).observe(T);addEventListener('resize',placeV);
     new MutationObserver(()=>setTimeout(placeV,20)).observe(D,{attributes:true,attributeFilter:['class']});
     apply()}
-  /* ================= (v264) touch keys: on the iPad (no keyboard) a tap on a cell opens two small panels over the bottom corners of
+  /* ================= (v264, v265: bigger arrows, bigger still in full screen) touch keys: on the iPad (no keyboard) a tap on a cell opens two small panels over the bottom corners of
      the tracker, like a game controller – the arrows, delete and close to the left, and to the right what the column takes: a real
      piano (one octave, octave −/+, OFF, chord), volume 0–F, hit, ratchet/chance, glitch 1–7. Each button sends the key the tracker
      already understands, so it does exactly what the keyboard does. "chord" keeps the row: every note goes into the next free
@@ -9714,9 +9714,11 @@ body.dw-dragging,body.dw-dragging *{cursor:inherit!important;user-select:none!im
 .tq-pad button.bk{background:rgba(0,0,0,.42)!important}.tq-pad button.bk:active{background:rgba(0,0,0,.25)!important}
 .tq-pad button.sm{font-size:10px!important;letter-spacing:.03em}
 .tq-pad button.on{background:#E9C54A!important;color:#17181A;box-shadow:none}
-.tq-pad .tp-nav{grid-template-columns:repeat(3,44px) 62px;grid-template-rows:40px 40px}
+.tq-pad .tp-nav{grid-template-columns:repeat(3,54px) 66px;grid-template-rows:50px 50px}
+.daw.tqfull .tq-pad .tp-nav{grid-template-columns:repeat(3,66px) 78px;grid-template-rows:62px 62px;gap:6px}
+.daw.tqfull .tq-pad .tp-nav [data-c^=Arrow]{font-size:22px!important}
 .tq-pad .tp-nav [data-c=ArrowUp]{grid-area:1/2}.tq-pad .tp-nav [data-c=ArrowLeft]{grid-area:2/1}.tq-pad .tp-nav [data-c=ArrowDown]{grid-area:2/2}.tq-pad .tp-nav [data-c=ArrowRight]{grid-area:2/3}
-.tq-pad .tp-nav [data-c=Delete]{grid-area:1/4}.tq-pad .tp-nav [data-x]{grid-area:2/4}.tq-pad .tp-nav [data-c^=Arrow]{font-size:16px!important}
+.tq-pad .tp-nav [data-c=Delete]{grid-area:1/4}.tq-pad .tp-nav [data-x]{grid-area:2/4}.tq-pad .tp-nav [data-c^=Arrow]{font-size:18px!important}
 .tq-pad .tp-pno{grid-template-columns:46px repeat(14,21px) 56px;grid-template-rows:42px 42px}
 .tq-pad .tp-grid{grid-template-columns:repeat(var(--n,8),44px);grid-auto-rows:40px}
 .tq-pad .tp-grid.wide{grid-template-columns:repeat(var(--n,2),88px)}
@@ -10956,7 +10958,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v264</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v265</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
