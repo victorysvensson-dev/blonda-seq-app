@@ -1,0 +1,100 @@
+2026-11-22 17:37:40.283 Df SEQ3[8276:7b7f] [com.apple.PlugInKit:discovery] [d 7E143748-58E6-437B-A726-468925AEB60F] <PKHost:0x600001750240> Beginning discovery for flags: 0, point: com.apple.AudioUnit-Speech
+2026-11-22 17:37:40.283 Df SEQ3[8276:7b94] [com.apple.launchservices:progress] Establishing xpc connection to lsd
+2026-11-22 17:37:40.283 Df SEQ3[8276:7b94] [com.apple.xpc:connection] [0x104f2f4c0] activating connection: mach=true listener=false peer=false name=com.apple.lsd.xpc
+2026-11-22 17:37:40.286 Df SEQ3[8276:7bb5] [com.apple.launchservices:progress] Received LSWorkspaceObserverPing, xpc connection established
+2026-11-22 17:37:40.287 Df SEQ3[8276:7bb5] [com.apple.PlugInKit:discovery] [d 7E143748-58E6-437B-A726-468925AEB60F] <PKHost:0x600001750240> Completed discovery. Final # of matches: 4
+2026-11-22 17:37:40.287 Df SEQ3[8276:7b94] [com.apple.PlugInKit:discovery] <PKDiscoveryDriver:0x60000261cfc0> delivering update to host (4 plugins)
+2026-11-22 17:37:40.287 A  SEQ3[8276:7b94] (ExtensionFoundation) discovering extensions
+2026-11-22 17:37:40.290 Df SEQ3[8276:7b94] [com.apple.extensionkit:NSExtension] discovered extensions: attributes {
+2026-11-22 17:37:40.291 Df SEQ3[8276:7b94] [com.apple.PlugInKit:discovery] <PKDiscoveryDriver:0x60000261cfc0> installing watchers for continuous discovery
+2026-11-22 17:37:40.304 Df SEQ3[8276:7b7f] [com.apple.avfaudio:avae]      AVAudioIONodeImpl.mm:235   Engine@0x60000374cb40: associating with audio session (0x0), error -10879
+2026-11-22 17:37:40.307 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1086  AURemoteIO@0x105893040: set kAudioOutputUnitProperty_OutputChannelLayout.  Layout = tag=0x0, 0 channel descriptions [], err = 0
+2026-11-22 17:37:40.332 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]           AQMixEngine.cpp:709   AQMEDevice (0x1060270f8) has neither a defaultOutStreamClient nor a defaultInStreamClient
+2026-11-22 17:37:40.333 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme] EnhanceDialogueProcessor.cpp:192   Product does not support Enhance Dialogue
+2026-11-22 17:37:40.334 Df SEQ3[8276:7bb5] [com.apple.coreaudio:AudioConverter]        ACv2Workarounds.mm:51    se.blonda.seq3: fix84702776_86723525_86479548_89800354_SinglePacketDesc: false
+2026-11-22 17:37:40.334 Df SEQ3[8276:7bb5] [com.apple.audio.caulk:alloc] Registered notify signal com.apple.caulk.alloc.audiodump (0)
+2026-11-22 17:37:40.334 Df SEQ3[8276:7bb5] [com.apple.coreaudio:AudioConverter]        AudioConverter.cpp:1007  Created a new in process converter -> 0x600000c63f60, from  2 ch,  48000 Hz, Float32, deinterleaved to  2 ch,  48000 Hz, Float32, interleaved
+2026-11-22 17:37:40.336 Df SEQ3[8276:7b94] [com.apple.coreaudio:aqme]          RemoteIOServer.h:101   rio@0x105088600 Got input layout from io node or spatialized client: tag=0x0, 2 channel descriptions [L, R]
+2026-11-22 17:37:40.337 Df SEQ3[8276:7b94] [com.apple.coreaudio:AudioConverter]        AudioConverter.cpp:1007  Created a new in process converter -> 0x600000c57f60, from  2 ch,  48000 Hz, Float32, interleaved to  2 ch,  48000 Hz, Float32, deinterleaved
+2026-11-22 17:37:40.338 Df SEQ3[8276:7b7f] [com.apple.coreaudio:AudioConverter]        AudioConverter.cpp:1007  Created a new in process converter -> 0x600000c6d950, from  2 ch,  48000 Hz, Float32, deinterleaved to  2 ch,      0 Hz, Float32, deinterleaved
+2026-11-22 17:37:40.338 Df SEQ3[8276:7b94] [com.apple.coreaudio:SpatialMgr] SpatializationManager.cpp:1433  Could not load preset file, invalid model/product name!
+2026-11-22 17:37:40.338 Df SEQ3[8276:7b94] [com.apple.coreaudio:aqme]        MEMixerChannel.cpp:2969  2-channel audiovisual content is NOT eligible for spatialization
+2026-11-22 17:37:40.339 Df SEQ3[8276:7b94] [com.apple.coreaudio:aqme]  MEDeviceStreamClient.cpp:227   AQME Default-InputOutput: client starting: <CA_UISoundClientBase@0x106032b40>; running count now 1
+2026-11-22 17:37:40.339 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:40.339 Df SEQ3[8276:7b94] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2738  FetchAndLogFrameSize starting IO deviceID=113, frame size is 512
+2026-11-22 17:37:40.339 Df SEQ3[8276:7b94] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2543  aqmeio@0x1058a2818: set input stream usage to 0 on device 113, err = 0
+2026-11-22 17:37:40.368 Df SEQ3[8276:7b94] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2706  aqmeio@0x1058a2818, device 113 (iOSSimulatorAudioDevice-8276-1), AudioDeviceStart (err 0)
+2026-11-22 17:37:40.382 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1086  AURemoteIO@0x105893040: set kAudioOutputUnitProperty_OutputChannelLayout.  Layout = tag=0x0, 0 channel descriptions [], err = 0
+2026-11-22 17:37:40.383 Df SEQ3[8276:7bb6] [com.apple.coreaudio:aqme]          RemoteIOServer.h:101   rio@0x105088600 Got input layout from io node or spatialized client: tag=0x0, 2 channel descriptions [L, R]
+2026-11-22 17:37:40.383 Df SEQ3[8276:7b7f] [com.apple.coreaudio:AudioConverter]        AudioConverter.cpp:1007  Created a new in process converter -> 0x600000c701e0, from  2 ch,  48000 Hz, Float32, deinterleaved to  2 ch,      0 Hz, Float32, deinterleaved
+2026-11-22 17:37:40.384 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:40.384 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1086  AURemoteIO@0x105893040: set kAudioOutputUnitProperty_OutputChannelLayout.  Layout = tag=0x0, 0 channel descriptions [], err = 0
+2026-11-22 17:37:40.385 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]          RemoteIOServer.h:101   rio@0x105088600 Got input layout from io node or spatialized client: tag=0x0, 2 channel descriptions [L, R]
+2026-11-22 17:37:40.385 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:40.386 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1086  AURemoteIO@0x105893040: set kAudioOutputUnitProperty_OutputChannelLayout.  Layout = tag=0x0, 0 channel descriptions [], err = 0
+2026-11-22 17:37:40.387 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]          RemoteIOServer.h:101   rio@0x105088600 Got input layout from io node or spatialized client: tag=0x0, 2 channel descriptions [L, R]
+2026-11-22 17:37:40.387 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:40.387 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1086  AURemoteIO@0x105893040: set kAudioOutputUnitProperty_OutputChannelLayout.  Layout = tag=0x0, 0 channel descriptions [], err = 0
+2026-11-22 17:37:40.387 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]          RemoteIOServer.h:101   rio@0x105088600 Got input layout from io node or spatialized client: tag=0x0, 2 channel descriptions [L, R]
+2026-11-22 17:37:40.388 Df SEQ3[8276:7b7f] [com.apple.avfaudio:avae]          AVAudioEngine.mm:1179  Engine@0x60000000ca20: start, was running 0
+2026-11-22 17:37:40.388 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1622  Starting AURemoteIO(0x105893040)
+2026-11-22 17:37:40.388 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:1064  fetched workgroup 0x600001759800
+2026-11-22 17:37:40.388 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1683  workgroup port 0x1400f
+2026-11-22 17:37:40.389 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]  MEDeviceStreamClient.cpp:227   AQME Default-InputOutput: client starting: <RemoteIOClient@0x105088600(@0x105088680); input; [8276]>; running count now 1
+2026-11-22 17:37:40.390 E  SEQ3[8276:7f71] [com.apple.coreaudio:aqme] iOSSimulatorAudioDevice-8276-1: Abandoning I/O cycle because reconfig pending
+2026-11-22 17:37:40.401 E  SEQ3[8276:7f71] [com.apple.coreaudio:aqme] iOSSimulatorAudioDevice-8276-1: Abandoning I/O cycle because reconfig pending
+2026-11-22 17:37:40.412 E  SEQ3[8276:7f71] [com.apple.coreaudio:aqme] iOSSimulatorAudioDevice-8276-1: Abandoning I/O cycle because reconfig pending
+2026-11-22 17:37:40.412 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2543  aqmeio@0x1058a2818: set input stream usage to 1 on device 113, err = 0
+2026-11-22 17:37:40.414 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.446 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.522 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.538 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.617 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.623 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.723 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.727 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.821 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.844 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.921 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:40.989 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.026 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.028 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.121 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.135 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.214 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114003fa0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.215 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114003fa0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.322 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.328 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.425 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.456 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x1140015a0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.529 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114003fa0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.538 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114003fa0 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.620 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::Activity: Starting foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.626 Df SEQ3[8276:7b7f] [com.apple.WebKit:ProcessSuspension] 0x114001510 - [PID=8284, throttler=0x114000eb0] ProcessThrottler::Activity::invalidate: Ending foreground activity / 'WebPageProxy::runJavaScriptInFrameInScriptWorld'
+2026-11-22 17:37:41.648 Df SEQ3[8276:7b7f] [com.apple.avfaudio:avae]          AVAudioEngine.mm:1233  Engine@0x60000000ca20: stop, was running 1
+2026-11-22 17:37:41.648 Df SEQ3[8276:7b7f] [com.apple.avfaudio:avae]          AVAudioEngine.mm:1216  Engine@0x60000000ca20: pause, was running 1
+2026-11-22 17:37:41.648 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:41.650 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2543  aqmeio@0x1058a2818: set input stream usage to 0 on device 113, err = 0
+2026-11-22 17:37:41.650 Df SEQ3[8276:7bb5] [com.apple.coreaudio:aqme]  MEDeviceStreamClient.cpp:491   AQME Default-InputOutput: client stopping: <RemoteIOClient@0x105088600(@0x105088680); input; [8276]>; running count now 0
+2026-11-22 17:37:41.651 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:41.651 Df SEQ3[8276:7b7f] [com.apple.avfaudio:avae]          AVAudioEngine.mm:1233  Engine@0x60000000ca20: stop, was running 0
+2026-11-22 17:37:41.651 Df SEQ3[8276:7b7f] [com.apple.avfaudio:avae]          AVAudioEngine.mm:1216  Engine@0x60000000ca20: pause, was running 0
+2026-11-22 17:37:41.652 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aurioc]            AURemoteIO.cpp:1697  Stopping AURemoteIO(0x105893040)
+2026-11-22 17:37:41.657 Df SEQ3[8276:7b7f] [com.apple.coreaudio:as_client] AVAudioSessionImpl_Simulator.mm:109   Set volume on device 85 to 0.60
+2026-11-22 17:37:41.658 Df SEQ3[8276:7b7f] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:978   PrimarySessionActiveWithInputEnabled 1 -> 0
+2026-11-22 17:37:41.688 Df SEQ3[8276:7b7f] [com.apple.coreaudio:ddagg]        AggregateDevice.mm:644   Built valid aggregate 118
+2026-11-22 17:37:41.695 E  SEQ3[8276:7f71] [com.apple.coreaudio:aqme] iOSSimulatorAudioDevice-8276-1: Abandoning I/O cycle because reconfig pending
+2026-11-22 17:37:41.702 E  SEQ3[8276:7f79] (CoreAudio)             HALPlugIn.cpp:540    HALPlugIn::StopIOProc: got an error from the plug-in routine, Error: 560227702 (!dev)
+2026-11-22 17:37:41.706 E  SEQ3[8276:7f79] (CoreAudio)             HALSystem.cpp:2170   AudioObjectPropertiesChanged: no such object
+2026-11-22 17:37:41.707 Df SEQ3[8276:7b7f] [com.apple.coreaudio:AudioConverter]        AudioConverter.cpp:1007  Created a new in process converter -> 0x600000c70060, from  2 ch,  48000 Hz, Float32, deinterleaved to  2 ch,  48000 Hz, Float32, interleaved
+2026-11-22 17:37:41.707 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aqme]        MEMixerChannel.cpp:2969  2-channel audiovisual content is NOT eligible for spatialization
+2026-11-22 17:37:41.708 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aqme]        MEMixerChannel.cpp:2969  2-channel audiovisual content is NOT eligible for spatialization
+2026-11-22 17:37:41.708 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2738  FetchAndLogFrameSize starting IO deviceID=118, frame size is 512
+2026-11-22 17:37:41.710 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:2706  aqmeio@0x1058a2818, device 118 (iOSSimulatorAudioDevice-8276-2), AudioDeviceStart (err 0)
+2026-11-22 17:37:41.718 Df SEQ3[8276:7ba0] [com.apple.coreaudio:AMCP]  80659          HALC_ProxyIOContext.cpp:1593  HALC_ProxyIOContext::IOWorkLoop: ending the transport, stopping the io thread
+2026-11-22 17:37:41.724 Df SEQ3[8276:7b7f] [com.apple.coreaudio:aqme]            AQMEIO_HAL.cpp:546   iOSSimulatorAudioDevice-8276-2 (118): IO started 1 (err 0), was running 1, running count 1
+2026-11-22 17:37:48.581 E  SEQ3[8276:7ba0] [com.apple.coreaudio:AMCP]  72115          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-22 17:37:49.208 E  SEQ3[8276:7ba0] [com.apple.coreaudio:AMCP]  72115          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-22 17:37:52.494 E  SEQ3[8276:7ba0] [com.apple.coreaudio:AMCP]  72115          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-22 17:37:52.743 E  SEQ3[8276:7ba0] [com.apple.coreaudio:AMCP]  72115          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
+2026-11-22 17:37:58.132 E  SEQ3[8276:7ba0] [com.apple.coreaudio:AMCP]  72115          HALC_ProxyIOContext.cpp:1622  HALC_ProxyIOContext::IOWorkLoop: skipping cycle due to overload
