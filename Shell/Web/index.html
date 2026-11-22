@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v268</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v270</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -3151,7 +3151,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
     <span class="sync" id="syncPill"><i></i><span>lokalt</span></span>
     <button class="pj-pill" id="libImp"><svg viewBox="0 0 16 16"><path d="M8 2v9M4.5 7.5 8 11l3.5-3.5M3 10v3.5h10V10"/></svg><span>lägg till ljud</span></button>
     <button class="pj-pill x" id="libX" aria-label="Stäng"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
-    <input type="file" class="pj-file" id="libFile" accept="audio/*,.wav,.mp3,.aif,.aiff,.m4a,.flac,.ogg" multiple>
+    <input type="file" class="pj-file" id="libFile" accept="audio/*,.wav,.mp3,.aif,.aiff,.m4a,.flac,.ogg,.json,application/json" multiple>
   </div>
   <div class="lib-tabs" id="libTabs"><button data-t="hit" class="cur">one-shots</button><button data-t="loop">loopar</button><button data-t="preset">presets</button><button data-t="fav">★ favoriter</button></div>
   <div class="lib-target" id="libTarget"></div>
@@ -4325,12 +4325,28 @@ async function ensureBuf(sm){if(!sm)return null;if(sm.buf)return sm.buf;if(sm._p
 function smpRec(sm){const {id,name,kind,bars,bpm,dur,pk,norm,mime,asset,t}=sm;return {id,name,kind,bars,bpm,dur,pk,norm,mime,asset:asset||null,t}}
 function b64ToAb(b){const bin=atob(b),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer}
 const abToB64=ab=>new Promise(res=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result).split(',')[1]);fr.readAsDataURL(new Blob([ab]))});
-async function importFiles(files){let n=0,bad=0;for(const f of files){if(!/audio|wav|aif|mp3|m4a|flac|ogg/i.test(f.type+f.name)){bad++;continue}
+/* (v269) sounds from the standalone tools: BLONDA SYNTHS (presets, one or many engines) and BLONDA SAMPLER (a multisample for
+   Sample+). Presets are kept for every project (not in the project), and show up in each engine's sound list as "synths". */
+const SYN_K='blonda.synths.import.v1';
+function synImp(){try{const o=JSON.parse(localStorage.getItem(SYN_K)||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return {}}}
+window.__synImp=synImp;
+async function blondaJson(f){let o;try{o=JSON.parse(await f.text())}catch(e){return null}if(!o||typeof o!=='object')return null;
+  if(o.blonda==='presets'&&Array.isArray(o.presets)){const I=synImp();let n=0,r=0;
+    o.presets.forEach(x=>{if(!x||!ENG[x.e]||x.e==='msx'||!x.n||!x.p||typeof x.p!=='object'||Array.isArray(x.p))return;const L=I[x.e]=Array.isArray(I[x.e])?I[x.e]:[];
+      const u={n:String(x.n).slice(0,60),p:x.p,m:x.m&&typeof x.m==='object'?x.m:null,t:Date.now()},ex=L.find(v=>String(v.n).toLowerCase()===u.n.toLowerCase());if(ex){Object.assign(ex,u);r++}else{L.push(u);n++}});
+    try{localStorage.setItem(SYN_K,JSON.stringify(I))}catch(e){toast('Storage is full – the sounds could not be saved');return 'err'}
+    try{window.rsPaint&&rsPaint()}catch(e){}try{window.KEYSX&&KEYSX._paint()}catch(e){}
+    toast(n||r?`BLONDA SYNTHS: ${n} new sound${n===1?'':'s'}${r?` · ${r} replaced`:''} · in the engines' sound lists`:'No sounds in that file');return 'ok'}
+  if(o.blonda==='ms'&&o.ins&&typeof o.ins==='object'){const rec=window.TEX&&TEX.importRec?await TEX.importRec(o.ins):null;
+    toast(rec?`${rec.name} · ${rec.regions.length} notes → Sample+`:'Could not read that instrument');return rec?'ok':'err'}
+  return null}
+async function importFiles(files){let n=0,bad=0,nj=0;for(const f of files){if(/\.json$/i.test(f.name)||/json/i.test(f.type)){const r=await blondaJson(f);if(r)nj++;else bad++;continue}
+  if(!/audio|wav|aif|mp3|m4a|flac|ogg/i.test(f.type+f.name)){bad++;continue}
   try{const ab=await f.arrayBuffer(),buf=await decode(ab),dur=buf.duration,{pk,max}=peaksOf(buf),name=f.name.replace(/\.[^.]+$/,'');
     const kind=dur>1.6?'loop':'hit',tm=guessTempo(name,dur);
     const sm={id:uidS(),name,kind,bars:tm.bars,bpm:tm.bpm,dur,pk,norm:Math.min(4,.89/(max||1)),mime:f.type||'audio/wav',asset:null,t:Date.now(),buf,size:ab.byteLength};
     SMP.set(sm.id,sm);await idbPut(Object.assign(smpRec(sm),{data:ab}));n++;cloudPushSample(sm,ab)}catch(e){bad++}}
-  renderLib();toast(n?`${n} ljud tillagda`+(bad?` · ${bad} kunde inte läsas`:''):'Kunde inte läsa filerna');if(n&&libTab==='preset'){}}
+  renderLib();if(n||!nj)toast(n?`${n} ljud tillagda`+(bad?` · ${bad} kunde inte läsas`:''):'Kunde inte läsa filerna');if(n&&libTab==='preset'){}}
 async function loadLocalLib(){const all=await idbAll();if(!all)return;all.forEach(r=>{if(!SMP.has(r.id)){const {data,...m}=r;SMP.set(r.id,Object.assign(m,{buf:null,size:data?data.byteLength:0}))}});warmSamples();renderLoops()}
 function warmSamples(){const need=new Set();Object.values(S.dk||{}).forEach(v=>{if(v&&v.startsWith('smp:'))need.add(v.slice(4))});(S.loops||[]).forEach(L=>{if(L.sid)need.add(L.sid)});need.forEach(id=>ensureBuf(SMP.get(id)).then(()=>renderLoops()))}
 
@@ -10290,11 +10306,12 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     if(e==='acid')ACID_PRE.forEach(p=>L.push({l:p[0],g:'acid · '+p[1],f:()=>{Object.assign(engE('acid'),JSON.parse(JSON.stringify(DEFS.eng.acid)),p[2])}}));
     if(e==='analog')ANA_PRE.forEach(p=>L.push({l:p[0],g:'analog · '+p[1],f:()=>{const o=S.synth[RS.id];if(o)Object.assign(o,JSON.parse(JSON.stringify(DEFS.synth[RS.id]||DEFS.synth.bass)),p[2])}}));
     if(e==='msx'&&window.TEX&&TEX.list)TEX.list().forEach(I=>L.push({l:I.meta.name,g:I.meta.dev||'sample+',f:()=>TEX.use(RS.id,I.meta.id)}));
+    /* (v269) sounds from BLONDA SYNTHS (every project) */((typeof synImp==='function'?synImp():{})[e]||[]).forEach(u=>{if(u&&u.p)L.push({l:u.n,g:'synths',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?(DEFS.synth[RS.id]||DEFS.synth.bass):DEFS.eng[e])),JSON.parse(JSON.stringify(u.p)));S.mods[e]=u.m?JSON.parse(JSON.stringify(u.m)):null;modOf(e);if(e==='bris'){try{brisApplyAll()}catch(_){}}}})});
     ((S.userPre||{})[e]||[]).forEach(u=>L.push({l:u.n,g:'sparade',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(u.p)));if(u.m)S.mods[e]=JSON.parse(JSON.stringify(u.m));modOf(e)}}));
     L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});
     /* (v250) a preset is the whole sound: a factory preset starts with no modulation (the LFOs, envelope and steps of the
        sound before don't stay on); a saved sound brings its own; a Sample+ sound brings what it was last played with */
-    L.forEach(x=>{if(x.g==='sparade'||x.g==='grund'||e==='msx')return;const f=x.f;x.f=()=>{f();if(!S.mods||typeof S.mods!=='object')S.mods={};S.mods[e]=null;modOf(e)}});
+    L.forEach(x=>{if(x.g==='sparade'||x.g==='synths'||x.g==='grund'||e==='msx')return;const f=x.f;x.f=()=>{f();if(!S.mods||typeof S.mods!=='object')S.mods={};S.mods[e]=null;modOf(e)}});
     return L}
   /* (v245) the keyboard's sound picker and MIDI program change use the same list, for any synth track */
   window.__rsPresets=(e,id)=>presetList(e).map(x=>({l:x.l,g:x.g,f:()=>{const o=RS.id;RS.id=id||o;if(!S.mods)S.mods={};try{x.f()}finally{RS.id=o}}}));
@@ -11002,7 +11019,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v268</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v270</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -14088,6 +14105,18 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   async function loadAll(){const all=await dbDo('readonly',st=>st.getAll())||[];for(const r of all)if(!INS.has(r.id))try{await load(r)}catch(e){}
     if(S.ms)for(const k in S.ms){if(!INS.has(S.ms[k]))delete S.ms[k];else if(S.inst[k]!=='msx')S.inst[k]='msx'}try{refreshInst()}catch(e){}paint()}
   async function remove(id){await dbDo('readwrite',st=>st.delete(id));INS.delete(id);if(S.ms)for(const k in S.ms)if(S.ms[k]===id)use(k,null);if(cfg.insSel===id)cfg.insSel='';try{save()}catch(e){}paint()}
+  /* (v269) an instrument from BLONDA SAMPLER: 16-bit PCM in base64, zones and loops as edited there. The same instrument
+     imported again (same id from the Sampler) replaces the old one and keeps its place in the list. */
+  async function importRec(o){try{if(!o||!Array.isArray(o.regions)||!o.regions.length)return null;
+    const ab=s=>{const b=atob(String(s||'')),u=new Uint8Array(b.length);for(let k=0;k<b.length;k++)u[k]=b.charCodeAt(k);return u.buffer};
+    const regions=o.regions.map(r=>{const L=ab(r.L),R=r.R?ab(r.R):null,len=Math.floor(L.byteLength/2);return {root:Math.round(+r.root||60),lo:Math.max(0,Math.min(127,Math.round(+r.lo||0))),hi:Math.max(0,Math.min(127,Math.round(r.hi==null?127:+r.hi))),
+      sr:+r.sr||+o.sr||48000,ch:R?2:1,L,R,len,loopS:Math.max(0,Math.min(len,Math.round(+r.loopS||0))),loopE:Math.max(0,Math.min(len,Math.round(+r.loopE||0)))}}).filter(r=>r.len>0).sort((a,b)=>a.root-b.root);
+    if(!regions.length)return null;const old=o.id?[...INS.values()].find(I=>I.meta.bid===o.id):null;
+    const env=o.env&&typeof o.env==='object'?{att:+o.env.att||0,dec:o.env.dec==null?MSX_DEF.dec:+o.env.dec,sus:o.env.sus==null?1:+o.env.sus,rel:o.env.rel==null?MSX_DEF.rel:+o.env.rel}:null;
+    const rec={id:old?old.meta.id:'ms'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),bid:o.id||null,name:String(o.name||'multisample').slice(0,60),dev:String(o.dev||'BLONDA SAMPLER').slice(0,40),
+      t:old?old.meta.t:Date.now(),sr:+o.sr||regions[0].sr,att:.002,rel:env?ENVT.rel(env.rel):.25,loop:!!o.loop,regions,env,mods:old?old.meta.mods||null:null};
+    await dbDo('readwrite',st=>st.put(rec));await load(rec);if(S.ms)for(const k in S.ms)if(S.ms[k]===rec.id&&env&&S.inst[k]==='msx')Object.assign(engE('msx'),env);
+    tab=cfg.tab='ins';cfg.insSel=rec.id;saveCfg();try{refreshInst()}catch(e){}paint();return rec}catch(e){console.warn(e);return null}}
   async function rename(id,name){const I=INS.get(id);if(!I)return;I.meta.name=name;await dbDo('readwrite',st=>st.put(I.meta));paint()}
   /* the voice: same call as the synth engines (sequencer, piano and MIDI in all play through it) */
   /* Sample+ envelope: knob 0..1 → seconds (the same curves the engine's knobs show) */
@@ -14278,7 +14307,7 @@ ${HITV.split(',').map(s=>s+'::after').join(',')}{content:"";position:absolute;in
   setInterval(()=>{if(!rec)return;const m=body.querySelector('.tx-meter i');if(m)m.style.width=Math.min(100,Math.round(Math.sqrt(rec.lvl)*100))+'%'},80);
 
   async function saveMeta(id){const I=INS.get(id);if(I)try{await dbDo('readwrite',st=>st.put(I.meta))}catch(e){}}
-  window.TEX={saveMeta,assign,use,play,draw,list,keepEnv,repaint:()=>paint(),_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
+  window.TEX={importRec,saveMeta,assign,use,play,draw,list,keepEnv,repaint:()=>paint(),_rec:()=>rec&&{frames:rec.frames,lvl:rec.lvl,peak:rec.peak,state:rec.nat?"app":rec.ac.state,sr:rec.sr,chunks:rec.chunks.length},tracks:()=>TRK(),route,profiles:PROF,profOf,scan:()=>devs,store,instruments:INS,exportXY,exportOP1,exportOP1Drum,_zip:zip,_aiff:aiff,_wav:wav16,refresh};
   const css=document.createElement('style');css.textContent=`
 .card.sampler .tx{display:flex;flex-direction:column;gap:10px;font-family:var(--f-mono);font-size:11px;color:var(--fg)}
 .tx-tabs{display:flex;gap:4px;flex-wrap:wrap}
@@ -14910,6 +14939,24 @@ body.mob .card[data-card="tracks"].mhero .orb{max-width:min(420px,100%,var(--orb
   watch();new MutationObserver(()=>{watch();panes.querySelectorAll(':scope>.pane').forEach(pick)}).observe(panes,{childList:true,subtree:false});
   panes.querySelectorAll(':scope>.pane').forEach(p=>new MutationObserver(()=>{watch();pick(p)}).observe(p,{childList:true}));
   setTimeout(()=>{const x=panes.querySelector(':scope>.pane.extra');if(x&&!x.__anc){x.__anc=1;new MutationObserver(()=>{watch();pick(x)}).observe(x,{childList:true});watch()}},400)}catch(e){console.warn('anchor',e)}})();
+
+/* ================= (v270) the sound must never stay late =================
+   On the iPhone the page renders its sound a little ahead and hands it to the system through a buffer. When the phone could not
+   keep up for a moment, the page afterwards stayed ahead of what is heard – in the video from 22 Nov every pad came 1.6 s after the
+   tap, and it stayed that way. That shows as the audio clock (ctx.currentTime) having moved further than real time: normally the
+   two run side by side. Here the distance is watched; when the sound has run more than 0.3 s ahead for over a second, the audio
+   output is restarted (a short pause), which empties the buffer – everything is in time again, and a short note says so. ================= */
+(()=>{try{let base=null,over=0,lastFix=0,lastNow=0;
+  const fix=()=>{lastFix=performance.now();base=null;over=0;const c=ctx;try{c.suspend().then(()=>setTimeout(()=>{c.resume().catch(()=>{})},40)).catch(()=>{})}catch(e){}
+    try{toast('The sound fell behind · caught up again')}catch(e){}window.__latFix=(window.__latFix||0)+1};
+  setInterval(()=>{const c=typeof ctx!=='undefined'?ctx:null,now=performance.now();if(!c||c.state!=='running'||document.hidden){base=null;over=0;lastNow=now;return}
+    /* a long gap in this timer (the page was frozen) says nothing about the sound buffer: start over */
+    if(lastNow&&now-lastNow>2000){base=null;over=0}lastNow=now;
+    const off=c.currentTime-now/1000;if(base==null||off<base)base=off;else base+=.0000175;/* the audio clock and the system clock may differ by up to ~70 ppm */
+    const lead=off-base;window.__latLead=lead;
+    if(lead>.3)over++;else over=0;
+    if(over>=5&&now-lastFix>8000)fix()},250);
+  window.__lat={lead:()=>window.__latLead||0,fixes:()=>window.__latFix||0,fix}}catch(e){console.warn('latfix',e)}})();
 
 /* ================= v236: no glimpse of an older-looking SEQ.3 while the page starts =================
    The page is first drawn in its plain form (the glass look, the intro in Swedish) and only then gets your saved look and
