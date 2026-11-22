@@ -2898,7 +2898,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v275</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v276</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -8816,9 +8816,10 @@ function stxLaneOf(l){return {g:1,pan:0}}
 
   /* ---- the notes: the chord on one step plays together, spread across the stereo field as the Starter does; the next step cuts the last ---- */
   const VQ={},VO={};
-  function flush(id){const q=VQ[id];delete VQ[id];if(!q||!q.length)return;const E=stxEnsure(),C=chainOf(id);if(!E||!E.free||!C)return;const K=Object.assign(EK(),(S.enkT||{})[id]||{}),t=q[0].t;
-    /* (v272) a longer release than the sound's own lets the last notes ring out instead of being cut by the next step */
-    (VO[id]||[]).forEach(v=>{if(!((K.r??.5)>.52)&&!v.cut&&t>v.t0+1e-4&&v.end>t){v.cut=1;const g=v.ck.gain,fd=.006+K.tail*.045;try{g.cancelAndHoldAtTime(t);g.setValueAtTime(1,t);g.linearRampToValueAtTime(0,t+fd)}catch(e){}}});
+  function flush(id){const q=VQ[id];delete VQ[id];if(!q||!q.length)return;const E=stxEnsure(),C=chainOf(id);if(!E||!E.free||!C)return;const K=q[0].kn||Object.assign(EK(),(S.enkT||{})[id]||{}),t=q[0].t;
+    /* (v276) the next step always cuts the last notes (they piled up into mush when they rang on); a longer release only
+       makes that cut softer */
+    (VO[id]||[]).forEach(v=>{if(!v.cut&&t>v.t0+1e-4&&v.end>t){v.cut=1;const g=v.ck.gain,fd=Math.min(.2,(.006+K.tail*.045)*Math.pow(4,Math.max(0,(K.r??.5)-.5)*2));try{g.cancelAndHoldAtTime(t);g.setValueAtTime(1,t);g.linearRampToValueAtTime(0,t+fd)}catch(e){}}});
     VO[id]=(VO[id]||[]).filter(v=>v.end>t-.05);
     q.sort((a,b)=>a.n-b.n);const n=q.length,br=K.br,k=1/Math.sqrt(n);
     q.forEach((o,j)=>{let pan=0;if(id==='keys'||!RL[id])pan=n>1?(j/(n-1)*2-1)*Math.min(1,br*1.1)*.9:0;else if(id==='pad')pan=n>1?(j%2?1:-1)*.4*br:0;else if(id==='lead'){LP[id]=-(LP[id]||1);pan=LP[id]*.5*br}
@@ -8841,7 +8842,11 @@ function stxLaneOf(l){return {g:1,pan:0}}
   function queue(id,o){(VQ[id]=VQ[id]||[]).push(o);if(VQ[id].length===1)Promise.resolve().then(()=>flush(id))}
   /* a glide in the notes (the Starter's top line, or one you draw): the scheduler hands it over in GL while the note is triggered */
   window.enkelVoice=(id,t,v,p,out,note,len,vc)=>{const N=(vc&&vc.length)?vc:[0],gl=(typeof GL!=='undefined'&&GL&&GL.list&&GL.list.length)?{list:GL.list.map(g=>({at:g.at,n:g.n})),sd:GL.sd,n0:GL.n0}:null;
-    N.forEach(iv=>queue(id,{t,n:note+iv+(p.tune||0),v,d:Math.max(.03,len||.2),p,gl}))};
+    /* (v276) the knobs as they are for this note: the track's own over the shared ones, then the modulation (lfo, random,
+       velocity …) of the full synth, the same way the other engines get it */
+    const k=Object.assign(EK(),(S.enkT||{})[id]||{});
+    try{if(typeof MODN!=='undefined'&&MODN&&MODN.e==='enkel'&&MODN.M&&MODN.M.rows)MODN.M.rows.forEach(r=>{if(!r.amt||r.dst.startsWith('x.')||typeof k[r.dst]!=='number')return;k[r.dst]=Math.max(0,Math.min(1,k[r.dst]+r.amt*modSrc(MODN.M,r.src,t,MODN.n)))})}catch(e){}
+    N.forEach(iv=>queue(id,{t,n:note+iv+(p.tune||0),v,d:Math.max(.03,len||.2),p,gl,kn:k}))};
   window.smpVoice2=(id,t,v,p,out,note,len)=>{if(!S.smpk)S.smpk={};const k=S.smpk[id]??(id==='syn6'?1:0);queue(id,{t,n:note+(p.tune||0),v,d:Math.max(.03,len||.2),p,smp:k})};
 
   /* the engine buttons in the synth card */
@@ -8869,27 +8874,35 @@ function stxLaneOf(l){return {g:1,pan:0}}
   /* (v275) factory sounds for Simple: [name, kind, sound, knobs]. Attack/decay/sustain/release/tone are the track's own
      (.5 = the sound as it is); drive, width, tape and echo are shared by the Simple tracks – the bass sounds leave them alone.
      Clean on purpose: little drive and tape, so the chords stay clear and apart from each other. */
+  /* (v276) [name, kind, sound, knobs, modulation]. The modulation moves the knobs note by note (velocity opens the tone,
+     a slow lfo breathes over the bars, random gives each note its own colour, the step sequence draws a pattern). Clean: little
+     drive and tape, moderate echo, so the parts stay apart. */
+  const V=(k,a)=>({src:'vel',dst:k,amt:a}),RN=(k,a)=>({src:'rnd',dst:k,amt:a}),L1=(rate,sh,rows)=>({l1:{rate,shape:sh,retrig:0},rows}),L2=(rate,sh,rows)=>({l2:{rate,shape:sh,retrig:0},rows});
   window.ENK_PRE=[
-    ['Clean Keys','keys','keys',{ton:.42,drv:0,tejp:.1,br:.5,eko:.6,d:.58,s:.58,r:.62}],
-    ['Warm Juno','keys','juno',{ton:.44,drv:.04,tejp:.22,br:.75,eko:.7,d:.6,s:.68,r:.64}],
-    ['Night Rhodes','keys','rhodes',{ton:.4,drv:.03,tejp:.28,br:.55,eko:.6,r:.62}],
-    ['Grand Piano','keys','flygel',{ton:.44,drv:0,tejp:.06,br:.3,eko:.45,r:.6}],
-    ['DX Piano','keys','dx-piano',{ton:.42,drv:0,tejp:.1,br:.45,eko:.55}],
-    ['Glass Keys','keys','glas',{ton:.44,drv:0,tejp:.08,br:.55,eko:.75,d:.62,r:.66}],
-    ['Mallet','pluck','mallet',{ton:.4,drv:0,tejp:.12,br:.4,eko:.7}],
-    ['Kalimba Drops','pluck','kalimba',{ton:.42,drv:0,tejp:.1,br:.45,eko:.8,r:.6}],
-    ['Soft Pluck','pluck','plock',{ton:.4,drv:0,tejp:.18,br:.6,eko:.65,d:.55,r:.6}],
-    ['Vibes','pluck','vibrafon',{ton:.42,drv:0,tejp:.1,br:.5,eko:.65,r:.62}],
-    ['Stack Lead','lead','stack',{ton:.44,drv:.06,tejp:.14,br:.55,eko:.5,s:.62,r:.56}],
-    ['Vowel Lead','lead','röst',{ton:.4,drv:0,tejp:.14,br:.5,eko:.55}],
-    ['Soft Pad','pad','mjuk',{a:.8,d:.62,s:.85,r:.82,ton:.42,drv:0,tejp:.16,br:.85,eko:.75}],
-    ['Cloud Pad','pad','moln',{a:.72,s:.8,r:.85,ton:.44,drv:0,tejp:.08,br:.9,eko:.8}],
-    ['Choir','pad','kör',{a:.7,s:.75,r:.8,ton:.4,drv:0,tejp:.18,br:.8,eko:.7}],
-    ['Organ','pad','orgel',{ton:.4,drv:.1,tejp:.2,br:.6,eko:.35,r:.55}],
-    ['Deep Sine','bass','s:sinus',{ton:.34,r:.55}],
-    ['Moog Bass','bass','s:moog',{ton:.38}],
-    ['Finger Bass','bass','fingerbas',{ton:.4}],
-    ['Short Sub','bass','s:kort',{ton:.34}]];
+    ['Clean Keys','keys','keys',{ton:.42,drv:0,tejp:.1,br:.5,eko:.55,d:.56,s:.55,r:.58},{rows:[V('ton',.25)]}],
+    ['Warm Juno','keys','juno',{ton:.44,drv:.04,tejp:.2,br:.75,eko:.6,d:.6,s:.65,r:.6},L1(0,0,[{src:'l1',dst:'ton',amt:.15},RN('ton',.06)])],
+    ['Breathing Chords','keys','juno',{ton:.4,drv:0,tejp:.15,br:.8,eko:.6,a:.6,s:.7,r:.62},L1(1,0,[{src:'l1',dst:'ton',amt:.25}])],
+    ['Dub Chords','keys','plock',{ton:.38,drv:.05,tejp:.2,br:.6,eko:.85,d:.45,s:.4},L1(0,0,[{src:'l1',dst:'ton',amt:.22}])],
+    ['Night Rhodes','keys','rhodes',{ton:.4,drv:.03,tejp:.25,br:.55,eko:.55,r:.58},{rows:[V('ton',.3)]}],
+    ['Grand Piano','keys','flygel',{ton:.44,drv:0,tejp:.05,br:.3,eko:.4,r:.58},{rows:[V('ton',.3)]}],
+    ['DX Piano','keys','dx-piano',{ton:.42,drv:0,tejp:.08,br:.45,eko:.5},{rows:[V('ton',.2),RN('d',.08)]}],
+    ['Glass Keys','keys','glas',{ton:.44,drv:0,tejp:.08,br:.55,eko:.65,d:.6,r:.6},L2(1,1,[{src:'l2',dst:'d',amt:.12}])],
+    ['Mallet','pluck','mallet',{ton:.4,drv:0,tejp:.1,br:.4,eko:.65},{rows:[RN('ton',.1),V('d',.15)]}],
+    ['Kalimba Drops','pluck','kalimba',{ton:.42,drv:0,tejp:.08,br:.45,eko:.7,r:.58},{rows:[RN('ton',.08)]}],
+    ['Step Pluck','pluck','plock',{ton:.4,drv:0,tejp:.15,br:.6,eko:.6,d:.55,r:.58},{rows:[{src:'stp',dst:'ton',amt:.22}]}],
+    ['Random Glass','pluck','glas',{ton:.42,drv:0,tejp:.08,br:.5,eko:.7,d:.45},{rows:[RN('ton',.2),RN('d',.15)]}],
+    ['Vibes','pluck','vibrafon',{ton:.42,drv:0,tejp:.08,br:.5,eko:.6,r:.6},{rows:[V('ton',.2)]}],
+    ['Stack Lead','lead','stack',{ton:.44,drv:.06,tejp:.12,br:.5,eko:.45,s:.6,r:.55},{rows:[V('ton',.2)]}],
+    ['Vowel Lead','lead','röst',{ton:.4,drv:0,tejp:.12,br:.45,eko:.5},L2(3,1,[{src:'l2',dst:'ton',amt:.12}])],
+    ['Soft Pad','pad','mjuk',{a:.8,d:.62,s:.85,r:.78,ton:.42,drv:0,tejp:.14,br:.85,eko:.65},L1(0,0,[{src:'l1',dst:'ton',amt:.15}])],
+    ['Cloud Pad','pad','moln',{a:.72,s:.8,r:.8,ton:.44,drv:0,tejp:.08,br:.9,eko:.7},L1(0,0,[{src:'l1',dst:'ton',amt:.2}])],
+    ['Grain Pad','pad','korn',{a:.7,s:.8,r:.8,ton:.42,drv:0,tejp:.1,br:.85,eko:.65},{rows:[RN('ton',.1)]}],
+    ['Choir','pad','kör',{a:.7,s:.75,r:.76,ton:.4,drv:0,tejp:.15,br:.8,eko:.6},null],
+    ['Organ','pad','orgel',{ton:.4,drv:.08,tejp:.18,br:.6,eko:.3,r:.55},null],
+    ['Deep Sine','bass','s:sinus',{ton:.34,r:.55},null],
+    ['Moog Bass','bass','s:moog',{ton:.38},{rows:[V('ton',.2)]}],
+    ['Finger Bass','bass','fingerbas',{ton:.4},null],
+    ['Short Sub','bass','s:kort',{ton:.34},null]];
   /* the sounds to choose from (Enkel) or the slot (sampler) */
   const _ri=refreshInst;refreshInst=function(){_ri.apply(this,arguments);try{const id=TRACKS[synT].id,e=S.inst[id];const ob=document.getElementById('engOpts');if(!ob)return;
       if(e==='enkel'){const cur=enkOf(id),mk=(v,lab)=>{const b=document.createElement('button');b.className='eopt'+(v===cur?' on':'');b.textContent=lab;b.onclick=()=>{pushHist();pick(id,v);refreshInst();save();synPreview()};return b};
@@ -8935,7 +8948,17 @@ function stxLaneOf(l){return {g:1,pan:0}}
   /* ================= the writer ================= */
   const acc=s=>s%4===0?1:s%2?.74:.87;
   /* a layer's four bars as notes: what the Starter would have played (velocities, the swing and the laid-back top, the form) */
-  function layerNotes(P,pl,lay,b){const L=P.ls[lay],sh=12*(L.oct||0),sd=60/S.bpm/4,Gr=P.g||{},sw=(Gr.sving||0)*.5,out=[];if(!P.lay[lay])return out;
+  /* (v276) the chord voicing on the tracks: the Starter's dense chords had up to six notes with semitones side by side and
+     sat low – on a full synth that is mud. Per chord: lifted out of the bass register, no two notes a semitone apart (the
+     top note, the melody of the chords, is kept), at most four notes (the closest inner ones go first). */
+  function voiceClean(out){const g=new Map();out.forEach(o=>{const k=Math.round(o.s*100);if(!g.has(k))g.set(k,[]);g.get(k).push(o)});const keep=new Set();
+    g.forEach(a=>{a.sort((x,y)=>x.n-y.n);if(a.length<3){a.forEach(o=>keep.add(o));return}
+      if(a[0].n<45){const up=a[a.length-1].n+12<=86?12:0;if(up)a.forEach(o=>o.n+=up)}
+      let L=a.slice();for(let i=L.length-2;i>=1;i--)if(L[i+1].n-L[i].n<=1||L[i].n-L[i-1].n<=1){if(L.length>2)L.splice(i,1)}
+      while(L.length>4){let bi=1,bd=99;for(let i=1;i<L.length-1;i++){const d=L[i].n-L[i-1].n;if(d<bd){bd=d;bi=i}}L.splice(bi,1)}
+      L.forEach(o=>keep.add(o))});return out.filter(o=>keep.has(o))}
+  function layerNotes(P,pl,lay,b){if(lay==='ack'||lay==='luft')return voiceClean(layerNotes0(P,pl,lay,b));return layerNotes0(P,pl,lay,b)}
+  function layerNotes0(P,pl,lay,b){const L=P.ls[lay],sh=12*(L.oct||0),sd=60/S.bpm/4,Gr=P.g||{},sw=(Gr.sving||0)*.5,out=[];if(!P.lay[lay])return out;
     /* a layer on a big synth gets the velocities the Starter used to send that synth (the layer's level in the velocity, no chord scaling) */
     const big=String(L.snd).startsWith('e:'),lv=Math.min(1.4,(L.lv??.75)/.75),V=v=>+Math.min(1,v).toFixed(3);
     const on=s=>true,lat=lay==='ack'?(Gr.lat||0)*.012/sd:lay==='klo'?(Gr.lat||0)*.03/sd:0;
@@ -10412,7 +10435,7 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     if(e==='bris'&&typeof BR_PRE!=='undefined')BR_PRE.forEach(p=>L.push({l:p[1],g:'bris · '+p[0].toLowerCase(),f:()=>{if(window.__bris&&__bris.load)__bris.load(p);else{Object.assign(engE('bris'),BR_DEF,p[2]);try{brisApplyAll()}catch(_){}}}}));
     if(e==='acid')ACID_PRE.forEach(p=>L.push({l:p[0],g:'acid · '+p[1],f:()=>{Object.assign(engE('acid'),JSON.parse(JSON.stringify(DEFS.eng.acid)),p[2])}}));
     if(e==='analog')ANA_PRE.forEach(p=>L.push({l:p[0],g:'analog · '+p[1],f:()=>{const o=S.synth[RS.id];if(o)Object.assign(o,JSON.parse(JSON.stringify(DEFS.synth[RS.id]||DEFS.synth.bass)),p[2])}}));
-    if(e==='enkel'&&window.ENK_PRE){ENK_PRE.forEach(p=>L.push({l:p[0],g:'simple · '+p[1],f:()=>{const o=rsObj('enkel'),D=DEFS.eng.enkel;ENK_PT.forEach(k=>o[k]=D[k]);Object.assign(o,p[3]);try{SIMPLE.pick(RS.id,p[2]);refreshInst()}catch(_){}}}));
+    if(e==='enkel'&&window.ENK_PRE){ENK_PRE.forEach(p=>L.push({l:p[0],g:'simple · '+p[1],f:()=>{const o=rsObj('enkel'),D=DEFS.eng.enkel;ENK_PT.forEach(k=>o[k]=D[k]);Object.assign(o,p[3]);if(!S.mods)S.mods={};S.mods.enkel=p[4]?JSON.parse(JSON.stringify(p[4])):null;modOf('enkel');try{SIMPLE.pick(RS.id,p[2]);refreshInst()}catch(_){}}}));
       L.push({l:'starter decides',g:'simple',f:()=>{try{SIMPLE.free()}catch(_){}}})}
     if(e==='msx'&&window.TEX&&TEX.list)TEX.list().forEach(I=>L.push({l:I.meta.name,g:I.meta.dev||'sample+',f:()=>TEX.use(RS.id,I.meta.id)}));
     /* (v269) sounds from BLONDA SYNTHS (every project) */((typeof synImp==='function'?synImp():{})[e]||[]).forEach(u=>{if(u&&u.p)L.push({l:u.n,g:'synths',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?(DEFS.synth[RS.id]||DEFS.synth.bass):DEFS.eng[e])),JSON.parse(JSON.stringify(u.p)));S.mods[e]=u.m?JSON.parse(JSON.stringify(u.m)):null;modOf(e);if(e==='bris'){try{brisApplyAll()}catch(_){}}}})});
@@ -10420,7 +10443,7 @@ const rsDef=(e,k)=>k.startsWith('x.')?MOD_XDEF[k.slice(2)]:e==='analog'?(DEFS.sy
     L.push({l:'init',g:'grund',f:()=>{const o=rsObj(e);if(o)Object.assign(o,JSON.parse(JSON.stringify(e==='analog'?DEFS.synth[RS.id]:DEFS.eng[e])));S.mods[e]=null;modOf(e)}});
     /* (v250) a preset is the whole sound: a factory preset starts with no modulation (the LFOs, envelope and steps of the
        sound before don't stay on); a saved sound brings its own; a Sample+ sound brings what it was last played with */
-    L.forEach(x=>{if(x.g==='sparade'||x.g==='synths'||x.g==='grund'||e==='msx')return;const f=x.f;x.f=()=>{f();if(!S.mods||typeof S.mods!=='object')S.mods={};S.mods[e]=null;modOf(e)}});
+    L.forEach(x=>{if(x.g==='sparade'||x.g==='synths'||x.g==='grund'||e==='msx'||String(x.g).startsWith('simple'))return;const f=x.f;x.f=()=>{f();if(!S.mods||typeof S.mods!=='object')S.mods={};S.mods[e]=null;modOf(e)}});
     return L}
   /* (v245) the keyboard's sound picker and MIDI program change use the same list, for any synth track */
   window.__rsPresets=(e,id)=>presetList(e).map(x=>({l:x.l,g:x.g,f:()=>{const o=RS.id;RS.id=id||o;if(!S.mods)S.mods={};try{x.f()}finally{RS.id=o}}}));
@@ -11128,7 +11151,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v275</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v276</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -11296,7 +11319,12 @@ function styRhythm(P){if(P.pat&&Array.isArray(P.pat.sub)&&Array.isArray(P.pat.ac
   const perms=[[0,1,2,3],[0,1,2,3],[0,1,0,3],[2,1,2,3],[0,1,0,1],[1,1,2,3],[0,0,2,3]],pm=sPk(perms);
   if(P.pat){['ack','sub','luft'].forEach(l=>{const a=P.pat[l];if(Array.isArray(a)&&a.length===4)P.pat[l]=pm.map(i=>a[i])});
     const a=P.pat.ack;if(Array.isArray(a)&&sRnd()<.35)P.pat.ack=a.map(b=>/\.\.$/.test(b)&&!/^-/.test(b)?'..'+b.slice(0,14):b)}
-  if(Array.isArray(P.rh)&&P.rh.length===4){P.rh=pm.map(i=>P.rh[i]).map(b=>{let s=b.split('');const n=sRi(3);for(let k=0;k<n;k++){const j=1+sRi(15);s[j]=s[j]==='x'?'.':'x'}return s.join('')})}}
+  if(Array.isArray(P.rh)&&P.rh.length===4){P.rh=pm.map(i=>P.rh[i]).map(b=>{let s=b.split('');const n=sRi(3);for(let k=0;k<n;k++){const j=1+sRi(15);s[j]=s[j]==='x'?'.':'x'}return s.join('')})}
+  /* (v276) a style's chords kept the style's own rhythm idea after idea (only the bar order moved): in a bit more than half
+     of the ideas they now get another feel – held chords, off-beats, 3-3-2, late or syncopated stabs – A A A B over the bars */
+  if(P.pat&&Array.isArray(P.pat.ack)&&P.pat.ack.length===4&&sRnd()<.55){
+    const CH=['x-------x-------','x---------------','..x-..x-..x-..x-','x-....x-....x-..','x--x--x---x--x--','...x..x...x..x..','x-----x-----x---','....x-------....','..x.......x.x...','x-------..x-x---','x---..x---..x-..','x.....x...x.....','x-..x-......x-..','......x-......x-'];
+    const a=sPk(CH),b=sPk(CH);P.pat.ack=[a,a,a,sRnd()<.5?a:b]}}
 /* the top line: the same feel, new notes in the scale (most steps kept, one or two moved, a note added now and then) */
 function styKlo(P){const m=P.pat&&P.pat.klo;if(!m||typeof m!=='object'||Array.isArray(m))return;const sc=SC7[P.mode]||SC7.moll,kl=P.pat.kl||{};
   const toD=n=>{const o=Math.floor(n/12),pc=((n%12)+12)%12;let bi=0,bd=99;sc.forEach((v,i)=>{const d=Math.abs(v-pc);if(d<bd){bd=d;bi=i}});return o*7+bi},
