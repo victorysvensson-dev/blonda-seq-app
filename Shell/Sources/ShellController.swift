@@ -217,6 +217,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             }
         case "link":
             link.handle(b) { [weak self] vc in self?.presentLinkSettings(vc) }
+        case "native":
+            native(b)
         case "playing":
             UIApplication.shared.isIdleTimerDisabled = (b["on"] as? Bool) ?? false
         case "log":
@@ -256,6 +258,38 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             nav.modalPresentationStyle = .formSheet
         }
         present(nav, animated: true)
+    }
+
+    // MARK: - native audio (the C++ engine plays, the page is the editor)
+
+    private var nativeTimer: Timer?
+    private func native(_ b: [String: Any]) {
+        let na = NativeAudio.shared()
+        switch b["op"] as? String ?? "" {
+        case "on":
+            do {
+                try na.start()
+                if let j = b["json"] as? String { try na.setProjectJSON(j) }
+                if nativeTimer == nil {
+                    let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in self?.nativeState() }
+                    RunLoop.main.add(t, forMode: .common); nativeTimer = t
+                }
+            } catch { call("__blonda.nativeState", ["on": false, "err": error.localizedDescription]); return }
+            nativeState()
+        case "off":
+            na.stop(); nativeTimer?.invalidate(); nativeTimer = nil; nativeState()
+        case "project":
+            guard let j = b["json"] as? String else { return }
+            do { try na.setProjectJSON(j) } catch { call("__blonda.nativeState", ["on": na.running, "err": error.localizedDescription]) }
+        case "play":
+            na.setPlaying((b["on"] as? Bool) ?? false)
+        default:
+            break
+        }
+    }
+    private func nativeState() {
+        let na = NativeAudio.shared()
+        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": na.load])
     }
 
     /// Calls a function in the page with JSON arguments.

@@ -43,8 +43,9 @@
       if(cfg.follow&&cfg.clockOut)h+=`<div class="note warn">Följ och skicka klocka samtidigt: SEQ.3 följer och skickar ingen egen klocka.</div>`;
       if(inN&&outN&&inN===outN)h+=`<div class="note warn">Samma enhet in och ut kan ge eko. Välj olika bussar.</div>`;
       h+=`<div class="note"><b>Med Ableton Live (Mac):</b> slå på IAC-drivern i Ljud-MIDI-inställningar. I Live → Inställningar → Link, Tempo & MIDI: sätt <b>Sync</b> på IAC som utgång om SEQ.3 ska följa Live, eller som ingång om Live ska följa SEQ.3.</div>`}
+    if(window.NATIVE)h+=NATIVE.panelHTML();
     if(window.LINK)h+=LINK.panelHTML();else h+=`<div class="note"><b>Ableton Link</b> kräver nätverksåtkomst som en webbsida inte får. Det kommer i den riktiga iPhone-appen via Abletons LinkKit. Till dess fungerar MIDI-klockan ovan.</div>`;
-    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);if(window.LINK)LINK.bindPanel(panelEl);
+    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);if(window.LINK)LINK.bindPanel(panelEl);if(window.NATIVE)NATIVE.bindPanel(panelEl);
     const si=$('#mpIn'),so=$('#mpOut');if(si)si.onchange=()=>{cfg.inId=si.value;saveCfg();bind()};if(so)so.onchange=()=>{cfg.outId=so.value;saveCfg();bind();paint()};
     const lb=$('#mpLearn');if(lb)lb.onclick=()=>{MLX.toggle();close()};
     panelEl.querySelectorAll('.mlist [data-x]').forEach(b=>b.onclick=()=>{MLX.remove(+b.dataset.x);paint()});const mc=$('#mpClr');if(mc)mc.onclick=()=>{MLX.clear();paint()};

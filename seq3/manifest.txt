@@ -235,6 +235,7 @@
 233b-dunk-drum-machine.js
 234-follow-external-midi-clock-v245.js
 234b-ableton-link.js
+234c-native-audio.js
 235-the-keyboard-s-sound-strip-v245.js
 236-tighter-cards-v249.js
 237-one-look-for-every-synth-v252.js

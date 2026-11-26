@@ -2916,7 +2916,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v291</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v292</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -6059,8 +6059,9 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
       if(cfg.follow&&cfg.clockOut)h+=`<div class="note warn">Följ och skicka klocka samtidigt: SEQ.3 följer och skickar ingen egen klocka.</div>`;
       if(inN&&outN&&inN===outN)h+=`<div class="note warn">Samma enhet in och ut kan ge eko. Välj olika bussar.</div>`;
       h+=`<div class="note"><b>Med Ableton Live (Mac):</b> slå på IAC-drivern i Ljud-MIDI-inställningar. I Live → Inställningar → Link, Tempo & MIDI: sätt <b>Sync</b> på IAC som utgång om SEQ.3 ska följa Live, eller som ingång om Live ska följa SEQ.3.</div>`}
+    if(window.NATIVE)h+=NATIVE.panelHTML();
     if(window.LINK)h+=LINK.panelHTML();else h+=`<div class="note"><b>Ableton Link</b> kräver nätverksåtkomst som en webbsida inte får. Det kommer i den riktiga iPhone-appen via Abletons LinkKit. Till dess fungerar MIDI-klockan ovan.</div>`;
-    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);if(window.LINK)LINK.bindPanel(panelEl);
+    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);if(window.LINK)LINK.bindPanel(panelEl);if(window.NATIVE)NATIVE.bindPanel(panelEl);
     const si=$('#mpIn'),so=$('#mpOut');if(si)si.onchange=()=>{cfg.inId=si.value;saveCfg();bind()};if(so)so.onchange=()=>{cfg.outId=so.value;saveCfg();bind();paint()};
     const lb=$('#mpLearn');if(lb)lb.onclick=()=>{MLX.toggle();close()};
     panelEl.querySelectorAll('.mlist [data-x]').forEach(b=>b.onclick=()=>{MLX.remove(+b.dataset.x);paint()});const mc=$('#mpClr');if(mc)mc.onclick=()=>{MLX.clear();paint()};
@@ -11182,7 +11183,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v291</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v292</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -15137,6 +15138,38 @@ function findLoop(L,R,sr,a0,b0,root,opt){
   setInterval(()=>{const el=document.getElementById('lkSt');if(el)el.innerHTML=stat()},500);
   const css=document.createElement('style');css.textContent=`.lk-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px}.lk-row span{display:flex;flex-direction:column;gap:2px;font-size:11px}.lk-row small{font-size:9px;opacity:.55}
 .lk-btn{height:28px;padding:0 12px;font:500 11px var(--f-mono);color:inherit;background:none;border:0;box-shadow:inset 0 0 0 1px rgba(232,230,220,.18);white-space:nowrap}`;document.head.appendChild(css);
+})();
+/* ================= native audio (v292, only in the app, beta) =================
+   The C++ sound engine in the app (Core/: the same sequencer, drums, DUNK, synths, strips, buses and master as the web
+   version, ported) plays the project; the page stays the editor. The page sends its project whenever it changes
+   (checked five times a second), and play / stop. Its own sound is cut off (nothing is built in Web Audio for the
+   sequencer), but it keeps its clock for the screen (the playhead, the pads lighting up) and for MIDI out.
+   Switched in the MIDI panel; the choice is kept. Not yet in the C++ engine: samples and loops (silent), the Starter,
+   Grime, live glitch from the page. ================= */
+(()=>{const N=window.BLONDA_NATIVE;if(!N||!N.native)return;const NA=N.native,LS='blonda.native';
+  const K={on:false,last:'',st:{},muted:false};
+  const json=()=>{const o={};PKEYS.forEach(k=>{if(S[k]!==undefined)o[k]=S[k]});return JSON.stringify(o)};
+  function sync(force){if(!K.on)return;let j='';try{j=json()}catch(e){globalThis.__el&&globalThis.__el(e);return}if(!force&&j===K.last)return;K.last=j;NA.project(j)}
+  /* the page's own output: off while the C++ engine plays (the analyser before the speakers is its last node) */
+  function mute(on){if(on===K.muted)return;if(!ctx||!A.an)return;try{if(on)A.an.disconnect(ctx.destination);else A.an.connect(ctx.destination);K.muted=on}catch(e){globalThis.__el&&globalThis.__el(e)}}
+  function setOn(on){if(on===K.on)return;K.on=on;try{localStorage.setItem(LS,on?'1':'0')}catch(e){globalThis.__el&&globalThis.__el(e)}
+    if(on){K.last=json();NA.on(K.last);mute(true);if(playing)NA.play(true)}else{NA.off();mute(false)}paint()}
+  {const _t0=trigger0;trigger0=function(i,t,vel,note,ls){if(!K.on)return _t0.apply(this,arguments);if(!ctx)return;
+    const len=60/S.bpm/4*(ls||1);if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);if(!isMuted(i))hitT.set(i,{t,v:vel})}}
+  {const _p=play;play=function(){const was=playing,r=_p.apply(this,arguments);if(K.on&&playing!==was){if(playing){sync(false);mute(true)}NA.play(playing)}return r}}
+  {const _s=stop;stop=function(){const was=playing,r=_s.apply(this,arguments);if(K.on&&was)NA.play(false);return r}}
+  setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true)}},200);
+  function stat(){const s=K.st;if(!K.on)return 'off · the page plays (web audio)';if(s.err)return 'error: '+String(s.err).replace(/[<>&]/g,'');
+    return `on · C++ engine · load <b>${Math.round((s.load||0)*100)} %</b>${s.playing?' · playing':''}`}
+  function paint(){const el=document.getElementById('naSt');if(el)el.innerHTML=stat();const b=document.getElementById('naBtn');if(b){b.textContent=K.on?'ON':'OFF';b.classList.toggle('on',K.on)}}
+  NA.sub(s=>{K.st=s;paint()});
+  window.NATIVE={
+    panelHTML(){return `<div class="lk-row"><span><b>Native audio · beta</b><small>the C++ engine plays (steadier, lighter) · samples, loops and the Starter not yet</small></span><button class="lk-btn na-btn" id="naBtn">${K.on?'ON':'OFF'}</button></div><div class="clk-st" id="naSt">${stat()}</div>`},
+    bindPanel(el){const b=el.querySelector('#naBtn');if(b)b.onclick=()=>{try{initAudio();ctx.resume()}catch(e){globalThis.__el&&globalThis.__el(e)}setOn(!K.on)}},
+    on:()=>K.on,_st:()=>({on:K.on,muted:K.muted,st:K.st,len:K.last.length})};
+  const css=document.createElement('style');css.textContent='.na-btn.on{background:#F2C318!important;color:#141517!important;box-shadow:none!important}';document.head.appendChild(css);
+  /* the choice is kept: on again after the start (once the page's audio exists) */
+  try{if(localStorage.getItem(LS)==='1'){const iv=setInterval(()=>{if(ctx&&A.an){clearInterval(iv);setOn(true)}},500)}}catch(e){globalThis.__el&&globalThis.__el(e)}
 })();
 /* ================= the keyboard's sound strip (v245) =================
    Under the keyboard's top row: the sound the keyboard plays (engine + preset, ‹ › steps presets, tap for the picker),

@@ -61,6 +61,12 @@ N.midiBatch=arr=>{for(const [id,b,ms] of arr){const p=ins.get(id);if(p)p._fire(b
    tempo(bpm){post({t:'link',op:'tempo',bpm:+bpm})},
    play(page,beat){post({t:'link',op:'play',host:page-(off||0),beat:+beat})},stop(){post({t:'link',op:'stop'})}};
  setTimeout(()=>post({t:'link',op:'query'}),0)}
+/* ---- native audio: the C++ engine in the app plays the project the page sends (the page stays the editor) ---- */
+{const subs=new Set();let st={on:false};
+ N.nativeState=s=>{st=Object.assign({},st,s);subs.forEach(f=>{try{f(st)}catch(e){}})};
+ N.native={get state(){return st},sub(f){subs.add(f);f(st);return()=>subs.delete(f)},
+   on(json){post({t:'native',op:'on',json})},off(){post({t:'native',op:'off'})},
+   project(json){post({t:'native',op:'project',json})},play(on){post({t:'native',op:'play',on:!!on})}}}
 Object.defineProperty(navigator,'requestMIDIAccess',{configurable:true,value:function(){return new Promise(res=>{if(access){res(access);return}waiting.push(res);post({t:'midi-open'})})}});
 /* the page asks whether MIDI is already allowed before connecting by itself – in the app it always is */
 try{const P=navigator.permissions;if(P&&P.query){const q=P.query.bind(P);P.query=d=>d&&d.name==='midi'?Promise.resolve({name:'midi',state:'granted',onchange:null}):q(d)}

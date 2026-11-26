@@ -328,7 +328,8 @@ void Seq3::load(const Project& p) {
 }
 
 void Seq3::adopt(Project& np) {
-    const int pat = P_.pat; std::swap(P_, np); if (playing_) P_.pat = pat;
+    const int pat = P_.pat; std::swap(P_, np);
+    if (playing_) { const int want = P_.pat; P_.pat = pat; if (!P_.song && want != pat && want >= 0 && want < kPatterns) queued_ = want; }   // a new pattern starts on the next bar
     for (int k = 0; k < kMel; ++k) for (int q = 0; q < bris::kNumParams; ++q) if (np.motor[k].vals[q] != P_.motor[k].vals[q]) mot_[k].setParam(q, P_.motor[k].vals[q]);
     applyParams();
 }
