@@ -24,8 +24,8 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 
 class Host {
 public:
-    enum Type : int { Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask, GlitchSet, Region, BusFlag, BusPump };
-    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; SampleRegion reg; };
+    enum Type : int { Update, PlayAt, Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask, GlitchSet, Region, BusFlag, BusPump };
+    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; SampleRegion reg; Project* proj = nullptr; };
 
     ~Host() { shutdown(); }
 
@@ -38,6 +38,17 @@ public:
         Cmd c; c.type = Swap; c.engine = e; send(c); return true;
     }
     void togglePlay() { Cmd c; c.type = Play; send(c); }
+    // the SEQ.3 app (Shell): the page is the editor, the engine follows it. A changed project goes to the running engine
+    // without stopping it (voices, tails and the transport go on); parsing and the sample regions happen here, not in audio.
+    bool update(const std::string& json, std::string* err) {
+        auto* p = new Project(); if (!p->loadJSON(json, err)) { delete p; return false; }
+        ui = *p; base_ = json;
+        Cmd c; c.type = Update; c.proj = p; send(c);
+        for (int i = 0; i < kTracks; ++i) if (isDrumT(i)) { Cmd r; r.type = Region; r.a = i; r.reg = regionFor(ui, i); send(r); }
+        return true;
+    }
+    // play / stop as the page says (on: start, off: stop) – not a toggle, so the two can never disagree
+    void setPlaying(bool on) { Cmd c; c.type = PlayAt; c.a = on ? 1 : 0; send(c); }
     void setBPM(float bpm) { ui.bpm = std::max(40.f, std::min(240.f, bpm)); Cmd c; c.type = BPM; c.f = ui.bpm; send(c); }
     void selectPattern(int p) { if (p < 0 || p >= kPatterns) return; ui.pat = p; Cmd c; c.type = Pattern; c.a = p; send(c); }
     void setMute(int t, bool m) { if (t < 0 || t >= kTracks) return; ui.mute[t] = m; Cmd c; c.type = Mute; c.a = t; c.b = m; send(c); }
@@ -454,10 +465,10 @@ public:
     long long blockFrame() const { return blockFrame_.load(std::memory_order_relaxed); }
     int currentStep() const { return step_.load(std::memory_order_relaxed); }
     bool isPlaying() const { return playing_.load(std::memory_order_relaxed); }
-    void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; delete c.smp; } }   // free what audio handed back
+    void collect() { Cmd c; while (retire_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; delete c.smp; delete c.proj; } }   // free what audio handed back
     // call after the audio callback can no longer run
     void shutdown() {
-        collect(); Cmd c; while (toAudio_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; if (c.type == Drop) delete c.smp; }
+        collect(); Cmd c; while (toAudio_.pop(c)) { delete c.roll; delete c.engine; delete c.rev; delete c.proj; if (c.type == Drop) delete c.smp; }
         delete engine_; engine_ = nullptr;
         for (auto& kv : bank_) delete kv.second; bank_.clear();
     }
@@ -471,6 +482,8 @@ public:
             switch (c.type) {
                 case Swap: { Cmd r; r.type = Swap; r.engine = engine_; engine_ = c.engine; if (r.engine) retire_.push(r); break; }
                 case Play: if (e) e->play(); break;
+                case PlayAt: if (e) { if (c.a && !e->playing()) e->play(); else if (!c.a && e->playing()) e->stop(); } break;
+                case Update: { if (e) e->adopt(*c.proj); Cmd r; r.type = Update; r.proj = c.proj; retire_.push(r); break; }
                 case BPM: if (e) e->setBPM(c.f); break;
                 case SetCell: if (e) e->setCell(c.a, c.b, c.c, c.cell); break;
                 case SetRoll: if (e) e->swapRoll(c.a, c.b, *c.roll); { Cmd r; r.type = SetRoll; r.roll = c.roll; retire_.push(r); } break;
@@ -590,7 +603,7 @@ private:
     std::array<int, kTracks> rot_{};
     int diceStyle_ = -1; std::pair<int, int> diceProg_{0, 8};
     std::vector<Snap> hist_, redo_;
-    void send(const Cmd& c) { collect(); if (!toAudio_.push(c)) { delete c.roll; delete c.engine; } }
+    void send(const Cmd& c) { collect(); if (!toAudio_.push(c)) { delete c.roll; delete c.engine; delete c.proj; } }
     Seq3* engine_ = nullptr;   // touched only by the audio thread (and shutdown)
     std::string base_;
     std::unordered_map<std::string, SampleData*> bank_;

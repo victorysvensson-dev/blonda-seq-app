@@ -174,6 +174,9 @@ class Seq3 {
 public:
     void prepare(float sampleRate);
     void load(const Project& p);     // call when not rendering (or swap safely between blocks)
+    // take over an edited project while running (audio thread, no allocation): the old one is left in `p` to free elsewhere.
+    // While playing, the pattern the engine is on stays (it follows the song itself).
+    void adopt(Project& p);
     Project& project() { return P_; }
     void applyParams();              // after editing project() parameters
     void play(); void stop(); bool playing() const { return playing_; }

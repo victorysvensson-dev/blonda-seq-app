@@ -327,6 +327,12 @@ void Seq3::load(const Project& p) {
     for (auto* m : {&eqLg_, &eqMg_, &eqHg_, &width_, &loud_}) m->snap(m->target);
 }
 
+void Seq3::adopt(Project& np) {
+    const int pat = P_.pat; std::swap(P_, np); if (playing_) P_.pat = pat;
+    for (int k = 0; k < kMel; ++k) for (int q = 0; q < bris::kNumParams; ++q) if (np.motor[k].vals[q] != P_.motor[k].vals[q]) mot_[k].setParam(q, P_.motor[k].vals[q]);
+    applyParams();
+}
+
 // applyAll(): push parameters to the smoothers (time constants like the web's setTargetAtTime calls)
 void Seq3::applyParams() {
     for (int i = 0; i < kTracks; ++i) {
