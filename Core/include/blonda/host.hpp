@@ -55,7 +55,7 @@ public:
     // 0 off, 1 on, 2 accent (drums) / 0 empty, 1 note, 2 loud note (melodic) — for the current pattern
     int stepValue(int t, int s) const {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return 0;
-        if (t >= 6) { for (const auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) return n.v >= .95f ? 2 : 1; return 0; }
+        if (isMelT(t)) { for (const auto& n : ui.roll[ui.pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) return n.v >= .95f ? 2 : 1; return 0; }
         return ui.cells[ui.pat][t][s].v;
     }
     // off -> on -> accent -> off
@@ -63,12 +63,12 @@ public:
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return;
         pushHist();
         const int pat = ui.pat;
-        if (t < 6) {
+        if (!isMelT(t)) {
             Cell& cell = ui.cells[pat][t][s]; cell.v = (cell.v + 1) % 3; cell.vel = -1;
             if (cell.v != 2) cell.o = 0;   // a removed or new step is back on the grid (accenting keeps its nudge)
             Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); return;
         }
-        auto& roll = ui.roll[pat][t - 6];
+        auto& roll = ui.roll[pat][melK(t)];
         int found = -1; for (size_t i = 0; i < roll.size(); ++i) if ((int)std::floor(roll[i].s + 1e-4f) == s) { found = (int)i; break; }
         if (found < 0) {   // new one-step note, pitched like the nearest note on the track
             int note = t == 6 ? 45 : 57; float best = 1e9f;
@@ -81,18 +81,18 @@ public:
             roll.erase(roll.begin() + found);
             for (auto& n : roll) { if (n.g == found) n.g = -1; else if (n.g > found) --n.g; }   // glide links are indices
         }
-        Cmd c; c.type = SetRoll; c.a = pat; c.b = t - 6; c.roll = new std::vector<RollNote>(roll); send(c);
+        Cmd c; c.type = SetRoll; c.a = pat; c.b = melK(t); c.roll = new std::vector<RollNote>(roll); send(c);
         syncCell(pat, t, s);
     }
     // the web keeps a step cell per melodic step in sync with the piano roll (it reconciles them on load)
     void syncCell(int pat, int t, int s) {
         Cell& cell = ui.cells[pat][t][s]; const Cell before = cell; cell.v = 0;
-        for (const auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
+        for (const auto& n : ui.roll[pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
         if (cell.v != before.v || cell.n != before.n) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = cell; send(c); }
     }
     // ---- BLONDA motor (engine "bris6") on melodic track k 0..3: factory sound + parameters in the motor's units
-    int motorPreset(int k) const { return (k >= 0 && k < 4) ? ui.motor[k].preset : 0; }
-    double motorParam(int k, int p) const { return (k >= 0 && k < 4 && p >= 0 && p < bris::kNumParams) ? ui.motor[k].vals[p] : 0; }
+    int motorPreset(int k) const { return (k >= 0 && k < kMel) ? ui.motor[k].preset : 0; }
+    double motorParam(int k, int p) const { return (k >= 0 && k < kMel && p >= 0 && p < bris::kNumParams) ? ui.motor[k].vals[p] : 0; }
     void setMotorPreset(int k, int i) {
         if (k < 0 || k >= 4 || i < 0 || i >= bris::kNumPresets) return;
         MotorState& m = ui.motor[k]; m.preset = i;   // same rule as Bris::loadPreset: unnamed parameters go to default, kept ones stay
@@ -109,9 +109,9 @@ public:
     }
     float motorMeter(int k) const { return (k >= 0 && k < 4) ? motMeter_[k].load(std::memory_order_relaxed) : 0.f; }   // loudest voice envelope 0..1
     // drum kits: "" (blonda) or a kit name; "smp:<id>" is a sample (see assignDrum)
-    std::string kit(int i) const { return (i >= 0 && i < 6) ? ui.kit[i] : std::string(); }
+    std::string kit(int i) const { return isDrumT(i) ? ui.kit[i] : std::string(); }
     void setKit(int i, const std::string& name) {
-        if (i < 0 || i >= 6) return; int idx = -1; for (int k = 0; k < kNumKits; ++k) if (name == kKitNames[k]) idx = k; if (idx < 0) return;
+        if (!isDrumT(i)) return; int idx = -1; for (int k = 0; k < kNumKits; ++k) if (name == kKitNames[k]) idx = k; if (idx < 0) return;
         ui.kit[i] = kKitNames[idx]; Cmd c; c.type = Kit; c.a = i; c.b = idx; send(c);
         ui.se[i] = SampleEdit{}; ui.chop[i] = ChopMap{}; sendRegion(i);   // a new sound starts from scratch
     }
@@ -135,10 +135,10 @@ public:
     int world() const { return ui.world; }
     void setWorld(int w) { ui.world = w; }   // colour only: nothing for the audio thread
     // ---- piano roll: the whole note list of a melodic track (current pattern); g = index of the glide target or -1
-    const std::vector<RollNote>& rollNotes(int t) const { static const std::vector<RollNote> none; return (t >= 6 && t < kTracks) ? ui.roll[ui.pat][t - 6] : none; }
+    const std::vector<RollNote>& rollNotes(int t) const { static const std::vector<RollNote> none; return isMelT(t) ? ui.roll[ui.pat][melK(t)] : none; }
     void setRollNotes(int t, const std::vector<RollNote>& notes) {
-        if (t < 6 || t >= kTracks) return;
-        auto& R = ui.roll[ui.pat][t - 6]; R = notes;
+        if (!isMelT(t)) return;
+        auto& R = ui.roll[ui.pat][melK(t)]; R = notes;
         for (auto& n : R) { n.s = std::max(0.f, std::min(15.9375f, n.s)); n.l = std::max(.0625f, std::min(16.f - n.s, n.l)); n.n = std::max(0, std::min(127, n.n)); n.v = std::max(.05f, std::min(1.f, n.v));
                             if (n.g < -1 || n.g >= (int)R.size()) n.g = -1; }
         commitTrack(t);
@@ -151,14 +151,14 @@ public:
     // ---- step inspector (web: sins) — velocity, ratchet, probability, accent for one step -------------------
     float stepVel(int t, int s) const {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return 0;
-        if (t >= 6) { float v = -1; for (const auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) v = std::max(v, n.v); return v < 0 ? .72f : v; }
+        if (isMelT(t)) { float v = -1; for (const auto& n : ui.roll[ui.pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) v = std::max(v, n.v); return v < 0 ? .72f : v; }
         const Cell& c = ui.cells[ui.pat][t][s]; return c.vel >= 0 ? c.vel : (c.v == 2 ? 1.f : .72f);
     }
     int stepRatchet(int t, int s) const { return (t >= 0 && t < kTracks && s >= 0 && s < kSteps) ? std::max(1, ui.cells[ui.pat][t][s].r) : 1; }
     float stepProb(int t, int s) const { return (t >= 0 && t < kTracks && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].p : 1.f; }
     void setStepVel(int t, int s, float v) {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; v = std::max(.05f, std::min(1.f, v));
-        if (t >= 6) { for (auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) n.v = v; commitTrack(t); sendCell(t, s); return; }
+        if (isMelT(t)) { for (auto& n : ui.roll[ui.pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) n.v = v; commitTrack(t); sendCell(t, s); return; }
         Cell& c = ui.cells[ui.pat][t][s]; if (!c.v) return; c.vel = v; c.v = v >= .95f ? 2 : 1; sendCell(t, s);
     }
     void setStepRatchet(int t, int s, int r) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].r = std::max(1, std::min(4, r)); sendCell(t, s); }
@@ -171,8 +171,8 @@ public:
         if (stepValue(t, s2) != 0) { setStepNudge(t, s, d * .5f); return s; }   // the neighbour is taken: stop at the edge
         Cell c = ui.cells[pat][t][s]; c.o = std::max(-.5f, std::min(.5f, o - d));
         ui.cells[pat][t][s] = Cell{}; ui.cells[pat][t][s2] = c;
-        if (t >= 6) {
-            for (auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { n.s += d; if (n.s >= kSteps) n.s -= kSteps; if (n.s < 0) n.s += kSteps; }
+        if (isMelT(t)) {
+            for (auto& n : ui.roll[pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) { n.s += d; if (n.s >= kSteps) n.s -= kSteps; if (n.s < 0) n.s += kSteps; }
             commitTrack(t);
         }
         sendCell(t, s); sendCell(t, s2);
@@ -184,13 +184,13 @@ public:
     void setStepProb(int t, int s, float p) { if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].p = std::max(0.f, std::min(1.f, p)); sendCell(t, s); }
     void toggleAccent(int t, int s) {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return;
-        if (t >= 6) { const bool acc = stepValue(t, s) != 2; for (auto& n : ui.roll[ui.pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) n.v = acc ? 1.f : .72f; commitTrack(t); sendCell(t, s); return; }
+        if (isMelT(t)) { const bool acc = stepValue(t, s) != 2; for (auto& n : ui.roll[ui.pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) n.v = acc ? 1.f : .72f; commitTrack(t); sendCell(t, s); return; }
         Cell& c = ui.cells[ui.pat][t][s]; const bool acc = c.v != 2; c.v = acc ? 2 : 1; c.vel = acc ? 1.f : .72f; sendCell(t, s);
     }
     void clearStep(int t, int s) {
         if (t < 0 || t >= kTracks || s < 0 || s >= kSteps) return;
-        if (t >= 6) { auto& R = ui.roll[ui.pat][t - 6]; std::vector<RollNote> keep; for (const auto& n : R) if ((int)std::floor(n.s + 1e-4f) != s) keep.push_back(n); R.swap(keep); for (auto& n : R) n.g = -1; }
-        ui.cells[ui.pat][t][s] = Cell{}; if (t >= 6) commitTrack(t); sendCell(t, s);
+        if (isMelT(t)) { auto& R = ui.roll[ui.pat][melK(t)]; std::vector<RollNote> keep; for (const auto& n : R) if ((int)std::floor(n.s + 1e-4f) != s) keep.push_back(n); R.swap(keep); for (auto& n : R) n.g = -1; }
+        ui.cells[ui.pat][t][s] = Cell{}; if (isMelT(t)) commitTrack(t); sendCell(t, s);
     }
     // ---- track editing (the grid / orbit actions in the web version) ----------------------------------------
     int trackLen(int t) const { const int v = ui.len[t]; return v >= 1 && v <= 16 ? v : 16; }
@@ -225,31 +225,31 @@ public:
     void rotate(int t, int d) {
         if (t < 0 || t >= kTracks) return; pushHist();
         const int L = trackLen(t); rot_[t] = ((rot_[t] + d) % L + L) % L;
-        if (t < 6) {
+        if (!isMelT(t)) {
             Cell row[16]; for (int s = 0; s < 16; ++s) row[s] = ui.cells[ui.pat][t][s];
             for (int s = 0; s < L; ++s) ui.cells[ui.pat][t][s] = row[((s - d) % L + L) % L];
             commitTrack(t);
         } else moveNotes(t, d, L);
     }
     void shift(int t) { if (t < 0 || t >= kTracks) return; pushHist();
-        if (t < 6) { Cell last = ui.cells[ui.pat][t][15]; for (int s = 15; s > 0; --s) ui.cells[ui.pat][t][s] = ui.cells[ui.pat][t][s - 1]; ui.cells[ui.pat][t][0] = last; commitTrack(t); }
+        if (!isMelT(t)) { Cell last = ui.cells[ui.pat][t][15]; for (int s = 15; s > 0; --s) ui.cells[ui.pat][t][s] = ui.cells[ui.pat][t][s - 1]; ui.cells[ui.pat][t][0] = last; commitTrack(t); }
         else moveNotes(t, 1, 16);
     }
     void clearTrack(int t) { if (t < 0 || t >= kTracks) return; pushHist();
         for (auto& c : ui.cells[ui.pat][t]) c = Cell{};
-        if (t >= 6) ui.roll[ui.pat][t - 6].clear();
+        if (isMelT(t)) ui.roll[ui.pat][melK(t)].clear();
         commitTrack(t);
     }
     // random variation: drop / add / accent steps; melodic notes may move two scale steps
     void variation(int t, uint32_t seed) {
         if (t < 0 || t >= kTracks) return; pushHist();
         uint32_t x = seed | 1; auto rnd = [&] { x ^= x << 13; x ^= x >> 17; x ^= x << 5; return (x & 0xFFFFFF) / 16777216.f; };
-        if (t < 6) {
+        if (!isMelT(t)) {
             for (auto& c : ui.cells[ui.pat][t]) { const float p = rnd();
                 if (c.v && p < .18f) c = Cell{}; else if (!c.v && p < .12f) { c.v = 1; c.vel = -1; } else if (c.v && p < .3f) { c.v = c.v == 2 ? 1 : 2; c.vel = -1; } }
         } else {
             static const int sc[7] = {0, 2, 3, 5, 7, 8, 10};   // A natural minor
-            auto& R = ui.roll[ui.pat][t - 6];
+            auto& R = ui.roll[ui.pat][melK(t)];
             for (int s = 0; s < 16; ++s) {
                 int idx = -1; for (size_t i = 0; i < R.size(); ++i) if ((int)std::floor(R[i].s + 1e-4f) == s) { idx = (int)i; break; }
                 const float p = rnd();
@@ -286,21 +286,21 @@ public:
         Dice d(seed); d.apply(ui, std::max(1, std::min(6, n)), diceStyle_, diceProg_);
         for (int t = 0; t < kTracks; ++t) commitTrack(t);
         if (ui.master.swing != before.master.swing) { const float sw = ui.master.swing; ui.master.swing = before.master.swing; setParam(PG_MASTER, 0, 5, sw); }
-        for (int k = 0; k < 4; ++k) if (ui.inst[k] != before.inst[k]) setInstrument(k, ui.inst[k]);
+        for (int k = 0; k < kMel; ++k) if (ui.inst[k] != before.inst[k]) setInstrument(k, ui.inst[k]);
         for (int t = 0; t < kTracks; ++t) if (ui.len[t] != before.len[t]) { Cmd c; c.type = Len; c.a = t; c.b = trackLen(t); send(c); }
         return d.message;
     }
     bool patternHasSteps(int p) const {
         if (p < 0 || p >= kPatterns) return false;
         for (int t = 0; t < kTracks; ++t) for (int s = 0; s < kSteps; ++s) if (ui.cells[p][t][s].v) return true;
-        for (int k = 0; k < 4; ++k) if (!ui.roll[p][k].empty()) return true;
+        for (int k = 0; k < kMel; ++k) if (!ui.roll[p][k].empty()) return true;
         return false;
     }
     // dock "copy": this pattern into the next one
     void copyPatternToNext() {
         pushHist(); const int a = ui.pat, b = (a + 1) % kPatterns;
         for (int t = 0; t < kTracks; ++t) { for (int s = 0; s < 16; ++s) ui.cells[b][t][s] = ui.cells[a][t][s]; }
-        for (int k = 0; k < 4; ++k) ui.roll[b][k] = ui.roll[a][k];
+        for (int k = 0; k < kMel; ++k) ui.roll[b][k] = ui.roll[a][k];
         for (int t = 0; t < kTracks; ++t) commitTrack(t, b);
     }
     // ---- undo / redo (pattern data, lengths, mutes) --------------------------------------------------------
@@ -337,23 +337,23 @@ public:
     void setLoopVol(int k, float v) { if (k < 0 || k >= 4) return; ui.loops[k].vol = std::max(0.f, std::min(1.f, v)); Cmd c; c.type = LoopVol; c.a = k; c.f = ui.loops[k].vol; send(c); }
     void setLoopBars(int k, int bars) { if (k >= 0 && k < 4) ui.loops[k].bars = std::max(0, bars); }
     // one-shots on drum tracks (web: S.dk[id] = "smp:<id>")
-    std::string drumSample(int i) const { return (i >= 0 && i < 6 && ui.kit[i].rfind("smp:", 0) == 0) ? ui.kit[i].substr(4) : std::string(); }
+    std::string drumSample(int i) const { return (isDrumT(i) && ui.kit[i].rfind("smp:", 0) == 0) ? ui.kit[i].substr(4) : std::string(); }
     void assignDrum(int i, const std::string& sid) {
-        if (i < 0 || i >= 6) return; ui.kit[i] = sid.empty() ? std::string() : "smp:" + sid;
+        if (!isDrumT(i)) return; ui.kit[i] = sid.empty() ? std::string() : "smp:" + sid;
         if (ui.se[i].sid != sid) ui.se[i] = SampleEdit{};   // the edit and the chop belong to the sample they were made on
         if (ui.chop[i].sid != sid) ui.chop[i] = ChopMap{};
         sendRegion(i);
     }
     // ---- sample editor (web: S.se[id]) and chop (web: S.chop[id]) on drum track i
-    SampleEdit sampleEdit(int i) const { SampleEdit e; if (i < 0 || i >= 6) return e; const std::string sid = drumSample(i); e = ui.se[i].sid == sid ? ui.se[i] : SampleEdit{}; e.sid = sid; return e; }
+    SampleEdit sampleEdit(int i) const { SampleEdit e; if (!isDrumT(i)) return e; const std::string sid = drumSample(i); e = ui.se[i].sid == sid ? ui.se[i] : SampleEdit{}; e.sid = sid; return e; }
     void setSampleEdit(int i, const SampleEdit& e) {
-        if (i < 0 || i >= 6) return; SampleEdit x = e; x.sid = drumSample(i); x.st = std::max(0.f, std::min(1.f, x.st)); x.en = std::max(x.st, std::min(1.f, x.en));
+        if (!isDrumT(i)) return; SampleEdit x = e; x.sid = drumSample(i); x.st = std::max(0.f, std::min(1.f, x.st)); x.en = std::max(x.st, std::min(1.f, x.en));
         x.fi = std::max(0.f, x.fi); x.fo = std::max(0.f, x.fo); x.g = std::max(-12.f, std::min(12.f, x.g)); ui.se[i] = x; sendRegion(i);
     }
-    void resetSampleEdit(int i) { if (i < 0 || i >= 6) return; ui.se[i] = SampleEdit{}; sendRegion(i); }
-    std::vector<float> chopCuts(int i) const { return (i >= 0 && i < 6 && !ui.chop[i].cuts.empty() && ui.chop[i].sid == drumSample(i)) ? ui.chop[i].cuts : std::vector<float>(); }
+    void resetSampleEdit(int i) { if (!isDrumT(i)) return; ui.se[i] = SampleEdit{}; sendRegion(i); }
+    std::vector<float> chopCuts(int i) const { return (isDrumT(i) && !ui.chop[i].cuts.empty() && ui.chop[i].sid == drumSample(i)) ? ui.chop[i].cuts : std::vector<float>(); }
     void setChop(int i, std::vector<float> cuts) {
-        if (i < 0 || i >= 6) return; std::sort(cuts.begin(), cuts.end()); if (cuts.size() > 16) cuts.resize(16);
+        if (!isDrumT(i)) return; std::sort(cuts.begin(), cuts.end()); if (cuts.size() > 16) cuts.resize(16);
         for (auto& f : cuts) f = std::max(0.f, std::min(.999f, f));
         ui.chop[i].sid = cuts.empty() ? std::string() : drumSample(i); ui.chop[i].cuts = cuts; sendRegion(i);
     }
@@ -365,8 +365,8 @@ public:
         return c;
     }
     // step slice (-1 = auto: the step's own number)
-    int stepSlice(int t, int s) const { return (t >= 0 && t < 6 && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].c : -1; }
-    void setStepSlice(int t, int s, int c) { if (t < 0 || t >= 6 || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].c = c < 0 ? -1 : std::min(15, c); sendCell(t, s); }
+    int stepSlice(int t, int s) const { return (t >= 0 && !isMelT(t) && s >= 0 && s < kSteps) ? ui.cells[ui.pat][t][s].c : -1; }
+    void setStepSlice(int t, int s, int c) { if (t < 0 || isMelT(t) || s < 0 || s >= kSteps) return; ui.cells[ui.pat][t][s].c = c < 0 ? -1 : std::min(15, c); sendCell(t, s); }
     /// lay the slices out in order on the track (a loop: where they sit in the bars; a hit: spread over the 16 steps)
     void chopToPattern(int i, int bars) {
         const auto cuts = chopCuts(i); if (cuts.empty()) return; pushHist();
@@ -407,7 +407,7 @@ public:
         return best / (double)sampleRate;
     }
     void bindDrum(int i, float norm) {
-        if (i < 0 || i >= 6) return; const std::string sid = drumSample(i); auto it = sid.empty() ? bank_.end() : bank_.find(sid);
+        if (!isDrumT(i)) return; const std::string sid = drumSample(i); auto it = sid.empty() ? bank_.end() : bank_.find(sid);
         Cmd c; c.type = DrumSmp; c.a = i; c.f = norm; c.smp = it == bank_.end() ? nullptr : it->second; send(c); sendRegion(i);
     }
     void previewSample(const std::string& id, float rate, float gain) {
@@ -553,11 +553,11 @@ private:
     }
     // set a drum track's steps (or the melodic notes on those steps) from a mask
     void setSteps(int t, const bool* want, int L) {
-        if (t < 6) {
+        if (!isMelT(t)) {
             for (int s = 0; s < 16; ++s) { Cell& c = ui.cells[ui.pat][t][s]; const bool w = s < L && want[s];
                 if (w && !c.v) { c.v = 1; c.vel = -1; } else if (!w && c.v) c = Cell{}; }
         } else {
-            auto& R = ui.roll[ui.pat][t - 6];
+            auto& R = ui.roll[ui.pat][melK(t)];
             std::vector<RollNote> keep; int note = t == 6 ? 45 : 57; if (!R.empty()) note = R.front().n;
             for (int s = 0; s < 16; ++s) {
                 const bool w = s < L && want[s]; bool had = false;
@@ -569,7 +569,7 @@ private:
         commitTrack(t);
     }
     void moveNotes(int t, int d, int L) {
-        auto& R = ui.roll[ui.pat][t - 6];
+        auto& R = ui.roll[ui.pat][melK(t)];
         for (auto& n : R) { const float s = n.s; if (s < L) { float m = std::fmod(s + d, (float)L); if (m < 0) m += L; n.s = m; } }
         commitTrack(t);
     }
@@ -578,12 +578,12 @@ private:
     void sendCell(int t, int s) { Cmd c; c.type = SetCell; c.a = ui.pat; c.b = t; c.c = s; c.cell = ui.cells[ui.pat][t][s]; send(c); }
     void commitTrack(int t, int pat = -1) {
         if (pat < 0) pat = ui.pat;
-        if (t >= 6) {
+        if (isMelT(t)) {
             for (int s = 0; s < 16; ++s) {   // keep the step cells in sync with the roll, like the web version
                 Cell& cell = ui.cells[pat][t][s]; cell.v = 0;
-                for (const auto& n : ui.roll[pat][t - 6]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
+                for (const auto& n : ui.roll[pat][melK(t)]) if ((int)std::floor(n.s + 1e-4f) == s) { cell.v = std::max(cell.v, n.v >= .95f ? 2 : 1); cell.n = n.n; }
             }
-            Cmd c; c.type = SetRoll; c.a = pat; c.b = t - 6; c.roll = new std::vector<RollNote>(ui.roll[pat][t - 6]); send(c);
+            Cmd c; c.type = SetRoll; c.a = pat; c.b = melK(t); c.roll = new std::vector<RollNote>(ui.roll[pat][melK(t)]); send(c);
         }
         for (int s = 0; s < 16; ++s) { Cmd c; c.type = SetCell; c.a = pat; c.b = t; c.c = s; c.cell = ui.cells[pat][t][s]; send(c); }
     }

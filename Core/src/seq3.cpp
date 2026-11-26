@@ -7,8 +7,13 @@
 
 namespace blonda {
 
-static const char* kTrackIds[kTracks] = {"kick", "snare", "clap", "hat", "ohat", "perc", "bass", "keys", "lead", "pad"};
-static const char* kMelIds[4] = {"bass", "keys", "lead", "pad"};
+static const char* kTrackIds[kTracks] = {"kick", "snare", "clap", "hat", "ohat", "perc", "bass", "keys", "lead", "pad",
+    "tom", "rim", "shaker", "bell", "conga", "clave", "snap", "tick", "kick2", "snare2", "syn5", "syn6", "syn7", "syn8"};
+static const char* kMelIds[kMel] = {"bass", "keys", "lead", "pad", "syn5", "syn6", "syn7", "syn8"};
+// the extra drum tracks play the voices of a drum kind, starting on their own model (web TRACKS kind / dm)
+static DrumKind drumKindOf(int t) { static const DrumKind x[10] = {DrumKind::Perc, DrumKind::Snare, DrumKind::Hat, DrumKind::Perc, DrumKind::Perc, DrumKind::Perc, DrumKind::Clap, DrumKind::Hat, DrumKind::Kick, DrumKind::Snare};
+    return t < 6 ? (DrumKind)t : (t >= 10 && t < 20 ? x[t - 10] : DrumKind::Perc); }
+static const char* drumDefaultKit(int t) { static const char* d[10] = {"tom", "rim", "shaker", "cowbell", "conga", "clave", "snap", "tick", "808", "909"}; return t >= 10 && t < 20 ? d[t - 10] : ""; }
 
 // ---------------------------------------------------------------- helpers
 // Web Audio biquad designs (LP/HP: Q in dB; BP: linear Q)
@@ -73,8 +78,9 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
     fx.spaceOn = X["space"]["on"].numOr(1) != 0; fx.spaceSize = (float)X["space"]["size"].numOr(2.6);
     fx.tapeOn = X["tape"]["on"].numOr(1) != 0; fx.tapeColor = (float)X["tape"]["color"].numOr(.75);
     fx.crushOn = X["crush"]["on"].numOr(0) != 0; fx.crushBits = (float)X["crush"]["bits"].numOr(6); fx.crushMix = (float)X["crush"]["mix"].numOr(.4);
-    for (int k = 0; k < 4; ++k) {
-        inst[k] = S["inst"][kMelIds[k]].strOr(k == 2 ? "pluck" : k == 3 ? "super" : "analog");
+    for (int k = 0; k < kMel; ++k) {
+        static const char* defI[kMel] = {"analog", "analog", "pluck", "super", "bris", "fm", "sh101", "acid"};
+        inst[k] = S["inst"][kMelIds[k]].strOr(defI[k]);
         const json::Value& sy = S["synth"][kMelIds[k]]; AnalogP& a = synth[k];
         const std::string w = sy["wave"].strOr("sawtooth"); a.wave = w == "sine" ? 0 : w == "square" ? 1 : w == "triangle" ? 3 : 2;
         a.a = (float)sy["a"].numOr(a.a); a.d = (float)sy["d"].numOr(a.d); a.s = (float)sy["s"].numOr(a.s); a.r = (float)sy["r"].numOr(a.r);
@@ -102,15 +108,15 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
     world = (int)S["world"].numOr(0);
     glitchAmt = (float)S["glitch"]["amt"].numOr(0); glitchMask = (int)S["glitch"]["mask"].numOr(0x7F) & 0x7F;
     chordKeys = (int)S["chord"]["keys"].numOr(1); chordPad = (int)S["chord"]["pad"].numOr(1);
-    for (int i = 0; i < 6; ++i) kit[i] = S["dk"][kTrackIds[i]].strOr("");
-    for (int i = 0; i < 6; ++i) {   // sample editor + chop (web: S.se, S.chop)
+    for (int i = 0; i < kTracks; ++i) kit[i] = isDrumT(i) ? S["dk"][kTrackIds[i]].strOr(S["dk"].has(kTrackIds[i]) ? "" : drumDefaultKit(i)) : std::string();
+    for (int i = 0; i < kTracks; ++i) { if (!isDrumT(i)) continue;   // sample editor + chop (web: S.se, S.chop)
         const json::Value& e = S["se"][kTrackIds[i]]; SampleEdit& o = se[i]; o = SampleEdit{};
         if (e.type == json::Value::Object) { o.st = (float)e["st"].numOr(0); o.en = (float)e["en"].numOr(1); o.fi = (float)e["fi"].numOr(0); o.fo = (float)e["fo"].numOr(0);
             o.g = (float)e["g"].numOr(0); o.rev = e["rev"].numOr(0) != 0; o.sid = e["sid"].strOr(""); if (o.sid.empty()) o.sid = drumSid(*this, i); }   // older edits had no sid
         const json::Value& c = S["chop"][kTrackIds[i]]; ChopMap& m = chop[i]; m = ChopMap{};
         if (c.type == json::Value::Object) { m.sid = c["sid"].strOr(""); for (size_t k = 0; k < c["cuts"].arr.size() && k < 16; ++k) m.cuts.push_back((float)c["cuts"][k].numOr(0)); }
     }
-    for (int k = 0; k < 4; ++k) {   // BLONDA motor (app field; the web version keeps it untouched)
+    for (int k = 0; k < kMel; ++k) {   // BLONDA motor (app field; the web version keeps it untouched)
         const json::Value& M = S["motor"][kMelIds[k]]; MotorState& o = motor[k];
         bris::Bris tmp; tmp.prepare(48000); o.preset = (int)M["preset"].numOr(1); tmp.loadPreset(o.preset);
         for (int p = 0; p < bris::kNumParams; ++p) { const json::Value& v = M["p"][bris::kParams[p].id]; if (v.type == json::Value::Number) tmp.setParam(p, v.num); o.vals[p] = tmp.getParam(p); }
@@ -118,6 +124,22 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
     }
     for (int k = 0; k < 4; ++k) { const json::Value& L = S["loops"][k]; LoopSlot& o = loops[k];
         o.sid = L["sid"].strOr(""); o.on = L["on"].numOr(1) != 0; o.vol = (float)L["vol"].numOr(.8); o.bars = (int)L["bars"].numOr(0); }
+    {   // DUNK (web piece 233b): S.dunk = {p: [8 patches in Microtonic units], fat, trim, fill: {rate, pats: {pattern: [8 rows of 16]}}}
+        const json::Value& D = S["dunk"]; dunk = dunk::Kit{}; dunkFillRate = 0; std::memset(dunkFill, 0, sizeof dunkFill);
+        if (D.type == json::Value::Object) {
+            dunk.fat = (float)D["fat"].numOr(.3); dunk.trim = (float)D["trim"].numOr(0);
+            for (int c = 0; c < 8; ++c) { const json::Value& o = D["p"][c]; dunk::Patch& q = dunk.p[c]; auto n = [&](const char* k, float d) { return (float)o[k].numOr(d); };
+                q.wave = (int)n("wave", 0); q.freq = n("freq", 60); q.atk = n("atk", 0); q.dcy = n("dcy", 300); q.mod = (int)n("mod", 0); q.rate = n("rate", 50); q.amt = n("amt", 0);
+                q.nf = (int)n("nf", 0); q.nfreq = n("nfreq", 2000); q.q = n("q", .7071f); q.st = (int)n("st", 0); q.ne = (int)n("ne", 0); q.natk = n("natk", 0); q.ndcy = n("ndcy", 50);
+                q.mix = n("mix", 50); q.dist = n("dist", 0); q.eqf = n("eqf", 1000); q.eqg = n("eqg", 0); q.lvl = n("lvl", 0); q.pan = n("pan", 0);
+                q.ov = n("ov", 0); q.nv = n("nv", 0); q.mv = n("mv", 0); q.ck = (int)n("ck", 0); q.sub = n("sub", 0); q.crush = n("crush", 0); }
+            const json::Value& F = D["fill"];
+            if (F.type == json::Value::Object) { dunkFillRate = (float)F["rate"].numOr(0);
+                for (int pi = 0; pi < kPatterns; ++pi) { const json::Value& rows = F["pats"][std::to_string(pi)]; if (rows.type != json::Value::Array) continue;
+                    for (int c = 0; c < 8; ++c) for (int q = 0; q < kSteps; ++q) dunkFill[pi][c][q] = rows[c][q].numOr(0) != 0; } }
+        }
+    }
+    trkND = std::max(6, std::min(16, (int)S["trk"]["nd"].numOr(10))); trkNS = std::max(4, std::min(8, (int)S["trk"]["ns"].numOr(4)));
     song = S["song"].numOr(0) != 0; for (int k = 0; k < 8; ++k) chain[k] = (int)S["chain"][k].numOr(-1);
     glideT = (float)S["glideT"].numOr(.07);
     for (int pi = 0; pi < kPatterns; ++pi) {
@@ -125,7 +147,7 @@ bool Project::loadJSON(const std::string& text, std::string* err) {
             const json::Value& c = S["pats"][pi][ti][s]; Cell& x = cells[pi][ti][s];
             x.v = (int)c["v"].numOr(0); x.n = (int)c["n"].numOr(0); x.r = (int)c["r"].numOr(1); x.p = (float)c["p"].numOr(1); x.vel = (float)c["vel"].numOr(-1); x.o = std::max(-.5f, std::min(.5f, (float)c["o"].numOr(0))); x.c = (int)c["c"].numOr(-1);
         }
-        for (int k = 0; k < 4; ++k) {
+        for (int k = 0; k < kMel; ++k) {
             const json::Value& R = S["roll"][pi][kMelIds[k]]; roll[pi][k].clear(); std::map<std::string, int> ids;
             for (size_t i = 0; i < R.arr.size(); ++i) { const std::string id = R[i]["id"].strOr(""); if (!id.empty()) ids[id] = (int)i; }
             for (size_t i = 0; i < R.arr.size(); ++i) {
@@ -147,10 +169,10 @@ std::string Project::toJSON(const std::string& base) const {
       X.at("space").at("on") = V::number(fx.spaceOn ? 1 : 0); X.at("space").at("size") = V::number(fx.spaceSize);
       X.at("tape").at("on") = V::number(fx.tapeOn ? 1 : 0); X.at("tape").at("color") = V::number(fx.tapeColor);
       X.at("crush").at("on") = V::number(fx.crushOn ? 1 : 0); X.at("crush").at("bits") = V::number(fx.crushBits); X.at("crush").at("mix") = V::number(fx.crushMix); }
-    for (int k = 0; k < 4; ++k) { V& M = S.at("motor").at(kMelIds[k]); M.at("preset") = V::number(motor[k].preset);
+    for (int k = 0; k < kMel; ++k) { V& M = S.at("motor").at(kMelIds[k]); M.at("preset") = V::number(motor[k].preset);
         for (int p = 0; p < bris::kNumParams; ++p) M.at("p").at(bris::kParams[p].id) = V::number(motor[k].vals[p]); }
-    for (int i = 0; i < 6; ++i) { if (!kit[i].empty()) S.at("dk").at(kTrackIds[i]) = V::string_(kit[i]); else if (S.has("dk")) S.at("dk").erase(kTrackIds[i]); }
-    for (int i = 0; i < 6; ++i) {
+    for (int i = 0; i < kTracks; ++i) { if (!isDrumT(i)) continue; if (!kit[i].empty()) S.at("dk").at(kTrackIds[i]) = V::string_(kit[i]); else if (S.has("dk")) S.at("dk").erase(kTrackIds[i]); }
+    for (int i = 0; i < kTracks; ++i) { if (!isDrumT(i)) continue;
         const SampleEdit& e = se[i];
         if (!e.sid.empty() && (e.st != 0 || e.en != 1 || e.fi != 0 || e.fo != 0 || e.g != 0 || e.rev)) { V& o = S.at("se").at(kTrackIds[i]); o = V::object();
             o.at("st") = V::number(e.st); o.at("en") = V::number(e.en); o.at("fi") = V::number(e.fi); o.at("fo") = V::number(e.fo); o.at("rev") = V::number(e.rev); o.at("g") = V::number(e.g); o.at("sid") = V::string_(e.sid); }
@@ -185,9 +207,9 @@ std::string Project::toJSON(const std::string& base) const {
         if (b > 0) { V& Pm = B.at("pump"); Pm = V::object(); Pm.at("src") = V::string_(o.pump.src ? "beat" : "kick"); Pm.at("rate") = V::number(o.pump.rate);
             Pm.at("shape") = o.pump.shape < 0 ? V() : V::number(o.pump.shape); Pm.at("rel") = o.pump.rel < 0 ? V() : V::number(o.pump.rel); if (b == 2) Pm.at("amt") = V::number(o.pump.amt); } }
     { V a = V::array(); for (int i = 0; i < kTracks; ++i) a.arr.push_back(V::number(solos[i])); S.at("solos") = a; }
-    for (int k = 0; k < 4; ++k) S.at("inst").at(kMelIds[k]) = V::string_(inst[k]);
+    for (int k = 0; k < kMel; ++k) S.at("inst").at(kMelIds[k]) = V::string_(inst[k]);
     static const char* kWaves[4] = {"sine", "square", "sawtooth", "triangle"};
-    for (int k = 0; k < 4; ++k) {
+    for (int k = 0; k < kMel; ++k) {
         V& y = S.at("synth").at(kMelIds[k]); const AnalogP& a = synth[k];
         y.at("wave") = V::string_(kWaves[std::max(0, std::min(3, a.wave))]);
         y.at("a") = V::number(a.a); y.at("d") = V::number(a.d); y.at("s") = V::number(a.s); y.at("r") = V::number(a.r);
@@ -220,7 +242,7 @@ std::string Project::toJSON(const std::string& base) const {
             if (x.o != 0) c.at("o") = V::number(x.o); else c.erase("o");
             if (x.c >= 0) c.at("c") = V::number(x.c); else c.erase("c");
         }
-        for (int k = 0; k < 4; ++k) {
+        for (int k = 0; k < kMel; ++k) {
             const auto& R = roll[pi][k]; V arr = V::array();
             std::vector<bool> target(R.size(), false); for (const auto& n : R) if (n.g >= 0 && n.g < (int)R.size()) target[n.g] = true;
             for (size_t i = 0; i < R.size(); ++i) {
@@ -240,10 +262,11 @@ std::string Project::toJSON(const std::string& base) const {
 void Seq3::prepare(float sampleRate) {
     sr_ = sampleRate; frame_ = 0;
     glitch_.prepare(sr_);
-    for (int i = 0; i < 6; ++i) drums_[i].prepare(sr_, (DrumKind)i);
+    for (int i = 0; i < kTracks; ++i) if (isDrumT(i)) drums_[i].prepare(sr_, drumKindOf(i));
+    dunk_.prepare(sr_);
     drums_[T_HAT].chokeTarget = &drums_[T_OHAT];
     for (auto& m : mot_) m.prepare(sr_);
-    for (int k = 0; k < 4; ++k) { mel_[k].prepare(sr_, k == 0); bris_[k].prepare(sr_); }
+    for (int k = 0; k < kMel; ++k) { mel_[k].prepare(sr_, k == 0); bris_[k].prepare(sr_); }
     const int maxB = 4096;
     for (int i = 0; i < kTracks; ++i) { chL_[i].assign(maxB, 0); chR_[i].assign(maxB, 0); strips_[i].comp.prepare(sr_); }
     for (auto* v : {&busL_, &busR_, &dInL_, &dInR_, &rInL_, &rInR_, &tmpL_, &tmpR_}) v->assign(maxB, 0);
@@ -288,8 +311,8 @@ Convolver* Seq3::swapReverb(Convolver* c) {
 
 void Seq3::load(const Project& p) {
     P_ = p; playing_ = false; evq_.clear(); for (auto& e : penv_) e.clear();
-    for (int i = 0; i < 6; ++i) reg_[i] = regionFor(P_, i);
-    for (int k = 0; k < 4; ++k) { mot_[k].reset(); motN_[k] = 0; for (int q = 0; q < bris::kNumParams; ++q) mot_[k].setParam(q, P_.motor[k].vals[q]); }
+    for (int i = 0; i < kTracks; ++i) reg_[i] = regionFor(P_, i);
+    for (int k = 0; k < kMel; ++k) { mot_[k].reset(); motN_[k] = 0; for (int q = 0; q < bris::kNumParams; ++q) mot_[k].setParam(q, P_.motor[k].vals[q]); }
     // web: comp threshold -12 ratio 1.8 attack .025 release .25 knee 12; limiter -1.5 / 20 / .002 / .12 / 0
     comp_.threshold = -12; comp_.ratio = 1.8f; comp_.attack = .025f; comp_.release = .25f; comp_.knee = 12;
     lim_.threshold = -1.5f; lim_.ratio = 20; lim_.attack = .002f; lim_.release = .12f; lim_.knee = 0;
@@ -338,12 +361,14 @@ void Seq3::applyParams() {
     if (!dynBypass_) { comp_.threshold = -24 * m.glue; comp_.ratio = 1 + 1.6f * m.glue; }
     eqLg_.setTau(.03f, sr_); eqLg_.target = m.eqL; eqMg_.setTau(.03f, sr_); eqMg_.target = m.eqM; eqHg_.setTau(.03f, sr_); eqHg_.target = m.eqH;
     width_.setTau(.03f, sr_); width_.target = m.width; loud_.setTau(.03f, sr_); loud_.target = std::pow(10.f, m.loud * 9 / 20);
-    for (int i = 0; i < 6; ++i) { drums_[i].setKit(P_.kit[i].c_str()); drums_[i].params = {P_.params[i].tune, P_.params[i].decay, P_.params[i].tone}; }   // ohat has its own kit entry (S.dk.ohat)
-    for (int k = 0; k < 4; ++k) {
+    dunk_.setKit(P_.dunk); dunk_.warm();
+    for (int i = 0; i < kTracks; ++i) { const std::string& k = P_.kit[i]; dunkCh_[i] = (isDrumT(i) && k.size() == 4 && k.compare(0, 3, "dk:") == 0 && k[3] >= '0' && k[3] <= '7') ? k[3] - '0' : -1; }
+    for (int i = 0; i < kTracks; ++i) { if (!isDrumT(i)) continue; drums_[i].setKit(isDunk(i) ? "" : P_.kit[i].c_str()); drums_[i].params = {P_.params[i].tune, P_.params[i].decay, P_.params[i].tone}; }   // ohat has its own kit entry (S.dk.ohat)
+    for (int k = 0; k < kMel; ++k) {
         const std::string& in = P_.inst[k]; MelodicTrack& M = mel_[k];
         M.engine = in == "acid" ? Eng::Acid : in == "sub" ? Eng::Sub : in == "fm" ? Eng::FM : in == "pluck" ? Eng::Pluck : in == "chip" ? Eng::Chip : in == "super" ? Eng::Super :
                    in == "sh101" ? Eng::SH101 : in == "mini" ? Eng::Mini : Eng::Analog;
-        M.params = &P_.eng; M.analog = &P_.synth[k]; M.bpm = P_.bpm; const TrackParams& tp = P_.params[6 + k]; M.sound = {tp.tone, tp.tune, tp.decay};
+        M.params = &P_.eng; M.analog = &P_.synth[k]; M.bpm = P_.bpm; const TrackParams& tp = P_.params[melT(k)]; M.sound = {tp.tone, tp.tune, tp.decay};
         Bris& B = bris_[k]; B.params = P_.bris; B.bpm = P_.bpm; B.trackTone = tp.tone; B.trackTune = tp.tune; B.trackDecay = tp.decay;
     }
 }
@@ -387,7 +412,7 @@ void Seq3::setLoopVol(int k, float v) {
     for (auto& L : lvox_) if (L.active && L.slot == k && !L.killing) L.lv = P_.loops[k].vol * loopRt_[k].norm * .8f;
 }
 void Seq3::setDrumSample(int i, const SampleData* smp, float norm) {
-    if (i < 0 || i >= 6) return;
+    if (!isDrumT(i)) return;
     dsmp_[i] = smp; dnorm_[i] = norm;
     if (!smp) { P_.kit[i].clear(); drums_[i].setKit(""); }
 }
@@ -399,7 +424,7 @@ void Seq3::dropSample(const SampleData* smp) {
     for (auto& v : svox_) if (v.s == smp) v.active = false;
     for (auto& v : lvox_) if (v.s == smp) v.active = false;
     for (auto& R : loopRt_) if (R.s == smp) R.s = nullptr;
-    for (int i = 0; i < 6; ++i) if (dsmp_[i] == smp) dsmp_[i] = nullptr;
+    for (int i = 0; i < kTracks; ++i) if (dsmp_[i] == smp) dsmp_[i] = nullptr;
 }
 void Seq3::startSample(int i, long long f, float vel, int slice) {
     const SampleData* s = dsmp_[i]; if (!s || s->frames < 2) return;
@@ -426,7 +451,7 @@ void Seq3::startSample(int i, long long f, float vel, int slice) {
     if (i == T_KICK) pump((double)f / sr_);
 }
 void Seq3::renderSamples(long long b0, int n) {
-    for (int i = 0; i < 6; ++i) { bool any = false; for (const auto& v : svox_) if (v.active && v.track == i) any = true; if (!any && !dsmp_[i]) sampleTail_[i] = false; }
+    for (int i = 0; i < kTracks; ++i) { if (!isDrumT(i)) continue; bool any = false; for (const auto& v : svox_) if (v.active && v.track == i) any = true; if (!any && !dsmp_[i]) sampleTail_[i] = false; }
     const float chk = std::exp(-1.f / (.008f * sr_));
     for (auto& v : svox_) {
         if (!v.active) continue;
@@ -540,8 +565,13 @@ void Seq3::pump(double t) {
 // ---------------------------------------------------------------- sequencer (port of schedule())
 void Seq3::trigger(int i, long long f, float vel, int note, float ls, int glide) {
     if (!liveCall_) outPush({f, 0, i, note, vel, (float)(stepDur() * (ls > 0 ? ls : 1))});
-    if (i < 6) {   // drums are built at schedule time (like the web), so a later closed hat can choke a scheduled open hat
+    if (isDrumT(i)) {   // drums are built at schedule time (like the web), so a later closed hat can choke a scheduled open hat
         if (i == T_KICK && isMuted(i)) return;
+        if (isDunk(i)) {   // DUNK: the channel named in S.dk ('dk:<channel>') plays into this track's strip
+            const TrackParams& tp = P_.params[i]; dunk_.trigger(dunkCh(i), (int)std::max(0LL, f - frame_), vel, dunk::TrackMod{tp.tune, tp.decay, tp.tone}, i);
+            if (i == T_KICK) pump((double)f / sr_);
+            return;
+        }
         if (i == T_HAT) for (auto& v : svox_) if (v.active && v.track == T_OHAT && !v.choked) { v.choked = true; v.chokeAt = f; }   // web hatChoke
         if (dsmp_[i]) startSample(i, f, vel, note >= 1000 ? note - 1000 : 0); else drums_[i].triggerAt(vel, f);
         if (i == T_KICK) pump((double)f / sr_);
@@ -585,8 +615,9 @@ void Seq3::scheduleStep(long long) {
     const int pat = std::min(3, std::max(0, P_.pat));
     for (int i = 0; i < kTracks; ++i) {
         const int L = trkLen(i), q = L < 16 ? gstep_ % L : ps;
-        if (i >= 6) {
-            const int k = i - 6; const auto& RR = P_.roll[pat][k];
+        if (!trkOn(i)) continue;
+        if (isMelT(i)) {
+            const int k = melK(i); const auto& RR = P_.roll[pat][k];
             // glide targets: notes pointed to by an earlier note's g
             std::array<bool, 256> tg{}; for (const auto& m : RR) if (m.g >= 0 && m.g < (int)RR.size() && RR[m.g].s > m.s && m.g < 256) tg[m.g] = true;
             const Cell& cl = P_.cells[pat][i][q]; const bool pass = prob.uni() < cl.p; const int rr = cl.r > 0 ? cl.r : 1;
@@ -610,8 +641,11 @@ void Seq3::scheduleStep(long long) {
         if (st.v && prob.uni() < st.p) {
             const float vel = st.vel >= 0 ? st.vel : (st.v == 2 ? 1.f : .72f); const int rr = st.r > 0 ? st.r : 1;
             const double tn = std::max(nowT_, t + st.o * sd);   // nudged steps: early or late by a share of a step
-            const int nn = i < 6 ? 1000 + (st.c >= 0 ? st.c : q) : st.n;   // drums: which chop slice (the step's own number unless it picked one)
+            const int nn = isDrumT(i) ? 1000 + (st.c >= 0 ? st.c : q) : st.n;   // drums: which chop slice (the step's own number unless it picked one)
             for (int r = 0; r < rr; ++r) trigger(i, (long long)std::llround((tn + r * sd / rr) * sr_), vel * (r ? .8f : 1.f), nn, 1, -1);
+            // DUNK fills (Microtonic): a roll of FillRate hits inside the step
+            if (isDunk(i) && P_.dunkFillRate > 0 && pat < kPatterns) { const int c = dunkCh(i); if (c >= 0 && c < 8 && P_.dunkFill[pat][c][q]) { const double gap = sd / std::max(1.f, P_.dunkFillRate); float v = vel;
+                for (int k = 1; k * gap < sd - 1e-4; ++k) { v *= .8f; trigger(i, (long long)std::llround((tn + k * gap) * sr_), v, nn, 1, -1); } } }
         }
     }
     curStep_ = ps; marks_[markW_++ & 31] = {(long long)std::llround(nextT_ * sr_), ps}; nextT_ += sd; step_ = (step_ + 1) % 16; ++gstep_; if (step_ == 0) ++bar_;
@@ -632,17 +666,17 @@ void Seq3::dispatch(long long blockStart, int frames) {
         const int i = ev.track; const double t = (double)(blockStart + off) / sr_;
         (void)t;
         {
-            const int k = i - 6; const float len = (float)(60.0 / P_.bpm / 4.0 * (ev.ls > 0 ? ev.ls : 1));
+            const int k = melK(i); const float len = (float)(60.0 / P_.bpm / 4.0 * (ev.ls > 0 ? ev.ls : 1));
             int iv[6]; int n = 0;
             const bool single = (k == 1 && P_.chordKeys == 0) || (k == 3 && P_.chordPad == 0);
-            if (single || k == 0 || k == 2) { iv[0] = 0; n = 1; }
+            if (single || k == 0 || k == 2 || k >= 4) { iv[0] = 0; n = 1; }
             else if (k == 1) { const int v[5] = {0, 3, 7, 10, 14}; for (int x = 0; x < 5; ++x) iv[x] = v[x]; n = 5; }
             else { const auto& sc = SCALE(); const int idx = scaleIndex(sc, ev.note);
                    if (idx < 0 || idx + 6 >= (int)sc.size()) { iv[0] = 0; iv[1] = 7; iv[2] = 10; iv[3] = 15; }
                    else { iv[0] = 0; iv[1] = sc[idx + 2] - ev.note; iv[2] = sc[idx + 4] - ev.note; iv[3] = sc[idx + 6] - ev.note; } n = 4; }
             if (P_.inst[k] == "bris6") {   // BLONDA motor: note on now, note off after the note length (a newer hit of the same note wins)
                 const long long f0 = blockStart + off, f1 = f0 + std::max<long long>(1, (long long)std::llround(len * sr_));
-                const int tr = (int)std::lround(P_.params[6 + k].tune);
+                const int tr = (int)std::lround(P_.params[melT(k)].tune);
                 for (int x = 0; x < n; ++x) { const int nn = std::max(0, std::min(127, ev.note + iv[x] + tr)); const uint32_t g = ++motGen_[k][nn];
                     motorEvent(k, f0, nn, ev.vel, true); motorEvent(k, f1, nn, 0, false, g); }
             } else if (P_.inst[k] == "bris") {
@@ -655,10 +689,10 @@ void Seq3::dispatch(long long blockStart, int frames) {
 }
 
 void Seq3::liveNote(int track, int note, float vel, bool on) {
-    if (track < 6) { if (on) { liveCall_ = true; trigger(track, frame_, vel, note >= 1000 ? note : 1000, 1, -1); liveCall_ = false; } return; }   // note 1000 + k: chop slice k
-    const int k = track - 6;
+    if (!isMelT(track)) { if (track < 0 || track >= kTracks) return; if (on) { liveCall_ = true; trigger(track, frame_, vel, note >= 1000 ? note : 1000, 1, -1); liveCall_ = false; } return; }   // note 1000 + k: chop slice k
+    const int k = melK(track);
     if (P_.inst[k] == "bris") { if (on) bris_[k].noteOn(note, vel, 0, 1, 0.f); else bris_[k].noteOff(note, 0); return; }
-    if (P_.inst[k] == "bris6") { const int nn = std::max(0, std::min(127, note + (int)std::lround(P_.params[6 + k].tune))); if (on) { ++motGen_[k][nn]; motorEvent(k, frame_, nn, vel, true); } else motorEvent(k, frame_, nn, 0, false, motGen_[k][nn]); return; }
+    if (P_.inst[k] == "bris6") { const int nn = std::max(0, std::min(127, note + (int)std::lround(P_.params[melT(k)].tune))); if (on) { ++motGen_[k][nn]; motorEvent(k, frame_, nn, vel, true); } else motorEvent(k, frame_, nn, 0, false, motGen_[k][nn]); return; }
     if (on) { const int iv[1] = {0}; mel_[k].trigger(vel, note, (float)(60.0 / P_.bpm / 4.0 * 24), iv, 1, 0, nullptr, true); }
     else mel_[k].releaseLive(note);
 }
@@ -671,11 +705,13 @@ void Seq3::render(float* L, float* R, int frames) {
         schedule(b0); dispatch(b0, n);
         // instruments into their channels
         for (int i = 0; i < kTracks; ++i) { std::memset(chL_[i].data(), 0, sizeof(float) * n); std::memset(chR_[i].data(), 0, sizeof(float) * n); }
-        for (int i = 0; i < 6; ++i) drums_[i].process(chL_[i].data(), n);
-        for (int i = 0; i < 6; ++i) if (dsmp_[i] || sampleTail_[i]) std::memcpy(chR_[i].data(), chL_[i].data(), sizeof(float) * n);
+        for (int i = 0; i < kTracks; ++i) if (isDrumT(i) && trkOn(i)) drums_[i].process(chL_[i].data(), n);
+        for (int i = 0; i < kTracks; ++i) if (isDrumT(i) && (dsmp_[i] || sampleTail_[i])) std::memcpy(chR_[i].data(), chL_[i].data(), sizeof(float) * n);
+        for (int i = 0; i < kTracks; ++i) if (isDrumT(i) && isDunk(i)) { dunkTail_[i] = true; dunk_.renderTrack(i, chL_[i].data(), chR_[i].data(), n); }
+        dunk_.advance(n);
         renderSamples(b0, n);
-        for (int k = 0; k < 4; ++k) { mel_[k].process(chL_[6 + k].data(), chR_[6 + k].data(), n); bris_[k].process(chL_[6 + k].data(), chR_[6 + k].data(), n); }
-        for (int k = 0; k < 4; ++k) renderMotor(k, b0, n, chL_[6 + k].data(), chR_[6 + k].data());
+        for (int k = 0; k < kMel; ++k) { const int t = melT(k); mel_[k].process(chL_[t].data(), chR_[t].data(), n); bris_[k].process(chL_[t].data(), chR_[t].data(), n); }
+        for (int k = 0; k < kMel; ++k) renderMotor(k, b0, n, chL_[melT(k)].data(), chR_[melT(k)].data());
         std::memset(busL_.data(), 0, sizeof(float) * n); std::memset(busR_.data(), 0, sizeof(float) * n);
         std::memset(dInL_.data(), 0, sizeof(float) * n); std::memset(dInR_.data(), 0, sizeof(float) * n);
         std::memset(rInL_.data(), 0, sizeof(float) * n); std::memset(rInR_.data(), 0, sizeof(float) * n);
@@ -684,8 +720,9 @@ void Seq3::render(float* L, float* R, int frames) {
             float* g = gate_[b].data(); for (int x = 0; x < n; ++x) g[x] = B.gate.next(); }   // a muted bus mutes its sends too
         // channel strips
         for (int i = 0; i < kTracks; ++i) {
+            if (!trkOn(i)) continue;   // a track not in use is silent (web trkOn): no strip work
             Strip& s = strips_[i]; float* cl = chL_[i].data(); float* cr = chR_[i].data();
-            const bool stereoSrc = (i >= 6 && (P_.inst[i - 6] == "pluck" || P_.inst[i - 6] == "super" || P_.inst[i - 6] == "bris" || P_.inst[i - 6] == "bris6")) || (i < 6 && (dsmp_[i] || sampleTail_[i]));
+            const bool stereoSrc = (isMelT(i) && (P_.inst[melK(i)] == "pluck" || P_.inst[melK(i)] == "super" || P_.inst[melK(i)] == "bris" || P_.inst[melK(i)] == "bris6")) || (isDrumT(i) && (dsmp_[i] || sampleTail_[i] || isDunk(i)));
             if (!stereoSrc) for (int x = 0; x < n; ++x) cr[x] = cl[x];
             const float kn = 1.f / std::tanh(s.driveK);
             for (int x = 0; x < n; ++x) {
@@ -707,12 +744,12 @@ void Seq3::render(float* L, float* R, int frames) {
             s.comp.process(cl, cr, n);
             for (int x = 0; x < n; ++x) {
                 const double t = (double)(b0 + x) / sr_;
-                const float bg = gate_[i >= 6 ? 1 : 0][x];
+                const float bg = gate_[isMelT(i) ? 1 : 0][x];
                 const float g = s.mk.next() * s.pg.valueAt(t) * s.g.next(), se = s.se.next() * bg, ss = s.ss.next() * bg, pan = s.pan.next();
                 float l = cl[x] * g, r = cr[x] * g;
                 dInL_[x] += l * se; dInR_[x] += r * se; rInL_[x] += l * ss; rInR_[x] += r * ss;
                 panStereo(l, r, pan);   // Chrome's per-track compressor always outputs stereo, so every panner sees two channels
-                BusRt& B = bus_[i >= 6 ? 1 : 0]; B.L[x] += l; B.R[x] += r;
+                BusRt& B = bus_[isMelT(i) ? 1 : 0]; B.L[x] += l; B.R[x] += r;
             }
         }
         renderLoops(b0, n);   // web: loopBus -> loopar bus -> dry

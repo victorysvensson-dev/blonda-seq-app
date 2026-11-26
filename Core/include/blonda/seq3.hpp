@@ -3,6 +3,7 @@
 // tape drive, crush, filter, glue compressor, limiter) — all matching the web version.
 #pragma once
 #include "bris.hpp"
+#include "dunk.hpp"
 #include "convolver.hpp"
 #include "drums.hpp"
 #include "dynamics.hpp"
@@ -17,7 +18,14 @@
 
 namespace blonda {
 
-constexpr int kTracks = 10, kSteps = 16, kPatterns = 4;
+constexpr int kTracks = 24, kSteps = 16, kPatterns = 4;
+// the web layout (v213+): drums 0–5 and 10–19, synths 6–9 and 20–23. Synth arrays use the synth index k (0–7);
+// drum-side arrays are sized kTracks and indexed by the track itself.
+constexpr int kMel = 8;
+inline bool isMelT(int t) { return (t >= 6 && t <= 9) || (t >= 20 && t < kTracks); }
+inline bool isDrumT(int t) { return t >= 0 && t < kTracks && !isMelT(t); }
+inline int melK(int t) { return t <= 9 ? t - 6 : t - 16; }
+inline int melT(int k) { return k < 4 ? 6 + k : 16 + k; }
 enum TrackId { T_KICK, T_SNARE, T_CLAP, T_HAT, T_OHAT, T_PERC, T_BASS, T_KEYS, T_LEAD, T_PAD };
 
 struct Cell { int v = 0, n = 0, r = 1; float p = 1.f, vel = -1.f, o = 0.f; int c = -1; };   // o: nudge, share of a step (-0.5 early … +0.5 late); c: chop slice (-1 = the step's own number)
@@ -49,17 +57,20 @@ struct Project {
     std::array<BusParams, 3> bus;
     std::array<TrackParams, kTracks> params; std::array<TrackFX, kTracks> tfx; std::array<int, kTracks> len{};
     MasterParams master; FxParams fx;
-    std::array<std::string, 4> inst{"analog", "analog", "pluck", "pad"};
-    EngineParams eng; BrisParams bris; std::array<AnalogP, 4> synth;
-    int chordKeys = 1, chordPad = 1; std::array<std::string, 6> kit{};
+    std::array<std::string, kMel> inst{"analog", "analog", "pluck", "pad", "bris", "fm", "sh101", "acid"};
+    EngineParams eng; BrisParams bris; std::array<AnalogP, kMel> synth;
+    int chordKeys = 1, chordPad = 1; std::array<std::string, kTracks> kit{};
     bool song = false; std::array<int, 8> chain{{-1, -1, -1, -1, -1, -1, -1, -1}}; float glideT = .07f;
     std::array<LoopSlot, 4> loops;
-    std::array<MotorState, 4> motor;
+    std::array<MotorState, kMel> motor;
     int world = 0;   // web: S.world (colour world, the sound does not change)
     float glitchAmt = 0; int glitchMask = 0x7F;   // BLONDA GLITCH: auto chance per step, which effects auto may pick (bits 0..6)
-    std::array<SampleEdit, 6> se; std::array<ChopMap, 6> chop;
+    std::array<SampleEdit, kTracks> se; std::array<ChopMap, kTracks> chop;
     Cell cells[kPatterns][kTracks][kSteps];
-    std::vector<RollNote> roll[kPatterns][4];
+    std::vector<RollNote> roll[kPatterns][kMel];
+    // DUNK (web S.dunk): the kit, and Microtonic's fills (rolls of dunkFillRate hits on steps with a trigger)
+    dunk::Kit dunk; float dunkFillRate = 0; uint8_t dunkFill[kPatterns][8][kSteps]{};
+    int trkND = 10, trkNS = 4;   // web S.trk: how many drum / synth tracks are in use (the rest are silent)
     bool loadJSON(const std::string& text, std::string* err = nullptr);   // the web version's S object
     // writes the project back in the web format; fields the app does not model are kept from `base` (the loaded file)
     std::string toJSON(const std::string& base) const;
@@ -146,9 +157,9 @@ inline bool engOpt(Project& p, int k, int e, int f, int* get, const int* set) {
 void buildReverb(Convolver& c, float size, float sr);
 
 // what drum track i plays of its sample: the edit and the chop only count while they belong to the sample on the track
-inline std::string drumSid(const Project& p, int i) { return (i >= 0 && i < 6 && p.kit[i].rfind("smp:", 0) == 0) ? p.kit[i].substr(4) : std::string(); }
+inline std::string drumSid(const Project& p, int i) { return (isDrumT(i) && p.kit[i].rfind("smp:", 0) == 0) ? p.kit[i].substr(4) : std::string(); }
 inline SampleRegion regionFor(const Project& p, int i) {
-    SampleRegion r; if (i < 0 || i >= 6) return r; const std::string sid = drumSid(p, i); if (sid.empty()) return r;
+    SampleRegion r; if (!isDrumT(i)) return r; const std::string sid = drumSid(p, i); if (sid.empty()) return r;
     const SampleEdit& e = p.se[i];
     if (e.sid == sid) { r.st = std::max(0.f, std::min(1.f, e.st)); r.en = std::max(r.st, std::min(1.f, e.en)); r.fi = std::max(0.f, e.fi); r.fo = std::max(0.f, e.fo); r.g = std::max(-24.f, std::min(24.f, e.g)); r.rev = e.rev ? 1 : 0; }
     const ChopMap& c = p.chop[i];
@@ -169,13 +180,13 @@ public:
     void queuePattern(int p) { queued_ = p; }
     // real-time safe edits (call from the audio thread, e.g. when draining a command queue)
     void setCell(int pat, int track, int step, const Cell& c) { if (pat >= 0 && pat < kPatterns && track >= 0 && track < kTracks && step >= 0 && step < kSteps) P_.cells[pat][track][step] = c; }
-    void swapRoll(int pat, int melTrack, std::vector<RollNote>& notes) { if (pat >= 0 && pat < kPatterns && melTrack >= 0 && melTrack < 4) P_.roll[pat][melTrack].swap(notes); }
+    void swapRoll(int pat, int melTrack, std::vector<RollNote>& notes) { if (pat >= 0 && pat < kPatterns && melTrack >= 0 && melTrack < kMel) P_.roll[pat][melTrack].swap(notes); }
     void setBPM(float bpm) { P_.bpm = std::max(40.f, std::min(240.f, bpm)); applyParams(); }
     void setPattern(int p) { if (playing_) queued_ = p; else P_.pat = p; }
     void setMute(int track, bool m) { if (track >= 0 && track < kTracks) { P_.mute[track] = m; applyParams(); } }
     int pattern() const { return P_.pat; }
     // switch a melodic track's instrument (short names fit std::string's small buffer: no allocation)
-    void setInstrument(int k, int idx) { if (k >= 0 && k < 4 && idx >= 0 && idx < kNumEngines) { if (P_.inst[k] == "bris6" && idx != 10) mot_[k].allNotesOff(); P_.inst[k] = kEngineNames[idx]; applyParams(); } }
+    void setInstrument(int k, int idx) { if (k >= 0 && k < kMel && idx >= 0 && idx < kNumEngines) { if (P_.inst[k] == "bris6" && idx != 10) mot_[k].allNotesOff(); P_.inst[k] = kEngineNames[idx]; applyParams(); } }
     void setEngParam(int k, int e, int f, float v) { if (float* x = engFloat(P_, k, e, f)) { *x = v; if (e == 9) applyParams(); } }
     void setEngOpt(int k, int e, int f, int v) { if (engOpt(P_, k, e, f, nullptr, &v) && e == 9) applyParams(); }
     // live (web: XY pad + beat repeat). f −1..1 = lowpass/highpass, fx 0..1 = echo + space throw.
@@ -195,13 +206,13 @@ public:
     void setDrumSample(int i, const SampleData* smp, float norm);   // nullptr: back to the synth kit
     void previewSample(const SampleData* smp, float rate, float gain);   // nullptr stops the preview
     void dropSample(const SampleData* smp);                          // nothing may play it after this returns
-    void setRegion(int i, const SampleRegion& r) { if (i >= 0 && i < 6) reg_[i] = r; }
+    void setRegion(int i, const SampleRegion& r) { if (isDrumT(i)) reg_[i] = r; }
     // BLONDA motor (engine "bris6")
-    void setMotorPreset(int k, int i) { if (k < 0 || k >= 4) return; mot_[k].loadPreset(i); P_.motor[k].preset = i; for (int p = 0; p < bris::kNumParams; ++p) P_.motor[k].vals[p] = mot_[k].getParam(p); }
-    void setMotorParam(int k, int p, double v) { if (k < 0 || k >= 4 || p < 0 || p >= bris::kNumParams) return; mot_[k].setParam(p, v); P_.motor[k].vals[p] = mot_[k].getParam(p); }
-    double motorMeter(int k) const { return (k >= 0 && k < 4) ? motEnv_[k] : 0; }
+    void setMotorPreset(int k, int i) { if (k < 0 || k >= kMel) return; mot_[k].loadPreset(i); P_.motor[k].preset = i; for (int p = 0; p < bris::kNumParams; ++p) P_.motor[k].vals[p] = mot_[k].getParam(p); }
+    void setMotorParam(int k, int p, double v) { if (k < 0 || k >= kMel || p < 0 || p >= bris::kNumParams) return; mot_[k].setParam(p, v); P_.motor[k].vals[p] = mot_[k].getParam(p); }
+    double motorMeter(int k) const { return (k >= 0 && k < kMel) ? motEnv_[k] : 0; }
     // drum kit of track i (web: S.dk[id]); index into kKitNames
-    void setKit(int i, int idx) { if (i < 0 || i >= 6 || idx < 0 || idx >= kNumKits) return; dsmp_[i] = nullptr; P_.kit[i] = kKitNames[idx]; drums_[i].setKit(kKitNames[idx]); }
+    void setKit(int i, int idx) { if (!isDrumT(i) || idx < 0 || idx >= kNumKits) return; dsmp_[i] = nullptr; P_.kit[i] = kKitNames[idx]; drums_[i].setKit(kKitNames[idx]); }
     void setGlideT(float v) { P_.glideT = v; }
     // BLONDA GLITCH (master): hold an effect (0 = let go), auto chance, which effects auto uses
     void glitchHold(int fx) { glitch_.hold(fx, frame_, std::max(64, (int)std::lround(60.0 / P_.bpm / 4 * sr_))); }
@@ -263,6 +274,10 @@ private:
     bool soloOn(int i) const { return P_.solo == i || P_.solos[i] != 0; }
     bool isMuted(int i) const { return anySolo() ? !soloOn(i) : P_.mute[i] != 0; }
     int trkLen(int i) const { int v = P_.len[i]; return v >= 1 && v <= 16 ? v : 16; }
+    // web trkOn(): drums in use are the first nd of 0–5,10–19; synths the first ns of 6–9,20–23
+    bool trkOn(int i) const { if (isMelT(i)) return melK(i) < P_.trkNS; const int k = i < 6 ? i : i - 4; return k < P_.trkND; }
+    bool isDunk(int i) const { return i >= 0 && i < kTracks && dunkCh_[i] >= 0; }
+    int dunkCh(int i) const { return dunkCh_[i]; }
     double stepDur() const { return 60.0 / P_.bpm / 4.0; }
 
     struct StepMark { long long f; int step; }; std::array<StepMark, 32> marks_{}; int markW_ = 0; int audible_ = -1;
@@ -271,22 +286,23 @@ private:
     long long nextF_ = 0; double nextT_ = 0; int step_ = 0, gstep_ = 0, bar_ = 0, curStep_ = -1, queued_ = -1, chainIdx_ = -1; bool songStart_ = true;
     std::vector<Ev> evq_; std::vector<Glide> glides_; int glideN_ = 0;
     // instruments
-    std::array<DrumTrack, 6> drums_; std::array<MelodicTrack, 4> mel_; std::array<Bris, 4> bris_;
+    std::array<DrumTrack, kTracks> drums_; std::array<MelodicTrack, kMel> mel_; std::array<Bris, kMel> bris_;
     // mixing
+    dunk::Dunk dunk_; std::array<int, kTracks> dunkCh_{}; std::array<bool, kTracks> dunkTail_{};
     std::array<Strip, kTracks> strips_;
     std::vector<float> chL_[kTracks], chR_[kTracks];
     WebParam duck_{1.f};
     // master
-    std::array<bris::Bris, 4> mot_;
+    std::array<bris::Bris, kMel> mot_;
     struct MotEv { long long f; int note; float vel; bool on; uint32_t gen; };
-    std::array<std::array<MotEv, 128>, 4> motQ_{}; std::array<int, 4> motN_{};
-    std::array<std::array<uint32_t, 128>, 4> motGen_{}; std::array<double, 4> motEnv_{};
+    std::array<std::array<MotEv, 128>, kMel> motQ_{}; std::array<int, kMel> motN_{};
+    std::array<std::array<uint32_t, 128>, kMel> motGen_{}; std::array<double, kMel> motEnv_{};
     void motorEvent(int k, long long f, int note, float vel, bool on, uint32_t gen = 0) { if (motN_[k] < 128) motQ_[k][motN_[k]++] = {f, note, vel, on, gen}; }
     void renderMotor(int k, long long b0, int n, float* L, float* R);
     struct LoopRt { const SampleData* s = nullptr; float srcBpm = 120; int bars = 1; float norm = 1; };
-    std::array<LoopRt, 4> loopRt_{}; std::array<const SampleData*, 6> dsmp_{}; std::array<float, 6> dnorm_{};
-    std::array<SampleVoice, 32> svox_{}; std::array<bool, 6> sampleTail_{}; std::array<LoopVoice, 16> lvox_{}; long long sAge_ = 0;
-    std::array<SampleRegion, 6> reg_{};
+    std::array<LoopRt, 4> loopRt_{}; std::array<const SampleData*, kTracks> dsmp_{}; std::array<float, kTracks> dnorm_{};
+    std::array<SampleVoice, 32> svox_{}; std::array<bool, kTracks> sampleTail_{}; std::array<LoopVoice, 16> lvox_{}; long long sAge_ = 0;
+    std::array<SampleRegion, kTracks> reg_{};
     void startSample(int i, long long f, float vel, int slice);
     void startLoop(int slot, const SampleData* s, long long f, double dur, double rate, float lv);
     void killLoops(int slot);   // -1: every loop, -2: the preview

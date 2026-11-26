@@ -74,12 +74,12 @@ public:
     const Kit& kit() const { return kit_; }
 
     // a hit on channel ch, `delay` frames into the next render block
-    void trigger(int ch, int delay, float vel, const TrackMod& tm) {
+    void trigger(int ch, int delay, float vel, const TrackMod& tm, int track = -1) {
         if (ch < 0 || ch >= kCh) return;
         const Patch& P = kit_.p[ch]; const double t = (double)(now_ + delay) / sr_;
         // the channel's own last hit, and its choke group
         cutCh(ch, t); if (P.ck) for (int j = 0; j < kCh; ++j) if (j != ch && kit_.p[j].ck == P.ck) cutCh(j, t);
-        Voice* v = alloc(); if (!v) return; new (v) Voice(); v->on = true; v->ch = ch; v->t0 = t;
+        Voice* v = alloc(); if (!v) return; new (v) Voice(); v->on = true; v->ch = ch; v->trk = track; v->t0 = t;
         const float tuneSt = tm.tune, dsc = std::exp2((tm.decay - .45f) * 2.2f), tsc = std::exp2((tm.tone - .5f) * 2.5f);
         vel = clampf(vel, 0, 1); const float mv = vel <= .72f ? vel / .72f * .5f : .5f + (vel - .72f) / .28f * .5f; const bool sens = P.ov != 0 || P.nv != 0 || P.mv != 0;
         auto vs = [&](float s) { return std::max(0.f, 1.f - s / 100.f * (1.f - mv)); };
@@ -138,6 +138,10 @@ public:
     void render(int ch, float* L, float* R, int n) {
         for (auto& v : v_) if (v.on && v.ch == ch) runVoice(v, L, R, n);
     }
+    // the voices one track started (a channel can play on several tracks)
+    void renderTrack(int track, float* L, float* R, int n) {
+        for (auto& v : v_) if (v.on && v.trk == track) runVoice(v, L, R, n);
+    }
     void advance(int n) { now_ += n; }
     // all channels into one pair
     void process(float* L, float* R, int n) { for (int c = 0; c < kCh; ++c) render(c, L, R, n); advance(n); }
@@ -145,7 +149,7 @@ public:
 
 private:
     struct Voice {
-        bool on = false; int ch = 0; double t0 = 0, end = 0, cutAt = 1e30;
+        bool on = false; int ch = 0, trk = -1; double t0 = 0, end = 0, cutAt = 1e30;
         bool osc = false; int wave = 0; float f = 60, sub = 0, ph = 0, sph = 0; int mod = -1; float modAmt = 0, modRate = 0, mph = 0, mc[5]{}, mz[2]{};
         WebParamN<8> og, det;
         bool noise = false, stereo = false; float nc[5]{}, nz[2][2]{}, bpg = 1; WebParamN<32> ng;
