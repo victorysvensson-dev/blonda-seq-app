@@ -1,0 +1,4 @@
+/* ===== v121: no text selection or long-press callout anywhere (iPad), except where you type ===== */
+html,body,body *{-webkit-user-select:none!important;user-select:none!important;-webkit-touch-callout:none!important}
+input,textarea,select,[contenteditable]:not([contenteditable="false"]){-webkit-user-select:text!important;user-select:text!important;-webkit-touch-callout:default!important}
+img,svg,canvas{-webkit-user-drag:none}

@@ -1,0 +1,45 @@
+/* ===== Starter v115: follow row + advanced editor ===== */
+.sx-fol{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px;align-items:center}
+.card.stx .sx-fol button{height:28px;padding:0 10px;font-size:10px;letter-spacing:.04em;color:rgba(232,230,220,.5);box-shadow:inset 0 0 0 1px var(--o-line)}
+.card.stx .sx-fol button b{font-weight:500;color:var(--o-ink);margin-left:4px}
+.card.stx .sx-fol button.on{color:var(--o-ink);box-shadow:inset 0 0 0 1px rgba(233,197,74,.6)}
+.card.stx .sx-fol button[data-fol].on::before{content:"";display:inline-block;width:6px;height:6px;background:var(--o-y);margin-right:7px;vertical-align:1px}
+.card.stx .sx-fol button[data-adv].on{background:var(--o-ink);color:#17181A;box-shadow:none}
+.sx-adv{margin-top:6px;border-top:1px solid var(--o-line);padding-top:4px}
+.sx-slots{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:4px}
+.card.stx .sx-slots button{height:52px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:0 10px;box-shadow:inset 0 0 0 1px var(--o-line);min-width:0}
+.sx-slots button b{font:400 15px var(--f-linje);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.sx-slots button small{font:8.5px var(--f-mono);color:rgba(232,230,220,.4);margin-top:3px}
+.card.stx .sx-slots button.on{box-shadow:inset 0 0 0 1.5px var(--o-y)}
+.card.stx .sx-slots button.sxnow{background:rgba(233,197,74,.12)}
+.sx-row{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:8px}
+.sx-row>.sx-ctl{min-width:190px}
+.sx-chips{display:flex;flex-wrap:wrap;gap:3px;flex:1 1 300px;min-width:0}
+.card.stx .sx-chips button{height:24px;padding:0 7px;font-size:9.5px;color:rgba(232,230,220,.6);box-shadow:inset 0 0 0 1px var(--o-line)}
+.card.stx .sx-chips button.on{background:var(--o-y);color:#17181A;box-shadow:none}
+.sx-btns{display:flex;flex-wrap:wrap;gap:4px}
+.card.stx .sx-btns button{height:28px;padding:0 10px;font-size:10px;letter-spacing:.03em;box-shadow:inset 0 0 0 1px var(--o-line)}
+.card.stx .sx-btns button:hover{background:rgba(255,255,255,.05)}.card.stx .sx-btns button:active{background:var(--o-y);color:#17181A}
+.card.stx .sx-btns button:disabled{opacity:.35;cursor:default}
+.sx-grid{display:flex;flex-direction:column;gap:3px}
+.sx-gr{display:grid;grid-template-columns:18px repeat(16,minmax(0,1fr));gap:3px;align-items:center}
+.sx-gr span{font:9px var(--f-mono);color:rgba(232,230,220,.4)}
+.sx-gr i{height:22px;box-shadow:inset 0 0 0 1px var(--o-line);cursor:pointer}
+.sx-gr i.q{box-shadow:inset 0 0 0 1px rgba(232,230,220,.22)}
+.sx-gr i.on{background:#F07AB0;box-shadow:none}
+.sx-gr i.now{outline:1.5px solid var(--o-y);outline-offset:-1.5px}
+.sx-strips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.sx-strip{box-shadow:inset 0 0 0 1px var(--o-line);padding:10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.sx-sh{display:flex;align-items:center;gap:7px;font:500 10px var(--f-mono);letter-spacing:.05em}
+.sx-sh i{width:7px;height:7px;background:var(--c)}
+.card.stx .sx-sh button{margin-left:auto;height:22px;padding:0 8px;font-size:9.5px;background:rgba(233,197,74,.14);color:var(--o-y)}
+.sx-strip .sx-ctl{grid-template-columns:44px 22px minmax(0,1fr) 22px}
+.card.stx .sx-strip .sx-ctl button{height:24px}
+.sx-strip .sx-ctl b{font-size:12px}
+.sx-sk{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px;margin-top:4px}
+.sx-sk.wide{grid-template-columns:repeat(4,60px)}
+.sx-folr .sx-ctl{min-width:170px;flex:1}
+@container (max-width:700px){.sx-strips{grid-template-columns:repeat(2,minmax(0,1fr))}.sx-slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@container (max-width:520px){.sx-gr i{height:18px}.sx-gr{gap:2px}.sx-row>.sx-ctl,.sx-folr .sx-ctl{min-width:0;flex:1 1 150px}}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .card.stx :is(.sx-gr i:not(.on),.sx-slots button,.sx-chips button:not(.on),.sx-btns button,.sx-strip,.sx-fol button:not([data-adv].on)){box-shadow:inset 0 0 0 1px rgba(232,230,220,.6)!important}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .card.stx .sx-adv{border-top-color:rgba(232,230,220,.35)}

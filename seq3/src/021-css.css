@@ -1,0 +1,28 @@
+
+/* Layout: one living blurred colour field; frosted glass cards float on it.
+   Folded = single column filtered by view tabs. Unfolded (Duo inner screen) = two columns split by a hinge.
+   Single committed dark-glass world (no light theme by design). */
+:root{
+  color-scheme:dark;
+  --bg:#0B0B10; --fg:#F5F5F2; --mute:rgba(245,245,242,.56); --faint:rgba(245,245,242,.1);
+  --glass:rgba(255,255,255,.045); --glass-hi:rgba(255,255,255,.1); --rim:rgba(255,255,255,.22);
+  --yellow:#F2C318; --sage:#A8C2A0; --brown:#A07A64; --orange:#F27A2E; --lilac:#B9A6FF; --green:#3FA56E; --red:#FF4A33; --pink:#F255A8;
+  --f-display:"BLONDA Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --f-mono:"BLONDA Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --f-dot:"BLONDA Dot","BLONDA Mono",ui-monospace,monospace;
+  --f-pixel:"BLONDA Pixel","BLONDA Mono",monospace;
+  --f-linje:"BLONDA Linje","BLONDA Mono",monospace;
+  --te-blue:#3D6CF5; --te-green:#27B26B; --te-white:#EDEDE8; --te-orange:#FF6A1A; --te-key:#D9D9D4;
+  --spring:cubic-bezier(.25,1.15,.5,1);
+  --r:14px;
+}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-display);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+#bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;display:block}
+.grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.09;mix-blend-mode:overlay}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+button:focus-visible,.knob:focus-visible{outline:2px solid var(--fg);outline-offset:3px}
+
+.app{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;gap:10px;
+  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:10px 0}
+

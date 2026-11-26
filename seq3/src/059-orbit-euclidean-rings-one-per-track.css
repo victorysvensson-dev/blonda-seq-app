@@ -1,0 +1,40 @@
+/* ================= Orbit: euclidean rings, one per track ================= */
+.card.orbit{--o-bg:#1D1E21;--o-line:#2F3034;--o-ink:#E8E6DC;--o-y:#E9C54A;background:var(--o-bg);color:var(--o-ink);border-radius:0;box-shadow:inset 0 0 0 1px var(--o-line),0 26px 50px -26px rgba(0,0,0,.7);-webkit-backdrop-filter:none;backdrop-filter:none;container-type:inline-size}
+.card.orbit::before,.card.orbit::after{display:none}
+.card.orbit .cap .t{color:rgba(232,230,220,.45)}.card.orbit .cap .t b{color:var(--o-ink)}
+.card.orbit .cbtn,.card.orbit .grab{border-radius:0;background:none;box-shadow:inset 0 0 0 1px var(--o-line);color:var(--o-ink)}
+.orb-wrap{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:16px;align-items:center}
+.orb{position:relative;aspect-ratio:1;width:100%;max-width:420px;justify-self:center;touch-action:none;cursor:pointer}
+.orb canvas{position:absolute;inset:0;width:100%;height:100%}
+.orb-mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.orb-big{line-height:0;color:var(--o-ink)}
+.orb-mid small{display:block;font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;color:rgba(232,230,220,.45);margin-top:6px}
+.orb-side{display:flex;flex-direction:column;gap:8px}
+.orb-ctl{display:grid;grid-template-columns:1fr 28px 34px 28px;align-items:center;gap:4px;font-family:var(--f-mono);font-size:10px}
+.orb-ctl span{color:rgba(232,230,220,.5);letter-spacing:.04em}
+.orb-ctl button{height:28px;box-shadow:inset 0 0 0 1px var(--o-line);color:var(--o-ink);font-size:14px}
+.orb-ctl button:hover{background:rgba(255,255,255,.06)}.orb-ctl button:active{background:var(--o-y);color:#17181A}
+.orb-ctl b{text-align:center;font-family:var(--f-linje);font-weight:400;font-size:15px;font-variant-numeric:tabular-nums;cursor:ns-resize;touch-action:none}
+.orb-hint{font-family:var(--f-mono);font-size:9px;line-height:1.5;color:rgba(232,230,220,.32);margin:4px 0 0}
+.orb-trk{display:flex;flex-wrap:wrap;gap:4px;margin-top:14px}
+.orb-trk button{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;font-family:var(--f-mono);font-size:10px;letter-spacing:.04em;color:rgba(232,230,220,.6);box-shadow:inset 0 0 0 1px var(--o-line)}
+.orb-trk button i{width:7px;height:7px;background:var(--c)}
+.orb-trk button.on{color:#17181A;background:var(--o-ink);box-shadow:none}
+.orb-trk button.mute{opacity:.4;text-decoration:line-through}
+@container (max-width:470px){.orb-wrap{grid-template-columns:1fr}.orb-side{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.orb-ctl{grid-template-columns:22px 1fr 22px;grid-template-rows:auto auto;row-gap:4px}
+  .orb-ctl span{grid-column:1/-1;text-align:center}.orb-ctl button{height:26px}.orb-hint{grid-column:1/-1;text-align:center}}
+
+.card.syn[data-eng="sh101"]{--e-fg:#EEF2F6;--e-mute:rgba(238,242,246,.55);--e-acc:#5B9BFF;--e-chip:rgba(255,255,255,.1);--e-line:rgba(238,242,246,.18);--e-on:#16202E;
+  animation:none;background:radial-gradient(90% 70% at 85% 10%,rgba(47,111,224,.55),transparent 60%),linear-gradient(170deg,#2B3440,#151A21)}
+.card.syn[data-eng="mini"]{--e-fg:#F6E7CC;--e-mute:rgba(246,231,204,.55);--e-acc:#F2A541;--e-chip:rgba(242,165,65,.14);--e-line:rgba(246,231,204,.2);--e-on:#1A120B;
+  animation:none;background:linear-gradient(90deg,#5A3620 0 10px,transparent 10px calc(100% - 10px),#5A3620 calc(100% - 10px)),radial-gradient(80% 70% at 75% 0%,rgba(242,165,65,.28),transparent 60%),linear-gradient(175deg,#221812,#0F0A07)}
+.card.syn[data-eng="chip"]{--e-fg:#0F380F;--e-mute:rgba(15,56,15,.6);--e-acc:#0F380F;--e-chip:rgba(15,56,15,.12);--e-line:rgba(15,56,15,.25);--e-on:#9BBC0F;
+  animation:none;background:linear-gradient(170deg,#A8C820,#8BAC0F 60%,#6E8C0A);font-family:var(--f-pixel)}
+.card.syn[data-eng="sh101"] .edials,.card.syn[data-eng="mini"] .edials{grid-template-columns:repeat(5,1fr)}
+.card.syn[data-eng="chip"] .edials{grid-template-columns:repeat(4,1fr)}
+.card.syn[data-eng="chip"] .edial b{font-size:24px}
+.card.syn[data-eng="sh101"] .edial b,.card.syn[data-eng="mini"] .edial b{font-size:21px}
+@media (max-width:560px){.card.syn[data-eng="sh101"] .edials,.card.syn[data-eng="mini"] .edials{grid-template-columns:repeat(3,1fr)}}
+.card.syn[data-eng="sh101"] .edial small,.card.syn[data-eng="mini"] .edial small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+
+

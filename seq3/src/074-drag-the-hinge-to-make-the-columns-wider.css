@@ -1,0 +1,52 @@
+/* ===== drag the hinge to make the columns wider or narrower ===== */
+.hinge{cursor:col-resize;touch-action:none}
+.hinge::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:46px;margin:-23px 0 0 -2px;border-radius:2px;background:rgba(255,255,255,.16);transition:background .2s}
+.hinge:hover::after,.hinge.drag::after{background:rgba(255,255,255,.6)}
+.pane>.card{max-width:100%;min-width:0}
+/* the Live card, more compact: a wide XY pad, smaller numbers, a lower repeat ruler */
+.card[data-card="perform"] .xy{aspect-ratio:auto;width:100%;height:clamp(170px,19vw,250px)}
+.card[data-card="perform"] .dev-sub{margin-top:10px;padding:12px 14px 6px}
+.card[data-card="perform"] .dev-nums span{font-size:26px}
+.card[data-card="perform"] .rpt-h{margin-bottom:6px}
+.card[data-card="perform"] .rpt-h b{font-size:18px}
+.card[data-card="perform"] .rpt-c{height:44px}
+.gpats .gcopy{white-space:nowrap}
+.card.master{container-type:inline-size}
+@container (max-width:560px){.card.master .knobs{grid-template-columns:repeat(4,1fr)!important;row-gap:14px}}
+body.look-dots .app>.top,body.look-dots #panes,body.look-dots #proj,body.look-dots #fullHost,body.look-dots #ded,body.look-dots #lib,body.look-dots #sins,body.look-dots #roll,body.look-dots #toast{filter:grayscale(1) invert(1) contrast(8)}
+/* the deck and the bottom bar sit above the yellow layer and are painted directly (Safari does not blend filtered layers reliably) */
+body.look-dots,body.look-studio{--yellow:#F2C318}
+body.look-dots #deck{z-index:2147483600!important;background:#F2C318!important;filter:none}
+body.look-dots #deckScrim{z-index:2147483500!important}
+/* in the dots look the bottom bar is glass instead of a yellow block; in studio it stays yellow (v212) */
+body.look-dots .transport{--tb:transparent!important;-webkit-backdrop-filter:blur(22px) saturate(1.2);backdrop-filter:blur(22px) saturate(1.2);outline:none!important;filter:none}
+body.look-dots .transport{z-index:2147483600!important;background:rgba(255,255,255,.2)!important;box-shadow:inset 0 1px 0 rgba(17,18,17,.4)!important;color:#111211}
+body.look-dots .transport .rec i,body.look-dots #deck .rec i{background:#111211}
+body.look-dots .transport .play{color:#F2C318}
+/* no soft shadows in the yellow look: they turn into smudges */
+body.look-dots .app>.top *{box-shadow:none!important;text-shadow:none!important}
+body.look-dots .app>.top .dock,body.look-dots #panes .pane{box-shadow:none!important}
+body.look-dots .app>.top{position:relative;z-index:30}
+body.look-dots .card,body.look-dots .card.lite,body.look-dots .card.syn,body.look-dots .card.dial,body.look-dots .card.loops,body.look-dots .card.gx{background:transparent!important;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:none!important;border-radius:0!important;animation:none}
+body.look-dots .card::before,body.look-dots .card::after{display:none}
+body.look-dots .sndcard .cap,body.look-dots .snd-hero,body.look-dots .snd-grid{background:transparent}
+body.look-dots .snd-grid{filter:invert(1)}
+body.look-dots .snd-grid>*{background:transparent!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)!important}
+body.look-dots .card.lite:not(.dotm):not(.sndcard),body.look-dots .card.syn[data-eng="fm"],body.look-dots .card.syn[data-eng="pluck"],body.look-dots .card.syn[data-eng="chip"]{filter:invert(1)}
+body.look-dots .seqlite.dotm .cells .cell,body.look-dots .seqlite.dotm .cells .cell:nth-child(n){background:transparent!important}
+body.look-dots .pad:not(.hit){background:#1C1E20!important;color:#E8E6DC!important;box-shadow:inset 0 0 0 1px rgba(232,230,220,.7)!important}
+body.look-dots .pad:not(.hit) *{color:#E8E6DC!important}
+body.look-dots .gx-box{background:transparent}
+/* no glow in the two-colour look: a glow turns into a black smudge */
+body.look-dots .seqlite.dotm .cells .cell::before,body.look-dots .seqlite.dotm .cells .cell.on::before{filter:none!important}
+body.look-dots .seqlite.dotm .cells .cell.on.ph{box-shadow:inset 0 0 0 2px #E8E6DC!important;background:transparent!important}
+body.look-dots #panes *,body.look-dots .app>.top *{text-shadow:none!important}
+body.look-dots .pad.hit,body.look-dots .rpt-c.cur{box-shadow:none!important;filter:none!important}
+body.look-dots .dev-sub{background:transparent!important;box-shadow:inset 0 0 0 1px rgba(29,29,27,.5)!important}
+body.look-dots .card[data-card="perform"]{--lm:rgba(29,29,27,.8)}
+body.look-dots .rpt-h,body.look-dots .rpt-c{color:#1D1D1B!important}
+body.look-dots .xtag,body.look-dots .xtag *{color:#1D1D1B!important}
+body.look-dots .seqlite.dotm .cells .cell:not(.on)::before{opacity:.4}
+body.look-dots .seqlite.dotm .steprule .cells span{opacity:.7}
+body.look-dots .dock{background:transparent;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.look-dots .dock.open{background:#17181A;box-shadow:inset 0 0 0 1px #45464B}

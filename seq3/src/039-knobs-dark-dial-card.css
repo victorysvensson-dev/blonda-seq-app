@@ -1,0 +1,33 @@
+/* ---------- knobs: dark dial card ---------- */
+.card.dial{background:#1B1B1C;color:#EDEDEA;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 24px 48px -24px rgba(0,0,0,.75),inset 0 1px 0 rgba(255,255,255,.06)}
+.card.dial::before,.card.dial::after{display:none}
+.dial .cap .t{color:rgba(237,237,234,.45)}
+.dial .cap .t b{color:#EDEDEA}
+.dial .grab{background:rgba(255,255,255,.07);color:#EDEDEA}
+.dl-top{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:2px}
+.dl-big{line-height:0;color:#D6D6D2;min-height:52px}
+.dl-big.over{color:#FF3B2F}.dl-it.over b{color:#FF5A4A}
+.dl-lab{font-size:14px;color:#F2F2EF;letter-spacing:.01em}
+.dl-ruler{position:relative;width:100%;height:46px;touch-action:none;cursor:ew-resize;-webkit-mask:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent);mask:linear-gradient(90deg,transparent,#000 16%,#000 84%,transparent)}
+.dl-ruler canvas{width:100%;height:100%;display:block}
+.dl-ruler i{position:absolute;left:50%;top:5px;bottom:5px;width:3px;margin-left:-1.5px;border-radius:2px;background:#E8F06B;box-shadow:0 0 10px rgba(232,240,107,.55)}
+.dl-dots{display:flex;gap:8px;margin:2px 0 4px}
+.dl-dots button{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.22);padding:0;transition:background .2s,transform .3s var(--spring)}
+.dl-dots button.on{background:#fff;transform:scale(1.2)}
+.dl-bot{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:center;margin-top:10px}
+.dl-list{display:grid;grid-template-columns:1fr 1fr;gap:12px 10px}
+.dl-it{display:grid;grid-template-columns:30px 1fr;grid-template-rows:auto auto;column-gap:9px;align-items:center;touch-action:none;cursor:ns-resize;min-width:0}
+.dl-mini{grid-row:1/3;width:30px;height:30px;border-radius:50%;background:#F2F2EF;position:relative;transition:background .25s,transform .35s var(--spring);box-shadow:0 6px 12px -6px rgba(0,0,0,.6)}
+.dl-mini i{position:absolute;inset:0;transform:rotate(var(--a,0deg));transition:transform .1s}
+.dl-mini i::after{content:"";position:absolute;left:calc(50% - 1px);top:4px;width:2px;height:8px;border-radius:1px;background:#B9A6C9}
+.dl-it.on .dl-mini{background:#E5539A}
+.dl-it.on .dl-mini i::after{background:#F9CFE2}
+.dl-it.act .dl-mini{transform:scale(1.14)}
+.dl-it b{font-weight:300;font-size:16px;color:#F2F2EF;line-height:1;font-variant-numeric:tabular-nums}
+.dl-it small{font-family:var(--f-mono);font-size:8.5px;color:rgba(237,237,234,.45);line-height:1.3}
+.dl-disc{position:relative;width:118px;height:118px;touch-action:none;cursor:ns-resize}
+.dl-disc canvas{position:absolute;inset:0;width:100%;height:100%}
+.dl-knob{position:absolute;inset:23px;border-radius:50%;background:radial-gradient(circle at 40% 32%,#fff,#ECECE8 72%);box-shadow:0 12px 26px -8px rgba(0,0,0,.7);transform:rotate(var(--a,0deg));transition:transform .1s}
+.dl-knob i{display:none}
+.dl-knob::after{content:"";position:absolute;left:calc(50% - 1px);top:7px;width:2px;height:10px;border-radius:1px;background:#1D1D1B}
+.dl-disc.act .dl-knob{transform:rotate(var(--a,0deg)) scale(1.05)}

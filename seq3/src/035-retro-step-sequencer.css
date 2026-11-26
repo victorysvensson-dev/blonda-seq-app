@@ -1,0 +1,49 @@
+/* ---------- retro step sequencer ---------- */
+.card.retro{--r1:#E5482F;--r2:#F08A2C;--r3:#F2C318;--r4:#E8E0CC;--ink2:#1A1815;color:#EDE6D6;
+  background:linear-gradient(180deg,#2B2824,#1B1916);-webkit-backdrop-filter:none;backdrop-filter:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.09),inset 0 -1px 0 rgba(0,0,0,.5),0 24px 48px -24px rgba(0,0,0,.65)}
+.card.retro::before{background:repeating-linear-gradient(90deg,rgba(255,255,255,.016) 0 1px,transparent 1px 4px);opacity:1}
+.card.retro::after{display:none}
+.retro .cap .t{text-transform:uppercase;letter-spacing:.2em;color:rgba(237,230,214,.5);font-size:8.5px}
+.retro .cap .t b{color:var(--r2)}
+.retro .grab{background:rgba(255,255,255,.06);color:#EDE6D6}
+.retro .row .rl{border-radius:3px;background:#34302A;color:#E9DFC8;text-transform:uppercase;letter-spacing:.1em;font-family:var(--f-mono);font-size:9px;font-weight:500;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
+.retro .row .rl::before{border-radius:1px;width:6px;height:6px}
+.retro .row.sel .rl{background:#E9DFC8;color:var(--ink2)}
+.retro .row.sel .rl::before{background:var(--tc);box-shadow:0 0 0 1px rgba(0,0,0,.3)}
+.retro .cells .cell{--k:var(--r1);aspect-ratio:1/1.32;border-radius:3px;background:color-mix(in srgb,var(--k) 24%,#1C1A17);color:var(--ink2);
+  display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;font-size:8px;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.1);transition:background .1s,transform .1s,filter .1s}
+.retro .cells .cell:nth-child(n+5){--k:var(--r2)}
+.retro .cells .cell:nth-child(n+9){--k:var(--r3)}
+.retro .cells .cell:nth-child(n+13){--k:var(--r4)}
+.retro .cells .cell::before{content:"";position:absolute;left:50%;top:20%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#3A1712;box-shadow:inset 0 1px 1px rgba(0,0,0,.6)}
+.retro .cells .cell.on{background:var(--k);transform:translateY(1px);box-shadow:inset 0 -1px 0 rgba(0,0,0,.35),inset 0 2px 3px rgba(0,0,0,.22)}
+.retro .cells .cell.on::before{background:var(--tc);box-shadow:0 0 6px 1px var(--tc),0 0 0 1px rgba(0,0,0,.35)}
+.retro .cells .cell.acc{box-shadow:inset 0 -1px 0 rgba(0,0,0,.35),inset 0 2px 3px rgba(0,0,0,.22)}
+.retro .cells .cell.acc::before{width:10px;margin-left:-5px;border-radius:3px}
+.retro .cells .cell.ph{outline:none;filter:brightness(1.5) saturate(1.1)}
+.retro .steprule .cells{padding-bottom:6px;background:linear-gradient(90deg,var(--r1) 0 24.5%,transparent 24.5% 25.5%,var(--r2) 25.5% 49.5%,transparent 49.5% 50.5%,var(--r3) 50.5% 74.5%,transparent 74.5% 75.5%,var(--r4) 75.5%) bottom/100% 2px no-repeat}
+.retro .steprule .cells span{position:relative;padding-bottom:10px;font-size:8px;color:rgba(237,230,214,.42)}
+.retro .steprule .cells span::after{content:"";position:absolute;left:50%;bottom:1px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:#3A1712}
+.retro .steprule .cells span.ph{color:#EDE6D6}
+.retro .steprule .cells span.ph::after{background:#FF4A33;box-shadow:0 0 7px 1px #FF4A33}
+.retro .chip{border-radius:4px;background:#34302A;color:#E9DFC8;text-transform:uppercase;letter-spacing:.1em;font-size:9px;
+  box-shadow:inset 0 -2px 0 rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.08)}
+.retro .chip.on{background:var(--r2);color:var(--ink2)}
+.retro .bigsteps{gap:7px}
+.retro .bigsteps .bs{--k:var(--r1);border-radius:6px;aspect-ratio:1/1.1;background:color-mix(in srgb,var(--k) 22%,#1C1A17);display:block;padding:0;
+  box-shadow:inset 0 -3px 0 rgba(0,0,0,.42),inset 0 1px 0 rgba(255,255,255,.1);transition:background .1s,transform .1s,filter .1s}
+.retro .bigsteps .bs:nth-child(n+5){--k:var(--r2)}
+.retro .bigsteps .bs:nth-child(n+9){--k:var(--r3)}
+.retro .bigsteps .bs:nth-child(n+13){--k:var(--r4)}
+.retro .bigsteps .bs::before{content:"";position:absolute;left:50%;top:14%;width:8px;height:8px;margin-left:-4px;border-radius:50%;background:#3A1712;box-shadow:inset 0 1px 2px rgba(0,0,0,.6)}
+.retro .bigsteps .bs i{left:8px;top:auto;bottom:6px;transform:none;color:rgba(237,230,214,.45);font-size:9px}
+.retro .bigsteps .bs span{position:absolute;right:8px;bottom:5px;margin:0;font-family:var(--f-mono);font-size:12px;font-weight:600;color:var(--ink2)}
+.retro .bigsteps .bs.on{background:var(--k);transform:translateY(2px);box-shadow:inset 0 -1px 0 rgba(0,0,0,.35),inset 0 3px 5px rgba(0,0,0,.24)}
+.retro .bigsteps .bs.on i{color:rgba(26,24,21,.55)}
+.retro .bigsteps .bs.on::before{background:var(--tc);box-shadow:0 0 10px 2px var(--tc),0 0 0 1px rgba(0,0,0,.35)}
+.retro .bigsteps .bs.acc::after{display:none}
+.retro .bigsteps .bs.acc::before{width:18px;margin-left:-9px;border-radius:4px}
+.retro .bigsteps .bs.ph{filter:brightness(1.45);box-shadow:inset 0 -3px 0 rgba(0,0,0,.42),0 0 0 2px #FF4A33}

@@ -1,0 +1,8 @@
+/* ===== A–D + copy inside the pattern card ===== */
+.gpats{display:inline-flex;gap:4px;margin-left:auto;margin-right:8px;align-items:center}
+.gpats button{font-family:var(--f-mono);font-size:10px;letter-spacing:.04em;min-width:22px;height:22px;padding:0 6px;border:0;border-radius:0;background:none;color:rgba(232,230,220,.6);box-shadow:inset 0 0 0 1px #2F3034;cursor:pointer}
+.gpats button.cur{background:#E9C54A;color:#17181A;box-shadow:none}
+.gpats button.queued{box-shadow:inset 0 0 0 1px #E9C54A;color:#E9C54A}
+.gpats button.has:not(.cur){color:#E8E6DC}
+.gpats .gcopy{margin-left:4px}
+@media (max-width:719px){.gpats .gcopy span{display:none}}

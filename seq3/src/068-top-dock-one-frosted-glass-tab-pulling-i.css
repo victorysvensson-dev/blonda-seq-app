@@ -1,0 +1,46 @@
+/* ---------- top dock: one frosted-glass tab; pulling it down grows the same tab (controls stay put) ---------- */
+.dock-slot{position:relative;z-index:30;align-self:flex-start;margin-top:-14px;width:var(--dw0,620px);height:var(--dh0,72px);flex:none}
+.dock{position:absolute;top:0;left:50%;transform:translateX(-50%);width:var(--dw0,620px);display:flex;flex-direction:column;align-items:center;padding:12px 14px 0;box-sizing:border-box;
+  color:#F5F5F2;border-radius:0 0 24px 24px;
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.07));-webkit-backdrop-filter:blur(26px) saturate(1.6);backdrop-filter:blur(26px) saturate(1.6);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.18),inset 0 1px 0 rgba(255,255,255,.35),0 18px 40px -20px rgba(0,0,0,.6);
+  transition:width .5s cubic-bezier(.2,1.1,.3,1),border-radius .3s}
+.dock-d{order:-1}.dock .pats{order:0}.dock-h{order:1}.dock-slot{margin-bottom:12px}
+.dock .pats{gap:6px;order:0}
+.dock .patseg{background:rgba(255,255,255,.08);-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+.dock .patseg .pat{color:rgba(245,245,242,.45)}.dock .patseg .pat.cur{color:#111211}
+.dock .gbtn{background:rgba(255,255,255,.1);color:#F5F5F2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);-webkit-backdrop-filter:none;backdrop-filter:none}
+.dock .gbtn:hover{background:rgba(255,255,255,.18)}.dock .mbtn .mdot{background:rgba(255,255,255,.35)}
+#palBtn{width:112px;justify-content:center;overflow:hidden;white-space:nowrap}
+.dock-h{width:100%;height:20px;display:grid;place-items:center;cursor:grab;touch-action:none;flex:none}
+.dock-h i{width:38px;height:4px;border-radius:2px;background:rgba(255,255,255,.35);transition:width .25s var(--spring),background .2s}
+.dock-h:hover i,.dock.open .dock-h i{width:52px;background:rgba(255,255,255,.6)}
+.dock-d{width:100%;max-height:calc(var(--o,0)*min(520px,72vh));overflow:hidden;opacity:var(--o,0)}
+.dock.drag .dock-d,.dock.drag{transition:none}.dock:not(.drag) .dock-d{transition:max-height .5s cubic-bezier(.2,1.1,.3,1),opacity .3s}
+.dock-in{padding:2px 2px 14px;display:flex;flex-direction:column;gap:12px;font-family:var(--f-mono);font-size:11px}
+.dk-name{display:flex;align-items:center;gap:8px}
+.dk-name input{flex:1;min-width:0;height:38px;border:0;border-radius:12px;padding:0 12px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:#F5F5F2;font-family:var(--f-display);font-size:16px}
+.dk-name small{color:rgba(245,245,242,.55);white-space:nowrap}
+.dk-row{display:flex;gap:6px;flex-wrap:wrap}
+.dk-row button{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);color:#F5F5F2;font:inherit;letter-spacing:.04em}
+.dk-row button:hover{background:rgba(255,255,255,.18)}.dk-row button.go{background:#F5F5F2;color:#111211;box-shadow:none}.dk-row button.on{background:#F2C318;color:#111211;box-shadow:none}
+.dk-row svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.dk-lab{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:rgba(245,245,242,.5)}
+.dk-songs{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.dk-songs::-webkit-scrollbar{display:none}
+.dk-song{flex:none;width:132px;border-radius:12px;background:rgba(17,18,17,.86);color:#F5F5F2;padding:8px 9px 9px;text-align:left;display:flex;flex-direction:column;gap:5px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transition:transform .15s}
+.dk-song:active{transform:scale(.97)}.dk-song.cur{box-shadow:inset 0 0 0 2px #F2C318}
+.dk-song b{font-family:var(--f-display);font-weight:400;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dk-song small{font-size:9px;color:rgba(245,245,242,.5)}.dk-song canvas{width:100%;height:36px;display:block;opacity:.85}
+.dk-tap b{min-width:30px;text-align:right}
+@media (max-width:719px){.dock-slot{order:3;width:100%;margin-top:0}.dock{left:0;transform:none;width:100%;border-radius:22px;padding:8px 8px 0}.dock.open{width:100%}.dock .pats{width:100%;justify-content:space-between}#palBtn{width:96px}}
+.toast{top:calc(var(--dockB,64px) + 14px);opacity:0;visibility:hidden;transform:translate(-50%,-10px)!important;transition:opacity .25s,transform .35s var(--spring),visibility 0s .3s}
+.toast.show{opacity:1;visibility:visible;transform:translate(-50%,0)!important;transition:opacity .2s,transform .35s var(--spring),visibility 0s}
+.dock button:focus-visible{outline:2px solid rgba(255,255,255,.4);outline-offset:2px}
+.app .transport{padding-top:14px;padding-bottom:calc(26px + env(safe-area-inset-bottom,0px));border-radius:26px 26px 0 0}
+/* bottom bar and the deck that pulls up from it share one width, so they read as one object */
+@media (min-width:720px){.app .transport{margin-inline:0;padding-left:18px;padding-right:16px}
+  .deck{left:max(14px,env(safe-area-inset-left,0px))!important;right:max(14px,env(safe-area-inset-right,0px))!important}
+  html.coarse .deck{left:max(22px,env(safe-area-inset-left,0px))!important;right:max(22px,env(safe-area-inset-right,0px))!important}}
+/* transport: keyboard, rec and play the same size */
+.tr-r .kbtn,.tr-r .rec,.tr-r .play{width:54px;height:54px}.tr-r .kbtn svg{width:24px;height:24px}.tr-r .rec i{width:16px;height:16px}
+@media (max-width:719px){.tr-r .kbtn,.tr-r .rec,.tr-r .play{width:50px;height:50px}}

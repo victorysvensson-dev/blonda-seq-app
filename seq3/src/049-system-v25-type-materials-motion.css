@@ -1,0 +1,45 @@
+/* ================= system · v25: type, materials, motion ================= */
+:root{--rad:22px;--elev:0 1px 0 rgba(255,255,255,.04),0 26px 50px -26px rgba(0,0,0,.65);--paper-a:#F7F6F1;--paper-b:#EAE9E2;--ink:#1D1D1B;
+  --ease-out:cubic-bezier(.22,1,.36,1)}
+body{font-feature-settings:"ss01","cv11";-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+/* type roles: Sans for reading, Mono for labels, Pixel for the wordmark, Linje for technical readouts */
+.brand b{font-family:var(--f-pixel);font-weight:400;font-size:16px;letter-spacing:.08em}
+.brand span{font-family:var(--f-mono);letter-spacing:.04em}
+.cap .t{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.09em}
+.steprule .cells span,#pos,.clock small{font-family:var(--f-linje)}
+.steprule .cells span{font-size:9px}
+.gbtn,.chip,.tabs button{font-family:var(--f-mono);letter-spacing:.03em}
+/* materials — three on purpose:
+   1 smoked glass for navigation & mixing · 2 paper for editors (grid, steps, live, master)
+   3 instrument colour for sound (ljud, synth) and black hardware for the dial */
+.card{border-radius:var(--rad)}
+.card,.card.lite,.card.dial{box-shadow:var(--elev),inset 0 1px 0 rgba(255,255,255,.14)}
+.card.lite,.card.lite.warm{background:linear-gradient(170deg,var(--paper-a),var(--paper-b));box-shadow:var(--elev),inset 0 1px 0 #fff;border-radius:var(--rad)}
+.card.lite.warm{background:linear-gradient(170deg,#F9F7EE,#EDEAD9)}
+.card.lite.sndcard{border-radius:var(--rad)}
+.card.dial{border-radius:var(--rad)}
+.pane{gap:14px}
+/* motion */
+.patseg{position:relative}
+.patseg .pind{position:absolute;top:3px;left:3px;width:32px;height:32px;border-radius:50%;background:var(--yellow);box-shadow:0 6px 18px -6px rgba(242,195,24,.8);
+  transform:translateX(calc(var(--pi,0)*34px));transition:transform .5s var(--spring);pointer-events:none}
+.patseg .pat{position:relative;z-index:1}
+.patseg .pat.cur{background:transparent;box-shadow:none;color:#111211}
+.chip,.gbtn,.pat,.cbtn,.tag{transition:transform .35s var(--spring),background .25s,color .2s,filter .2s,opacity .2s}
+.chip:active,.gbtn:active,.tag:active{transform:scale(.95)}
+.seqlite .cells .cell::before{transition:width .38s var(--spring),height .38s var(--spring),background .2s,box-shadow .25s}
+.grid.swap .cell{animation:swapIn .5s var(--ease-out) both;animation-delay:calc(var(--sx,0)*14ms)}
+@keyframes swapIn{from{opacity:.25;transform:scale(.86)}to{opacity:1;transform:none}}
+.card.enter{animation:enter .55s var(--ease-out) both;animation-delay:calc(var(--i,0)*45ms)}
+@keyframes enter{from{opacity:0;filter:blur(10px);transform:translateY(16px) scale(.985)}to{opacity:1;filter:blur(0);transform:none}}
+.toast{transition:transform .45s var(--spring),opacity .3s}
+.dev-head b{font-family:var(--f-pixel);font-weight:400;letter-spacing:.06em}
+.start .go{font-family:var(--f-mono)}
+.card.syn{container-type:inline-size}
+/* hard guards: the synth body must always span the card, never shrink to min-content (Safari re-layout after overlays) */
+.syn-in,#engGen,#engAnalog,.edials,.eopts,.eng-head{width:100%;max-width:100%;box-sizing:border-box}
+.eng{white-space:nowrap}.eng i{flex:none}
+.eng-head{flex-wrap:nowrap}.eng-name{white-space:nowrap;flex:none}.eng-tag{min-width:0;text-align:right}
+.eng-cv{width:100%!important}
+@container (max-width:470px){.card.syn .cap .t{display:none}.card.syn .cap .capr{width:100%;justify-content:flex-end}}
+

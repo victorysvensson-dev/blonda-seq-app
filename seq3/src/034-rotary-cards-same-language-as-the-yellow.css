@@ -1,0 +1,15 @@
+/* ---------- rotary cards: same language as the yellow player ---------- */
+.card.deckish{background:var(--yellow);color:#111211;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 24px 48px -24px rgba(0,0,0,.6)}
+.card.deckish::before,.card.deckish::after{display:none}
+.deckish .cap .t{color:rgba(17,18,17,.55)}
+.deckish .cap .t b{color:#111211}
+.deckish .grab{background:rgba(17,18,17,.08);color:#111211}
+.deckish .knob .face{background:#111211;box-shadow:0 8px 14px -8px rgba(0,0,0,.45)}
+.deckish .knob .face::before{background:conic-gradient(from 225deg,#111211 calc(var(--v)*270deg),rgba(17,18,17,.17) 0 270deg,transparent 0)}
+.deckish .knob .mark::after{background:var(--yellow)}
+.deckish .knob .face::after{background:var(--kc);width:7px;height:7px;margin:-3.5px 0 0 -3.5px;box-shadow:0 0 0 1.5px #111211}
+.deckish .knob .kl{color:rgba(17,18,17,.6)}
+.deckish .knob .kv{line-height:0;margin-top:4px;color:#111211;min-height:14px}
+.deckish .knob .bubble{background:#111211;color:var(--yellow)}
+.deckish .meter{background:rgba(17,18,17,.2)}
+.deckish .meter i{background:#111211}

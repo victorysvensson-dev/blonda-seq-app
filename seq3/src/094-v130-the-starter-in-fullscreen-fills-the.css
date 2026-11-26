@@ -1,0 +1,20 @@
+/* ===== v130: the Starter in fullscreen fills the screen — rings + controls | sounds, knobs, fx | the editor ===== */
+.fullhost>.card.stx{width:100%;max-width:none;height:100%;max-height:100%}
+/* fw3 = three parts (wide), fw2 = rings + controls left, the editor right, fw1 = as in the card (set by the card's script) */
+.fullhost>.card.stx #stBox.fw3,.fullhost>.card.stx #stBox.fw2{display:grid;column-gap:26px;align-items:start}
+.fullhost>.card.stx #stBox.fw3{grid-template-columns:minmax(0,1.2fr) minmax(0,.9fr) minmax(0,1.35fr)}
+.fullhost>.card.stx #stBox.fw3:has(.sx-adv[hidden]){grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+.fullhost>.card.stx #stBox.fw2{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}
+.fullhost>.card.stx #stBox.fw2>.sx-c1{grid-column:1;grid-row:1}.fullhost>.card.stx #stBox.fw2>.sx-c2{grid-column:1;grid-row:2}.fullhost>.card.stx #stBox.fw2>.sx-adv{grid-column:2;grid-row:1/span 2}
+.fullhost>.card.stx #stBox.fw2:has(.sx-adv[hidden]){grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.fullhost>.card.stx #stBox.fw2:has(.sx-adv[hidden])>.sx-c2{grid-column:2;grid-row:1}
+.fullhost>.card.stx :is(.fw3,.fw2) .sx-c1,.fullhost>.card.stx :is(.fw3,.fw2) .sx-c2{display:flex;flex-direction:column;min-width:0}
+.fullhost>.card.stx :is(.fw3,.fw2) .sx-c2>.sx-smp{margin-top:0}
+.fullhost>.card.stx .fw3 .sx-c2>.sx-knobs{grid-template-columns:repeat(6,minmax(0,1fr));row-gap:12px;margin-top:14px}
+.fullhost>.card.stx .fw3 .sx-c2>.sx-fx{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fullhost>.card.stx :is(.fw3,.fw2)>.sx-adv{margin-top:0;max-height:var(--advh,calc(100vh - 120px));overflow:auto;scrollbar-width:thin;padding-right:4px}
+.fullhost>.card.stx :is(.fw3,.fw2) .sx-orb{max-width:min(640px,calc(var(--advh,100vh) - 230px))}
+.fullhost>.card.stx :is(.fw3,.fw2) .sx-wrap{grid-template-columns:minmax(0,1fr) 210px}
+.fullhost>.card.stx .sx-mid{width:62%}.fullhost>.card.stx .sx-big{font-size:clamp(26px,3.2vw,46px);overflow:visible;text-overflow:clip}
+.fullhost>.card.stx .sx-slots button b{font-size:13px}
+.fullhost>.card.stx .sx-strips{grid-template-columns:repeat(2,minmax(0,1fr))}
+}

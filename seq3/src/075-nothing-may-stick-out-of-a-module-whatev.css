@@ -1,0 +1,62 @@
+/* ===== nothing may stick out of a module, whatever the column width ===== */
+.pane{overflow-x:hidden}
+.card[data-card="pads"]{container-type:inline-size}
+.pad b{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container (max-width:420px){.card[data-card="pads"] .pads{gap:5px}.card[data-card="pads"] .pad{padding:6px 5px}.card[data-card="pads"] .pad b{font-size:11.5px;letter-spacing:-.02em}.card[data-card="pads"] .pad::after{width:6px;height:6px;right:5px;top:5px}}
+@container (max-width:300px){.card[data-card="pads"] .pad b{font-size:10.5px}}
+.card[data-card="song"]{container-type:inline-size}
+@container (max-width:520px){.card[data-card="song"] .chain{grid-template-columns:repeat(4,1fr)}.card[data-card="song"] .chain .slot{aspect-ratio:1/.62}}
+/* medium screens (iPad Air/mini portrait): the dock gets its own row instead of lying over the name and the tempo */
+@media (min-width:720px) and (max-width:999px){.top{grid-template-columns:minmax(0,1fr) auto}.dock-slot{order:3;grid-column:1/-1;width:100%;margin-top:0}.dock{left:0;transform:none;width:100%;padding:8px 8px 0}.dock.open{width:100%}.dock .pats{width:100%;justify-content:space-between}}
+/* pads in full screen: 4×4, pad 1 bottom left (MPC order), the pad number top left */
+.pad.gxp{display:none}
+.fullhost .card[data-card="pads"] .pads{grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(4,auto);gap:10px;max-width:min(100%,calc((100vh - 170px) * 1.25));margin-inline:auto}
+.fullhost .card[data-card="pads"] .pad{grid-row:var(--mr);grid-column:var(--mc);aspect-ratio:1/.8}
+.fullhost .card[data-card="pads"] .pad.gxp{display:flex}
+.fullhost .card[data-card="pads"] .pad.gxp::after{background:none;box-shadow:inset 0 0 0 1px currentColor}
+.pad.gxp.hit{background:var(--yellow);color:#111211}
+/* mixer: all channels fit side by side when there is room (no sideways scrolling) */
+.mixer .mx{grid-auto-columns:minmax(38px,1fr);gap:4px}
+@container (min-width:470px){.mixer .mx-wrap{-webkit-mask-image:none;mask-image:none;padding-right:6px}}
+@container (max-width:640px){.mixer .ms{padding-inline:3px}.mixer .ms .bt{flex-wrap:wrap;row-gap:3px}.mixer .ms .bt button{width:20px}}
+.ms .mks,.ms .mlab,.ms .mscale{display:none}
+/* full screen: a classic mixing desk */
+.fullhost>.card.mixer{width:min(100%,1400px)}
+.fullhost .mixer .mx{grid-auto-columns:minmax(64px,1fr);gap:4px}
+.fullhost .mixer .ms{grid-template-rows:auto auto 1fr auto auto auto;gap:10px;padding:12px 4px 8px;border-radius:10px}
+.fullhost .mixer .ms .mks{display:flex;flex-direction:column;align-items:center;gap:8px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.fullhost .mixer .ms .pn{display:none}
+.fullhost .mixer .ms .fd{min-height:clamp(200px,calc(100vh - 560px),560px);gap:10px}
+.fullhost .mixer .ms .tr{width:6px}
+.fullhost .mixer .ms .tr .cap0{width:38px;height:20px;margin:0 0 -10px -19px;border-radius:4px}
+.fullhost .mixer .ms .tr .cap0::after{top:9.5px;left:4px;right:4px}
+.fullhost .mixer .ms .mt{width:6px}
+.fullhost .mixer .ms .mscale{display:flex;position:absolute;right:2px;top:0;bottom:0;flex-direction:column;justify-content:space-between;font-family:var(--f-linje);font-size:7px;color:rgba(245,245,242,.35);pointer-events:none;transform:translateY(-4px)}
+.fullhost .mixer .ms .scale{display:none}
+.fullhost .mixer .ms .nm span{display:none}
+.fullhost .mixer .ms .db{font-size:11px}
+.fullhost .mixer .ms .bt button{width:26px;height:24px;font-size:10px}
+.fullhost .mixer .ms .mlab{display:block;text-align:center;font-family:var(--f-mono);font-size:10px;letter-spacing:.03em;padding:5px 2px;margin:0 2px;border-radius:3px;background:rgba(255,255,255,.08);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fullhost .mixer .ms.sel .mlab{background:var(--tc);color:#111211}
+.fullhost .mixer .ms.master .mlab{background:var(--yellow);color:#111211}
+.mk{display:grid;justify-items:center;gap:1px;cursor:ns-resize;touch-action:none;user-select:none;-webkit-user-select:none}
+.mk-k{position:relative;width:30px;height:30px}
+.mk-k::before{content:"";position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 225deg,var(--tc) 0 calc(var(--v,0)*270deg),rgba(255,255,255,.16) 0 270deg,transparent 0);-webkit-mask:radial-gradient(circle,transparent 58%,#000 60%);mask:radial-gradient(circle,transparent 58%,#000 60%)}
+.mk.pan .mk-k::before{background:conic-gradient(from 225deg,rgba(255,255,255,.16) 0 270deg,transparent 0)}
+.mk-k i{position:absolute;inset:0;transform:rotate(calc(var(--v,0)*270deg - 135deg))}
+.mk-k i::after{content:"";position:absolute;left:calc(50% - 1px);top:1px;width:2px;height:10px;border-radius:1px;background:#F5F5F2}
+.mk em{font-style:normal;font-family:var(--f-mono);font-size:8px;letter-spacing:.04em;opacity:.55}
+.mk b{font-family:var(--f-linje);font-size:9px;font-weight:400;font-variant-numeric:tabular-nums;opacity:.85}
+/* glitch: the screen always filled, a segment slider, big pads in full screen */
+.gx-box{height:clamp(132px,15vw,210px)}
+.gx-scr{white-space:pre;overflow:hidden;max-width:100%}
+.gx-sl{display:flex;align-items:flex-end;gap:2px;height:26px}
+.gx-sl::before,.gx-sl i,.gx-sl b{display:none}
+.gx-sl s{flex:1;height:calc(var(--h,1)*100%);background:rgba(255,255,255,.1);text-decoration:none;pointer-events:none;transition:background .12s}
+.gx-sl s.on{background:#E9C54A}
+.fullhost>.card.gx{display:flex;flex-direction:column;height:min(100%,980px)}
+.fullhost>.card.gx .gx-box{flex:1;height:auto;min-height:260px}
+.fullhost>.card.gx .gx-pad button{height:clamp(56px,9vh,96px);font-size:12px}
+.fullhost>.card.gx .gx-sl{height:40px}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .gx-sl s{background:transparent;box-shadow:inset 0 0 0 1px rgba(232,230,220,.6)!important}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .gx-sl s.on{background:#E8E6DC}

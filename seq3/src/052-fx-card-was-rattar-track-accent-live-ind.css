@@ -1,0 +1,14 @@
+/* ---------- FX card (was Rattar): track accent, live indicators ---------- */
+.card.dial{--fxc:#F2C318}
+.dl-ruler i{background:var(--fxc);box-shadow:0 0 10px var(--fxc)}
+.dl-it.on .dl-mini{background:var(--fxc);box-shadow:0 0 0 3px rgba(255,255,255,.08),0 8px 18px -6px var(--fxc)}
+.dl-it.on .dl-mini i::after{background:rgba(17,17,17,.55)}
+.dl-it:not(.live) .dl-mini{background:#5A5A58}
+.dl-it:not(.live).on .dl-mini{background:var(--fxc)}
+.dl-it:not(.live) b{color:rgba(242,242,239,.45)}
+.dl-it small{display:flex;align-items:center;gap:5px}
+.dl-it.live small::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--fxc);box-shadow:0 0 6px var(--fxc)}
+.dl-lab{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:lowercase}
+.dl-desc{font-size:11px;color:rgba(237,237,234,.45);margin-top:-4px;text-align:center}
+.dl-list{grid-template-columns:1fr 1fr;gap:14px 12px}
+

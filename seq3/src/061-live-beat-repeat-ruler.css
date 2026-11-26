@@ -1,0 +1,15 @@
+/* ---------- live: beat repeat ruler ---------- */
+.rpt{margin-top:12px;color:#1D1D1B}
+.rpt-h{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;font-family:var(--f-mono);font-size:10px;letter-spacing:.06em;color:rgba(29,29,27,.55)}
+.rpt-h b{font-family:var(--f-linje,var(--f-display));font-weight:400;font-size:22px;color:#1D1D1B;letter-spacing:0;min-width:58px}
+.rpt-h small{margin-left:auto;font-size:9.5px}
+.rpt-ruler{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px;touch-action:none;-webkit-user-select:none;user-select:none;cursor:ew-resize}
+.rpt-c{height:78px;border-radius:10px;background:rgba(29,29,27,.05);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px 0 9px;
+  font-family:var(--f-mono);font-size:10px;color:rgba(29,29,27,.6);transition:background .1s,color .1s,transform .1s}
+.rpt-c .d{display:flex;flex-direction:column-reverse;gap:3px;align-items:center}.rpt-c .d i{width:4px;height:4px;border-radius:50%;background:rgba(29,29,27,.28)}
+.rpt-c.t{background:rgba(29,29,27,.025)}.rpt-c.t span{font-size:9px}
+.rpt-c.cur{background:#1D1D1B;color:#F2EFC9}.rpt-c.cur .d i{background:#F2C318}
+.rpt.on .rpt-c.cur{background:#F2C318;color:#1D1D1B;transform:translateY(1px);box-shadow:0 8px 22px -10px rgba(242,195,24,.9)}.rpt.on .rpt-c.cur .d i{background:#1D1D1B;animation:rptb var(--rr,.125s) steps(1) infinite}
+@keyframes rptb{50%{opacity:.25}}
+@media (max-width:420px){.rpt-c{height:64px;font-size:9px}.rpt-c.t span{font-size:8px}}
+

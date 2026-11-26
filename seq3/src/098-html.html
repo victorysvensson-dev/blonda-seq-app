@@ -1,0 +1,365 @@
+</style>
+
+<div id="dotsTint" aria-hidden="true"></div>
+<canvas id="bg" aria-hidden="true"></canvas>
+<div class="grain" id="grain" aria-hidden="true"></div>
+
+<div class="app" id="app">
+  <header class="top">
+    <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
+      <div><b>BLONDA<i class="ver">v283</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+    </button>
+    <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
+    <div class="pats" id="pats" role="group" aria-label="Mönster">
+      <div class="patseg" role="group" aria-label="Mönster A–D"><i class="pind" aria-hidden="true"></i>
+      <button class="pat" data-p="0" style="--c:var(--yellow)" aria-label="Mönster A">A</button>
+      <button class="pat" data-p="1" style="--c:var(--lilac)" aria-label="Mönster B">B</button>
+      <button class="pat" data-p="2" style="--c:var(--pink)" aria-label="Mönster C">C</button>
+      <button class="pat" data-p="3" style="--c:var(--sage)" aria-label="Mönster D">D</button>
+      </div>
+      <button class="gbtn ic" id="copyPat" title="Kopiera mönstret till nästa" aria-label="Kopiera mönstret till nästa"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="5" width="8.5" height="8.5" rx="2"/><path d="M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5"/></svg></button>
+      <button class="gbtn" id="palBtn" title="Byt färg och bakgrund (ljudet ändras inte)">Velvet</button>
+      <button class="gbtn" id="lookBtn" title="Utseende: glas · studio · dots"><i class="ldot"></i><span>glas</span></button>
+      <button class="gbtn mbtn" id="midiBtn" title="MIDI · klocka och synk"><i class="mdot"></i>midi</button>
+      <button class="gbtn" id="pjBtn2" title="Projekt – spara, öppna, byt låt"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2 4.5a1 1 0 0 1 1-1h3.2l1.5 1.6H13a1 1 0 0 1 1 1V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>projekt</button>
+      <button class="gbtn" id="libBtn" title="Ljudbibliotek – samples, loopar, presets"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 2.5v11M6.5 2.5v11M10 3l3 10.2"/></svg>lib</button>
+    </div>
+    <button class="dock-h" id="dockH" aria-label="Dra ner för projekt och låtar" aria-expanded="false"><i></i></button>
+    <div class="dock-d" id="dockD" aria-hidden="true"><div class="dock-in" id="dockIn"></div></div>
+    </div></div>
+    <div class="bpm" role="group" aria-label="Tempo">
+      <button id="bpmDn" aria-label="Sänk tempo"><svg viewBox="0 0 16 16"><path d="M4 8h8"/></svg></button>
+      <div class="bpmv"><div class="num" id="bpmNum" data-dh="20" title="Dra upp/ner för att ändra tempo"></div><span>bpm</span></div>
+      <button id="bpmUp" aria-label="Öka tempo"><svg viewBox="0 0 16 16"><path d="M4 8h8M8 4v8"/></svg></button>
+    </div>
+  </header>
+
+  <main class="panes" id="panes" data-v="seq">
+    <section class="pane left" data-pane="left">
+      <div class="card orbit in-seq in-pads" data-card="tracks">
+        <div class="cap"><span class="t">Orbit · <b id="selName">01 Kick</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="orb-wrap">
+          <div class="orb" id="orb"><canvas id="orbC"></canvas><div class="orb-mid"><div class="orb-big" id="orbBig"></div><small id="orbSub"></small></div></div>
+          <div class="orb-side">
+            <div class="orb-ctl" data-k="k"><span>slag</span><button data-d="-1" aria-label="Färre slag">−</button><b id="orbK"></b><button data-d="1" aria-label="Fler slag">+</button></div>
+            <div class="orb-ctl" data-k="r"><span>rotera</span><button data-d="-1" aria-label="Rotera bakåt">−</button><b id="orbR"></b><button data-d="1" aria-label="Rotera framåt">+</button></div>
+            <div class="orb-ctl" data-k="l"><span>längd</span><button data-d="-1" aria-label="Kortare">−</button><b id="orbL"></b><button data-d="1" aria-label="Längre">+</button></div>
+            <p class="orb-hint">tryck på en ring för att välja spår · på en prick för att tända</p>
+          </div>
+        </div>
+        <div class="orb-trk" id="orbTrk"></div>
+        <div class="tags" id="tags" hidden></div>
+      </div>
+      <div class="card lite seqlite dotm in-seq fold-only" data-card="steps">
+        <div class="cap"><span class="t">Steg · tryck på/av · håll = detaljer <b id="melHint"></b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="bigsteps" id="bigsteps"></div>
+      </div>
+      <div class="card in-pads" data-card="pads">
+        <div class="cap"><span class="t">Pads · 1–0 <b id="recHint"></b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="pads" id="pads"></div>
+      </div>
+      <div class="card lite sndcard in-seq in-pads" data-card="sound">
+        <div class="cap"><span class="t">Ljud · <b id="knobTitle">Kick</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="snd" id="trackKnobs"></div>
+      </div>
+      <div class="card dial in-seq in-pads" data-card="knobs">
+        <div class="cap"><span class="t">FX · <b id="knobTitle2">kick</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="dl" id="trackKnobs2"></div>
+      </div>
+      <div class="card syn in-pads" data-card="synth">
+        <div class="syn-in" id="synIn">
+          <div class="cap"><span class="t"><b id="synName">bass</b></span><span class="capr"><span class="seg" id="synSeg"><button data-t="6" data-ti="6" class="on">bass</button><button data-t="7" data-ti="7">keys</button><button data-t="8" data-ti="8">lead</button><button data-t="9" data-ti="9">pad</button><button data-t="20" data-ti="20">bris</button><button data-t="21" data-ti="21">fm</button><button data-t="22" data-ti="22">101</button><button data-t="23" data-ti="23">acid</button></span><button class="rollbtn" id="synRoll" aria-label="Öppna piano roll" title="Piano roll"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2" width="11" height="10" rx="1.5"/><path d="M5 2v6M9 2v6M5 8v4M9 8v4"/></svg></button><button class="grab" aria-label="Dra kortet"></button></span></div>
+          <div class="engs" id="engs" role="group" aria-label="Instrument"></div>
+          <div id="engAnalog">
+          <div class="syn-top">
+            <div class="syn-big" id="synCut" title="Dra upp/ner"><small>cutoff</small><span></span><sup>hz</sup></div>
+            <div class="syn-mini"><div class="syn-sm" data-k="res" title="Dra upp/ner"><small>res</small><span></span><sup>%</sup></div><div class="syn-sm" data-k="env" title="Dra upp/ner"><small>env</small><span></span><sup>%</sup></div></div>
+          </div>
+          <canvas class="syn-cv" id="synCv" aria-label="Envelope: dra punkterna"></canvas>
+          <div class="syn-waves" id="synWaves">
+            <button data-w="sine" aria-label="Sinus"><svg viewBox="0 0 22 22"><path d="M2 11c2.5-7 6-7 9 0s6.5 7 9 0"/></svg></button>
+            <button data-w="triangle" aria-label="Triangel"><svg viewBox="0 0 22 22"><path d="M2 15l5-9 8 12 5-9"/></svg></button>
+            <button data-w="sawtooth" aria-label="Sågtand"><svg viewBox="0 0 22 22"><path d="M2 16L11 5v11l9-11v11"/></svg></button>
+            <button data-w="square" aria-label="Fyrkant"><svg viewBox="0 0 22 22"><path d="M2 15V6h6v10h6V6h6"/></svg></button>
+          </div>
+          </div>
+          <div id="engGen" hidden>
+            <div class="eng-head"><div class="eng-name" id="engName"></div><div class="eng-tag" id="engTag"></div></div>
+            <canvas class="eng-cv" id="engCv"></canvas>
+            <div class="edials" id="engDials"></div>
+            <div class="eopts" id="engOpts"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card bris in-pads" data-card="bris" data-clone="bris">
+        <div class="cap"><span class="t">Bris · <b>6 röster analog</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="br-body"></div>
+      </div>
+      <div class="card clone moog in-pads" data-card="minimoog" data-clone="mini">
+        <div class="cap"><span class="t">Moog · <b>model d</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="cl-body"></div>
+      </div>
+      <div class="card clone s101 in-pads" data-card="sh101" data-clone="sh101">
+        <div class="cap"><span class="t">SH-101 · <b>mono synth</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="cl-body"></div>
+      </div>
+      <div class="card in-pads in-mix in-live" data-card="scope">
+        <div class="cap"><span class="t">Ut · nivå</span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="scope"><canvas id="scope"></canvas><div class="big"><span id="peak" data-dh="24"></span><small>dB</small></div></div>
+      </div>
+    </section>
+    <div class="hinge" aria-hidden="true"></div>
+    <section class="pane right" data-pane="right">
+      <div class="card lite seqlite dotm in-grid" data-card="grid">
+        <div class="cap"><span class="t">Mönster <b id="patName">A</b> · takt <b id="barNum">1</b></span><span class="gpats" id="gPats"><button data-p="0">A</button><button data-p="1">B</button><button data-p="2">C</button><button data-p="3">D</button><button class="gcopy" id="gCopy" title="Kopiera mönstret till nästa och gå dit">kopiera<span> → B</span></button></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="steprule"><span></span><div class="cells" id="rule"></div></div>
+        <div class="grid" id="grid"></div>
+        <div class="actions">
+          <button class="chip" id="actRoll"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M6 3v6M10 3v6"/></svg>Piano roll</button>
+          <button class="chip dice" id="actDice" title="Kasta tärning – 1 liten variation … 6 allt nytt" aria-label="Kasta tärning"><span class="die" id="dieFace"></span>tärning</button>
+          <button class="chip" id="actVar"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 12c3 0 4-8 7-8s3 5 5 5"/></svg>Variation</button>
+          <button class="chip" id="actShift"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8h11M10 5l3 3-3 3"/></svg>Flytta</button>
+          <button class="chip" id="actClear"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3l10 10M13 3L3 13"/></svg>Rensa<span class="xs"> spår</span></button>
+          <span class="asep"></span>
+          <button class="chip" id="actMute">Mute</button>
+          <button class="chip" id="actSolo">Solo</button>
+          <span class="asep"></span><button class="chip ic" id="actUndo" title="Ångra (⌘Z)" aria-label="Ångra"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3L2 6l3 3"/><path d="M2 6h7a4 4 0 010 8H6"/></svg></button>
+          <button class="chip ic" id="actRedo" title="Gör om (⇧⌘Z)" aria-label="Gör om"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 3l3 3-3 3"/><path d="M14 6H7a4 4 0 000 8h3"/></svg></button>
+        </div>
+      </div>
+      <div class="card lite seqlite dotm in-grid synmod" data-card="synths">
+        <div class="cap"><span class="t">Syntar · mönster <b class="sm-pat">A</b> · <b class="sm-n">4 spår</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="steprule"><span></span><div class="cells sm-rule"></div></div>
+        <div class="grid sgrid" id="sgrid"></div>
+        <div class="actions trk-act"><button class="chip" data-add="1">+ synt</button><button class="chip ic" data-del="1" title="Ta bort sista syntspåret" aria-label="Ta bort sista syntspåret">−</button><span class="trk-hint"></span></div>
+      </div>
+      <div class="card loops in-seq in-live" data-card="loops">
+        <div class="cap"><span class="t">Loopar · <b id="loopRead">följer tempot</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="lps" id="lps"></div>
+        <div class="lps-f"><span id="loopInfo">dra in ljudfiler i biblioteket</span><button id="loopLib">bibliotek</button></div>
+      </div>
+      <div class="card sampler in-live" data-card="sampler"><div class="cap"><span class="t">Sampler · <b id="txRead">multisample</b></span><button class="grab" aria-label="Dra kortet"></button></div><div class="tx"></div></div>
+      <div class="card lite in-live" data-card="perform">
+        <div class="cap"><span class="t">Live · <b id="xyRead">håll och dra</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="xy" id="xy" role="application" aria-label="XY-pad: filter vänster/höger, effekter upp/ner"><canvas id="xyc"></canvas>
+          <span class="xtag x1" style="--d:#3D6CF5">filter <b id="xtF">av</b></span>
+          <span class="xtag x2" style="--d:#F2C318">fx <b id="xtFx">0 %</b></span>
+          <span class="xtag x3" style="--d:#27B26B">echo <b id="xtE"></b></span>
+          <span class="xtag x4" style="--d:#8E7CFF">space <b id="xtS"></b></span>
+          <span class="xtag x5" style="--d:#1D1D1B"><b id="xtB"></b></span>
+          <span class="xtag x6" style="--d:#FF6A1A"><b id="xtT"></b></span>
+          <span class="xl xl-y">↑ echo + space</span><span class="xl xl-x">← lowpass</span><span class="xl xl-r">highpass →</span><div class="puck" id="puck"></div></div>
+        <div class="dev-sub">
+          <div class="dev-head"><div><b>BLONDA LIVE</b><small>performance · gen 3</small></div><span class="dev-act" id="devAct">redo</span></div>
+          <div class="dev-nums"><div><small>filter</small><span id="dnF">0</span><sup id="dnFu">av</sup></div><div><small>effekt</small><span id="dnX">0</span><sup>%</sup></div></div>
+          <div class="rpt" id="rpt">
+            <div class="rpt-h"><span>repeat</span><b id="rptRate">1/16</b><small>håll · dra ← → för takt</small></div>
+            <div class="rpt-ruler" id="rptRuler" aria-label="Beat repeat: håll och dra"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card gx in-live in-mix" data-card="glitch">
+        <div class="cap"><span class="t">Glitch · <b id="gxRead">håll en pad</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="gx-box" id="gxBox"><pre class="gx-scr" id="gxScr" aria-hidden="true"></pre><span class="gx-tag" id="gxTag">· · ·</span></div>
+        <div class="gx-pads" id="gxPads"></div>
+        <div class="gx-auto"><span>slump</span><div class="gx-sl" id="gxSl" role="slider" aria-label="Slump – hur ofta glitchar kommer av sig själva"><i></i><b></b></div><em id="gxN">0 %</em></div>
+      </div>
+      <div class="card st2 in-live in-seq" data-card="starter">
+        <div class="cap"><span class="t">Starter · <b id="stRead">house</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div id="stBox"></div>
+      </div>
+      <div class="card stm in-live in-seq" data-card="stammor">
+        <div class="cap"><span class="t">Stämmor · <b id="smRead">ackord</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div id="smBox"></div>
+      </div>
+      <div class="card in-live" data-card="song">
+        <div class="cap"><span class="t">Låt · <b id="songRead">av</b></span><span class="capr"><button class="chip sm" id="songBtn">Låtläge</button><button class="grab" aria-label="Dra kortet"></button></span></div>
+        <div class="chain" id="chain"></div>
+      </div>
+      <div class="card master lite warm in-mix in-grid" data-card="master">
+        <div class="cap"><span class="t">Master · <b>Glue · Tape</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="knobs" id="masterKnobs"></div>
+        <div class="meter"><i id="meter"></i></div>
+      </div>
+      <div class="card mixer in-mix" data-card="mixer">
+        <div class="cap"><span class="t">Mixer · <b id="mixRead">10 kanaler</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="mx-wrap"><div class="mx" id="mx"></div></div>
+      </div>
+      <div class="card plugs in-mix" data-card="plugins">
+        <div class="cap"><span class="t">plugins · <b>master</b></span><button class="grab" aria-label="Dra kortet"></button></div>
+        <div class="ptiles" id="ptiles"></div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="tabs" id="tabs" aria-label="Vy">
+    <span class="ind" id="tabInd"></span>
+    <button data-v="seq" class="cur">Steg</button><button data-v="pads">Pads</button><button data-v="grid">Grid</button><button data-v="mix">Mix</button><button data-v="live">Live</button>
+  </nav>
+
+  <section class="kb" id="kb" hidden aria-label="Klaviatur">
+    <div class="kb-bar">
+      <div class="kb-trk" id="kbTrk"></div>
+      <div class="kb-oct"><button id="kbDn" aria-label="Oktav ner">−</button><b id="kbOct">C3</b><button id="kbUp" aria-label="Oktav upp">+</button></div>
+      <button class="kb-t kb-ch" id="kbChord" title="Ackordläge · en tangent ger ett ackord (BLONDA CHORDS)">ackord</button>
+      <button class="kb-t" id="kbScale" title="Bara toner i skalan">skala</button>
+      <button class="kb-t" id="kbHold" title="Toner ligger kvar tills du släpper håll">håll</button>
+      <button class="kb-t" id="kbMidi" title="Koppla in ett MIDI-keyboard">midi</button>
+      <button class="kb-x" id="kbX" aria-label="Stäng klaviatur"><svg viewBox="0 0 16 16"><path d="M4 6l4 4 4-4"/></svg></button>
+    </div>
+    <div class="kc" id="kc" hidden></div>
+    <div class="kb-keys" id="kbKeys"></div>
+  </section>
+  <footer class="transport">
+    <div class="clock"><span id="clock" data-dh="42"></span><small id="pos">01·1</small></div>
+    <div class="bar16" id="bar16"></div>
+    <div class="tr-r">
+      <button class="kbtn" id="kbBtn" aria-label="Klaviatur" title="Klaviatur (K)"><svg viewBox="0 0 24 24"><rect x="2.5" y="4.5" width="19" height="15" rx="2.6" stroke-width="2"/><path d="M5.95 4.5h2.6v7.6h-2.6zM10.7 4.5h2.6v7.6h-2.6zM15.45 4.5h2.6v7.6h-2.6z" fill="currentColor" stroke="none"/><path d="M7.25 12v7M12 12v7M16.75 12v7" stroke-width="1.6"/></svg></button>
+      <button class="rec" id="recBtn" aria-label="Spela in"><i></i></button>
+      <button class="play" id="playBtn" aria-label="Spela"><svg id="playIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+    </div>
+  </footer>
+</div>
+<div class="proj" id="proj" hidden role="dialog" aria-label="Projekt">
+  <div class="pj-top">
+    <h2>Projekt <small id="pjCount"></small></h2>
+    <button class="pj-pill" id="pjNew"><svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>nytt</button>
+    <button class="pj-pill" id="pjImp"><svg viewBox="0 0 16 16"><path d="M8 11V2M4.5 5.5 8 2l3.5 3.5M3 10v3.5h10V10"/></svg><span>importera</span></button>
+    <button class="pj-pill x" id="pjX" aria-label="Stäng"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    <input type="file" class="pj-file" id="pjFile" accept=".json,application/json">
+  </div>
+  <div class="pj-stage" id="pjStage"><div class="pj-arc"><i></i></div></div>
+  <div class="pj-hint">svep för att bläddra · tryck på ett kort för att välja</div>
+  <div class="pj-sheet">
+    <div class="pj-name"><input id="pjNameIn" maxlength="40" aria-label="Project name" spellcheck="false"></div>
+    <div class="pj-meta" id="pjMeta"></div>
+    <div class="pj-acts">
+      <button class="pj-pill" id="pjDup"><svg viewBox="0 0 16 16"><rect x="5" y="5" width="8.5" height="8.5" rx="2"/><path d="M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5"/></svg>duplicera</button>
+      <button class="pj-pill" id="pjExp"><svg viewBox="0 0 16 16"><path d="M8 2v9M4.5 7.5 8 11l3.5-3.5M3 10v3.5h10V10"/></svg>exportera</button>
+      <button class="pj-pill" id="pjDel"><svg viewBox="0 0 16 16"><path d="M3.5 4.5h9M6.5 4.5V3h3v1.5M5 4.5l.6 9h4.8l.6-9"/></svg>radera</button>
+      <button class="pj-pill go" id="pjOpen">öppna <svg viewBox="0 0 16 16"><path d="M3 8h10M9 4l4 4-4 4"/></svg></button>
+    </div>
+    <div class="pj-tl"><canvas id="pjTl"></canvas><div class="here" id="pjHere">här nu</div></div>
+  </div>
+</div>
+<div class="fullhost" id="fullHost" hidden></div>
+<div class="dropline" id="dropLine"></div>
+<div class="dedScrim" id="dedScrim" hidden></div>
+<div class="ded" id="ded" hidden role="dialog" aria-label="Ljudeditor">
+  <div class="ded-h"><span class="dot" id="dedDot"></span><div><h3 id="dedName"></h3><small id="dedSub"></small></div>
+    <button class="x" id="dedX" aria-label="Stäng"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button></div>
+  <div class="ded-lab">ljudmodell · tryck för att lyssna</div>
+  <div class="dmods" id="dedMods"></div>
+  <div class="ded-lab">form</div>
+  <div class="ded-k" id="dedKnobs"></div>
+  <div class="ded-f"><button id="dedPlay">▶ provlyssna</button><button class="mute" id="dedMute">mute</button><button id="dedReset">återställ</button></div>
+</div>
+<div class="lib" id="lib" hidden role="dialog" aria-label="Ljudbibliotek">
+  <div class="lib-top">
+    <h2>Bibliotek <small id="libCount"></small></h2>
+    <span class="sync" id="syncPill"><i></i><span>lokalt</span></span>
+    <button class="pj-pill" id="libImp"><svg viewBox="0 0 16 16"><path d="M8 2v9M4.5 7.5 8 11l3.5-3.5M3 10v3.5h10V10"/></svg><span>lägg till ljud</span></button>
+    <button class="pj-pill x" id="libX" aria-label="Stäng"><svg viewBox="0 0 16 16"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>
+    <input type="file" class="pj-file" id="libFile" accept="audio/*,.wav,.mp3,.aif,.aiff,.m4a,.flac,.ogg,.json,application/json" multiple>
+  </div>
+  <div class="lib-tabs" id="libTabs"><button data-t="hit" class="cur">one-shots</button><button data-t="loop">loopar</button><button data-t="preset">presets</button><button data-t="fav">★ favoriter</button></div>
+  <div class="lib-target" id="libTarget"></div>
+  <div class="lib-act" id="libAct"></div>
+  <div class="lib-grid" id="libGrid"></div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="sins-scrim" id="sinsScrim" hidden></div>
+<div class="sins" id="sins" hidden role="dialog" aria-label="Steg-detaljer">
+  <div class="sins-h"><b id="sinsT">steg 1</b><small id="sinsSub"></small><button class="sins-x" id="sinsX" aria-label="Stäng">×</button></div>
+  <div class="sins-row"><span>velocity</span><b id="sinsVelN">72</b></div>
+  <div class="sins-vel" id="sinsVel" title="Dra"><i></i></div>
+  <div class="sins-row"><span>timing · tidig ← → sen</span><b id="sinsON">0</b></div>
+  <div class="sins-vel sins-o" id="sinsO" title="Dra – flytta steget lite före eller efter takten"><i></i></div>
+  <div class="sins-row"><span>ratchet · slag per steg</span></div>
+  <div class="sins-seg" id="sinsR"><button data-v="1">1×</button><button data-v="2">2×</button><button data-v="3">3×</button><button data-v="4">4×</button></div>
+  <div class="sins-row"><span>chans att spelas</span></div>
+  <div class="sins-seg" id="sinsP"><button data-v="1">100%</button><button data-v=".75">75%</button><button data-v=".5">50%</button><button data-v=".25">25%</button></div>
+  <div class="sins-act"><button id="sinsAcc">accent</button><button id="sinsRoll">piano roll</button><button id="sinsClr">rensa steg</button></div>
+</div>
+<section class="roll" id="roll" aria-label="Piano roll" aria-hidden="true">
+  <header class="roll-h">
+    <div class="roll-title"><span id="rollName">Lead</span><small id="rollInfo"></small></div>
+    <div class="roll-ctl">
+      <button class="rbtn" id="rollRec" aria-label="Spela in"><i></i></button>
+      <button class="rbtn" id="rollPlay" aria-label="Spela"><svg id="rollPlayIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+      <button class="rbtn" id="rollClose" aria-label="Stäng piano roll"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3l8 8M11 3l-8 8"/></svg></button>
+    </div>
+    <div class="roll-trk" id="rollTrk"></div>
+  </header>
+  <div class="roll-main" id="rollMain"><canvas id="rollCv" aria-label="Notrutnät"></canvas></div>
+  <div class="roll-vel"><span class="roll-lab">velocity</span><canvas id="rollVel" aria-label="Velocity"></canvas></div>
+  <div class="roll-tools" id="rollTools">
+    <span class="seg" id="rollTool"><button data-m="draw" class="on">rita</button><button data-m="sel">markera</button></span>
+    <button class="rchip" id="rShift">⇧ shift</button>
+    <button class="rchip glide" id="rGlide">glide →</button><button class="rchip" id="rUnglide">ta bort glide</button><button class="rchip" id="rGlT">glide 70 ms</button>
+    <button class="rchip" id="rSnap">snap 1/16</button>
+    <button class="rchip" id="rLen">längd 1/16</button>
+    <button class="rchip on" id="rScale">skala</button>
+    <button class="rchip on" id="rGhost">spöknoter</button>
+    <button class="rchip" id="rChord">auto-ackord</button>
+    <button class="rchip" id="rQuant">kvantisera</button>
+    <button class="rchip" id="rDn12">−oct</button><button class="rchip" id="rDn">−1</button><button class="rchip" id="rUp">+1</button><button class="rchip" id="rUp12">+oct</button>
+    <button class="rchip" id="rLegato">legato</button>
+    <button class="rchip" id="rDup">duplicera</button>
+    <button class="rchip" id="rAll">markera alla</button>
+    <button class="rchip" id="rDel">ta bort</button>
+    <button class="rchip" id="rZoomOut" aria-label="Zooma ut">−</button><button class="rchip" id="rZoomIn" aria-label="Zooma in">+</button>
+    <button class="rchip" id="rUndo">ångra</button>
+  </div>
+</section>
+<div class="deck-scrim" id="deckScrim"></div>
+<section class="deck" id="deck" aria-label="Master" aria-hidden="true">
+  <header class="deck-h" id="deckH"><span class="pill"></span>
+    <span class="dk-l">master · <b id="dkWorld">velvet night</b></span>
+    <button class="dk-x" id="deckClose" aria-label="Stäng mastervyn"><svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l4 4 4-4"/></svg></button>
+  </header>
+  <div class="deck-body">
+    <div class="dk-a">
+      <div class="dk-clock"><span id="deckClock" data-dh="60"></span><div class="dk-beats" id="dkBeats" aria-hidden="true"><i></i><i></i><i></i><i></i></div></div>
+      <div class="dk-box"><div class="dk-cap"><span>master · vågform</span><span id="dkPos">stopp</span></div><canvas id="dkWave"></canvas></div>
+      <div class="dk-box"><div class="dk-cap"><span>spår · senaste takten</span><span>10 × 16</span></div><canvas id="dkAct"></canvas></div>
+    </div>
+    <div class="dk-b">
+      <div class="dk-box dk-split">
+        <div><div class="dk-cap"><span>stereo</span><span>l · r</span></div><canvas id="dkGon"></canvas></div>
+        <div><div class="dk-cap"><span>spektrum</span><span>40 hz – 16 khz</span></div><canvas id="dkSpec"></canvas></div>
+      </div>
+      <div class="dk-stats">
+        <div><span class="dk-l">peak db</span><b id="dkPk" data-dh="18"></b></div>
+        <div><span class="dk-l">rms db</span><b id="dkRms" data-dh="18"></b></div>
+        <div><span class="dk-l">bpm</span><b id="dkBpm" data-dh="18"></b></div>
+        <div><span class="dk-l">mönster</span><b id="dkPat" data-dh="18"></b></div>
+      </div>
+      <div class="dk-box dk-grow"><div class="dk-cap"><span>kanaler · efter fader</span><span id="dkChS">10</span></div><canvas id="dkMtr"></canvas></div>
+      <div class="dk-box"><div class="dk-cap"><span>nivå · senaste 30 s</span><span id="dkLu">--</span></div><canvas id="dkLoud"></canvas></div>
+      <div class="dk-box"><div class="dk-cap"><span>låt</span><span id="dkSongS">av</span></div><div class="dkq" id="dkQ"></div></div>
+      <div class="dk-stats">
+        <div><span class="dk-l">takt</span><b id="dkBar" data-dh="18"></b></div>
+        <div><span class="dk-l">swing</span><b id="dkSw" data-dh="18"></b></div>
+        <div><span class="dk-l">pump</span><b id="dkPu" data-dh="18"></b></div>
+        <div><span class="dk-l">eko · rum</span><b id="dkFx" data-dh="18"></b></div>
+      </div>
+    </div>
+  </div>
+  <footer class="deck-ctl">
+    <div class="dk-chain" id="dkChain" aria-hidden="true"></div>
+    <div class="tr-r">
+      <button class="rec" id="deckRec" aria-label="Spela in"><i></i></button>
+      <button class="play" id="deckPlay" aria-label="Spela"><svg id="deckPlayIco" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+    </div>
+  </footer>
+</section>
+<div class="start" id="start">
+  <button id="startBtn">
+    <span class="big" id="startBig" data-dh="96"></span>
+    <span class="go">TAP TO START</span>
+    <p>Dra korten i handtaget uppe till höger för att flytta dem. Hör du inget på iPhone? Stäng av tyst-läget.</p>
+  </button>
+</div>
+
+<script>

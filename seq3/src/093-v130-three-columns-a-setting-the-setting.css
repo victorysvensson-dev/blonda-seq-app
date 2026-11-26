@@ -1,0 +1,8 @@
+/* ===== v130: three columns (a setting), the settings popover ===== */
+.panes.c3 .pane.left{flex:.78}.panes.c3 .pane.right{flex:1}.panes.c3 .pane.extra{flex:.95}
+.pane.extra{display:none}.panes.c3 .pane.extra{display:flex}.hinge.h2{display:none!important}
+@media (min-width:720px){.panes.c3 .hinge.h2{display:block!important}}
+.set-pop{width:240px}.set-row{display:flex;align-items:center;gap:6px;padding:10px 12px 6px}.set-row span{flex:1;font:10px var(--f-mono);letter-spacing:.06em;color:rgba(232,230,220,.6)}
+.set-row button{width:38px;height:30px;border:0;border-radius:8px;background:rgba(255,255,255,.07);color:#E8E6DC;font:12px var(--f-mono);cursor:pointer}
+.set-row button.on{background:#E9C54A;color:#17181A}
+.set-pop small{display:block;padding:0 12px 8px;font:9.5px/1.4 var(--f-mono);color:rgba(232,230,220,.45)}.set-pop small.set-n:empty{display:none}.set-pop .set-n{color:#E9C54A}

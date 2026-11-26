@@ -1,0 +1,38 @@
+/* ---------- mixer: one strip per track + master ---------- */
+.card.mixer{container-type:inline-size}
+.mx-wrap{overflow-x:auto;scrollbar-width:none;margin:0 -6px;padding:0 6px}
+.mx-wrap::-webkit-scrollbar{display:none}
+.mx{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(58px,1fr);gap:6px;min-width:min-content}
+.ms{--tc:#fff;position:relative;display:grid;grid-template-rows:auto auto 1fr auto auto;gap:8px;padding:10px 6px 8px;border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.02));box-shadow:inset 0 1px 0 rgba(255,255,255,.1),inset 0 0 0 1px rgba(255,255,255,.04);
+  transition:background .3s,opacity .3s}
+.ms.sel{background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04));box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 0 0 1px rgba(255,255,255,.12)}
+.ms.muted .nm,.ms.muted .fd,.ms.muted .db,.ms.muted .pn{opacity:.4}
+.ms .nm{display:flex;flex-direction:column;align-items:center;gap:5px;font-family:var(--f-mono);font-size:9.5px;letter-spacing:.03em;cursor:pointer;min-width:0}
+.ms .nm i{width:18px;height:18px;border-radius:50%;background:var(--tc);display:grid;place-items:center;font-style:normal;font-size:8px;font-weight:600;color:#111;box-shadow:0 0 0 0 var(--tc);transition:box-shadow .25s}
+.ms .nm i.hit{box-shadow:0 0 14px 2px var(--tc);transition:none}
+.ms .nm span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ms .pn{position:relative;height:16px;touch-action:none;cursor:ew-resize}
+.ms .pn::before{content:"";position:absolute;left:4px;right:4px;top:7px;height:2px;border-radius:1px;background:rgba(255,255,255,.14)}
+.ms .pn::after{content:"";position:absolute;left:50%;top:4px;width:1px;height:8px;background:rgba(255,255,255,.3)}
+.ms .pn b{position:absolute;top:3px;width:10px;height:10px;margin-left:-5px;border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.4);left:calc(4px + (100% - 8px)*var(--pv,.5))}
+.ms .fd{position:relative;display:flex;justify-content:center;gap:7px;min-height:150px;touch-action:none;cursor:ns-resize}
+.ms .tr{position:relative;width:4px;border-radius:2px;background:rgba(0,0,0,.35);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.ms .tr .fl{position:absolute;left:0;right:0;bottom:0;height:calc(var(--fv)*100%);border-radius:2px;background:linear-gradient(0deg,var(--tc),color-mix(in srgb,var(--tc) 40%,transparent))}
+.ms .tr .cap0{position:absolute;left:50%;bottom:calc(var(--fv)*100%);width:26px;height:14px;margin:0 0 -7px -13px;border-radius:7px;background:linear-gradient(180deg,#fff,#DADAD4);
+  box-shadow:0 4px 10px -2px rgba(0,0,0,.55),inset 0 -1px 0 rgba(0,0,0,.15)}
+.ms .tr .cap0::after{content:"";position:absolute;left:5px;right:5px;top:6.5px;height:1px;background:rgba(0,0,0,.35)}
+.ms .mt{position:relative;width:5px;background:radial-gradient(circle,rgba(255,255,255,.13) 1.3px,transparent 1.7px) 50% 100%/5px 5px repeat-y}
+.ms .mt i{position:absolute;left:0;right:0;bottom:0;height:calc(var(--lv,0)*100%);background:radial-gradient(circle,var(--mc,var(--tc)) 1.5px,transparent 1.9px) 50% 100%/5px 5px repeat-y;filter:drop-shadow(0 0 3px var(--mc,var(--tc)))}
+.ms .mt i.hot{--mc:#FF6A3D}
+.ms .db{text-align:center;font-family:var(--f-linje);font-size:10px;font-variant-numeric:tabular-nums;color:var(--fg)}
+.ms .bt{display:flex;gap:3px;justify-content:center}
+.ms .bt button{width:22px;height:20px;border-radius:6px;font-family:var(--f-mono);font-size:9px;font-weight:600;background:rgba(255,255,255,.08);color:var(--mute)}
+.ms .bt .m.on{background:var(--red);color:#fff}.ms .bt .s.on{background:var(--yellow);color:#111}
+.ms.master{grid-column:span 1;background:linear-gradient(180deg,rgba(242,195,24,.22),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 0 0 1px rgba(242,195,24,.25);margin-left:6px}
+.ms.master .nm i{background:var(--yellow)}
+.ms.master .fd{gap:4px}
+.ms .scale{position:absolute;left:2px;top:0;bottom:0;display:flex;flex-direction:column;justify-content:space-between;font-family:var(--f-linje);font-size:7px;color:rgba(245,245,242,.35);pointer-events:none}
+@container (max-width:520px){.mx{grid-auto-columns:52px}.ms .scale{display:none}}
+@container (max-width:760px){.mx-wrap{-webkit-mask-image:linear-gradient(90deg,#000 88%,transparent);mask-image:linear-gradient(90deg,#000 88%,transparent);padding-right:30px}}
+

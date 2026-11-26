@@ -1,0 +1,25 @@
+/* ---------- minimised mini-views ---------- */
+.mini{display:none}
+.card.min .mini{display:flex;align-items:center;gap:6px;flex:1 1 auto;min-width:0;overflow:visible;margin:0 4px 0 10px;padding:0 4px;height:22px}
+.card.min .cap .t{flex:none}
+.card.min .capr>*:not(.cbtns):not(.grab){display:none}
+.card[data-card="pads"].min .led,.card[data-card="tracks"].min .led{width:11px}
+.card[data-card="pads"].min .mini,.card[data-card="tracks"].min .mini{gap:clamp(3px,1.2vw,7px)}
+.mini .sq{min-width:3px}
+.mini .txt{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.led{flex:0 1 auto;min-width:5px;aspect-ratio:1;width:9px;height:auto;border-radius:50%;background:var(--c,#fff);opacity:.2;transition:opacity .35s,box-shadow .35s,transform .35s;cursor:pointer}
+.led.on{opacity:1;transform:scale(1.25);box-shadow:0 0 10px var(--c),0 0 3px var(--c);transition:none}
+.led.sel{opacity:.85;box-shadow:0 0 0 2px rgba(255,255,255,.18)}
+.lite .led{box-shadow:inset 0 0 0 1px rgba(0,0,0,.14)}.lite .led.on{box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),0 0 10px var(--c)}
+.mini .sq{flex:1 1 0;max-width:12px;height:12px;border-radius:3px;background:currentColor;opacity:calc(.1 + var(--d,0)*.55);transition:opacity .25s}
+.mini .sq.ph{opacity:1;box-shadow:0 0 8px currentColor}
+.mini .sq:nth-child(4n+1){margin-left:3px}
+.mini .seg{flex:1 1 0;max-width:7px;height:12px;border-radius:2px;background:currentColor;opacity:.13}
+.mini .seg.on{opacity:.95}.mini .seg.hot.on{background:var(--orange)}.mini .seg.clip.on{background:var(--red)}
+.mini .txt{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.04em;white-space:nowrap;opacity:.85}
+.mini .txt b{font-weight:500}
+.mini .bar{flex:0 1 60px;height:4px;border-radius:2px;background:rgba(127,127,127,.25);overflow:hidden}
+.mini .bar i{display:block;height:100%;background:currentColor;border-radius:2px}
+.mini .pl{display:flex;align-items:center;gap:4px;font-family:var(--f-mono);font-size:9px;opacity:.9}
+@media (max-width:560px){.card.min .cap .t{max-width:26vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.card.min .cbtn.cfull{display:none}.card.min .mini .txt{display:none}.card.min .mini{margin-left:6px}}
+

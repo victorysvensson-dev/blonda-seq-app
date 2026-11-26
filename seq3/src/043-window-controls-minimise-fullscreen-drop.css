@@ -1,0 +1,27 @@
+/* ---------- window controls: minimise / fullscreen / drop line ---------- */
+.cbtns{display:inline-flex;gap:4px;margin-left:auto;margin-right:4px;flex:none}
+.cbtn{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.07);color:currentColor;opacity:.55;transition:opacity .2s,transform .25s var(--spring),background .2s}
+.cbtn:hover{opacity:1}.cbtn:active{transform:scale(.88)}
+.cbtn svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.lite .cbtn{background:rgba(29,29,27,.07)}.sndcard .cbtn{background:rgba(255,255,255,.2);color:#fff}
+.card.min .cbtn.cmin svg{transform:rotate(180deg)}
+.cbtn.cmin svg{transition:transform .35s var(--spring)}
+.card.anim{transition:height .42s cubic-bezier(.3,1.25,.5,1),padding .3s;overflow:hidden}
+.card.min{overflow:hidden}
+.pane>.card{flex-shrink:0}
+.card.min .mnx{display:none!important}.card.min .cap{margin-bottom:0}.card.min .phband{display:none}
+.card.min .cap .t{cursor:pointer}
+.card.min::before{opacity:.5}
+.dropline{position:fixed;z-index:70;height:3px;border-radius:3px;pointer-events:none;background:var(--fg);box-shadow:0 0 18px rgba(255,255,255,.8),0 0 4px #fff;opacity:0;transition:opacity .15s,top .18s var(--spring),left .18s,width .18s}
+.dropline.on{opacity:1}
+.dropline::before,.dropline::after{content:"";position:absolute;top:-3.5px;width:10px;height:10px;border-radius:50%;background:var(--fg)}
+.dropline::before{left:-5px}.dropline::after{right:-5px}
+.fullhost{position:fixed;inset:0;z-index:58;display:flex;align-items:center;justify-content:center;
+  padding:max(14px,env(safe-area-inset-top,0px)) max(14px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px));
+  background:rgba(6,7,9,.55);-webkit-backdrop-filter:blur(22px) saturate(140%);backdrop-filter:blur(22px) saturate(140%);opacity:0;transition:opacity .3s}
+.fullhost[hidden]{display:none}.fullhost.show{opacity:1}
+.fullhost>.card{box-sizing:border-box;width:min(100%,1200px);max-height:100%;overflow:auto;scrollbar-width:none;animation:fullin .45s cubic-bezier(.2,1.1,.4,1) both}
+.fullhost>.card .grab{display:none}
+.fullhost>.card .cmin{display:none}
+@keyframes fullin{from{transform:scale(.92);opacity:.4;filter:blur(8px)}to{transform:none;opacity:1;filter:none}}
+

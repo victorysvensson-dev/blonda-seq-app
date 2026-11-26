@@ -1,0 +1,9 @@
+/* ---------- SH-101 skin: dark grey body, boxed sections, sliders ---------- */
+.card.clone.s101{color:#EDEDEA;background:linear-gradient(180deg,#46494D,#34373A 30%,#2B2D30);box-shadow:inset 0 1px 0 rgba(255,255,255,.15),0 26px 50px -26px rgba(0,0,0,.8)}
+.card.clone.s101 .cap .t{color:rgba(237,237,234,.55)}.card.clone.s101 .cap .t b{color:#fff}.card.clone.s101 .grab{background:rgba(255,255,255,.1)}
+.s101 .cl-logo{font-family:var(--f-display);font-weight:700;letter-spacing:.02em}.s101 .cl-logo small{color:#FF5A4A;opacity:.9}
+.s101 .cl-nav,.s101 .cl-trk{background:rgba(0,0,0,.25)}.s101 .cl-trk button.on{background:#EDEDEA;color:#1D1E20}.s101 .cl-kb{background:rgba(0,0,0,.25)}
+.s101 .cl-panel{gap:8px;padding:8px;border-radius:10px;background:#1E2022;box-shadow:inset 0 2px 6px rgba(0,0,0,.6)}
+.s101 .cl-sec{border:1px solid rgba(237,237,234,.28);border-radius:4px;padding:0 8px 10px;flex:0 1 auto}
+.s101 .cl-sec h5{margin:0 -8px 4px;padding:4px 8px;background:rgba(237,237,234,.9);color:#1D1E20;font-size:9px;letter-spacing:.2em}
+.s101 .cl-sec{flex:1 1 auto}.s101 .cl-row{justify-content:space-around}

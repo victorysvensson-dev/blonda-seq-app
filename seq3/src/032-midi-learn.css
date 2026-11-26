@@ -1,0 +1,16 @@
+/* ---------- MIDI learn ---------- */
+body.mlearn .mlk{outline:1.5px dashed rgba(242,195,24,.75);outline-offset:3px;border-radius:10px;cursor:copy!important;position:relative}
+body.mlearn .mlk.mlarm{outline:2px solid #F2C318;outline-offset:3px;animation:mlpulse 1s ease-in-out infinite}
+body.mlearn .mlk.mlok{outline:2px solid #3FD07A}
+@keyframes mlpulse{50%{outline-color:rgba(242,195,24,.35)}}
+body.mlearn .mlk[data-cc]::after{content:"cc " attr(data-cc);position:absolute;top:-9px;right:-6px;z-index:5;padding:2px 5px;border-radius:6px;background:#F2C318;color:#111211;font:500 8.5px/1 var(--f-mono);letter-spacing:.04em;pointer-events:none}
+.mlbar{position:fixed;left:50%;top:calc(var(--dockB,64px) + 12px);transform:translateX(-50%);z-index:90;display:flex;align-items:center;gap:10px;max-width:calc(100vw - 24px);
+  padding:6px 6px 6px 14px;border-radius:999px;background:rgba(17,18,17,.86);color:#F5F5F2;-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  box-shadow:0 14px 30px -14px rgba(0,0,0,.7),inset 0 0 0 1px rgba(255,255,255,.1);font-family:var(--f-mono);font-size:11px}
+.mlbar span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.mlbar b{font-weight:500;color:#F2C318}
+.mlbar button{flex:none;height:30px;padding:0 13px;border-radius:999px;background:rgba(255,255,255,.12);color:inherit;font:inherit}.mlbar button.go{background:#F2C318;color:#111211}
+.mld{flex:none;width:8px;height:8px;border-radius:50%;background:#F2C318;animation:mlpulse2 1s ease-in-out infinite}@keyframes mlpulse2{50%{opacity:.3}}
+.mp .mlist{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.mp .mlist>div{display:grid;grid-template-columns:auto auto 1fr auto;align-items:center;gap:8px;padding:6px 6px 6px 10px;border-radius:10px;background:rgba(255,255,255,.06);font-size:11px}
+.mp .mlist b{font-weight:500;color:#E9C54A}.mp .mlist small{opacity:.5}.mp .mlist span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp .mlist button{width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.08);color:inherit}.mp .mclr{align-self:flex-start;margin-top:4px;padding:6px 12px!important;width:auto!important;height:auto!important;border-radius:999px!important}

@@ -1,0 +1,4 @@
+/* ===== v127: the sample slots' colour (the same as their arcs in the rings) ===== */
+.card.stx .sx-sr .sx-son{display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.sx-son i{width:7px;height:7px;border-radius:50%;background:var(--c);opacity:.45}.sx-sr.on .sx-son i{opacity:1;box-shadow:0 0 0 1.5px #17181A}
+

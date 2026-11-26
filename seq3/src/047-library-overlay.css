@@ -1,0 +1,47 @@
+/* ---------- library overlay ---------- */
+.lib{--lg:#6BE28C;position:fixed;inset:0;z-index:60;display:flex;flex-direction:column;background:rgba(6,7,9,.88);
+  -webkit-backdrop-filter:blur(26px) saturate(140%);backdrop-filter:blur(26px) saturate(140%);
+  padding:max(14px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(14px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));opacity:0;transition:opacity .3s}
+.lib[hidden]{display:none}.lib.show{opacity:1}
+.lib.drop::after{content:"släpp ljudfiler här";position:absolute;inset:12px;border-radius:24px;border:2px dashed var(--lg);display:grid;place-items:center;font:300 26px var(--f-display);color:var(--lg);background:rgba(107,226,140,.06);pointer-events:none}
+.lib-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.lib-top h2{font-weight:300;font-size:22px;margin-right:auto;display:flex;align-items:baseline;gap:10px}
+.lib-top h2 small{font-family:var(--f-mono);font-size:10px;color:var(--mute)}
+.sync{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:99px;font-family:var(--f-mono);font-size:10px;background:rgba(255,255,255,.06)}
+.sync i{width:7px;height:7px;border-radius:50%;background:#888}
+.sync.on i{background:var(--lg);box-shadow:0 0 8px var(--lg)}.sync.busy i{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.3}}
+.lib-tabs{display:flex;gap:4px;margin:14px 0 10px;padding:4px;border-radius:12px;background:rgba(255,255,255,.06);align-self:flex-start}
+.lib-tabs button{height:32px;padding:0 14px;border-radius:9px;font-size:12.5px;color:var(--mute)}
+.lib-tabs button.cur{background:var(--fg);color:#111}
+.lib-target{font-family:var(--f-mono);font-size:10px;color:var(--lg);margin:-2px 0 10px;min-height:14px}
+.lib-grid{flex:1;overflow:auto;scrollbar-width:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:10px;align-content:start;padding-bottom:20px}
+.lib-empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--mute);font-size:14px;line-height:1.6}
+.lib-empty b{display:block;color:var(--fg);font-weight:300;font-size:22px;margin-bottom:6px}
+.st{position:relative;border-radius:18px;padding:12px;background:linear-gradient(160deg,rgba(255,255,255,.09),rgba(255,255,255,.03));box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1px rgba(255,255,255,.05);display:flex;flex-direction:column;gap:8px;min-width:0}
+.st.hl{box-shadow:inset 0 0 0 1.5px var(--lg),0 10px 30px -12px rgba(107,226,140,.5)}
+.st .wv{position:relative;height:54px;border-radius:10px;background:rgba(0,0,0,.25);cursor:pointer;overflow:hidden}
+.st .wv canvas{position:absolute;inset:0;width:100%;height:100%}
+.st .wv .pl{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;background:rgba(255,255,255,.9);color:#111;display:grid;place-items:center;font-size:9px}
+.st .nm{font-size:13.5px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.st .mt{font-family:var(--f-mono);font-size:9.5px;color:var(--mute);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.st .mt .cl{width:6px;height:6px;border-radius:50%;background:var(--lg)}
+.st .ch{display:flex;flex-wrap:wrap;gap:4px}
+.st .ch button{height:24px;min-width:24px;padding:0 7px;border-radius:99px;font:500 10px var(--f-mono);background:rgba(255,255,255,.07);display:inline-flex;align-items:center;gap:4px}
+.st .ch button i{width:7px;height:7px;border-radius:50%;background:var(--c)}
+.st .ch button.on{background:var(--fg);color:#111}
+.st .ch button.go{background:var(--lg);color:#07140B}
+.st .ch .del{margin-left:auto;opacity:.55}.st .ch .del.warn{opacity:1;background:rgba(255,74,51,.3)}
+.st .ch .bars{background:none;padding:0 4px;opacity:.5}.st .ch .bars.on{opacity:1;background:rgba(255,255,255,.14);color:var(--fg)}
+.st .cloud{position:absolute;right:12px;top:12px;font-size:10px;opacity:.6}
+.lib-act{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.lib-act button{height:34px;padding:0 14px;border-radius:99px;background:var(--lg);color:#07140B;font-size:12.5px;font-weight:500}
+.lib-act button.sec{background:rgba(255,255,255,.08);color:var(--fg);font-weight:400}
+.lib-flt{display:flex;gap:4px;flex-wrap:wrap;align-items:center;width:100%}
+.lib-flt button{height:28px;padding:0 11px;border-radius:99px;background:rgba(255,255,255,.06);color:var(--mute);font:500 10.5px var(--f-mono);font-weight:500}
+.lib-flt button.on{background:var(--fg);color:#111}
+.lib-flt i{width:1px;height:16px;background:rgba(255,255,255,.14);margin:0 6px}
+.st .pk{position:absolute;right:12px;top:12px;font:500 8.5px var(--f-mono);letter-spacing:.06em;color:#F2C318;opacity:.85}
+.dmod.smp{border:1px dashed rgba(255,255,255,.25);background:none}
+.dmod.smp.on{border:0;background:var(--tc)}
+

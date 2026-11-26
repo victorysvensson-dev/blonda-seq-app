@@ -1,0 +1,20 @@
+/* ===== v125: the Starter's sample slots (röst = chopped voice, ljud = one-shot) ===== */
+.sx-smp{display:flex;flex-direction:column;gap:4px;margin-top:10px}
+.sx-sr{position:relative;display:grid;grid-template-columns:54px minmax(0,1fr) 48px 22px 22px 22px 44px 44px 44px;gap:4px;align-items:center;padding:4px;box-shadow:inset 0 0 0 1px var(--o-line)}
+.sx-sr.drop{box-shadow:inset 0 0 0 1px var(--o-y);background:rgba(233,197,74,.08)}
+.card.stx .sx-sr>button{height:28px;font-size:10px;letter-spacing:.04em;box-shadow:inset 0 0 0 1px var(--o-line);color:rgba(232,230,220,.55)}
+.card.stx .sx-sr>button:hover{background:rgba(255,255,255,.06)}
+.card.stx .sx-sr.on .sx-son{background:var(--o-y);color:#17181A;box-shadow:none}
+.card.stx .sx-sr .sx-sn{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:1px;padding:0 8px;text-align:left;overflow:hidden}
+.sx-sn b{font:400 12px/1.1 var(--f-linje);color:var(--o-ink);max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-sn small{font:8.5px var(--f-mono);color:rgba(232,230,220,.4)}
+.sx-oct{font:11px var(--f-mono);text-align:center;color:var(--o-ink)}
+.sx-sr .sx-k{transform:scale(.72);transform-origin:center;margin:-8px 0}
+.sx-pick{position:absolute;left:58px;right:0;top:100%;z-index:30;max-height:260px;overflow:auto;background:#1B1C1F;box-shadow:0 0 0 1px var(--o-line),0 16px 30px rgba(0,0,0,.5);display:flex;flex-direction:column}
+.sx-pick[hidden]{display:none}
+.card.stx .sx-pick button{display:flex;justify-content:space-between;gap:10px;padding:7px 10px;font-size:11px;text-align:left;color:var(--o-ink)}
+.card.stx .sx-pick button:hover{background:rgba(255,255,255,.06)}.card.stx .sx-pick button.cur{color:var(--o-y)}
+.sx-pick small{font-size:9px;color:rgba(232,230,220,.4);white-space:nowrap}
+.card.stx .sx-pick [data-add]{color:var(--o-y)}
+@container (max-width:520px){.sx-sr{grid-template-columns:48px minmax(0,1fr) 44px 22px 20px 22px;}.sx-sr .sx-k{display:none}}
+

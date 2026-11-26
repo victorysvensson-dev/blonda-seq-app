@@ -1,0 +1,64 @@
+/* ================= design pass · v24 ================= */
+/* header: patterns as one segmented capsule, quieter secondary buttons */
+.patseg{display:flex;gap:2px;padding:3px;border-radius:99px;background:rgba(255,255,255,.08);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.06)}
+.patseg .pat{width:32px;height:32px;background:transparent;box-shadow:none;color:var(--mute);transition:background .3s var(--spring),color .2s,transform .2s}
+.patseg .pat.cur{background:var(--yellow);color:#111211;box-shadow:0 6px 18px -6px rgba(242,195,24,.8)}
+.gbtn{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 13px;border-radius:99px;background:rgba(255,255,255,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.06);text-transform:lowercase}
+.gbtn svg{width:14px;height:14px;flex:none;opacity:.85}
+.gbtn.ic{width:38px;padding:0;justify-content:center}
+#palBtn::before{content:"";width:9px;height:9px;border-radius:50%;flex:none;background:conic-gradient(from 30deg,#F255A8,#F2C318,#6BE28C,#3D6CF5,#B9A6FF,#F255A8);box-shadow:0 0 8px rgba(255,255,255,.35)}
+.pats{gap:6px}
+/* card header controls: one consistent 26px family */
+.cap{min-height:26px}
+.cap .t{letter-spacing:.11em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.cbtn,.grab{width:26px;height:26px;border-radius:50%;opacity:1;color:currentColor}
+.cbtn{background:rgba(255,255,255,.07);opacity:.62}
+.cbtn:hover{opacity:1;background:rgba(255,255,255,.14)}
+.cbtn svg{width:12px;height:12px}
+.grab svg{width:13px;height:13px}
+.cbtns{gap:5px;margin-right:5px}
+.lite .cbtn,.lite .grab{background:rgba(29,29,27,.06)}
+.lite .cbtn:hover{background:rgba(29,29,27,.12)}
+/* tracks: an even grid instead of ragged wrapping */
+.card[data-card="tracks"]{container-type:inline-size}
+.card[data-card="tracks"] .tags{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px}
+@container (min-width:600px){.card[data-card="tracks"] .tags{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@container (max-width:440px){.card[data-card="tracks"] .tags{display:flex;flex-wrap:wrap}.card[data-card="tracks"] .tag{overflow:visible}}
+.card[data-card="tracks"] .tag{min-width:0;overflow:hidden;white-space:nowrap}
+.card[data-card="tracks"] .tag small{overflow:hidden;text-overflow:ellipsis}
+/* pads: drop the tiny sublabel when the pads get narrow */
+.card[data-card="pads"]{container-type:inline-size}
+@container (max-width:470px){.pad i{display:none}.pad{justify-content:flex-end}}
+/* grid toolbar: one tidy row, grouped, icon-only undo/redo */
+.actions{flex-wrap:nowrap;align-items:center;gap:5px;overflow-x:auto;scrollbar-width:none;margin-top:14px;padding:1px}
+.actions::-webkit-scrollbar{display:none}
+.actions .chip{flex:none;height:30px;padding:0 11px}
+.actions .chip.ic{width:30px;padding:0;justify-content:center}
+.actions .chip.ic svg{margin:0}
+.actions .asep{flex:none;width:1px;height:18px;background:rgba(29,29,27,.14);margin:0 3px}
+.actions .asep:last-of-type{margin-left:auto}
+.actions #actMute.on{background:var(--red);color:#fff}
+.actions #actSolo.on{background:var(--yellow);color:#111}
+.card[data-card="grid"]{container-type:inline-size}
+@container (max-width:700px){.actions{flex-wrap:wrap;overflow:visible}.actions .asep{display:none}.actions .chip.ic:first-of-type{margin-left:auto}}
+@container (max-width:420px){.actions{gap:4px}.actions .chip{padding:0 8px;font-size:10.5px;height:28px;gap:5px}.actions .chip.ic{width:28px}.actions .chip.dice{padding-left:4px}.actions .chip svg{width:12px;height:12px}.actions .xs{display:none}}
+/* step ruler: beats read in fours */
+.steprule .cells span:nth-child(4n+1){color:var(--lk,var(--fg));font-weight:600}
+/* engines strip: fade the edge only when it overflows */
+.engs.ovf{-webkit-mask-image:linear-gradient(90deg,#000 82%,transparent);mask-image:linear-gradient(90deg,#000 82%,transparent)}
+/* plugin tiles: compact, no dead space */
+.ptile{min-height:128px;aspect-ratio:auto}
+/* hover affordance on precise pointers */
+@media (hover:hover) and (pointer:fine){
+  .chip:hover,.gbtn:hover,.patseg .pat:not(.cur):hover{filter:brightness(1.12)}
+  .patseg .pat:not(.cur):hover{color:var(--fg);background:rgba(255,255,255,.08)}
+  .tag:hover{background:rgba(255,255,255,.13)}
+}
+/* start screen */
+.start .go{border-radius:99px;padding:15px 26px;font-size:12px;letter-spacing:.12em;box-shadow:0 14px 40px -12px rgba(242,195,24,.75);transition:transform .3s var(--spring)}
+.start button:hover .go{transform:scale(1.04)}
+.start p{opacity:.8}
+/* tablets: balance the two panes */
+@media (min-width:720px) and (max-width:1100px){.pane.left{flex:1}.pane.right{flex:1.1}}
+

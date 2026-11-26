@@ -1,0 +1,54 @@
+/* ===== Starter v3: its own synth, Orbit-style ===== */
+.card.stx{--o-bg:#1D1E21;--o-line:#2F3034;--o-ink:#E8E6DC;--o-y:#E9C54A;background:var(--o-bg);color:var(--o-ink);border-radius:0;box-shadow:inset 0 0 0 1px var(--o-line),0 26px 50px -26px rgba(0,0,0,.7);-webkit-backdrop-filter:none;backdrop-filter:none;container-type:inline-size;animation:none}
+.card.stx::before,.card.stx::after{display:none}
+.card.stx .cap .t{color:rgba(232,230,220,.45)}.card.stx .cap .t b{color:var(--o-ink)}
+.card.stx .cbtn,.card.stx .grab{border-radius:0;background:none;box-shadow:inset 0 0 0 1px var(--o-line);color:var(--o-ink)}
+.card.stx button{border:0;background:none;color:inherit;cursor:pointer;font-family:var(--f-mono)}
+.sx-wrap{display:grid;grid-template-columns:minmax(0,1fr) 190px;gap:16px;align-items:center}
+.sx-orb{position:relative;aspect-ratio:1;width:100%;max-width:440px;justify-self:center;touch-action:none;cursor:pointer}
+.sx-orb canvas{position:absolute;inset:0;width:100%;height:100%}
+.sx-mid{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;width:34%}
+.sx-big{display:block;font:400 clamp(18px,6.5cqi,34px)/1 var(--f-linje);letter-spacing:-.01em;color:var(--o-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-sub{display:block;font:9px var(--f-mono);letter-spacing:.06em;color:rgba(232,230,220,.45);margin-top:8px;white-space:nowrap}
+.sx-side{display:flex;flex-direction:column;gap:7px}
+.sx-ctl{display:grid;grid-template-columns:1fr 26px 86px 26px;align-items:center;gap:3px;font:10px var(--f-mono)}
+.sx-ctl span{color:rgba(232,230,220,.5);letter-spacing:.04em}
+.card.stx .sx-ctl button{height:26px;box-shadow:inset 0 0 0 1px var(--o-line);font-size:13px}
+.card.stx .sx-ctl button:hover{background:rgba(255,255,255,.06)}.card.stx .sx-ctl button:active{background:var(--o-y);color:#17181A}
+.sx-ctl b{text-align:center;font:400 13px var(--f-linje);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sx-dice{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:3px}
+.card.stx .sx-dice button{height:28px;font-size:10px;letter-spacing:.04em;box-shadow:inset 0 0 0 1px var(--o-line)}
+.card.stx .sx-dice button:hover{background:rgba(233,197,74,.12)}.card.stx .sx-dice button:active{background:var(--o-y);color:#17181A}
+.sx-lay{display:flex;flex-wrap:wrap;gap:4px;margin-top:14px;align-items:center}
+.card.stx .sx-lay button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;font-size:10px;letter-spacing:.04em;color:rgba(232,230,220,.45);box-shadow:inset 0 0 0 1px var(--o-line)}
+.sx-lay button i{width:7px;height:7px;background:var(--c);opacity:.35}
+.card.stx .sx-lay button.on{color:var(--o-ink)}.sx-lay button.on i{opacity:1}
+.sx-sp{flex:1}
+.card.stx .sx-lay .sx-on{min-width:44px;justify-content:center}
+.card.stx .sx-lay .sx-on.on{background:var(--o-y);color:#17181A;box-shadow:none}
+.card.stx .sx-lay .sx-play{background:var(--o-ink);color:#17181A;box-shadow:none;padding:0 14px}
+.sx-knobs{display:grid;grid-template-columns:repeat(11,minmax(0,1fr));gap:4px;margin-top:12px;border-top:1px solid var(--o-line);padding-top:12px}
+.sx-k{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:ns-resize;touch-action:none;user-select:none;-webkit-user-select:none}
+.sx-k .r{width:34px;height:34px;border-radius:50%;background:conic-gradient(from -135deg,var(--o-ink) 0 calc(var(--v,0)*270deg),rgba(232,230,220,.13) 0 270deg,transparent 0);
+  -webkit-mask:radial-gradient(circle,transparent 12px,#000 12.6px);mask:radial-gradient(circle,transparent 12px,#000 12.6px);position:relative}
+.sx-k.drag .r{background:conic-gradient(from -135deg,var(--o-y) 0 calc(var(--v,0)*270deg),rgba(232,230,220,.13) 0 270deg,transparent 0)}
+.sx-k b{font:400 12px var(--f-linje);font-variant-numeric:tabular-nums;margin-top:-26px;height:18px;line-height:18px;pointer-events:none}
+.sx-k em{font:normal 9px var(--f-mono);letter-spacing:.04em;color:rgba(232,230,220,.5);margin-top:8px}
+.sx-sec{display:flex;align-items:baseline;gap:10px;margin:14px 0 6px;font:500 9.5px var(--f-mono);letter-spacing:.08em}
+.sx-sec span{white-space:nowrap}.sx-sec small{font:9px var(--f-mono);color:rgba(232,230,220,.38);letter-spacing:.03em}
+.sx-fx{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px}
+.card.stx .sx-fx button{position:relative;height:58px;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;padding:8px;text-align:left;box-shadow:inset 0 0 0 1px var(--o-line);touch-action:none;transition:background .12s}
+.sx-fx button span{font:400 12.5px/1.1 var(--f-linje);color:var(--o-ink)}
+.sx-fx button small{font:8.5px var(--f-mono);color:rgba(232,230,220,.38);margin-top:3px}
+.card.stx .sx-fx button:hover{background:rgba(255,255,255,.04)}
+.card.stx .sx-fx button.hold{background:var(--o-y)}.sx-fx button.hold span,.sx-fx button.hold small{color:#17181A}
+.sx-in{position:absolute;top:6px;right:6px;width:16px;height:16px;display:grid;place-items:center;cursor:pointer}
+.sx-in::after{content:"";width:7px;height:7px;box-shadow:inset 0 0 0 1px rgba(232,230,220,.35)}
+.sx-fx button.in .sx-in::after{background:var(--o-y);box-shadow:none}
+.sx-hint{font:9px/1.5 var(--f-mono);color:rgba(232,230,220,.32);margin:10px 0 0}
+.card.stx.off .sx-orb{opacity:.55}
+@container (max-width:700px){.sx-fx{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@container (max-width:520px){.sx-wrap{grid-template-columns:1fr}.sx-side{display:grid;grid-template-columns:1fr 1fr;gap:6px 10px}.sx-dice{grid-column:1/-1}
+  .sx-ctl{grid-template-columns:1fr 24px 58px 24px}.sx-knobs{grid-template-columns:repeat(6,minmax(0,1fr));row-gap:10px}.sx-fx{grid-template-columns:repeat(3,minmax(0,1fr))}}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .card.stx :is(.sx-ctl button,.sx-dice button,.sx-lay button:not(.sx-play):not(.sx-on.on),.sx-fx button:not(.hold)){box-shadow:inset 0 0 0 1px rgba(232,230,220,.6)!important}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .card.stx .sx-knobs{border-top-color:rgba(232,230,220,.35)}

@@ -1,0 +1,20 @@
+/* ---------- light (yellow) background: dark ink on everything that sits directly on the background ---------- */
+body.bg-light .top{--fg:#111211;--mute:rgba(17,18,17,.55);color:#111211}
+body.bg-light .brand .dots i{box-shadow:0 0 0 1px rgba(17,18,17,.25)}
+body.bg-light .bpm{background:rgba(255,255,255,.3);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}body.bg-light .bpm button{background:rgba(17,18,17,.08)}
+body.bg-light .tabs{--fg:#111211;color:#111211;background:rgba(17,18,17,.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
+body.bg-light .tabs .ind{background:#111211}body.bg-light .tabs button.cur{color:#F2C318}
+body.bg-light .hinge::before{background:linear-gradient(transparent,rgba(17,18,17,.25) 20%,rgba(17,18,17,.25) 80%,transparent)}
+body.bg-light .srail .tr{color:rgba(17,18,17,.25)}body.bg-light .srail .th{color:#111211;filter:none}
+body.bg-light .dock{color:#111211;background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.22));box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),inset 0 1px 0 rgba(255,255,255,.8),0 18px 40px -22px rgba(80,50,0,.45)}
+body.bg-light .dock .patseg{background:rgba(17,18,17,.07);box-shadow:none}body.bg-light .dock .patseg .pat{color:rgba(17,18,17,.4)}body.bg-light .dock .patseg .pat.cur{color:#111211}
+body.bg-light .dock .gbtn,body.bg-light .dk-row button,body.bg-light .dk-name input{background:rgba(255,255,255,.4);color:#111211;box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+body.bg-light .dock .mbtn .mdot{background:rgba(17,18,17,.35)}body.bg-light .dock-h i{background:rgba(17,18,17,.35)}
+body.bg-light .dk-row button.go{background:#111211;color:#F2C318}body.bg-light .dk-row button.on{background:#111211;color:#F2C318}
+body.bg-light .dk-lab,body.bg-light .dk-name small{color:rgba(17,18,17,.55)}
+body.bg-light{--glass-hi:rgba(17,18,17,.62);--glass:rgba(17,18,17,.54);--glass-lo:rgba(17,18,17,.48)}
+body.bg-light .card.loops{background:linear-gradient(160deg,rgba(40,90,55,.62),rgba(17,18,17,.54) 45%,rgba(17,18,17,.48))}
+body.bg-light .app .transport{outline:1px solid rgba(17,18,17,.14)}
+@media (max-width:719px){#pjBtn2{font-size:0;gap:0;width:40px;padding:0;justify-content:center}#pjBtn2 svg{width:16px;height:16px}}
+body.bg-light .toast{background:rgba(17,18,17,.82);color:#F5F5F2}
+body.bg-light .app .transport{box-shadow:0 -14px 34px -18px rgba(80,50,0,.5),inset 0 1px 0 rgba(255,255,255,.5)}

@@ -1,0 +1,11 @@
+/* ===== nudge + swing: the dots jump inside their step ===== */
+.seqlite.dotm .cells .cell.on.late::before{-webkit-mask:linear-gradient(90deg,transparent 25%,#000 25%);mask:linear-gradient(90deg,transparent 25%,#000 25%)}
+.seqlite.dotm .cells .cell.on.early::before{-webkit-mask:linear-gradient(90deg,#000 75%,transparent 75%);mask:linear-gradient(90deg,#000 75%,transparent 75%)}
+.seqlite.dotm .cells .cell.on.late:not([data-r])::after,.seqlite.dotm .cells .cell.on.early:not([data-r])::after{content:"";position:absolute;top:14%;width:18%;height:72%;background:radial-gradient(circle closest-side,#353639 60%,transparent 74%) 0 0/100% 25%}
+.seqlite.dotm .cells .cell.on.late:not([data-r])::after{left:14%}
+.seqlite.dotm .cells .cell.on.early:not([data-r])::after{left:68%}
+.seqlite.dotm .cells .cell.nudging{box-shadow:inset 0 0 0 1px var(--dm-y)}
+.cells .cell.nudging{cursor:ew-resize}
+.sins-o{background:rgba(29,29,27,.06)}
+.sins-o i{position:absolute;top:0;bottom:0;left:50%;width:0;background:var(--tc);box-shadow:none}
+.sins-o::after{content:"";position:absolute;left:50%;top:4px;bottom:4px;width:1px;background:rgba(29,29,27,.35)}

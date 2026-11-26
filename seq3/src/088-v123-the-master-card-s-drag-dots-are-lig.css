@@ -1,0 +1,5 @@
+/* ===== v123: the master card's drag dots are light like the other cards ===== */
+.card.master.mx2 .cap .cbtn,.card.master.mx2 .cap .grab{background:rgba(255,255,255,.07);color:#ECEAE3}
+.card.master.mx2 .cap .cbtn:hover,.card.master.mx2 .cap .grab:hover{background:rgba(255,255,255,.13)}
+body.look-dots .card.master.mx2 .cap .grab{background:none;color:#ECEAE3}
+

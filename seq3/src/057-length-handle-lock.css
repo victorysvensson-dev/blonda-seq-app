@@ -1,0 +1,21 @@
+/* ---------- length handle + lock ---------- */
+.cells{position:relative}
+.cell.out{opacity:.28;pointer-events:none}
+.seqlite.dotm .cells .cell.out::before{background:none}
+.lenh{position:absolute;top:-3px;bottom:-3px;width:14px;margin-left:-7px;cursor:ew-resize;touch-action:none;z-index:3;display:flex;justify-content:center}
+.lenh::before{content:"";width:2px;height:100%;background:rgba(232,230,220,.18);transition:background .2s,width .2s}
+.lenh:hover::before,.lenh.drag::before{background:#E9C54A;width:3px}
+.lenh.short::before{background:#E9C54A}
+.lenh.short::after{content:attr(data-n);position:absolute;top:50%;left:9px;transform:translateY(-50%);font:500 9px var(--f-mono);color:#E9C54A}
+.seqlite:not(.dotm) .lenh::before{background:rgba(29,29,27,.2)}
+.row .rl{position:relative;padding-right:14px!important}
+.row .rl .lock{position:absolute;right:0;top:50%;margin-top:-7px;width:14px;height:14px;display:grid;place-items:center;opacity:0;transition:opacity .2s;cursor:pointer}
+.row .rl .lock svg{width:10px;height:10px;fill:none;stroke:currentColor;stroke-width:1.3}
+.row .rl:hover .lock{opacity:.5}
+.row.locked .rl .lock{opacity:1;color:#E9C54A}
+.row.locked .rl .lock svg rect{fill:#E9C54A;stroke:#E9C54A}
+@media (hover:none){.row .rl .lock{opacity:.3}}
+.seqlite.dotm .row .rl{display:flex;align-items:center}
+.seqlite.dotm .row.sel .rl::after{order:1}
+.seqlite.dotm .row .rl .lock{order:2}
+

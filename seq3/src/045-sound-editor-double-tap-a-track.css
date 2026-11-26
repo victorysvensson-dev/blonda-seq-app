@@ -1,0 +1,31 @@
+/* ---------- sound editor (double-tap a track) ---------- */
+.ded{position:fixed;z-index:62;left:50%;top:50%;width:min(94vw,520px);max-height:90vh;overflow:auto;scrollbar-width:none;transform:translate(-50%,-50%);border-radius:26px;padding:18px;
+  background:linear-gradient(160deg,rgba(40,40,46,.92),rgba(18,18,22,.95));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 1px rgba(255,255,255,.07),0 40px 100px -20px rgba(0,0,0,.8);
+  -webkit-backdrop-filter:blur(30px);backdrop-filter:blur(30px);color:var(--fg)}
+.ded[hidden],.dedScrim[hidden]{display:none}
+.ded.pop{animation:dedIn .45s cubic-bezier(.2,1.2,.4,1) both}
+@keyframes dedIn{from{opacity:0;transform:translate(-50%,-46%) scale(.94);filter:blur(6px)}to{opacity:1;transform:translate(-50%,-50%);filter:none}}
+.dedScrim{position:fixed;inset:0;z-index:61;background:rgba(5,5,8,.5);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ded-h{display:flex;align-items:center;gap:12px}
+.ded-h .dot{width:34px;height:34px;border-radius:50%;background:var(--tc);box-shadow:0 0 24px var(--tc);flex:none;display:grid;place-items:center;font:500 12px var(--f-mono);color:#111}
+.ded-h h3{font-weight:300;font-size:24px;letter-spacing:-.01em;line-height:1}
+.ded-h small{display:block;font-family:var(--f-mono);font-size:10px;color:var(--mute);margin-top:4px;letter-spacing:.04em}
+.ded-h .x{margin-left:auto;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center}
+.ded-h .x svg{width:13px;height:13px;stroke:currentColor;stroke-width:1.7;fill:none}
+.ded-lab{font-family:var(--f-mono);font-size:9.5px;color:var(--mute);letter-spacing:.08em;margin:18px 0 8px;text-transform:lowercase}
+.dmods{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px}
+.dmod{position:relative;text-align:left;padding:11px 12px 10px;border-radius:14px;background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1px rgba(255,255,255,.06);transition:background .25s,transform .25s var(--spring)}
+.dmod:active{transform:scale(.95)}
+.dmod b{display:block;font-weight:500;font-size:14px;letter-spacing:-.01em}
+.dmod small{display:block;font-family:var(--f-mono);font-size:9px;color:var(--mute);margin-top:3px}
+.dmod.on{background:var(--tc);color:#111;box-shadow:0 10px 30px -10px var(--tc)}
+.dmod.on small{color:rgba(0,0,0,.55)}
+.dmod::after{content:"";position:absolute;right:10px;top:12px;width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.25}
+.dmod.on::after{opacity:.8}
+.ded-k{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.ded-k .knob .face{width:min(46px,10.5vw)}
+@media (max-width:420px){.ded-k{grid-template-columns:repeat(4,1fr);row-gap:14px}}
+.ded-f{display:flex;gap:8px;margin-top:18px}
+.ded-f button{flex:1;height:40px;border-radius:99px;background:rgba(255,255,255,.07);font-size:12.5px}
+.ded-f button.mute.on{background:var(--red);color:#fff}
+

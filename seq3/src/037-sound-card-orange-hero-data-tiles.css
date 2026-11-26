@@ -1,0 +1,35 @@
+/* ---------- sound card (orange hero + data tiles) ---------- */
+.card.lite.sndcard{padding:0;overflow:hidden;background:#F7F7F5;border-radius:26px}
+.sndcard .cap{margin:0;padding:16px 16px 4px;background:#EE6A2C}
+.sndcard .cap .t{color:rgba(255,255,255,.75)}
+.sndcard .cap .t b{color:#fff}
+.sndcard .grab{background:rgba(255,255,255,.18);color:#fff}
+.snd-hero{background:#EE6A2C;color:#fff;padding:6px 16px 18px;touch-action:none;cursor:ew-resize}
+.snd-hero .lab{display:flex;justify-content:space-between;font-size:12.5px;font-weight:300}
+.snd-hero .lab small{font-family:var(--f-mono);font-size:9px;opacity:.7}
+.snd-hero-row{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:end;margin-top:4px}
+.snd-big{display:flex;align-items:baseline;gap:6px}
+.snd-big b{font-weight:200;font-size:56px;letter-spacing:-.04em;line-height:.95;font-variant-numeric:tabular-nums}
+.snd-big em{font-style:normal;font-weight:300;font-size:17px;opacity:.85}
+#sdChart{width:100%;height:78px;display:block}
+.snd-hero p{margin:12px 0 0;font-size:12px;font-weight:300;line-height:1.45;opacity:.92;max-width:42ch}
+.snd-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px}
+.snd-tile{position:relative;background:#ECECE9;border-radius:6px;padding:12px;min-height:150px;color:#1D1D1B;touch-action:none;overflow:hidden;cursor:ns-resize;transition:box-shadow .2s}
+.snd-tile.act,.snd-hero.act{box-shadow:inset 0 0 0 1.5px #1D1D1B}
+.snd-hero.act{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.snd-tile h4{position:relative;margin:0 0 6px;font-size:12px;font-weight:400}
+.snd-num{position:relative;font-weight:300;font-size:30px;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.snd-num em{font-style:normal;font-size:12px;margin-left:3px;color:rgba(29,29,27,.55)}
+.snd-word{position:relative;display:block;font-size:11px;color:rgba(29,29,27,.55);margin-top:3px}
+.t-lvl canvas{position:absolute;inset:26px 6px 6px}
+.t-lvl canvas,#sdRuler{width:calc(100% - 12px);height:calc(100% - 32px)}
+.snd-center{position:absolute;left:0;right:0;top:calc(50% + 10px);transform:translateY(-50%);text-align:center}
+.snd-center .snd-num{font-size:28px}
+#sdRuler{position:absolute;top:0;right:0;width:100%;height:100%}
+.t-tone .snd-num,.t-tone .snd-word{max-width:52%}
+.t-fx{cursor:ew-resize}
+#sdBars{width:100%;height:62px;margin-top:12px;display:block}
+#sdStep{width:100%;height:70px;margin-top:8px;display:block}
+.snd-tile.wide{grid-column:1/-1;min-height:0;cursor:ew-resize}
+.pan-row{display:grid;grid-template-columns:64px 1fr;align-items:center;gap:10px}
+#sdPanC{width:100%;height:40px;display:block}

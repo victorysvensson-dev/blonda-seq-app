@@ -1,0 +1,17 @@
+/* ===== looks: glas (default) · studio (blonda.studio) · dots (all yellow, no windows) ===== */
+#lookBtn .ldot{width:9px;height:9px;flex:none;background:radial-gradient(circle,currentColor 1.2px,transparent 1.6px) 0 0/4.5px 4.5px}
+body.look-studio,body.look-dots{--r:0px;--rad:0px}
+body.look-studio #bg,body.look-studio #grain,body.look-dots #bg,body.look-dots #grain{display:none}
+body.look-studio{background:#17181A!important}
+body.look-studio .card,body.look-studio .card.lite,body.look-studio .card.syn,body.look-studio .card.dial,body.look-studio .card.loops{border-radius:0!important;background:#1C1E20;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:inset 0 0 0 1px #373738;animation:none}
+body.look-studio .card::before,body.look-studio .card::after{display:none}
+body.look-studio .card.lite:not(.dotm):not(.sndcard){filter:invert(1) hue-rotate(180deg);background:#E3E1D9}
+body.look-studio .sndcard .cap,body.look-studio .snd-hero{background:#1C1E20}
+body.look-studio .snd-grid{filter:invert(1) hue-rotate(180deg)}
+body.look-studio .card.syn{background:#1C1E20}
+body.look-studio .card.syn[data-eng="fm"],body.look-studio .card.syn[data-eng="pluck"],body.look-studio .card.syn[data-eng="chip"]{filter:invert(1) hue-rotate(180deg);background:#E3E1D9}
+body.look-studio .dock{border-radius:0;background:#1C1E20;box-shadow:inset 0 0 0 1px #373738;-webkit-backdrop-filter:none;backdrop-filter:none}
+body.look-dots{background:#fff!important}
+/* one yellow layer multiplied over a black-and-white page: white → yellow, black stays black, nothing else (works in Safari too) */
+#dotsTint{display:none;position:fixed;inset:0;background:#F2C318;mix-blend-mode:multiply;pointer-events:none;z-index:2147483000}
+body.look-dots #dotsTint{display:block}

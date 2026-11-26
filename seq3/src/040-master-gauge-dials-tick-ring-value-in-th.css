@@ -1,0 +1,12 @@
+/* ---------- master: gauge dials (tick ring + value in the centre) ---------- */
+.card.master.lite .knob{--fw:min(64px,15vw);gap:8px}
+.card.master.lite .knob .face{width:var(--fw);background:radial-gradient(circle,rgba(29,29,27,.04) 0 64%,transparent 65%);box-shadow:none}
+.card.master.lite .knob .face::before{inset:-3px;background:conic-gradient(from 225deg,#1D1D1B calc(var(--v)*270deg),rgba(29,29,27,.15) 0 270deg,transparent 0);
+  -webkit-mask:radial-gradient(circle closest-side,transparent 84%,#000 85% 99%,transparent 100%),repeating-conic-gradient(from 222deg,#000 0 3.6deg,transparent 3.6deg 9deg);-webkit-mask-composite:source-in;
+  mask:radial-gradient(circle closest-side,transparent 84%,#000 85% 99%,transparent 100%),repeating-conic-gradient(from 222deg,#000 0 3.6deg,transparent 3.6deg 9deg);mask-composite:intersect}
+.card.master.lite .knob .mark::after,.card.master.lite .knob .face::after,.card.master.lite .knob .bubble{display:none}
+.card.master.lite .knob .mark::before{top:-5px;width:9px;height:9px;margin:0 0 0 -4.5px;background:#EE6A2C;box-shadow:0 0 0 2.5px #F7F4DD,0 2px 6px rgba(238,106,44,.55)}
+.card.master.lite .knob .kv{position:absolute;top:calc(var(--fw)/2);left:50%;transform:translate(-50%,-50%);margin:0;font-family:var(--f-display);font-weight:200;font-size:19px;letter-spacing:-.03em;line-height:1;pointer-events:none;white-space:nowrap}
+.card.master.lite .knob.active .face{transform:scale(1.07)}
+.card.master.lite .knob.active .kv{color:#EE6A2C}
+@media (min-width:720px){.card.master.lite .knob{--fw:min(60px,5.4vw)}}

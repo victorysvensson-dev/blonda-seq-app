@@ -1,0 +1,4 @@
+/* ===== v131: drag the seams between the columns ===== */
+@media (min-width:720px){.panes>.hinge{cursor:col-resize;touch-action:none}.panes>.hinge::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:44px;margin:-22px 0 0 -2px;border-radius:2px;background:rgba(255,255,255,.18);opacity:0;transition:opacity .2s}
+  .panes>.hinge:hover::after,.panes>.hinge.drag::after{opacity:1}.panes>.hinge.drag::before{background:rgba(233,197,74,.7)}}
+

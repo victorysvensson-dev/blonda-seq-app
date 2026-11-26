@@ -1,0 +1,9 @@
+/* ===== v130: zoom in the Starter's notes view ===== */
+.sx-zm{display:inline-flex;align-items:center;gap:3px;margin-right:6px}
+.card.stx .sx-zm button{width:24px;height:24px;font-size:13px;box-shadow:inset 0 0 0 1px var(--o-line)}
+.card.stx .sx-zm button:hover{background:rgba(255,255,255,.06)}
+.sx-zm b{min-width:38px;text-align:center;font:400 10px var(--f-mono);color:rgba(232,230,220,.6)}
+.sx-c1,.sx-c2{display:contents}
+.sx-roll{position:relative}.sx-rbar{position:absolute;left:30px;right:0;bottom:-7px;height:5px;background:rgba(232,230,220,.06);cursor:pointer;touch-action:none}
+.sx-rbar[hidden]{display:none}.sx-rbar i{position:absolute;top:0;bottom:0;background:rgba(233,197,74,.6);border-radius:3px}
+

@@ -1,0 +1,24 @@
+/* ---------- plugins: light frosted tiles ---------- */
+.ptiles{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ptile{--pc:#3D6CF5;position:relative;border-radius:22px;padding:14px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;gap:10px;color:#fff;min-width:0;
+  background:linear-gradient(160deg,rgba(255,255,255,.26),rgba(255,255,255,.07));-webkit-backdrop-filter:blur(22px) saturate(160%);backdrop-filter:blur(22px) saturate(160%);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.3),inset 0 1px 0 rgba(255,255,255,.5),0 18px 30px -18px rgba(0,0,0,.5);transition:background .45s,transform .4s var(--spring)}
+.ptile.sel{background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 92%,#fff),color-mix(in srgb,var(--pc) 62%,transparent))}
+.ptl-h{display:flex;align-items:flex-start;gap:9px;padding-right:40px}
+.ptl-h .ic{width:18px;height:18px;flex:none;margin-top:1px}
+.ptl-h .nm{font-size:12px;font-weight:300;line-height:1.25;opacity:.92}
+.pedit{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);transition:transform .35s var(--spring)}
+.pedit:active{transform:scale(.88) rotate(-12deg)}
+.pedit svg{width:13px;height:13px}
+.pfoot{display:flex;align-items:flex-end;justify-content:space-between;gap:6px;min-width:0}
+.pfoot>div{min-width:0}
+.pcap{font-family:var(--f-mono);font-size:9px;opacity:.7;margin-bottom:7px;letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pnum{font-weight:200;font-size:40px;line-height:.85;letter-spacing:-.03em;touch-action:none;cursor:ns-resize;font-variant-numeric:tabular-nums;white-space:nowrap;transition:opacity .3s}
+.pnum sup,.syn-big sup,.syn-sm sup{font-size:.3em;font-weight:400;margin-left:3px;vertical-align:top;position:relative;top:.18em;opacity:.8}
+.ptile.off .pnum{opacity:.45}
+.pact{display:flex;align-items:center;gap:5px;padding:8px 12px;border-radius:999px;font-size:11px;font-weight:400;color:#fff;flex:none;
+  background:linear-gradient(180deg,#62C483,#3E9C5E);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 6px 14px -6px rgba(40,140,80,.7);transition:background .3s,transform .35s var(--spring),box-shadow .3s}
+.pact svg{width:10px;height:10px;transition:transform .35s var(--spring)}
+.ptile.off .pact{background:rgba(255,255,255,.14);box-shadow:inset 0 0 0 1px rgba(255,255,255,.3)}
+.ptile.off .pact svg{transform:scale(0)}
+.pact:active{transform:scale(.92)}

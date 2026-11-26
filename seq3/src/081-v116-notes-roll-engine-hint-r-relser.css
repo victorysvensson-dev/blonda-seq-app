@@ -1,0 +1,19 @@
+/* ===== v116: notes roll, engine hint, rörelser ===== */
+.sx-ntabs{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.card.stx .sx-ntabs button{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;font-size:10px;color:rgba(232,230,220,.5);box-shadow:inset 0 0 0 1px var(--o-line)}
+.sx-ntabs button i{width:7px;height:7px;background:var(--c)}
+.card.stx .sx-ntabs button.on{color:var(--o-ink);box-shadow:inset 0 0 0 1.5px var(--c)}
+.sx-ninfo{font:10px var(--f-mono);color:var(--o-y);margin-right:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
+.sx-roll{margin-top:6px;height:220px;box-shadow:inset 0 0 0 1px var(--o-line);touch-action:none}
+.sx-roll canvas{width:100%;height:100%;display:block;cursor:crosshair}
+.sx-via{font:9px var(--f-mono);color:rgba(233,197,74,.75);letter-spacing:.02em}
+.mlk.mot{outline:1.5px dashed rgba(233,197,74,.85);outline-offset:2px}
+.mlk.motrec{outline:2px solid #FF4A33!important;outline-offset:2px}
+.m2-mot{display:flex;flex-direction:column;gap:4px}
+.mo-r{display:grid;grid-template-columns:52px minmax(0,1fr) 120px 26px;gap:8px;align-items:center;font:10px var(--f-mono);padding:4px 6px;border-radius:10px;background:rgba(255,255,255,.05)}
+.mo-r b{font-weight:600;color:#E9C54A}.mo-r span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mo-r svg{width:100%;height:18px}.mo-r svg path{fill:none;stroke:#E9C54A;stroke-width:1.4;vector-effect:non-scaling-stroke}
+.mo-r button{width:26px;height:22px;border:0;border-radius:8px;background:rgba(255,255,255,.08);color:inherit;cursor:pointer}
+.mo-clr{align-self:flex-start;margin-top:2px;border:0;border-radius:999px;padding:6px 12px;background:rgba(255,255,255,.08);color:inherit;font:500 10px var(--f-mono);cursor:pointer}
+.mo-e{font:10px/1.5 var(--f-mono);opacity:.55;margin:0}
+body.look-dots :is(#panes,#fullHost,.daw .dw-slot,.daw .dw-cl) .card.stx :is(.sx-ntabs button,.sx-roll){box-shadow:inset 0 0 0 1px rgba(232,230,220,.6)!important}

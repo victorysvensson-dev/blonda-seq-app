@@ -1,0 +1,67 @@
+/* ---------- master deck (expanded transport) ---------- */
+.transport{cursor:pointer;touch-action:none}
+.transport::before{content:"";position:absolute;left:50%;top:6px;width:36px;height:4px;margin-left:-18px;border-radius:2px;background:rgba(17,18,17,.28)}
+.deck-scrim{position:fixed;inset:0;z-index:39;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .4s}
+.deck-scrim.on{opacity:1;pointer-events:auto}
+.deck{position:fixed;left:0;right:0;bottom:0;top:calc(env(safe-area-inset-top,0px) + 26px);z-index:40;background:var(--yellow);color:#111211;border-radius:26px 26px 0 0;
+  transform:translateY(105%);transition:transform .55s cubic-bezier(.2,.9,.25,1.04);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 -24px 60px rgba(0,0,0,.45);
+  padding:8px max(18px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(18px,env(safe-area-inset-left,0px))}
+.deck.open{transform:none}
+.deck:not(.open):not(.dragging){visibility:hidden;transition:transform .55s cubic-bezier(.2,.9,.25,1.04),visibility 0s linear .56s}
+.deck.open,.deck.dragging{visibility:visible;transition:transform .55s cubic-bezier(.2,.9,.25,1.04),visibility 0s}
+.deck.dragging{transition:none}
+.deck-h{position:relative;display:flex;align-items:center;justify-content:space-between;padding:14px 0 12px;touch-action:none;cursor:grab}
+.deck-h .pill{position:absolute;left:50%;top:2px;width:40px;height:5px;margin-left:-20px;border-radius:3px;background:rgba(17,18,17,.3)}
+.dk-l{font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;text-transform:lowercase;color:rgba(17,18,17,.55);line-height:1.2}
+.dk-l b{color:#111211;font-weight:500}
+.dk-x{width:34px;height:34px;border-radius:50%;border:1px solid rgba(17,18,17,.35);display:grid;place-items:center}
+.dk-x svg{width:14px;height:14px}
+.deck-body{flex:1;min-height:0;display:grid;grid-template-columns:1fr;gap:16px;align-content:start;overflow-y:auto;scrollbar-width:none}
+.deck-body::-webkit-scrollbar{display:none}
+.dk-a,.dk-b{display:flex;flex-direction:column;gap:16px;min-width:0}
+.dk-clock{display:flex;align-items:flex-end;justify-content:space-between;line-height:0}
+.dk-beats{display:flex;gap:8px;padding-bottom:4px}
+.dk-beats i{width:12px;height:12px;border-radius:50%;background:rgba(17,18,17,.14)}
+.dk-beats i.on{background:#111211}
+.dk-box{border-top:1px solid rgba(17,18,17,.2);padding-top:8px;min-width:0}
+.dk-cap{display:flex;justify-content:space-between;gap:8px;font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;text-transform:lowercase;color:rgba(17,18,17,.55);margin-bottom:8px}
+#dkWave{width:100%;height:150px;display:block}
+#dkAct{width:100%;height:112px;display:block}
+.dk-split{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}
+.dk-split>div{min-width:0;display:flex;flex-direction:column}
+#dkGon{width:100%;aspect-ratio:1;display:block}
+#dkSpec{width:100%;flex:1;min-height:100px;display:block}
+.dk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;border-top:1px solid rgba(17,18,17,.2);padding-top:10px}
+.dk-stats div{display:flex;flex-direction:column;gap:8px;min-width:0}
+.dk-stats b{line-height:0}
+.deck-ctl{display:flex;align-items:center;gap:12px;padding-top:12px;margin-top:12px;border-top:1px solid rgba(17,18,17,.2)}
+.dk-chain{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;flex:1;max-width:280px}
+.dk-chain i{width:8px;height:8px;border-radius:50%;background:rgba(17,18,17,.18);justify-self:center}
+.dk-chain i.on{background:#111211}
+@media (min-width:720px){
+  .deck{left:max(16px,env(safe-area-inset-left,0px));right:max(16px,env(safe-area-inset-right,0px))}
+  .deck-body{grid-template-columns:1.35fr 1fr;gap:30px}
+  #dkWave{height:clamp(210px,34vh,380px)}
+  #dkAct{height:clamp(130px,22vh,240px)}
+  #dkGon{max-height:clamp(180px,34vh,320px)}
+}
+
+/* deck: never shows a gap under it while it springs up, and fills its height */
+.deck{bottom:-64px!important;padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))!important}
+#dkMtr{width:100%;height:150px;display:block}
+.dk-stats b{min-width:0;max-width:100%;overflow:hidden}.dk-stats b svg.dmx{max-width:100%;height:auto}
+@media (min-width:720px){.deck-body{align-content:stretch}
+.dk-a,.dk-b{min-height:100%}
+.dk-a>.dk-box:nth-child(2){flex:1.4;display:flex;flex-direction:column;min-height:170px}.dk-a>.dk-box:nth-child(2) #dkWave{flex:1;height:auto!important}
+.dk-a>.dk-box:nth-child(3){flex:1;display:flex;flex-direction:column;min-height:130px}.dk-a>.dk-box:nth-child(3) #dkAct{flex:1;height:auto!important}
+.dk-grow{flex:1;display:flex;flex-direction:column;min-height:150px}#dkMtr{flex:1;height:auto;min-height:120px}}
+/* canvases must never size themselves: their pixel buffer (set from clientHeight × dpr) fed back into the flex layout and pushed them over the next box */
+@media (min-width:720px){.dk-a>.dk-box:nth-child(2) #dkWave,.dk-a>.dk-box:nth-child(3) #dkAct,.dk-grow #dkMtr{flex:1 1 0!important;height:0!important;min-height:0!important}
+.dk-a>.dk-box:nth-child(2){min-height:120px}.dk-a>.dk-box:nth-child(3){min-height:110px}.dk-grow{min-height:110px}
+.dk-a>*,.dk-b>*{flex-shrink:0}.dk-a>.dk-box:nth-child(2),.dk-a>.dk-box:nth-child(3),.dk-b>.dk-grow{flex-shrink:1}}
+#dkLoud{width:100%;height:70px;display:block}
+.dkq{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.dkq span{display:grid;place-items:center;height:34px;border-radius:8px;box-shadow:inset 0 0 0 1px rgba(17,18,17,.18);line-height:0}
+.dkq span.on{background:#111211;color:var(--yellow)}.dkq span.off{opacity:.35}
+
+

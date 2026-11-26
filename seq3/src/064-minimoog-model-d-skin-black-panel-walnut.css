@@ -1,0 +1,16 @@
+/* ---------- MINIMOOG MODEL D skin: black panel, walnut cheeks, white silkscreen ---------- */
+.card.clone.moog{color:#F2EFE6;background:
+  linear-gradient(90deg,#5B3A22 0,#7A4E2C 6px,#4A2E19 14px,transparent 14px,transparent calc(100% - 14px),#4A2E19 calc(100% - 14px),#7A4E2C calc(100% - 6px),#5B3A22 100%),
+  repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 2px,transparent 2px 5px),
+  linear-gradient(180deg,#19191B,#0E0E0F);padding-left:26px;padding-right:26px;box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 26px 50px -26px rgba(0,0,0,.8)}
+.card.clone.moog .cap .t{color:rgba(242,239,230,.55)}.card.clone.moog .cap .t b{color:#F2EFE6}.card.clone.moog .grab{background:rgba(255,255,255,.08)}
+.moog .cl-logo{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-style:italic;font-size:26px;letter-spacing:.01em}.moog .cl-logo small{font-style:normal;font-family:var(--f-mono)}
+.moog .cl-nav,.moog .cl-trk{background:rgba(255,255,255,.06)}.moog .cl-trk button.on{background:#F2EFE6;color:#111}.moog .cl-kb{background:rgba(255,255,255,.08)}
+.moog .cl-panel{border-top:1px solid rgba(242,239,230,.25);border-bottom:1px solid rgba(242,239,230,.25)}
+.moog .cl-sec{border-right:1px solid rgba(242,239,230,.14)}.moog .cl-sec:last-child{border-right:0}
+.moog .cl-sec h5{padding-bottom:6px;border-bottom:1px solid rgba(242,239,230,.25)}
+.moog .c-osc{flex:1 1 260px}.moog .c-mod{flex:1 1 260px}.moog .c-mix{flex:0 1 150px}.moog .c-mix .cl-row{gap:4px}.moog .c-ctrl{flex:0 1 160px}.moog .c-out{flex:0 1 90px}
+.moog .cl-kf{background:radial-gradient(circle,#242426 0 56%,transparent 57%),repeating-conic-gradient(#060606 0 6deg,#202022 6deg 12deg);box-shadow:0 4px 8px rgba(0,0,0,.7),0 0 0 1px #000}
+.moog .cl-kf::after{content:"";position:absolute;inset:20%;border-radius:50%;background:radial-gradient(circle at 40% 30%,#3C3C40,#141416 70%);box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.moog .cl-kf i{position:absolute;z-index:1;left:50%;top:2px;width:2.5px;height:42%;margin-left:-1.25px;border-radius:1px;background:#F4F2EA}
+.moog .cl-k.act .cl-kf{box-shadow:0 0 0 2px rgba(245,154,58,.7),0 4px 8px rgba(0,0,0,.7)}

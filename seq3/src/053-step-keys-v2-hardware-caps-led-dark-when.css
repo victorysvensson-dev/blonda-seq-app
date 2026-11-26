@@ -1,0 +1,37 @@
+/* ================= step keys v2: hardware caps + LED, dark when on ================= */
+.seqlite.keys .cells{gap:4px}
+.seqlite.keys .cells .cell{position:relative;border-radius:7px;place-items:start center;padding-top:14%;
+  background:linear-gradient(180deg,#FDFDFB,#ECEBE5);box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(29,29,27,.05),0 2px 0 #D3D2CB,0 3px 6px -3px rgba(0,0,0,.28);
+  transition:transform .3s var(--spring),background .25s,box-shadow .35s}
+.seqlite.keys .cells .cell:nth-child(n+5):nth-child(-n+8):not(.on):not(.ph),.seqlite.keys .cells .cell:nth-child(n+13):not(.on):not(.ph){background:linear-gradient(180deg,#F3F2EC,#E1E0D9)}
+.seqlite.keys .cells .cell::before{width:46%;height:3px;border-radius:2px;aspect-ratio:auto;background:rgba(29,29,27,.13);box-shadow:none;transition:background .2s,box-shadow .3s,width .35s var(--spring)}
+.seqlite.keys .cells .cell.on{transform:translateY(1px);background:linear-gradient(180deg,#34343A,#1C1C1F);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 1.5px color-mix(in srgb,var(--tc) 55%,transparent),0 1px 0 #0D0D0F,0 4px 10px -4px color-mix(in srgb,var(--tc) 70%,transparent)}
+.seqlite.keys .cells .cell.on::before{width:calc(34% + 30% * var(--vel,.72));height:3px;aspect-ratio:auto;background:var(--tc);opacity:calc(.55 + .45 * var(--vel,.72));
+  box-shadow:0 0 6px var(--tc),0 0 1px var(--tc)}
+.seqlite.keys .cells .cell.acc::before{width:70%;height:4px;opacity:1}
+.seqlite.keys .cells .cell.acc{box-shadow:inset 0 1px 0 rgba(255,255,255,.14),inset 0 0 0 2px var(--tc),0 1px 0 #0D0D0F,0 5px 14px -4px var(--tc)}
+.seqlite.keys .cells .cell.ph{background:linear-gradient(180deg,#FFF5CF,#F1E2A2)}
+.seqlite.keys .cells .cell.on.ph{transform:translateY(0) scale(1.07);background:linear-gradient(180deg,#46464D,#26262A);box-shadow:inset 0 0 0 2px var(--tc),0 0 18px 2px color-mix(in srgb,var(--tc) 80%,transparent);transition:none}
+.seqlite.keys .cells .cell.on.ph::before{width:76%;opacity:1;box-shadow:0 0 10px var(--tc),0 0 3px #fff}
+.seqlite.keys .cells .cell[data-p].on{outline:1.4px dashed rgba(255,255,255,.45);outline-offset:-4px}
+.seqlite.keys .cells .cell[data-p].on::before{opacity:var(--pp,1)}
+.seqlite.keys .cells .cell[data-r]::after{bottom:16%;background:radial-gradient(circle,rgba(255,255,255,.85) 1.1px,transparent 1.4px) 0 0/4px 3px repeat-x}
+@container (max-width:560px){.seqlite.keys .cells{gap:3px}.seqlite.keys .cells .cell{border-radius:4px;padding-top:3px;box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(29,29,27,.06),0 1px 0 #D3D2CB}
+  .seqlite.keys .cells .cell::before{height:2px;width:56%}.seqlite.keys .cells .cell.on::before{height:2px}.seqlite.keys .cells .cell.on{transform:none}}
+/* big steps (phone) share the same key language */
+.seqlite.keys .bigsteps .bs{border-radius:16px;place-items:start center;padding-top:22%;background:linear-gradient(180deg,#FDFDFB,#ECEBE5);
+  box-shadow:inset 0 1px 0 #fff,inset 0 0 0 1px rgba(29,29,27,.05),0 3px 0 #D3D2CB,0 5px 10px -5px rgba(0,0,0,.3);transition:transform .3s var(--spring),background .25s,box-shadow .35s}
+.seqlite.keys .bigsteps .bs::before{position:absolute;left:50%;top:14%;transform:translateX(-50%);width:44%;height:4px;border-radius:2px;aspect-ratio:auto;background:rgba(29,29,27,.13);box-shadow:none}
+.seqlite.keys .bigsteps .bs i{left:12px;top:auto;bottom:10px;transform:none}
+.seqlite.keys .bigsteps .bs.on{transform:translateY(2px);background:linear-gradient(180deg,#34343A,#1C1C1F);color:#fff;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12),inset 0 0 0 2px color-mix(in srgb,var(--tc) 55%,transparent),0 1px 0 #0D0D0F,0 8px 16px -6px color-mix(in srgb,var(--tc) 70%,transparent)}
+.seqlite.keys .bigsteps .bs.on::before{width:calc(34% + 34% * var(--vel,.72));height:5px;aspect-ratio:auto;background:var(--tc);box-shadow:0 0 10px var(--tc)}
+.seqlite.keys .bigsteps .bs.acc::before{width:76%;height:6px}
+.seqlite.keys .bigsteps .bs.on span,.seqlite.keys .bigsteps .bs.on i{color:rgba(255,255,255,.75)}
+.seqlite.keys .bigsteps .bs.ph{background:linear-gradient(180deg,#FFF5CF,#F1E2A2)}
+.seqlite.keys .bigsteps .bs.on.ph{transform:scale(1.05);background:linear-gradient(180deg,#46464D,#26262A);box-shadow:inset 0 0 0 2px var(--tc),0 0 24px 3px color-mix(in srgb,var(--tc) 80%,transparent);transition:none}
+.seqlite.keys .bigsteps .bs.on.ph::before{width:80%;background:var(--tc);box-shadow:0 0 12px var(--tc),0 0 3px #fff}
+.seqlite.keys .bigsteps .bs[data-p].on{outline:2px dashed rgba(255,255,255,.4);outline-offset:-7px}
+.seqlite.keys .bigsteps .bs[data-r]::after{background:radial-gradient(circle,rgba(255,255,255,.85) 2px,transparent 2.4px) 0 0/8px 5px repeat-x}
+

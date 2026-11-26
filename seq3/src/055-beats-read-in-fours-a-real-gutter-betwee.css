@@ -1,0 +1,12 @@
+/* ---------- beats read in fours: a real gutter between every group of 4 steps ---------- */
+/* beats read in fours through tone, not spacing */
+.seqlite.keys .cells .cell:nth-child(n+5):nth-child(-n+8):not(.on):not(.ph),.seqlite.keys .cells .cell:nth-child(n+13):not(.on):not(.ph){background:linear-gradient(180deg,#E9E7DF,#D8D6CD)}
+.seqlite.keys .bigsteps .bs:nth-child(n+5):nth-child(-n+8):not(.on):not(.ph),.seqlite.keys .bigsteps .bs:nth-child(n+13):not(.on):not(.ph){background:linear-gradient(180deg,#E9E7DF,#D8D6CD)}
+.seqlite .steprule .cells span:nth-child(n+5):nth-child(-n+8),.seqlite .steprule .cells span:nth-child(n+13){color:rgba(29,29,27,.55)}
+/* dice: lighter wave so it never fights the key transforms */
+.grid.diced .cell{animation:diceIn .5s var(--ease-out) both;animation-delay:calc(var(--sx,0)*9ms)}
+@keyframes diceIn{from{opacity:.35}to{opacity:1}}
+.die.spin{animation:dieSpin .9s cubic-bezier(.2,.9,.25,1)}
+@keyframes dieSpin{0%{transform:rotate(0) scale(1)}25%{transform:rotate(180deg) scale(1.22)}60%{transform:rotate(320deg) scale(1.05)}100%{transform:rotate(360deg) scale(1)}}
+.actions .chip.dice:disabled{opacity:1;cursor:progress}
+

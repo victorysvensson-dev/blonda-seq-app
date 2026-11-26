@@ -1,0 +1,1 @@
+setTimeout(()=>{const c=document.getElementById("bootcov");if(c)c.remove()},4000)

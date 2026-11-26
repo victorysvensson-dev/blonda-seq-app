@@ -1,0 +1,4 @@
+/* ===== v125: the Grime engine's synth card — acid green on near-black ===== */
+.card.syn[data-eng="grime"]{--e-fg:#EEF6DE;--e-mute:rgba(238,246,222,.55);--e-acc:#B8F23A;--e-chip:rgba(184,242,58,.12);--e-line:rgba(238,246,222,.18);--e-on:#141A0A;
+  animation:none;background:radial-gradient(90% 70% at 85% 10%,rgba(184,242,58,.22),transparent 60%),linear-gradient(170deg,#20251A,#0E110B)}
+
