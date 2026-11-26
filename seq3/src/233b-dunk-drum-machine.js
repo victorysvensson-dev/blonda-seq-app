@@ -81,13 +81,14 @@
   const last=new Array(8).fill(null);
   /* Microtonic's oscillator "triggers at full force" with attack 0, a distinct click: the sine starts at its peak (cosine phase) */
   const cosW=new WeakMap();const cosWave=c=>{let w=cosW.get(c);if(!w){w=c.createPeriodicWave(new Float32Array([0,1]),new Float32Array([0,0]),{disableNormalization:true});cosW.set(c,w)}return w};
-  const cut=(g,t)=>{try{g.gain.cancelAndHoldAtTime(t);g.gain.setTargetAtTime(0,t,.003)}catch(e){globalThis.__el&&globalThis.__el(e)}};
+  const cut=(v,t)=>{try{v.vg.gain.cancelAndHoldAtTime(t);v.vg.gain.setTargetAtTime(0,t,.003)}catch(e){globalThis.__el&&globalThis.__el(e)}stopV(v,t+.03)};
   const CAL=.75;
   /* a Microtonic kit plays about 9 dB louder here than in Microtonic (A/B against a recording of the same preset), so imports are trimmed */
   const IMPORT_TRIM=-9;
   /* constants of the Microtonic match, kept together so the A/B tests can try values */
   const TUNE={cosStart:true,expAtk:true,modLin:false,eqQ:.4,eqQn:.4,eqK:.85,eqFree:6,mixRev:false,dcyK:4.6,ndcyK:4.6,modK:4.6};/* level match with SEQ.3's own drums (same peak for the default kick) */
-  const nz=(c,t,end)=>{const s=c.createBufferSource();s.buffer=A.noise;s.loop=true;s.start(t,Math.random()*Math.max(.01,A.noise.duration-.05));s.stop(end);return s};
+  let SRC=null;/* the sources of the voice being built */
+  const nz=(c,t,end)=>{const s=c.createBufferSource();s.buffer=A.noise;s.loop=true;s.start(t,Math.random()*Math.max(.01,A.noise.duration-.05));SRC.push(s);return s};
   function voice(ch,t,vel,tp,out){const c=ctx;if(!c||!A.noise)return;const d=st(),P=d.p[ch];if(!P)return;
     tp=tp||{};const tune=+tp.tune||0,dsc=Math.pow(2,((tp.decay??.45)-.45)*2.2),tsc=Math.pow(2,((tp.tone??.5)-.5)*2.5);
     vel=Math.max(0,Math.min(1,vel==null?.8:vel));
@@ -95,6 +96,7 @@
     const mv=vel<=.72?vel/.72*.5:.5+(vel-.72)/.28*.5,sens=P.ov||P.nv||P.mv;const vs=s=>Math.max(0,1-s/100*(1-mv));
     /* the channel's own last hit, and its choke group */
     if(last[ch])cut(last[ch],t);if(P.ck)for(let j=0;j<8;j++)if(j!==ch&&last[j]&&d.p[j].ck===P.ck)cut(last[j],t);
+    SRC=[];
     const atk=P.atk/1000,dcy=Math.max(.001,P.dcy/1000*dsc),natk=P.natk/1000,ndcy=Math.max(.001,P.ndcy/1000*dsc);
     const oLen=atk+dcy*1.5,nLen=natk+(P.ne===1?ndcy:ndcy*1.5)+(P.ne===2?.03:0),end=t+Math.max(oLen,nLen)+.06;
     const sum=c.createGain();const mixO=TUNE.mixRev?1-P.mix/100:P.mix/100,mixN=1-mixO;
@@ -108,10 +110,10 @@
       const amt=P.amt*vs(P.mv)*100;
       if(Math.abs(amt)>.5){
         if(P.mod===0){const r=Math.max(.0005,P.rate/1000*dsc)/TUNE.modK;oscs.forEach(x=>{x.detune.setValueAtTime(amt,t);if(TUNE.modLin)x.detune.linearRampToValueAtTime(0,t+Math.max(.0005,P.rate/1000*dsc));else x.detune.setTargetAtTime(0,t,r)})}
-        else{let src;if(P.mod===1){src=c.createOscillator();src.type='sine';src.frequency.value=Math.max(.01,P.rate);src.start(t);src.stop(end)}
+        else{let src;if(P.mod===1){src=c.createOscillator();src.type='sine';src.frequency.value=Math.max(.01,P.rate);src.start(t);SRC.push(src)}
           else{const n=nz(c,t,end),lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=Math.max(1,Math.min(20000,P.rate));lp.Q.value=.5;n.connect(lp);src=lp}
           const mg=c.createGain();mg.gain.value=P.mod===2?amt*Math.min(6,Math.sqrt(c.sampleRate/2/Math.max(1,P.rate))*.6):amt;src.connect(mg);oscs.forEach(x=>mg.connect(x.detune))}}
-      oscs.forEach(x=>{x.start(t);x.stop(end)});og.connect(sum)}
+      oscs.forEach(x=>{x.start(t);SRC.push(x)});og.connect(sum)}
     /* noise */
     if(mixN>.0005){const ng=c.createGain(),pk=Math.max(1e-6,mixN*vs(P.nv));const g=ng.gain;g.setValueAtTime(0,t);
       if(P.ne===2){/* clap: bursts for the attack time (Microtonic: the attack sets the number of triggers and the time between them), then the tail */
@@ -126,15 +128,21 @@
       ng.connect(sum)}
     /* drive → EQ → fat shelf → crush → level → pan */
     let node=sum;const fat=+d.fat||0,drv=P.dist/100*13+fat*4;
-    if(drv>.05){const w=c.createWaveShaper();w.curve=tanhCurve(1+drv);w.oversample='2x';node.connect(w);node=w}
+    if(drv>.05){const w=c.createWaveShaper();w.curve=tanhCurve(1+drv);w.oversample='none';/* Microtonic: the only part not made alias-free */node.connect(w);node=w}
     if(Math.abs(P.eqg)>.05){const e=c.createBiquadFilter();e.type='peaking';e.frequency.value=Math.max(20,Math.min(c.sampleRate*.45,P.eqf));e.Q.value=P.eqg<0?TUNE.eqQn:TUNE.eqQ;e.gain.value=P.eqg;node.connect(e);node=e}
     /* as in Microtonic: a strong EQ boost turns the channel down so the volume stays about the same */
     const eqComp=P.eqg>TUNE.eqFree?Math.pow(10,-(P.eqg-TUNE.eqFree)*TUNE.eqK/20):1;
     if(fat>.01){const e=c.createBiquadFilter();e.type='lowshelf';e.frequency.value=95;e.gain.value=fat*5;node.connect(e);node=e}
     if(P.crush>.01){const w=c.createWaveShaper();w.curve=stepCurve(P.crush);node.connect(w);node=w}
     const vg=c.createGain();vg.gain.value=CAL*Math.pow(10,(+d.trim||0)/20)*eqComp*Math.pow(10,P.lvl/20)*(sens?1:.5+.5*vel);/* a patch without velocity settings still hears the accent */node.connect(vg);
-    const pn=c.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,P.pan/100));vg.connect(pn).connect(out);
-    last[ch]=vg;if(ch===0&&!RENDER&&typeof pump==='function')pump(t)}
+    if(Math.abs(P.pan)>.5){const pn=c.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,P.pan/100));vg.connect(pn).connect(out)}else vg.connect(out);
+    /* when the sources stop: a short voice at its end; a long one (a tail of seconds) as soon as the channel's next hit or its choke
+       cuts it, else at its end (the housekeeping below) */
+    const v={vg,srcs:SRC,end,stopped:false};SRC=null;if(RENDER||end-t<.6)stopV(v,end);last[ch]=v;if(!RENDER)LIVE.add(v);
+    if(ch===0&&!RENDER&&typeof pump==='function')pump(t)}
+  const LIVE=new Set();
+  function stopV(v,at){if(v.stopped)return;v.stopped=true;const a=Math.min(v.end,at);for(const s of v.srcs)try{s.stop(a)}catch(e){globalThis.__el&&globalThis.__el(e)}}
+  setInterval(()=>{if(!ctx)return;const now=ctx.currentTime;for(const v of LIVE){if(!v.stopped&&v.end<=now+1)stopV(v,v.end);if(v.stopped&&v.end<now-1)LIVE.delete(v)}},250);
   let RENDER=false;
   /* offline render for tests: one channel of the current kit (or a list of [channel, time, velocity]) → [L,R] */
   window.__dunkRender=async(ch,dur,sr,vel,tp)=>{sr=sr||48000;const oc=new OfflineAudioContext(2,Math.ceil(dur*sr),sr),real=ctx,rn=A.noise,keep=last.slice();
@@ -224,6 +232,7 @@
       <div class="dk-pads">${MAP.map((_,c)=>`<button class="dk-pad" data-c="${c}"><b></b><small></small></button>`).join('')}</div>
       <div class="dk-ed"><div class="dk-row"><input class="dk-name" maxlength="24" aria-label="Sound name" spellcheck="false"><span class="dk-segs"></span></div><div class="dk-secs"></div></div>
       <div class="dk-gr"><small>GROOVES · into pattern</small><div class="dk-grl">${GROOVES.map((g,i)=>`<button data-g="${i}">${g[0]}</button>`).join('')}</div></div>
+      <div class="dk-mv"><small>MOVES · press ● and ▶, then turn a knob · it plays back in the pattern</small><div class="dk-mvl"></div></div>
       <div class="dk-msg" aria-live="polite"></div>`;
     const segs=body.querySelector('.dk-segs');
     const secs=body.querySelector('.dk-secs');knobs=[];
@@ -236,9 +245,9 @@
         if(k==='rate'){const dec=st().p[st().sel].mod===0;o=Object.assign(o,dec?{label:'Time',min:1,max:2000,fmt:ms}:{min:.1,max:8000},LOG(dec?1:.1,dec?2000:8000));if(!dec)o.fmt=v=>hz(v)+'Hz'}
         else if(map)Object.assign(o,map);
         if(k==='amt'||k==='eqg'||k==='pan')o.bi=true;
-        knobs.push(__dknob(kn,o))}}
+        const el=__dknob(kn,o);knobs.push(el);try{mlReg(el,{key:()=>'d.'+st().sel+'.'+k,label:()=>'dunk '+(st().sel+1)+' '+String(o.label).toLowerCase(),min:o.min,max:o.max,paint:()=>el.refresh()})}catch(e){globalThis.__el&&globalThis.__el(e)}}}
     {const s=document.createElement('div');s.className='dk-sec dk-fat';s.innerHTML='<div class="dk-h">KIT</div><div class="dk-kn"></div>';secs.appendChild(s);
-      knobs.push(__dknob(s.querySelector('.dk-kn'),{label:'Fat',min:0,max:1,def:.3,cls:'sm',get:()=>+st().fat||0,set:v=>{touch();st().fat=v},end:()=>{settle();audition(0)},fmt:v=>pc(v*100)}))}
+      knobs.push(__dknob(s.querySelector('.dk-kn'),{label:'Fat',min:0,max:1,def:.3,cls:'sm',get:()=>+st().fat||0,set:v=>{touch();st().fat=v},end:()=>{settle();audition(0)},fmt:v=>pc(v*100)}));const fk=knobs[knobs.length-1];try{mlReg(fk,{key:'d.fat',label:'dunk fat',min:0,max:1,paint:()=>fk.refresh()})}catch(e){globalThis.__el&&globalThis.__el(e)}}
     body.querySelectorAll('.dk-arw').forEach(b=>b.onclick=()=>{const d=st();let i=KITS.findIndex(k=>k.name===d.kit);i=(i+(+b.dataset.k)+KITS.length)%KITS.length;try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}loadKit(KITS[i]);done();audition(0)});
     body.querySelector('.dk-on').onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}setOn(!isOn());done()};
     body.querySelectorAll('.dk-pad').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;const d=st();const same=d.sel===c;d.sel=c;if(!same)build();paint();audition(c)});
@@ -246,7 +255,7 @@
     body.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}writeRows(S.pat,fromGroove(GROOVES[+b.dataset.g][1]));if(!isOn())setOn(true);done();msg('Groove "'+GROOVES[+b.dataset.g][0]+'" in pattern '+'ABCDEFGH'[S.pat])});
     const fi=body.querySelector('.dk-file');body.querySelector('.dk-imp').onclick=()=>fi.click();
     fi.onchange=async()=>{const f=fi.files&&fi.files[0];fi.value='';if(!f)return;let txt='';try{txt=await f.text()}catch(e){globalThis.__el&&globalThis.__el(e)}importText(txt,f.name)};
-    paint();sig=sigNow()}
+    paint();moves();sig=sigNow()}
   function msg(t,btns){const m=body&&body.querySelector('.dk-msg');if(!m)return;m.innerHTML='';const s=document.createElement('span');s.textContent=t;m.appendChild(s);
     (btns||[]).forEach(([l,f])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>{m.innerHTML='';f()};m.appendChild(b)});if(!btns){clearTimeout(msg._t);msg._t=setTimeout(()=>{if(m.firstChild===s)m.innerHTML=''},4000)}}
   /* (v286) the file input has no accept list: iPadOS greys out file types it doesn't know (.mtpreset), so any file can be
@@ -269,6 +278,7 @@
   /* the choice as a small window in the export window's BLONDA yellow */
   function askImport(kitName,r,go){const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
     const n=Math.min(r.pats.length,S.pats.length),bpm=r.tempo>0?Math.round(r.tempo/r.k16):0;
+    try{if(window.__dock&&__dock.isOpen())__dock.toggle(false)}catch(e){globalThis.__el&&globalThis.__el(e)}/* the menu must not lie over the window */
     const scrim=document.createElement('div');scrim.className='ex-scrim';const el=document.createElement('div');el.className='dk-dlg';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
     el.innerHTML=`<div class="dkd-top"><small>BLONDA / DUNK / IMPORT</small><button class="dkd-x" aria-label="Close">CLOSE ×</button></div>
       <h2 class="dkd-t">${esc(kitName)}</h2>
@@ -283,7 +293,20 @@
       if(!(rows[c]&&rows[c][q]))return;const st0=S.pats[S.pat]&&S.pats[S.pat][i]&&S.pats[S.pat][i][q];if(!st0||!st0.v)return;
       const sd=stepDur()/tapeRate,t0=t+((q%2)?S.master.swing*sd*.66:0),gap=sd/Math.max(1,F.rate);let v=st0.v===2?1:.72;
       for(let k=1;k*gap<sd-1e-4;k++){v*=.8;trigger(i,t0+k*gap,v)}})}}catch(e){globalThis.__el&&globalThis.__el(e)}return r}}
-  window.DUNK={TUNE,voice,KITS,GROOVES,readFile,importText,setOn,loadKit:i=>{loadKit(KITS[i]);done()},state:st,_last:last};
+  /* recorded moves (SEQ.3's "rörelser", piece 169): keys d.<channel>.<param> and d.fat. A move changes the value the next hit uses */
+  {const _g=motGet,_w=motWrite;
+    motGet=function(key){if(String(key).startsWith('d.')){const q=key.split('.'),d=st();if(q[1]==='fat')return +d.fat||0;const P=d.p[+q[1]];return P&&typeof P[q[2]]==='number'?P[q[2]]:null}return _g.apply(this,arguments)};
+    motWrite=function(key,v){if(!String(key).startsWith('d.'))return _w.apply(this,arguments);const q=key.split('.'),d=st();if(q[1]==='fat')d.fat=v;else{const P=d.p[+q[1]];if(P&&q[2] in P)P[q[2]]=Math.max(RNG[q[2]][0],Math.min(RNG[q[2]][1],v))}
+      sig=sigNow();/* a played-back move is not a reason to rebuild the card */MOT.pend.add(key);if(!MOT.rq)MOT.rq=requestAnimationFrame(motRepaint)};
+    const _l=motList;motList=function(){const r=_l.apply(this,arguments);try{moves()}catch(e){globalThis.__el&&globalThis.__el(e)}return r}}
+  /* the card's own list of DUNK moves, with × per move and one to clear them all */
+  function moves(){const box=body&&body.querySelector('.dk-mvl');if(!box)return;const M=S.mot||{},rows=[];
+    for(const g of Object.keys(M).sort())for(const k of Object.keys(M[g]||{}))if(k.startsWith('d.')&&M[g][k]&&M[g][k].some(v=>v!=null))rows.push([g,k]);
+    box.innerHTML=rows.map(([g,k])=>`<span class="dk-mvr"><b>${'ABCDEFGH'[+g.slice(1)]||g}</b>${String((S.motL||{})[k]||k).replace(/[<>&]/g,'')}<button data-g="${g}" data-k="${k}" aria-label="Remove move">×</button></span>`).join('')+(rows.length>1?'<button class="dk-mvc">CLEAR ALL</button>':'');
+    box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}delete M[b.dataset.g][b.dataset.k];try{save();motList();motBadges()}catch(e){globalThis.__el&&globalThis.__el(e)}});
+    const c=box.querySelector('.dk-mvc');if(c)c.onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}for(const [g,k] of rows)delete M[g][k];try{save();motList();motBadges()}catch(e){globalThis.__el&&globalThis.__el(e)}};
+    try{motBadges()}catch(e){globalThis.__el&&globalThis.__el(e)}}
+  window.DUNK={TUNE,voice,KITS,GROOVES,readFile,importText,setOn,loadKit:i=>{loadKit(KITS[i]);done()},state:st,_last:last,_live:LIVE};
   /* undo, a loaded project: the card follows */
   setInterval(()=>{if(!body||dirty||!body.offsetParent)return;if(sigNow()!==sig)build()},1000);
   if(body){build();const css=document.createElement('style');css.textContent=`
@@ -311,5 +334,8 @@
 .dkd-go{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.dkd-go button{height:42px;padding:0 18px;border:0;border-radius:999px;font:600 10.5px var(--f-mono);letter-spacing:.06em}
 .dk-dlg button:focus{outline:none}.dk-dlg button:focus-visible{outline:2px solid #17181A;outline-offset:2px}
 .dkd-kit{background:transparent;color:#17181A;box-shadow:inset 0 0 0 1.5px #17181A}.dkd-all{background:#17181A;color:#EFCB4A}
+.dk-mv small{font-size:8px;letter-spacing:.14em;opacity:.5}.dk-mvl{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.dk-mvl:empty{display:none}
+.dk-mvr{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 0 0 8px;font:500 9.5px var(--f-mono);box-shadow:inset 0 0 0 1px #2E3032}.dk-mvr b{color:#F2C318;font-weight:600}
+.dk-mvr button{width:26px;height:26px;border:0;background:none;color:inherit;font-size:13px;opacity:.7}.dk-mvc{height:26px;padding:0 9px;font:600 9px var(--f-mono);color:inherit;background:none;border:0;box-shadow:inset 0 0 0 1px #3A3C3F}
 .dk-msg{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:10px;min-height:0}.dk-msg:empty{display:none}.dk-msg button{height:26px;padding:0 9px;font:600 9.5px var(--f-mono);color:#141517;background:#F2C318;border:0}`;document.head.appendChild(css)}
 })();
