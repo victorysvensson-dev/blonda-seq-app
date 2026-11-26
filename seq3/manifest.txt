@@ -232,6 +232,7 @@
 231-v233-the-music-keeps-going-while-the-win.js
 232-ipad-and-iphone-fit-v241.js
 233-sampler-multisample-teenage-engineering-.js
+233b-dunk-drum-machine.js
 234-follow-external-midi-clock-v245.js
 234b-ableton-link.js
 235-the-keyboard-s-sound-strip-v245.js

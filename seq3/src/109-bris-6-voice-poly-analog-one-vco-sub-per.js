@@ -73,7 +73,7 @@ function trigger(i,t,vel,note,ls){return window.__trgCap?__trgCap(t,()=>trigger0
 function trigger0(i,t,vel,note,ls){if(!ctx)return;const tr=TRACKS[i],p0=S.params[tr.id],sp=!tr.mel&&typeof SFX!=='undefined'&&SFX&&SFX.pt?SFX.pt:0,p=gTune||sp?Object.assign({},p0,{tune:p0.tune+gTune+sp}):p0,out=ckOut(i,t,A.ch[i].inp||A.ch[i].g),len=60/S.bpm/4*(ls||1);
   if(tr.id==='kick'&&isMuted(i))return;
   const dkk=tr.id==='ohat'?'hat':tr.id,dm=S.dk&&S.dk[tr.id],alt=dm&&DKV[dkk]&&DKV[dkk][dm];
-  if(dm&&dm.startsWith('smp:'))smpVoice(dm.slice(4),t,vel,p,out,tr.id);else if(alt)alt(t,vel,p,out,tr.id==='ohat');else if(tr.id==='hat')VOICE.hat(t,vel,p,out,false);else if(tr.id==='ohat')VOICE.hat(t,vel,p,out,true);else VOICE[tr.id](t,vel,p,out,null,note,len);
+  if(dm&&dm.startsWith('smp:'))smpVoice(dm.slice(4),t,vel,p,out,tr.id);else if(dm&&dm.startsWith('dk:')&&window.DUNK)DUNK.voice(+dm.slice(3),t,vel,p,out);else if(alt)alt(t,vel,p,out,tr.id==='ohat');else if(tr.id==='hat')VOICE.hat(t,vel,p,out,false);else if(tr.id==='ohat')VOICE.hat(t,vel,p,out,true);else VOICE[tr.id](t,vel,p,out,null,note,len);
   if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);
   if(!isMuted(i))hitT.set(i,{t,v:vel})}
 

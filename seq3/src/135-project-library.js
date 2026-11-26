@@ -1,5 +1,5 @@
 /* ---------------- project library ---------------- */
-const PKEYS=['nrep','stxw','smpk','enk','trk','ck','gxEx','clips','duoMem','stxSnap','mods','userPre','rsPre','arr','mot','motL','stx','gfx','bus','solos','chop','se','glitch','eu','len','lock','tfx','dk','loops','bpm','pats','roll','inst','params','master','world','eng','synth','fx','chain','song','chord','glideT','mute','solo','pat','sel'];
+const PKEYS=['nrep','dunk','stxw','smpk','enk','trk','ck','gxEx','clips','duoMem','stxSnap','mods','userPre','rsPre','arr','mot','motL','stx','gfx','bus','solos','chop','se','glitch','eu','len','lock','tfx','dk','loops','bpm','pats','roll','inst','params','master','world','eng','synth','fx','chain','song','chord','glideT','mute','solo','pat','sel'];
 const LIBK=KEY+'-lib',CURK=KEY+'-cur';
 const pjData=()=>{const o={};PKEYS.forEach(k=>{if(S[k]!==undefined)o[k]=S[k]});return JSON.parse(JSON.stringify(o))};
 const pjId=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
