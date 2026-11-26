@@ -65,6 +65,7 @@
       C.base={cnt:C.cnt+1,g};window.__extStart={t:toCtx(at(C.cnt+1)),g};play();C.run=playing}
     else C.pend={g}}
   window.CLK={
+    toCtx(ms){return toCtx(ms)},/* (v284) Ableton Link uses the same page → audio clock step */
     msg(st,d,ms){if(ms==null||!(ms>0))ms=performance.now();
       if(st===0xF8)tick(ms);
       else if(st===0xFA){C.spp=0;begin(0,ms)}

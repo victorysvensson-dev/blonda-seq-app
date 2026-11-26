@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegate, UIDocumentPickerDelegate {
     private var web: WKWebView!
     private let midi = MIDIBridge()
+    private let link = LinkBridge()
     private let args = ProcessInfo.processInfo.arguments
     private lazy var selfTest = args.contains("-selftest")
 
@@ -64,6 +65,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             self?.call("__blonda.midiBatch", batch.map { [$0.0, $0.1.map { Int($0) }, $0.2] as [Any] })
         }
         midi.onTestOut = { [weak self] bytes in self?.testOut.append(bytes) }
+        link.onState = { [weak self] st in self?.call("__blonda.linkState", st) }
     }
 
     override func viewDidLoad() {
@@ -213,6 +215,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             if let id = (b["id"] as? NSNumber)?.intValue {
                 try? FileManager.default.removeItem(at: BundleScheme.importRoot.appendingPathComponent("\(id)", isDirectory: true))
             }
+        case "link":
+            link.handle(b) { [weak self] vc in self?.presentLinkSettings(vc) }
         case "playing":
             UIApplication.shared.isIdleTimerDisabled = (b["on"] as? Bool) ?? false
         case "log":
@@ -230,6 +234,28 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         default:
             break
         }
+    }
+
+    /// Abletons inställningsvy för Link: ett litet fönster med Klar-knapp (popover på iPad och Mac).
+    private func presentLinkSettings(_ vc: UIViewController) {
+        guard presentedViewController == nil else { return }
+        vc.title = "Ableton Link"
+        vc.navigationItem.rightBarButtonItem = UIBarButtonItem(systemItem: .done, primaryAction: UIAction { [weak self] _ in
+            self?.dismiss(animated: true)
+        })
+        let nav = UINavigationController(rootViewController: vc)
+        nav.preferredContentSize = CGSize(width: 320, height: 400)
+        if Self.platform != "iphone" {
+            nav.modalPresentationStyle = .popover
+            if let pop = nav.popoverPresentationController {
+                pop.sourceView = view
+                pop.sourceRect = CGRect(x: view.bounds.midX, y: view.bounds.midY, width: 1, height: 1)
+                pop.permittedArrowDirections = []
+            }
+        } else {
+            nav.modalPresentationStyle = .formSheet
+        }
+        present(nav, animated: true)
     }
 
     /// Calls a function in the page with JSON arguments.

@@ -12,3 +12,6 @@ Shell/ddm/
 
 # the BLONDA sound pack is part of the SEQ.3 app (the page loads it from blonda-pack/)
 !Shell/Web/blonda-pack/*.wav
+
+# Ableton LinkKit (hämtas med tools/get_linkkit.sh, får inte spridas)
+Shell/Vendor/

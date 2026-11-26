@@ -2916,7 +2916,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v283</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v284</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -6058,8 +6058,8 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
       if(cfg.follow&&cfg.clockOut)h+=`<div class="note warn">Följ och skicka klocka samtidigt: SEQ.3 följer och skickar ingen egen klocka.</div>`;
       if(inN&&outN&&inN===outN)h+=`<div class="note warn">Samma enhet in och ut kan ge eko. Välj olika bussar.</div>`;
       h+=`<div class="note"><b>Med Ableton Live (Mac):</b> slå på IAC-drivern i Ljud-MIDI-inställningar. I Live → Inställningar → Link, Tempo & MIDI: sätt <b>Sync</b> på IAC som utgång om SEQ.3 ska följa Live, eller som ingång om Live ska följa SEQ.3.</div>`}
-    h+=`<div class="note"><b>Ableton Link</b> kräver nätverksåtkomst som en webbsida inte får. Det kommer i den riktiga iPhone-appen via Abletons LinkKit. Till dess fungerar MIDI-klockan ovan.</div>`;
-    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);
+    if(window.LINK)h+=LINK.panelHTML();else h+=`<div class="note"><b>Ableton Link</b> kräver nätverksåtkomst som en webbsida inte får. Det kommer i den riktiga iPhone-appen via Abletons LinkKit. Till dess fungerar MIDI-klockan ovan.</div>`;
+    panelEl.innerHTML=h;$('#mpX').onclick=close;if(window.CLK&&CLK.bindPanel)CLK.bindPanel(panelEl);if(window.LINK)LINK.bindPanel(panelEl);
     const si=$('#mpIn'),so=$('#mpOut');if(si)si.onchange=()=>{cfg.inId=si.value;saveCfg();bind()};if(so)so.onchange=()=>{cfg.outId=so.value;saveCfg();bind();paint()};
     const lb=$('#mpLearn');if(lb)lb.onclick=()=>{MLX.toggle();close()};
     panelEl.querySelectorAll('.mlist [data-x]').forEach(b=>b.onclick=()=>{MLX.remove(+b.dataset.x);paint()});const mc=$('#mpClr');if(mc)mc.onclick=()=>{MLX.clear();paint()};
@@ -11179,7 +11179,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v283</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v284</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -14716,6 +14716,7 @@ function findLoop(L,R,sr,a0,b0,root,opt){
       C.base={cnt:C.cnt+1,g};window.__extStart={t:toCtx(at(C.cnt+1)),g};play();C.run=playing}
     else C.pend={g}}
   window.CLK={
+    toCtx(ms){return toCtx(ms)},/* (v284) Ableton Link uses the same page → audio clock step */
     msg(st,d,ms){if(ms==null||!(ms>0))ms=performance.now();
       if(st===0xF8)tick(ms);
       else if(st===0xFA){C.spp=0;begin(0,ms)}
@@ -14737,6 +14738,62 @@ function findLoop(L,R,sr,a0,b0,root,opt){
 .clk-st{font:10px var(--f-mono);opacity:.7;margin-bottom:6px}.clk-st b{font-weight:500;opacity:1}`;document.head.appendChild(css);
 })();
 
+/* ================= Ableton Link (v284, only in the app) =================
+   The app (LinkBridge + LinkKit) holds the Link session and sends its timeline ten times a second: tempo, the beat at a
+   moment, and whether the session is playing. Link is switched on and off in Ableton's own settings view (Ableton's rule).
+   - Tempo: a change in SEQ.3 goes to the session, a change from the session (Live, other apps) comes to SEQ.3.
+   - Start: SEQ.3 starts on the session's next bar (quantum 4 beats = 16 steps). Alone in the session it starts at once
+     and the session's bar begins there.
+   - The beat: like the MIDI clock follower, the next step's time is set from the timeline, converted to the audio clock
+     at the moment the sound is heard (CLK.toCtx), so SEQ.3 stays on the session's beat.
+   - Start/stop sync (if switched on in the settings view): play and stop go both ways.
+   The MIDI clock follower wins when it is running (two masters can't both steer the beat). */
+(()=>{const N=window.BLONDA_NATIVE;if(!N||!N.link)return;const L=N.link,Q=4;
+  const K={st:null,base:null,hold:0,mine:null,sentAt:0,applied:0,shown:0,was:false,err:[]};
+  const clkRun=()=>{try{return !!(window.CLK&&CLK._st().run)}catch(e){return false}};
+  const toCtx=p=>window.CLK&&CLK.toCtx?CLK.toCtx(p):ctx.currentTime+(p-performance.now())/1000;
+  const on=()=>!!(K.st&&K.st.on);
+  /* start SEQ.3 on the session's beat: the next bar (or now, when alone and the session is not playing) */
+  function startPlan(){const p0=performance.now()+90,b0=L.beatAt(p0),B=Math.ceil(b0/Q-1e-6)*Q;
+    const alone=!K.st.peers&&!K.st.playing;return alone?{p:p0,beat:B}:{p:L.pageAtBeat(B),beat:B}}
+  {const _p=play;play=function(){
+    if(!on()||playing||window.__extStart||clkRun())return _p.apply(this,arguments);
+    try{initAudio()}catch(e){globalThis.__el&&globalThis.__el(e)}if(!ctx)return _p.apply(this,arguments);
+    const pl=startPlan();K.base={beat:pl.beat,g:0};K.hold=performance.now()+300;
+    window.__extStart={t:toCtx(pl.p),g:0};const r=_p.apply(this,arguments);
+    if(playing)L.play(pl.p,pl.beat);else K.base=null;return r}}
+  {const _s=stop;stop=function(){const was=playing,r=_s.apply(this,arguments);if(was&&on())L.stop();K.base=null;return r}}
+  function tempo(s){const now=performance.now();
+    if(K.mine==null)K.mine=S.bpm;
+    if(Math.abs(S.bpm-K.mine)>.005){K.mine=S.bpm;K.sentAt=now;L.tempo(S.bpm);return}/* changed in SEQ.3 */
+    if(now-K.sentAt<400)return;/* a timeline sent before our change got there */
+    if(Math.abs(s.bpm-S.bpm)>.005){S.bpm=Math.round(s.bpm*1000)/1000;K.mine=S.bpm;
+      if(Math.round(S.bpm)!==K.shown){K.shown=Math.round(S.bpm);try{setDM($('#bpmNum'),String(K.shown))}catch(e){globalThis.__el&&globalThis.__el(e)}}
+      if(now-K.applied>400){K.applied=now;try{applyMaster()}catch(e){globalThis.__el&&globalThis.__el(e)}}}}
+  function transport(s){if(!s.ss){K.was=s.playing;return}
+    if(s.playing&&!K.was&&!playing&&!clkRun())play();
+    else if(!s.playing&&K.was&&playing&&K.base)stop();
+    K.was=s.playing}
+  function beat(){if(!(playing&&K.base&&ctx)||clkRun()||performance.now()<K.hold||tapeRate!==1)return;
+    const b=K.base.beat+(gstep-K.base.g)/4,target=toCtx(L.pageAtBeat(b)),d=target-nextT,sd=stepDur();
+    K.err.push(d*1000);if(K.err.length>30)K.err.shift();
+    if(Math.abs(d)<.0015)return;
+    if(Math.abs(d)<sd*.5){startT+=d;nextT+=d}else{startT+=d;nextT=Math.max(target,ctx.currentTime+.003)}}
+  L.sub(s=>{const first=!K.st;K.st=s;if(!s.on){K.base=null;K.mine=null;K.was=false;return}
+    if(first)return;
+    try{tempo(s);transport(s);beat()}catch(e){globalThis.__el&&globalThis.__el(e)}});
+  /* the MIDI panel */
+  function stat(){const s=K.st;if(!s)return 'Ableton Link is starting …';if(!s.on)return 'off';
+    const e=K.err.slice(-10),m=e.length?e.reduce((a,b)=>a+Math.abs(b),0)/e.length:0;
+    return `on · <b>${s.peers}</b> ${s.peers===1?'link':'links'} · tempo <b>${s.bpm.toFixed(2)}</b>${s.ss?' · start/stop sync':''}${playing&&K.base?` · on the beat <b>±${m.toFixed(1)} ms</b>`:''}`}
+  window.LINK={
+    panelHTML(){return `<div class="lk-row"><span><b>Ableton Link</b><small>play in time with Live and other apps on the same network</small></span><button class="lk-btn" id="lkSet">Link settings</button></div><div class="clk-st" id="lkSt">${stat()}</div>`},
+    bindPanel(el){const b=el.querySelector('#lkSet');if(b)b.onclick=()=>L.settings()},
+    _st:()=>({st:K.st,base:K.base,err:K.err.slice(),g:gstep,n:nextT,bpm:S.bpm,playing})};
+  setInterval(()=>{const el=document.getElementById('lkSt');if(el)el.innerHTML=stat()},500);
+  const css=document.createElement('style');css.textContent=`.lk-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 4px}.lk-row span{display:flex;flex-direction:column;gap:2px;font-size:11px}.lk-row small{font-size:9px;opacity:.55}
+.lk-btn{height:28px;padding:0 12px;font:500 11px var(--f-mono);color:inherit;background:none;border:0;box-shadow:inset 0 0 0 1px rgba(232,230,220,.18);white-space:nowrap}`;document.head.appendChild(css);
+})();
 /* ================= the keyboard's sound strip (v245) =================
    Under the keyboard's top row: the sound the keyboard plays (engine + preset, ‹ › steps presets, tap for the picker),
    its envelope as A·D·S·R knobs with a drawing, and what came in over MIDI.

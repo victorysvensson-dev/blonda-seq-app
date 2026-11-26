@@ -6,6 +6,7 @@ import Foundation
 /// - navigator.requestMIDIAccess: the Web MIDI API, talking to CoreMIDI (MIDIBridge)
 /// - window.claude.use('downloads'): the same file-saving call the page uses on claude.ai, here a native save dialog
 /// - the play state, so the screen stays on while playing
+/// - window.__blonda.link: Ableton Link (LinkBridge)
 /// - page errors go to the app's log
 enum Bridge {
     static func script(platform: String, selfTest: Bool) -> String {
@@ -47,6 +48,19 @@ N.midiPorts=list=>{const sync=(map,arr,C)=>{const seen=new Set();for(const o of 
    smallest gap seen (the fastest a message got here). So MIDI clock keeps its real timing even though messages come in batches. */
 let hostOff=null;N.midiTime=ms=>{if(ms==null)return performance.now();const o=performance.now()-ms;if(hostOff===null||o<hostOff||o-hostOff>1000)hostOff=o;return ms+hostOff};
 N.midiBatch=arr=>{for(const [id,b,ms] of arr){const p=ins.get(id);if(p)p._fire(b,N.midiTime(ms))}};
+/* ---- Ableton Link (LinkBridge): the app sends the session's timeline (tempo, the beat at a host time in ms); the page
+   turns host ms into its own clock the same way as for MIDI (smallest gap seen, slowly let go so it can follow drift) ---- */
+{const subs=new Set();let off=null,st=null;
+ N.linkState=s=>{const o=performance.now()-s.host;if(off===null||o<off||o-off>1000)off=o;else off+=Math.min(o-off,.005);
+   st=Object.assign({},s,{at:s.host+off});subs.forEach(f=>{try{f(st)}catch(e){}})};
+ N.link={get state(){return st},sub(f){subs.add(f);if(st)f(st);return()=>subs.delete(f)},
+   /* page time (performance.now ms) <-> host ms, and the beat on the timeline at a page time */
+   toHost:p=>p-(off||0),toPage:h=>h+(off||0),
+   beatAt:p=>st?st.beat+(p-st.at)*st.bpm/60000:0,pageAtBeat:b=>st?st.at+(b-st.beat)*60000/st.bpm:0,
+   settings(){post({t:'link',op:'settings'})},query(){post({t:'link',op:'query'})},
+   tempo(bpm){post({t:'link',op:'tempo',bpm:+bpm})},
+   play(page,beat){post({t:'link',op:'play',host:page-(off||0),beat:+beat})},stop(){post({t:'link',op:'stop'})}};
+ setTimeout(()=>post({t:'link',op:'query'}),0)}
 Object.defineProperty(navigator,'requestMIDIAccess',{configurable:true,value:function(){return new Promise(res=>{if(access){res(access);return}waiting.push(res);post({t:'midi-open'})})}});
 /* the page asks whether MIDI is already allowed before connecting by itself – in the app it always is */
 try{const P=navigator.permissions;if(P&&P.query){const q=P.query.bind(P);P.query=d=>d&&d.name==='midi'?Promise.resolve({name:'midi',state:'granted',onchange:null}):q(d)}
