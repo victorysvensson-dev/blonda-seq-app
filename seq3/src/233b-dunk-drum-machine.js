@@ -265,7 +265,19 @@
         if(r.tempo>0){S.bpm=Math.round(Math.max(40,Math.min(300,r.tempo/r.k16))*100)/100;try{setDM($('#bpmNum'),String(Math.round(S.bpm)));applyMaster()}catch(e){globalThis.__el&&globalThis.__el(e)}tx+=' · '+Math.round(S.bpm)+' bpm'}
         if(isFinite(r.swing)){S.master.swing=Math.max(0,Math.min(1,r.swing/100/.66));tx+=' · swing '+Math.round(r.swing)+'%'}}done();build();
       msg('Kit "'+kitName+'" loaded'+(withPats?' with '+Math.min(r.pats.length,S.pats.length)+' patterns'+tx:''));audition(0)};
-    if(r.pats.length)msg(kitName+': 8 sounds, '+r.pats.length+' patterns.',[['KIT ONLY',()=>go(false)],['KIT + PATTERNS',()=>go(true)]]);else go(false)}
+    if(r.pats.length)askImport(kitName,r,go);else go(false)}
+  /* the choice as a small window in the export window's BLONDA yellow */
+  function askImport(kitName,r,go){const esc=x=>String(x).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+    const n=Math.min(r.pats.length,S.pats.length),bpm=r.tempo>0?Math.round(r.tempo/r.k16):0;
+    const scrim=document.createElement('div');scrim.className='ex-scrim';const el=document.createElement('div');el.className='dk-dlg';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');
+    el.innerHTML=`<div class="dkd-top"><small>BLONDA / DUNK / IMPORT</small><button class="dkd-x" aria-label="Close">CLOSE ×</button></div>
+      <h2 class="dkd-t">${esc(kitName)}</h2>
+      <div class="dkd-info"><span><b>8</b>sounds</span><span><b>${r.pats.length}</b>patterns</span>${bpm?`<span><b>${bpm}</b>bpm</span>`:''}${r.swing?`<span><b>${Math.round(r.swing)}%</b>swing</span>`:''}</div>
+      <p class="dkd-note">Kit + patterns puts Microtonic's patterns ${'abcdefghijkl'.slice(0,n).toUpperCase().split('').join(' ')} into SEQ.3's patterns A–${'ABCDEFGH'[n-1]} (drum tracks only) and sets the tempo and swing. Undo takes it back.</p>
+      <div class="dkd-go"><button class="dkd-kit">KIT ONLY</button><button class="dkd-all">KIT + PATTERNS</button></div>`;
+    const close=()=>{el.remove();scrim.remove();document.removeEventListener('keydown',key,true)};const key=e=>{if(e.key==='Escape'){e.preventDefault();close()}};
+    scrim.onclick=close;el.querySelector('.dkd-x').onclick=close;el.querySelector('.dkd-kit').onclick=()=>{close();go(false)};el.querySelector('.dkd-all').onclick=()=>{close();go(true)};
+    document.addEventListener('keydown',key,true);document.body.appendChild(scrim);document.body.appendChild(el);el.querySelector('.dkd-all').focus({preventScroll:true})}
   {const _bp=beatPump;beatPump=function(t,stp){const r=_bp.apply(this,arguments);try{const d=S.dunk,F=d&&d.fill,rows=F&&F.pats&&F.pats[S.pat];
     if(rows&&isOn()){MAP.forEach((id,c)=>{const i=tIdx(id);if(i<0||!trkOn(i)||String(S.dk[id]||'')!=='dk:'+c)return;const L=trkLen(i),q=gstep%L,round=Math.floor(gstep/L);
       if(!(rows[c]&&rows[c][q]))return;const st0=S.pats[S.pat]&&S.pats[S.pat][i]&&S.pats[S.pat][i][q];if(!st0||!st0.v)return;
@@ -290,5 +302,14 @@
 .dk-kn{display:flex;flex-wrap:wrap;gap:4px}.card.dunk .dk-l{color:#E8E6DC!important;opacity:.62}.dk-kn .dk.sm{--dk-sz:40px;min-width:48px}
 .dk-gr small{font-size:8px;letter-spacing:.14em;opacity:.5}.dk-grl{display:flex;flex-wrap:wrap;gap:4px;margin-top:5px}.dk-grl button{height:26px;padding:0 9px;font:600 9.5px var(--f-mono);color:inherit;background:none;border:0;box-shadow:inset 0 0 0 1px #2E3032}
 .dk-grl button:active{background:#F2C318;color:#141517}
+.dk-dlg{position:fixed;z-index:80;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 40px);overflow:auto;box-sizing:border-box;padding:20px 22px 20px;border-radius:26px;background:#EFCB4A;color:#17181A;box-shadow:0 40px 90px rgba(0,0,0,.55);font-family:var(--f-mono)}
+.dkd-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}.dkd-top small{font:500 9px var(--f-mono);letter-spacing:.12em;opacity:.7;padding-top:4px}
+.dkd-x{height:34px;padding:0 16px;border:0;border-radius:999px;background:transparent;color:#17181A;font:600 10.5px var(--f-mono);letter-spacing:.06em;box-shadow:inset 0 0 0 1.5px #17181A}
+.dkd-t{margin:6px 0 14px;font:500 clamp(26px,4.4vw,38px)/1.05 var(--f-display);letter-spacing:-.035em;word-break:break-word}
+.dkd-info{display:flex;flex-wrap:wrap;gap:6px 22px;padding:12px 0;border-top:1px solid rgba(23,24,26,.25);border-bottom:1px solid rgba(23,24,26,.25)}.dkd-info span{display:flex;flex-direction:column;gap:2px;font:500 9px var(--f-mono);letter-spacing:.12em;text-transform:uppercase;opacity:.8}.dkd-info b{font:400 26px var(--f-mono);letter-spacing:-.02em;opacity:1}
+.dkd-note{margin:12px 0 16px;font:400 10.5px/1.5 var(--f-mono);opacity:.75}
+.dkd-go{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.dkd-go button{height:42px;padding:0 18px;border:0;border-radius:999px;font:600 10.5px var(--f-mono);letter-spacing:.06em}
+.dk-dlg button:focus{outline:none}.dk-dlg button:focus-visible{outline:2px solid #17181A;outline-offset:2px}
+.dkd-kit{background:transparent;color:#17181A;box-shadow:inset 0 0 0 1.5px #17181A}.dkd-all{background:#17181A;color:#EFCB4A}
 .dk-msg{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:10px;min-height:0}.dk-msg:empty{display:none}.dk-msg button{height:26px;padding:0 9px;font:600 9.5px var(--f-mono);color:#141517;background:#F2C318;border:0}`;document.head.appendChild(css)}
 })();
