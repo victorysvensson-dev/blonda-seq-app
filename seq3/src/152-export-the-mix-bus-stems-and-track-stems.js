@@ -47,6 +47,8 @@ function expPlan(){const L=[];if(EXP.mix)L.push({k:'mix',name:'mix',node:()=>A.o
 const expFiles=()=>expPlan().filter(p=>!p.hide).length;
 function expSecs(){const bars=EXP.song&&songBars()?songBars():EXP.bars;return bars*240/S.bpm+(EXP.tail?2:0)}
 function openExport(){if(expEl){expEl.remove();expEl=null;if(window.__exScrim)__exScrim.remove();return}
+  /* (v288) opened from the menu: the menu closes, so it doesn't lie over the export window */
+  try{if(window.__dock&&__dock.isOpen())__dock.toggle(false)}catch(e){globalThis.__el&&globalThis.__el(e)}
   /* the export window, BLONDA yellow: live output as dots (waveform + spectrum), what and how long, the numbers, go */
   const scrim=document.createElement('div');scrim.className='ex-scrim';document.body.appendChild(scrim);window.__exScrim=scrim;
   expEl=document.createElement('div');expEl.className='exp ey';
@@ -63,7 +65,7 @@ function openExport(){if(expEl){expEl.remove();expEl=null;if(window.__exScrim)__
         <div><small>${expRun?'KLART':'FILER / SEK'}</small><b class="ey-pr">${expRun?'0 %':plan.length+' / '+secs.toFixed(1)}</b></div>
         <div class="ex-go"><button class="ex-mid" title="Alla noter som MIDI: mönstren och Starterns lager">MIDI ⤓</button><button class="ex-run"${plan.length?'':' disabled'}>${expRun?'AVBRYT ■':'SPELA IN OCH EXPORTERA ●'}</button></div></div>
       <div class="ex-bar"><i></i></div>
-      <div class="ey-foot">WAV 24-BIT · ${sr} HZ · ${plan.length} FIL${plan.length===1?'':'ER'} · CA ${mb<1?mb.toFixed(1):Math.round(mb)} MB I EN ZIP · SPÅREN EFTER FADER OCH PAN · STARTERN LAGER FÖR LAGER · BUSSARNA EFTER PUMPEN · MIXEN EFTER LIMITERN · ALLT BÖRJAR PÅ SAMMA SAMPEL</div>`;
+      <div class="ey-foot">WAV 24-BIT · ${sr} HZ · ${plan.length} FILE${plan.length===1?'':'S'} · ABOUT ${mb<1?mb.toFixed(1):Math.round(mb)} MB IN ONE ZIP · TRACKS AFTER FADER AND PAN · STARTER LAYER BY LAYER · BUSES AFTER THE PUMP · MIX AFTER THE LIMITER · ALL START ON THE SAME SAMPLE</div>`;
     expEl.querySelector('.ex-x').onclick=close;
     expEl.querySelectorAll('.ex-c').forEach(b=>b.onclick=()=>{if(expRun)return;const k=b.dataset.k;
       if(k[0]==='b'&&k!=='bus'){EXP.bars=+k.slice(1);EXP.song=0}else if(k==='song')EXP.song=EXP.song?0:1;else EXP[k]=EXP[k]?0:1;

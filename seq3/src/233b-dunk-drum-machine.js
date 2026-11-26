@@ -84,7 +84,9 @@
   const nz=(c,t,end)=>{const s=c.createBufferSource();s.buffer=A.noise;s.loop=true;s.start(t,Math.random()*Math.max(.01,A.noise.duration-.05));s.stop(end);return s};
   function voice(ch,t,vel,tp,out){const c=ctx;if(!c||!A.noise)return;const d=st(),P=d.p[ch];if(!P)return;
     tp=tp||{};const tune=+tp.tune||0,dsc=Math.pow(2,((tp.decay??.45)-.45)*2.2),tsc=Math.pow(2,((tp.tone??.5)-.5)*2.5);
-    vel=Math.max(0,Math.min(1,vel==null?.8:vel));const vs=s=>1-Math.min(1,s/100)*(1-vel);
+    vel=Math.max(0,Math.min(1,vel==null?.8:vel));
+    /* Microtonic: a step without accent plays at velocity 64, with accent 127. SEQ.3's steps are .72 and 1, so they map onto that */
+    const mv=vel<=.72?vel/.72*.5:.5+(vel-.72)/.28*.5,sens=P.ov||P.nv||P.mv;const vs=s=>Math.max(0,1-s/100*(1-mv));
     /* the channel's own last hit, and its choke group */
     if(last[ch])cut(last[ch],t);if(P.ck)for(let j=0;j<8;j++)if(j!==ch&&last[j]&&d.p[j].ck===P.ck)cut(last[j],t);
     const atk=P.atk/1000,dcy=Math.max(.001,P.dcy/1000*dsc),natk=P.natk/1000,ndcy=Math.max(.001,P.ndcy/1000*dsc);
@@ -123,7 +125,7 @@
     const eqComp=P.eqg>6?Math.pow(10,-(P.eqg-6)*.85/20):1;
     if(fat>.01){const e=c.createBiquadFilter();e.type='lowshelf';e.frequency.value=95;e.gain.value=fat*5;node.connect(e);node=e}
     if(P.crush>.01){const w=c.createWaveShaper();w.curve=stepCurve(P.crush);node.connect(w);node=w}
-    const vg=c.createGain();vg.gain.value=CAL*eqComp*Math.pow(10,P.lvl/20)*(.5+.5*vel);node.connect(vg);
+    const vg=c.createGain();vg.gain.value=CAL*eqComp*Math.pow(10,P.lvl/20)*(sens?1:.5+.5*vel);/* a patch without velocity settings still hears the accent */node.connect(vg);
     const pn=c.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,P.pan/100));vg.connect(pn).connect(out);
     last[ch]=vg;if(ch===0&&!RENDER&&typeof pump==='function')pump(t)}
   let RENDER=false;
@@ -162,11 +164,12 @@
     const p=[];for(let i=1;i<=8;i++){const o=dp[String(i)]||dp[String(i-1)]||Object.values(dp)[i-1];p.push(isPatch(o)?toPatch(o):fix({}))}
     const mu=String(top.Mutes||'').replace(/[{}]/g,'').split(',').map(x=>/^\s*on/i.test(x));/* muted channels stay silent, as in Microtonic */
     const pats=[];const PT=top.Patterns;if(PT&&typeof PT==='object')for(const key of Object.keys(PT)){const P=PT[key];if(!P||typeof P!=='object')continue;
-      const len=Math.max(1,Math.min(16,Math.round(num(P.Length,16))));const rows=[];
-      for(let i=1;i<=8;i++){const r=P[String(i)]||{};const tg=stepsOf(r.Triggers)||[],ac=stepsOf(r.Accents)||[];rows.push(Array.from({length:16},(_,s)=>!mu[i-1]&&s<len&&tg[s]?(ac[s]?2:1):0))}
-      if(rows.some(r=>r.some(x=>x)))pats.push({key,len,rows,swing:num(P.Swing,0)})}
+      const len=Math.max(1,Math.min(16,Math.round(num(P.Length,16))));const rows=[],fills=[];
+      for(let i=1;i<=8;i++){const r=P[String(i)]||{};const tg=stepsOf(r.Triggers)||[],ac=stepsOf(r.Accents)||[],fl=stepsOf(r.Fills)||[];rows.push(Array.from({length:16},(_,s)=>!mu[i-1]&&s<len&&tg[s]?(ac[s]?2:1):0));
+        fills.push(Array.from({length:16},(_,s)=>!mu[i-1]&&s<len&&fl[s]&&!tg[s]?(ac[s]?2:1):0))}
+      if(rows.some(r=>r.some(x=>x)))pats.push({key,len,rows,fills,swing:num(P.Swing,0)})}
     const sr=String(top.StepRate||'1/16').replace(/\s/g,'');const m=/^1\/(\d+)(T?)$/i.exec(sr);let k16=1;if(m){k16=16/(+m[1]);if(m[2])k16*=2/3}
-    return {p,pats,tempo:num(top.Tempo,0),swing:num(top.Swing,0),k16,stepRate:sr,name:typeof top.Name==='string'?top.Name:''}}
+    return {p,pats,fillRate:Math.max(1,Math.round(num(top.FillRate,4))),tempo:num(top.Tempo,0),swing:num(top.Swing,0),k16,stepRate:sr,name:typeof top.Name==='string'?top.Name:''}}
 
   /* ---------------- applying ---------------- */
   const tIdx=id=>TRACKS.findIndex(t=>t.id===id);
@@ -177,7 +180,7 @@
     MAP.forEach((id,c)=>{if(tIdx(id)<0)return;if(on){if(!String(S.dk[id]||'').startsWith('dk:'))d.prev[id]=S.dk[id]||'';S.dk[id]='dk:'+c}
       else if(String(S.dk[id]||'').startsWith('dk:')){const pv=d.prev[id];if(pv)S.dk[id]=pv;else delete S.dk[id]}});
     if(!on)d.prev={}}
-  function loadKit(k){const d=st();d.kit=k.name;d.p=k.p.map(fix);if(k.fat!=null)d.fat=k.fat;setOn(true)}
+  function loadKit(k){const d=st();d.fill=null;d.kit=k.name;d.p=k.p.map(fix);if(k.fat!=null)d.fat=k.fat;setOn(true)}
   function writeRows(pi,rows){const pat=S.pats[pi];if(!pat)return;MAP.forEach((id,c)=>{const i=tIdx(id);if(i<0||!pat[i])return;const r=rows[c];if(!r)return;
     for(let s=0;s<16;s++){const old=pat[i][s]||{};pat[i][s]={v:r[s]|0,n:old.n}}})}
   const fromGroove=g=>MAP.map(id=>{const s=g[id]||'';return Array.from({length:16},(_,i)=>s[i]==='X'?2:s[i]==='x'?1:0)});
@@ -245,13 +248,20 @@
     if(!r){msg('Could not read '+(name||'the file')+' (Microtonic .mtpreset or .mtdrum, version 3)');return}
     if(r.patch){try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.p[d.sel]=r.patch;setOn(true);done();build();msg('"'+r.patch.name+'" on channel '+(d.sel+1));audition(d.sel);return}
     const kitName=String(r.name||name||'Import').replace(/\.(mtpreset|mtpg|txt)$/i,'').replace(/^SC\s+/,'').slice(0,24);
-    const go=withPats=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.kit=kitName;d.p=r.p;setOn(true);
-      let tx='';if(withPats){r.pats.slice(0,S.pats.length).forEach((P,k)=>writeRows(k,P.rows));
+    const go=withPats=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.kit=kitName;d.p=r.p;d.fill=null;setOn(true);
+      let tx='';if(withPats){const use=r.pats.slice(0,S.pats.length);use.forEach((P,k)=>writeRows(k,P.rows));
+        /* the pattern length (Microtonic loops all eight channels over it): SEQ.3's per-track length */
+        const L=use[0].len;if(!S.len)S.len={};MAP.forEach(id=>{if(L<16)S.len[id]=L;else delete S.len[id]});if(L<16)tx+=' · '+L+' steps';
+        /* fills: extra hits every n-th time round the pattern */
+        d.fill={rate:r.fillRate,pats:{}};use.forEach((P,k)=>{if(P.fills.some(x=>x.some(v=>v)))d.fill.pats[k]=P.fills});if(Object.keys(d.fill.pats).length)tx+=' · fills every '+r.fillRate;
         /* the same speed as in Microtonic: SEQ.3's steps are 16ths, so the tempo carries the preset's step rate */
         if(r.tempo>0){S.bpm=Math.round(Math.max(40,Math.min(300,r.tempo/r.k16))*100)/100;try{setDM($('#bpmNum'),String(Math.round(S.bpm)));applyMaster()}catch(e){globalThis.__el&&globalThis.__el(e)}tx+=' · '+Math.round(S.bpm)+' bpm'}
         if(isFinite(r.swing)){S.master.swing=Math.max(0,Math.min(1,r.swing/100/.66));tx+=' · swing '+Math.round(r.swing)+'%'}}done();build();
       msg('Kit "'+kitName+'" loaded'+(withPats?' with '+Math.min(r.pats.length,S.pats.length)+' patterns'+tx:''));audition(0)};
     if(r.pats.length)msg(kitName+': 8 sounds, '+r.pats.length+' patterns.',[['KIT ONLY',()=>go(false)],['KIT + PATTERNS',()=>go(true)]]);else go(false)}
+  {const _bp=beatPump;beatPump=function(t,stp){const r=_bp.apply(this,arguments);try{const d=S.dunk,F=d&&d.fill,rows=F&&F.pats&&F.pats[S.pat];
+    if(rows&&isOn()){MAP.forEach((id,c)=>{const i=tIdx(id);if(i<0||!trkOn(i)||String(S.dk[id]||'')!=='dk:'+c)return;const L=trkLen(i),q=gstep%L,round=Math.floor(gstep/L);
+      if((round%F.rate)!==F.rate-1)return;const v=rows[c]&&rows[c][q];if(!v)return;const sd=stepDur()/tapeRate;trigger(i,t+((q%2)?S.master.swing*sd*.66:0),v===2?1:.72)})}}catch(e){globalThis.__el&&globalThis.__el(e)}return r}}
   window.DUNK={voice,KITS,GROOVES,readFile,importText,setOn,loadKit:i=>{loadKit(KITS[i]);done()},state:st,_last:last};
   /* undo, a loaded project: the card follows */
   setInterval(()=>{if(!body||dirty||!body.offsetParent)return;if(sigNow()!==sig)build()},1000);
