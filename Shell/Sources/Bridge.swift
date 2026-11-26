@@ -61,6 +61,10 @@ N.midiBatch=arr=>{for(const [id,b,ms] of arr){const p=ins.get(id);if(p)p._fire(b
    tempo(bpm){post({t:'link',op:'tempo',bpm:+bpm})},
    play(page,beat){post({t:'link',op:'play',host:page-(off||0),beat:+beat})},stop(){post({t:'link',op:'stop'})}};
  setTimeout(()=>post({t:'link',op:'query'}),0)}
+/* ---- coming back to the app: the page's sound engine can be left "interrupted" by iOS; wake it when the app is
+   shown again (the app also switches the audio session on again first) and on the next touch ---- */
+{const wake=()=>{try{const A=window.__seq&&__seq.Aref(),c=A&&A.out&&A.out.context;if(c&&c.state!=='running'&&!(window.__nap&&__nap()&&document.hidden))c.resume().catch(()=>{})}catch(e){}};
+ N.wake=wake;document.addEventListener('pointerdown',wake,true);document.addEventListener('visibilitychange',()=>{if(!document.hidden)setTimeout(wake,150)})}
 /* ---- native audio: the C++ engine in the app plays the project the page sends (the page stays the editor) ---- */
 {const subs=new Set();let st={on:false};
  N.nativeState=s=>{st=Object.assign({},st,s);subs.forEach(f=>{try{f(st)}catch(e){}})};

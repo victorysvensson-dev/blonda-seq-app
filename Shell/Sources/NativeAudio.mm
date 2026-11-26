@@ -9,7 +9,7 @@
     std::shared_ptr<blonda::Host> _host;
     AVAudioEngine *_engine;
     AVAudioSourceNode *_source;
-    BOOL _loaded;
+    BOOL _loaded, _wanted;
     std::shared_ptr<std::atomic<double>> _load;
 }
 
@@ -23,6 +23,7 @@
 - (BOOL)running { return _engine.isRunning; }
 
 - (BOOL)start:(NSError **)error {
+    _wanted = YES;
     if (_engine.isRunning) return YES;
     AVAudioSession *s = AVAudioSession.sharedInstance;   // the shell already set Playback; the page's own audio is muted in this mode
     [s setPreferredSampleRate:48000 error:nil];
@@ -49,7 +50,14 @@
     return [_engine startAndReturnError:error];
 }
 
+- (void)resumeIfNeeded {
+    if (!_wanted) return;
+    if (_engine && !_engine.isRunning) { [_engine prepare]; if ([_engine startAndReturnError:nil]) return; }
+    if (!_engine.isRunning) { _engine = nil; _source = nil; [self start:nil]; }
+}
+
 - (void)stop {
+    _wanted = NO;
     _host->setPlaying(false);
     [_engine stop]; _engine = nil; _source = nil;
 }

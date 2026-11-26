@@ -31,6 +31,7 @@ enum Audio {
     /// Playback category: the app is heard even with the silent switch on, like an instrument. 48 kHz like the studio,
     /// and a short buffer so pads and keys answer quickly. WebKit plays through this session.
     static func configure() {
+        recording = false
         let s = AVAudioSession.sharedInstance()
         do {
             try s.setCategory(.playback, mode: .default, options: [])
@@ -46,6 +47,7 @@ enum Audio {
     /// mode so iOS adds no processing (no gain control, no noise suppression) – the sample is what the instrument plays.
     /// Back to plain playback when the sampler is closed.
     static func record(_ on: Bool) {
+        recording = on
         let s = AVAudioSession.sharedInstance()
         do {
             if on {
@@ -58,6 +60,15 @@ enum Audio {
         } catch {
             NSLog("SEQ3 audio session (record %@): %@", on ? "on" : "off", String(describing: error))
         }
+    }
+
+    /// Whether the sampler has the session recording (so coming back keeps that).
+    private(set) static var recording = false
+
+    /// Back from the background or after an interruption (a call, another app's audio): iOS may have switched the session
+    /// off, and then neither WebKit nor the C++ engine is heard until it is switched on again.
+    static func reactivate() {
+        if recording { record(true) } else { configure() }
     }
 
     /// The inputs iOS offers right now (USB instruments show up here as "USB audio").

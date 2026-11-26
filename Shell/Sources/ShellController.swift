@@ -70,6 +70,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        observeWake()
         web.load(URLRequest(url: BundleScheme.startURL))
         if selfTest {
             // if the page never reports, the app still writes what it knows, so a hang can be told apart from a crash
@@ -258,6 +259,26 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             nav.modalPresentationStyle = .formSheet
         }
         present(nav, animated: true)
+    }
+
+    // MARK: - coming back (background, a call, another app's audio): the session on again, both engines awake
+
+    private var wakeObservers: [NSObjectProtocol] = []
+    private func observeWake() {
+        let nc = NotificationCenter.default
+        let wake: (Notification) -> Void = { [weak self] _ in self?.wakeAudio() }
+        wakeObservers.append(nc.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main, using: wake))
+        wakeObservers.append(nc.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] n in
+            let t = (n.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt).flatMap(AVAudioSession.InterruptionType.init(rawValue:))
+            if t == .ended { self?.wakeAudio() }
+        })
+        wakeObservers.append(nc.addObserver(forName: AVAudioSession.mediaServicesWereResetNotification, object: nil, queue: .main, using: wake))
+        wakeObservers.append(nc.addObserver(forName: .AVAudioEngineConfigurationChange, object: nil, queue: .main) { _ in NativeAudio.shared().resumeIfNeeded() })
+    }
+    private func wakeAudio() {
+        Audio.reactivate()
+        NativeAudio.shared().resumeIfNeeded()
+        call("__blonda.wake", true)
     }
 
     // MARK: - native audio (the C++ engine plays, the page is the editor)
