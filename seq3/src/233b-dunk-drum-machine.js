@@ -79,8 +79,14 @@
   const tanhCurve=k=>{k=Math.round(k*4)/4;let c=tanhC.get(k);if(c)return c;const n=4096,a=.12,f=x=>Math.tanh(k*(x+a))-Math.tanh(k*a),d=Math.max(Math.abs(f(1)),Math.abs(f(-1)));c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=f(x)/d}tanhC.set(k,c);return c};
   const stepCurve=a=>{const L=Math.max(3,Math.round(3+Math.pow(1-a,2)*125));let c=stepC.get(L);if(c)return c;const n=4096;c=new Float32Array(n);for(let i=0;i<n;i++){const x=i/(n-1)*2-1;c[i]=Math.round(x*L)/L}stepC.set(L,c);return c};
   const last=new Array(8).fill(null);
+  /* Microtonic's oscillator "triggers at full force" with attack 0, a distinct click: the sine starts at its peak (cosine phase) */
+  const cosW=new WeakMap();const cosWave=c=>{let w=cosW.get(c);if(!w){w=c.createPeriodicWave(new Float32Array([0,1]),new Float32Array([0,0]),{disableNormalization:true});cosW.set(c,w)}return w};
   const cut=(g,t)=>{try{g.gain.cancelAndHoldAtTime(t);g.gain.setTargetAtTime(0,t,.003)}catch(e){globalThis.__el&&globalThis.__el(e)}};
-  const CAL=.75;/* level match with SEQ.3's own drums (same peak for the default kick) */
+  const CAL=.75;
+  /* a Microtonic kit plays about 9 dB louder here than in Microtonic (A/B against a recording of the same preset), so imports are trimmed */
+  const IMPORT_TRIM=-9;
+  /* constants of the Microtonic match, kept together so the A/B tests can try values */
+  const TUNE={cosStart:true,expAtk:true,modLin:false,eqQ:.4,eqQn:.4,eqK:.85,eqFree:6,mixRev:false,dcyK:4.6,ndcyK:4.6,modK:4.6};/* level match with SEQ.3's own drums (same peak for the default kick) */
   const nz=(c,t,end)=>{const s=c.createBufferSource();s.buffer=A.noise;s.loop=true;s.start(t,Math.random()*Math.max(.01,A.noise.duration-.05));s.stop(end);return s};
   function voice(ch,t,vel,tp,out){const c=ctx;if(!c||!A.noise)return;const d=st(),P=d.p[ch];if(!P)return;
     tp=tp||{};const tune=+tp.tune||0,dsc=Math.pow(2,((tp.decay??.45)-.45)*2.2),tsc=Math.pow(2,((tp.tone??.5)-.5)*2.5);
@@ -90,28 +96,29 @@
     /* the channel's own last hit, and its choke group */
     if(last[ch])cut(last[ch],t);if(P.ck)for(let j=0;j<8;j++)if(j!==ch&&last[j]&&d.p[j].ck===P.ck)cut(last[j],t);
     const atk=P.atk/1000,dcy=Math.max(.001,P.dcy/1000*dsc),natk=P.natk/1000,ndcy=Math.max(.001,P.ndcy/1000*dsc);
-    const oLen=atk+dcy*1.5,nLen=natk+(P.ne===1?ndcy:ndcy*1.5)+(P.ne===2?.04:0),end=t+Math.max(oLen,nLen)+.06;
-    const sum=c.createGain();const mixO=P.mix/100,mixN=1-mixO;
+    const oLen=atk+dcy*1.5,nLen=natk+(P.ne===1?ndcy:ndcy*1.5)+(P.ne===2?.03:0),end=t+Math.max(oLen,nLen)+.06;
+    const sum=c.createGain();const mixO=TUNE.mixRev?1-P.mix/100:P.mix/100,mixN=1-mixO;
     /* oscillator (+ sub) */
-    if(mixO>.0005){const f=Math.max(5,Math.min(20000,P.freq*Math.pow(2,tune/12)));const o=c.createOscillator();o.type=WAVES[P.wave|0]||'sine';o.frequency.setValueAtTime(f,t);
-      const og=c.createGain(),pk=mixO*vs(P.ov);og.gain.setValueAtTime(0,t);
-      if(atk>.0005){og.gain.linearRampToValueAtTime(pk,t+atk)}else og.gain.linearRampToValueAtTime(pk,t+.0004);
-      og.gain.setTargetAtTime(0,t+Math.max(atk,.0004),dcy/6.9);
+    if(mixO>.0005){const f=Math.max(5,Math.min(20000,P.freq*Math.pow(2,tune/12)));const o=c.createOscillator();if(TUNE.cosStart&&(P.wave|0)===0)o.setPeriodicWave(cosWave(c));else o.type=WAVES[P.wave|0]||'sine';o.frequency.setValueAtTime(f,t);
+      const og=c.createGain(),pk=Math.max(1e-6,mixO*vs(P.ov));og.gain.setValueAtTime(0,t);
+      if(atk>.0005){if(TUNE.expAtk){og.gain.setValueAtTime(pk*.001,t);og.gain.exponentialRampToValueAtTime(Math.max(1e-5,pk),t+atk)}else og.gain.linearRampToValueAtTime(pk,t+atk)}else og.gain.setValueAtTime(pk,t);
+      og.gain.setTargetAtTime(0,t+Math.max(atk,.0004),dcy/TUNE.dcyK);
       const oscs=[o];o.connect(og);
       if(P.sub>.001){const s=c.createOscillator();s.type='sine';s.frequency.setValueAtTime(f/2,t);const sg=c.createGain();sg.gain.value=P.sub*1.2;s.connect(sg).connect(og);oscs.push(s)}
       const amt=P.amt*vs(P.mv)*100;
       if(Math.abs(amt)>.5){
-        if(P.mod===0){const r=Math.max(.0005,P.rate/1000*dsc)/4.6;oscs.forEach(x=>{x.detune.setValueAtTime(amt,t);x.detune.setTargetAtTime(0,t,r)})}
+        if(P.mod===0){const r=Math.max(.0005,P.rate/1000*dsc)/TUNE.modK;oscs.forEach(x=>{x.detune.setValueAtTime(amt,t);if(TUNE.modLin)x.detune.linearRampToValueAtTime(0,t+Math.max(.0005,P.rate/1000*dsc));else x.detune.setTargetAtTime(0,t,r)})}
         else{let src;if(P.mod===1){src=c.createOscillator();src.type='sine';src.frequency.value=Math.max(.01,P.rate);src.start(t);src.stop(end)}
           else{const n=nz(c,t,end),lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=Math.max(1,Math.min(20000,P.rate));lp.Q.value=.5;n.connect(lp);src=lp}
           const mg=c.createGain();mg.gain.value=P.mod===2?amt*Math.min(6,Math.sqrt(c.sampleRate/2/Math.max(1,P.rate))*.6):amt;src.connect(mg);oscs.forEach(x=>mg.connect(x.detune))}}
       oscs.forEach(x=>{x.start(t);x.stop(end)});og.connect(sum)}
     /* noise */
-    if(mixN>.0005){const ng=c.createGain(),pk=mixN*vs(P.nv);const g=ng.gain;g.setValueAtTime(0,t);
-      if(P.ne===2){/* clap: three quick bursts, then the tail */const sp=Math.max(.006,Math.min(.014,ndcy*.06));
-        for(let k=0;k<3;k++){const a=t+k*sp;g.setValueAtTime(0,a);g.linearRampToValueAtTime(pk,a+.0006);g.setTargetAtTime(pk*.08,a+.0006,sp/3)}
-        const a=t+3*sp;g.setValueAtTime(0,a);g.linearRampToValueAtTime(pk,a+.0006);g.setTargetAtTime(0,a+.0006,ndcy/6.9)}
-      else{g.linearRampToValueAtTime(pk,t+Math.max(natk,.0004));if(P.ne===1)g.linearRampToValueAtTime(0,t+natk+ndcy);else g.setTargetAtTime(0,t+Math.max(natk,.0004),ndcy/6.9)}
+    if(mixN>.0005){const ng=c.createGain(),pk=Math.max(1e-6,mixN*vs(P.nv));const g=ng.gain;g.setValueAtTime(0,t);
+      if(P.ne===2){/* clap: bursts for the attack time (Microtonic: the attack sets the number of triggers and the time between them), then the tail */
+        const span=natk>.002?natk:.03,nb=Math.max(2,Math.min(8,Math.round(span/.01))),sp=span/nb;
+        for(let k=0;k<nb;k++){const a=t+k*sp;g.setValueAtTime(0,a);g.linearRampToValueAtTime(pk,a+.0006);g.setTargetAtTime(pk*.08,a+.0006,sp/3)}
+        const a=t+nb*sp;g.setValueAtTime(0,a);g.linearRampToValueAtTime(pk,a+.0006);g.setTargetAtTime(0,a+.0006,ndcy/6.9)}
+      else{if(natk>.0005&&P.ne===0&&TUNE.expAtk){g.setValueAtTime(pk*.001,t);g.exponentialRampToValueAtTime(Math.max(1e-5,pk),t+natk)}else if(natk>.0005)g.linearRampToValueAtTime(pk,t+natk);else g.setValueAtTime(pk,t);if(P.ne===1)g.linearRampToValueAtTime(0,t+natk+ndcy);else g.setTargetAtTime(0,t+Math.max(natk,.0004),ndcy/TUNE.ndcyK)}
       const mk=()=>{const n=nz(c,t,end),f=c.createBiquadFilter();f.type=FT[P.nf|0]||'lowpass';f.frequency.value=Math.max(20,Math.min(c.sampleRate*.45,P.nfreq*tsc*Math.pow(2,tune/24)));f.Q.value=P.nf===1?Math.min(300,Math.max(.1,P.q)):Math.max(-20,Math.min(40,20*Math.log10(Math.max(.1,P.q))));/* Web Audio: LP/HP Q is in dB */n.connect(f);if(P.nf!==1)return f;
         /* band pass as a state-variable filter: its peak rises with Q, so a narrow band still sounds (low BP noise kicks) */
         const q=Math.max(.1,P.q),bg=c.createGain();bg.gain.value=q<=30?q:30*Math.sqrt(q/30);f.connect(bg);return bg};
@@ -120,19 +127,19 @@
     /* drive → EQ → fat shelf → crush → level → pan */
     let node=sum;const fat=+d.fat||0,drv=P.dist/100*13+fat*4;
     if(drv>.05){const w=c.createWaveShaper();w.curve=tanhCurve(1+drv);w.oversample='2x';node.connect(w);node=w}
-    if(Math.abs(P.eqg)>.05){const e=c.createBiquadFilter();e.type='peaking';e.frequency.value=Math.max(20,Math.min(c.sampleRate*.45,P.eqf));e.Q.value=.9;e.gain.value=P.eqg;node.connect(e);node=e}
+    if(Math.abs(P.eqg)>.05){const e=c.createBiquadFilter();e.type='peaking';e.frequency.value=Math.max(20,Math.min(c.sampleRate*.45,P.eqf));e.Q.value=P.eqg<0?TUNE.eqQn:TUNE.eqQ;e.gain.value=P.eqg;node.connect(e);node=e}
     /* as in Microtonic: a strong EQ boost turns the channel down so the volume stays about the same */
-    const eqComp=P.eqg>6?Math.pow(10,-(P.eqg-6)*.85/20):1;
+    const eqComp=P.eqg>TUNE.eqFree?Math.pow(10,-(P.eqg-TUNE.eqFree)*TUNE.eqK/20):1;
     if(fat>.01){const e=c.createBiquadFilter();e.type='lowshelf';e.frequency.value=95;e.gain.value=fat*5;node.connect(e);node=e}
     if(P.crush>.01){const w=c.createWaveShaper();w.curve=stepCurve(P.crush);node.connect(w);node=w}
-    const vg=c.createGain();vg.gain.value=CAL*eqComp*Math.pow(10,P.lvl/20)*(sens?1:.5+.5*vel);/* a patch without velocity settings still hears the accent */node.connect(vg);
+    const vg=c.createGain();vg.gain.value=CAL*Math.pow(10,(+d.trim||0)/20)*eqComp*Math.pow(10,P.lvl/20)*(sens?1:.5+.5*vel);/* a patch without velocity settings still hears the accent */node.connect(vg);
     const pn=c.createStereoPanner();pn.pan.value=Math.max(-1,Math.min(1,P.pan/100));vg.connect(pn).connect(out);
     last[ch]=vg;if(ch===0&&!RENDER&&typeof pump==='function')pump(t)}
   let RENDER=false;
-  /* offline render for tests: one channel of the current kit → [L,R] */
+  /* offline render for tests: one channel of the current kit (or a list of [channel, time, velocity]) → [L,R] */
   window.__dunkRender=async(ch,dur,sr,vel,tp)=>{sr=sr||48000;const oc=new OfflineAudioContext(2,Math.ceil(dur*sr),sr),real=ctx,rn=A.noise,keep=last.slice();
     const nb=oc.createBuffer(1,sr*1.5,sr),nd=nb.getChannelData(0);for(let i=0;i<nd.length;i++)nd[i]=Math.random()*2-1;
-    try{ctx=oc;A.noise=nb;RENDER=true;last.fill(null);if(typeof ch==='string'){const id=ch,P=S.params[id],v=vel==null?.9:vel;if(id==='hat'||id==='ohat')VOICE.hat(.01,v,P,oc.destination,id==='ohat');else VOICE[id](.01,v,P,oc.destination,null,57,.2)}else voice(ch,.01,vel==null?.9:vel,tp||null,oc.destination)}finally{ctx=real;A.noise=rn;RENDER=false;keep.forEach((v,i)=>last[i]=v)}
+    try{ctx=oc;A.noise=nb;RENDER=true;last.fill(null);if(Array.isArray(ch)){for(const [c,t,v] of ch)voice(c,t,v,tp||null,oc.destination)}else if(typeof ch==='string'){const id=ch,P=S.params[id],v=vel==null?.9:vel;if(id==='hat'||id==='ohat')VOICE.hat(.01,v,P,oc.destination,id==='ohat');else VOICE[id](.01,v,P,oc.destination,null,57,.2)}else voice(ch,.01,vel==null?.9:vel,tp||null,oc.destination)}finally{ctx=real;A.noise=rn;RENDER=false;keep.forEach((v,i)=>last[i]=v)}
     const b=await oc.startRendering();return [b.getChannelData(0),b.getChannelData(1)]};
 
   /* ---------------- Microtonic files ---------------- */
@@ -166,10 +173,10 @@
     const pats=[];const PT=top.Patterns;if(PT&&typeof PT==='object')for(const key of Object.keys(PT)){const P=PT[key];if(!P||typeof P!=='object')continue;
       const len=Math.max(1,Math.min(16,Math.round(num(P.Length,16))));const rows=[],fills=[];
       for(let i=1;i<=8;i++){const r=P[String(i)]||{};const tg=stepsOf(r.Triggers)||[],ac=stepsOf(r.Accents)||[],fl=stepsOf(r.Fills)||[];rows.push(Array.from({length:16},(_,s)=>!mu[i-1]&&s<len&&tg[s]?(ac[s]?2:1):0));
-        fills.push(Array.from({length:16},(_,s)=>!mu[i-1]&&s<len&&fl[s]&&!tg[s]?(ac[s]?2:1):0))}
+        fills.push(Array.from({length:16},(_,s)=>!mu[i-1]&&s<len&&fl[s]&&tg[s]?1:0))}/* a fill is a roll on a step that has a trigger */
       if(rows.some(r=>r.some(x=>x)))pats.push({key,len,rows,fills,swing:num(P.Swing,0)})}
     const sr=String(top.StepRate||'1/16').replace(/\s/g,'');const m=/^1\/(\d+)(T?)$/i.exec(sr);let k16=1;if(m){k16=16/(+m[1]);if(m[2])k16*=2/3}
-    return {p,pats,fillRate:Math.max(1,Math.round(num(top.FillRate,4))),tempo:num(top.Tempo,0),swing:num(top.Swing,0),k16,stepRate:sr,name:typeof top.Name==='string'?top.Name:''}}
+    return {p,pats,fillRate:Math.max(1,Math.min(8,num(top.FillRate,2))),tempo:num(top.Tempo,0),swing:num(top.Swing,0),k16,stepRate:sr,name:typeof top.Name==='string'?top.Name:''}}
 
   /* ---------------- applying ---------------- */
   const tIdx=id=>TRACKS.findIndex(t=>t.id===id);
@@ -180,7 +187,7 @@
     MAP.forEach((id,c)=>{if(tIdx(id)<0)return;if(on){if(!String(S.dk[id]||'').startsWith('dk:'))d.prev[id]=S.dk[id]||'';S.dk[id]='dk:'+c}
       else if(String(S.dk[id]||'').startsWith('dk:')){const pv=d.prev[id];if(pv)S.dk[id]=pv;else delete S.dk[id]}});
     if(!on)d.prev={}}
-  function loadKit(k){const d=st();d.fill=null;d.kit=k.name;d.p=k.p.map(fix);if(k.fat!=null)d.fat=k.fat;setOn(true)}
+  function loadKit(k){const d=st();d.fill=null;d.trim=0;d.kit=k.name;d.p=k.p.map(fix);if(k.fat!=null)d.fat=k.fat;setOn(true)}
   function writeRows(pi,rows){const pat=S.pats[pi];if(!pat)return;MAP.forEach((id,c)=>{const i=tIdx(id);if(i<0||!pat[i])return;const r=rows[c];if(!r)return;
     for(let s=0;s<16;s++){const old=pat[i][s]||{};pat[i][s]={v:r[s]|0,n:old.n}}})}
   const fromGroove=g=>MAP.map(id=>{const s=g[id]||'';return Array.from({length:16},(_,i)=>s[i]==='X'?2:s[i]==='x'?1:0)});
@@ -246,14 +253,14 @@
      picked and the content decides */
   function importText(txt,name){let r=null;try{r=readFile(txt)}catch(e){globalThis.__el&&globalThis.__el(e)}
     if(!r){msg('Could not read '+(name||'the file')+' (Microtonic .mtpreset or .mtdrum, version 3)');return}
-    if(r.patch){try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.p[d.sel]=r.patch;setOn(true);done();build();msg('"'+r.patch.name+'" on channel '+(d.sel+1));audition(d.sel);return}
+    if(r.patch){try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.p[d.sel]=fix(Object.assign({},r.patch,{lvl:Math.max(-60,r.patch.lvl+(IMPORT_TRIM-(+d.trim||0)))}));setOn(true);done();build();msg('"'+r.patch.name+'" on channel '+(d.sel+1));audition(d.sel);return}
     const kitName=String(r.name||name||'Import').replace(/\.(mtpreset|mtpg|txt)$/i,'').replace(/^SC\s+/,'').slice(0,24);
-    const go=withPats=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.kit=kitName;d.p=r.p;d.fill=null;setOn(true);
+    const go=withPats=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.kit=kitName;d.p=r.p;d.fill=null;d.trim=IMPORT_TRIM;setOn(true);
       let tx='';if(withPats){const use=r.pats.slice(0,S.pats.length);use.forEach((P,k)=>writeRows(k,P.rows));
         /* the pattern length (Microtonic loops all eight channels over it): SEQ.3's per-track length */
         const L=use[0].len;if(!S.len)S.len={};MAP.forEach(id=>{if(L<16)S.len[id]=L;else delete S.len[id]});if(L<16)tx+=' · '+L+' steps';
-        /* fills: extra hits every n-th time round the pattern */
-        d.fill={rate:r.fillRate,pats:{}};use.forEach((P,k)=>{if(P.fills.some(x=>x.some(v=>v)))d.fill.pats[k]=P.fills});if(Object.keys(d.fill.pats).length)tx+=' · fills every '+r.fillRate;
+        /* fills: Microtonic's rolls, FillRate hits per step on steps with a trigger (fractional rates run free) */
+        d.fill={rate:r.fillRate,pats:{}};use.forEach((P,k)=>{if(P.fills.some(x=>x.some(v=>v)))d.fill.pats[k]=P.fills});if(Object.keys(d.fill.pats).length)tx+=' · fills '+(Math.round(r.fillRate*100)/100)+'×';
         /* the same speed as in Microtonic: SEQ.3's steps are 16ths, so the tempo carries the preset's step rate */
         if(r.tempo>0){S.bpm=Math.round(Math.max(40,Math.min(300,r.tempo/r.k16))*100)/100;try{setDM($('#bpmNum'),String(Math.round(S.bpm)));applyMaster()}catch(e){globalThis.__el&&globalThis.__el(e)}tx+=' · '+Math.round(S.bpm)+' bpm'}
         if(isFinite(r.swing)){S.master.swing=Math.max(0,Math.min(1,r.swing/100/.66));tx+=' · swing '+Math.round(r.swing)+'%'}}done();build();
@@ -261,8 +268,10 @@
     if(r.pats.length)msg(kitName+': 8 sounds, '+r.pats.length+' patterns.',[['KIT ONLY',()=>go(false)],['KIT + PATTERNS',()=>go(true)]]);else go(false)}
   {const _bp=beatPump;beatPump=function(t,stp){const r=_bp.apply(this,arguments);try{const d=S.dunk,F=d&&d.fill,rows=F&&F.pats&&F.pats[S.pat];
     if(rows&&isOn()){MAP.forEach((id,c)=>{const i=tIdx(id);if(i<0||!trkOn(i)||String(S.dk[id]||'')!=='dk:'+c)return;const L=trkLen(i),q=gstep%L,round=Math.floor(gstep/L);
-      if((round%F.rate)!==F.rate-1)return;const v=rows[c]&&rows[c][q];if(!v)return;const sd=stepDur()/tapeRate;trigger(i,t+((q%2)?S.master.swing*sd*.66:0),v===2?1:.72)})}}catch(e){globalThis.__el&&globalThis.__el(e)}return r}}
-  window.DUNK={voice,KITS,GROOVES,readFile,importText,setOn,loadKit:i=>{loadKit(KITS[i]);done()},state:st,_last:last};
+      if(!(rows[c]&&rows[c][q]))return;const st0=S.pats[S.pat]&&S.pats[S.pat][i]&&S.pats[S.pat][i][q];if(!st0||!st0.v)return;
+      const sd=stepDur()/tapeRate,t0=t+((q%2)?S.master.swing*sd*.66:0),gap=sd/Math.max(1,F.rate);let v=st0.v===2?1:.72;
+      for(let k=1;k*gap<sd-1e-4;k++){v*=.8;trigger(i,t0+k*gap,v)}})}}catch(e){globalThis.__el&&globalThis.__el(e)}return r}}
+  window.DUNK={TUNE,voice,KITS,GROOVES,readFile,importText,setOn,loadKit:i=>{loadKit(KITS[i]);done()},state:st,_last:last};
   /* undo, a loaded project: the card follows */
   setInterval(()=>{if(!body||dirty||!body.offsetParent)return;if(sigNow()!==sig)build()},1000);
   if(body){build();const css=document.createElement('style');css.textContent=`
