@@ -200,7 +200,7 @@
     knobs.forEach(k=>k.refresh());body.querySelector('.dk-name').value=P.name}
   function build(){if(!body)return;const d=st();
     body.innerHTML=`<div class="dk-top"><button class="dk-arw" data-k="-1" aria-label="Previous kit">‹</button><div class="dk-kit"><small>KIT</small><b></b></div><button class="dk-arw" data-k="1" aria-label="Next kit">›</button>
-      <button class="dk-on"></button><button class="dk-imp">IMPORT</button><input type="file" class="dk-file" accept=".mtpreset,.mtdrum,.txt,text/plain" hidden></div>
+      <button class="dk-on"></button><button class="dk-imp">IMPORT</button><input type="file" class="dk-file" hidden></div>
       <div class="dk-pads">${MAP.map((_,c)=>`<button class="dk-pad" data-c="${c}"><b></b><small></small></button>`).join('')}</div>
       <div class="dk-ed"><div class="dk-row"><input class="dk-name" maxlength="24" aria-label="Sound name" spellcheck="false"><span class="dk-segs"></span></div><div class="dk-secs"></div></div>
       <div class="dk-gr"><small>GROOVES · into pattern</small><div class="dk-grl">${GROOVES.map((g,i)=>`<button data-g="${i}">${g[0]}</button>`).join('')}</div></div>
@@ -229,6 +229,8 @@
     paint();sig=sigNow()}
   function msg(t,btns){const m=body&&body.querySelector('.dk-msg');if(!m)return;m.innerHTML='';const s=document.createElement('span');s.textContent=t;m.appendChild(s);
     (btns||[]).forEach(([l,f])=>{const b=document.createElement('button');b.textContent=l;b.onclick=()=>{m.innerHTML='';f()};m.appendChild(b)});if(!btns){clearTimeout(msg._t);msg._t=setTimeout(()=>{if(m.firstChild===s)m.innerHTML=''},4000)}}
+  /* (v286) the file input has no accept list: iPadOS greys out file types it doesn't know (.mtpreset), so any file can be
+     picked and the content decides */
   function importText(txt,name){let r=null;try{r=readFile(txt)}catch(e){globalThis.__el&&globalThis.__el(e)}
     if(!r){msg('Could not read '+(name||'the file')+' (Microtonic .mtpreset or .mtdrum, version 3)');return}
     if(r.patch){try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}const d=st();d.p[d.sel]=r.patch;setOn(true);done();build();msg('"'+r.patch.name+'" on channel '+(d.sel+1));audition(d.sel);return}
