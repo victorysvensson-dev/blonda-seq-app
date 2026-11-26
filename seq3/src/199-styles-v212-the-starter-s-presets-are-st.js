@@ -70,12 +70,12 @@ function styGroove(si){const st=PDR[STX_PRE[si].nm]||'house',pat=S.pats[S.pat];S
   const keep=DR.filter(i=>S.lock&&S.lock[TRACKS[i].id]).map(i=>[i,JSON.parse(JSON.stringify(pat[i]))]);genDrumsS(pat,st);keep.forEach(([i,r])=>{pat[i]=r});return st}
 /* every new idea gets a new drum kit that suits the style: the style's own drum models, or a sample from the library now and then */
 function kitFor(genre){const st=STY[genre]||{},R=Math.random,pk=a=>a[Math.floor(R()*a.length)];let lib=[];try{lib=[...SMP.values()].filter(s=>s&&s.pack&&s.group&&s.group!=='loop'&&s.group!=='vox')}catch(e){globalThis.__el&&globalThis.__el(e)}
-  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id]))return;const key=t.id==='ohat'?'hat':t.id,P=S.params[t.id]||{},pool=lib.filter(s=>((typeof KIT_G!=='undefined'&&KIT_G[t.id])||[]).includes(s.group));
+  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id])||String(S.dk[t.id]||'').startsWith('dk:'))return;/* (v293) a DUNK sound stays */const key=t.id==='ohat'?'hat':t.id,P=S.params[t.id]||{},pool=lib.filter(s=>((typeof KIT_G!=='undefined'&&KIT_G[t.id])||[]).includes(s.group));
     if(pool.length&&R()<.4){const sm=pk(pool);S.dk[t.id]='smp:'+sm.id;Object.assign(P,{tone:.5,decay:1,tune:0});try{ensureBuf(sm).then(()=>{try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}})}catch(e){globalThis.__el&&globalThis.__el(e)}}
     else{const opts=(st.kit&&st.kit[key])||((typeof DKM!=='undefined'&&DKM[key])||[]).map(o=>o[0]),o=pk(opts.length?opts:['']);if(o)S.dk[t.id]=o;else delete S.dk[t.id];
       const D=(typeof DEF_P!=='undefined'&&DEF_P[t.id])||{};P.tone=Math.max(0,Math.min(1,(D.tone??.5)+(R()-.5)*.25));P.decay=Math.max(.05,Math.min(1,(D.decay??.5)+(R()-.5)*.25));P.tune=0}
     try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}});
-  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
+  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.ohat||'').startsWith('dk:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
   try{renderSnd();renderDial()}catch(e){globalThis.__el&&globalThis.__el(e)}}
 /* the chord module (Stämmor) follows along: a new sound that suits the style, on the Starter's chords */
 const proMix=g=>{try{if(window.__mix)__mix.mixFor(g)}catch(e){globalThis.__el&&globalThis.__el(e)}};

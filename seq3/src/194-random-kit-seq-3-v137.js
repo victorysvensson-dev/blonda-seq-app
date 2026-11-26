@@ -6,14 +6,14 @@
 const KIT_G={kick:['kick'],snare:['snare','rim'],clap:['clap','snap'],hat:['hat'],ohat:['open'],perc:['perc','rim','snap']};
 function randomKit(){initAudio();if(typeof pushHist==='function')pushHist();const R=Math.random,pick=a=>a[Math.floor(R()*a.length)],names=[];
   const lib=[...SMP.values()].filter(s=>s&&s.pack&&s.group&&s.group!=='loop'&&s.group!=='vox');
-  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id]))return;const key=t.id==='ohat'?'hat':t.id,pool=lib.filter(s=>(KIT_G[t.id]||[]).includes(s.group)),models=(DKM[key]||[]).map(o=>o[0]);
+  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id])||String(S.dk[t.id]||'').startsWith('dk:'))return;/* (v293) a DUNK sound stays */const key=t.id==='ohat'?'hat':t.id,pool=lib.filter(s=>(KIT_G[t.id]||[]).includes(s.group)),models=(DKM[key]||[]).map(o=>o[0]);
     const P=S.params[t.id];let nm='';
     if(pool.length&&(R()<.62||!models.length)){const sm=pick(pool);S.dk[t.id]='smp:'+sm.id;Object.assign(P,{tone:.5,decay:1,tune:0});ensureBuf(sm).then(()=>{try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}});nm=sm.name.replace(/^(kick|snare|clap|hat|open hat|open|perc|rim|snap)\s*/i,'')||sm.name}
     else{const m=pick(models);if(m)S.dk[t.id]=m;else delete S.dk[t.id];const D=DEF_P[t.id]||{};P.tone=Math.max(0,Math.min(1,(D.tone??.5)+(R()-.5)*.3));P.decay=Math.max(.05,Math.min(1,(D.decay??.5)+(R()-.5)*.3));P.tune=0;nm=((DKM[key]||[]).find(o=>o[0]===m)||['','blonda'])[1]}
     if(R()<.35&&!(S.dk[t.id]||'').startsWith('smp:'))P.tune=Math.round((R()-.5)*6);
     try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}names.push(t.name.toLowerCase()+' '+nm)});
   /* the open hat sounds like the closed one when both are built-in */
-  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
+  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.ohat||'').startsWith('dk:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
   save();try{renderSnd();renderDial()}catch(e){globalThis.__el&&globalThis.__el(e)}if(!playing)setTimeout(()=>{try{audition(0)}catch(e){globalThis.__el&&globalThis.__el(e)}},350);
   toast('Nytt kit · '+names.slice(0,4).join(' · ')+(names.length>4?' …':''))}
 window.randomKit=randomKit;

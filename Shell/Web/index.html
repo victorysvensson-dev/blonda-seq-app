@@ -2916,7 +2916,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v292</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v293</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -4674,9 +4674,9 @@ function feelM(pat,pi){const H=pat[TI('hat')],Sn=pat[TI('snare')];
   (S.roll[pi].bass||[]).forEach(b=>b.v=b.s%4===0?1:.72);syncCells(pi,TI('bass'))}
 function soundsFor(sty){const st=STY[sty];
   TRACKS.forEach(t=>{if(S.lock[t.id]||(t.x&&!t.mel))return;if(t.mel){S.inst[t.id]=pickA(st.eng[t.id]||st.eng[t.x?['keys','lead','bass','pad'][TRACKS.indexOf(t)%4]:'keys']);return}
-    const cur=S.dk[t.id]||'';if(cur.startsWith('smp:'))return;const key=t.id==='ohat'?'hat':t.id;
+    const cur=S.dk[t.id]||'';if(cur.startsWith('smp:')||cur.startsWith('dk:'))return;/* (v293) a DUNK sound stays */const key=t.id==='ohat'?'hat':t.id;
     const opts=st.kit[key]||(DKM[key]||[]).map(o=>o[0]);const o=pickA(opts);if(o)S.dk[t.id]=o;else delete S.dk[t.id]});
-  if(!S.lock.ohat&&!(S.dk.ohat||'').startsWith('smp:')){if(S.dk.hat&&!S.dk.hat.startsWith('smp:'))S.dk.ohat=S.dk.hat;else delete S.dk.ohat}}
+  if(!S.lock.ohat&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.ohat||'').startsWith('dk:')){if(S.dk.hat&&!S.dk.hat.startsWith('smp:'))S.dk.ohat=S.dk.hat;else delete S.dk.ohat}}
 let rolling=false;
 function rollDice(){if(rolling)return;initAudio();const n=1+Math.floor(rnd()*6),d=$('#dieFace'),btn=$('#actDice');dieN=n;
   if(!d||RM){pushHist();drawDie(n);applyDice(n);return}
@@ -10906,14 +10906,14 @@ body.bg-light .mm-x{background:rgba(17,18,17,.08)}
 const KIT_G={kick:['kick'],snare:['snare','rim'],clap:['clap','snap'],hat:['hat'],ohat:['open'],perc:['perc','rim','snap']};
 function randomKit(){initAudio();if(typeof pushHist==='function')pushHist();const R=Math.random,pick=a=>a[Math.floor(R()*a.length)],names=[];
   const lib=[...SMP.values()].filter(s=>s&&s.pack&&s.group&&s.group!=='loop'&&s.group!=='vox');
-  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id]))return;const key=t.id==='ohat'?'hat':t.id,pool=lib.filter(s=>(KIT_G[t.id]||[]).includes(s.group)),models=(DKM[key]||[]).map(o=>o[0]);
+  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id])||String(S.dk[t.id]||'').startsWith('dk:'))return;/* (v293) a DUNK sound stays */const key=t.id==='ohat'?'hat':t.id,pool=lib.filter(s=>(KIT_G[t.id]||[]).includes(s.group)),models=(DKM[key]||[]).map(o=>o[0]);
     const P=S.params[t.id];let nm='';
     if(pool.length&&(R()<.62||!models.length)){const sm=pick(pool);S.dk[t.id]='smp:'+sm.id;Object.assign(P,{tone:.5,decay:1,tune:0});ensureBuf(sm).then(()=>{try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}});nm=sm.name.replace(/^(kick|snare|clap|hat|open hat|open|perc|rim|snap)\s*/i,'')||sm.name}
     else{const m=pick(models);if(m)S.dk[t.id]=m;else delete S.dk[t.id];const D=DEF_P[t.id]||{};P.tone=Math.max(0,Math.min(1,(D.tone??.5)+(R()-.5)*.3));P.decay=Math.max(.05,Math.min(1,(D.decay??.5)+(R()-.5)*.3));P.tune=0;nm=((DKM[key]||[]).find(o=>o[0]===m)||['','blonda'])[1]}
     if(R()<.35&&!(S.dk[t.id]||'').startsWith('smp:'))P.tune=Math.round((R()-.5)*6);
     try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}names.push(t.name.toLowerCase()+' '+nm)});
   /* the open hat sounds like the closed one when both are built-in */
-  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
+  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.ohat||'').startsWith('dk:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
   save();try{renderSnd();renderDial()}catch(e){globalThis.__el&&globalThis.__el(e)}if(!playing)setTimeout(()=>{try{audition(0)}catch(e){globalThis.__el&&globalThis.__el(e)}},350);
   toast('Nytt kit · '+names.slice(0,4).join(' · ')+(names.length>4?' …':''))}
 window.randomKit=randomKit;
@@ -11183,7 +11183,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v292</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v293</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -11390,12 +11390,12 @@ function styGroove(si){const st=PDR[STX_PRE[si].nm]||'house',pat=S.pats[S.pat];S
   const keep=DR.filter(i=>S.lock&&S.lock[TRACKS[i].id]).map(i=>[i,JSON.parse(JSON.stringify(pat[i]))]);genDrumsS(pat,st);keep.forEach(([i,r])=>{pat[i]=r});return st}
 /* every new idea gets a new drum kit that suits the style: the style's own drum models, or a sample from the library now and then */
 function kitFor(genre){const st=STY[genre]||{},R=Math.random,pk=a=>a[Math.floor(R()*a.length)];let lib=[];try{lib=[...SMP.values()].filter(s=>s&&s.pack&&s.group&&s.group!=='loop'&&s.group!=='vox')}catch(e){globalThis.__el&&globalThis.__el(e)}
-  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id]))return;const key=t.id==='ohat'?'hat':t.id,P=S.params[t.id]||{},pool=lib.filter(s=>((typeof KIT_G!=='undefined'&&KIT_G[t.id])||[]).includes(s.group));
+  TRACKS.forEach((t,i)=>{if(t.mel||t.x||(S.lock&&S.lock[t.id])||String(S.dk[t.id]||'').startsWith('dk:'))return;/* (v293) a DUNK sound stays */const key=t.id==='ohat'?'hat':t.id,P=S.params[t.id]||{},pool=lib.filter(s=>((typeof KIT_G!=='undefined'&&KIT_G[t.id])||[]).includes(s.group));
     if(pool.length&&R()<.4){const sm=pk(pool);S.dk[t.id]='smp:'+sm.id;Object.assign(P,{tone:.5,decay:1,tune:0});try{ensureBuf(sm).then(()=>{try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}})}catch(e){globalThis.__el&&globalThis.__el(e)}}
     else{const opts=(st.kit&&st.kit[key])||((typeof DKM!=='undefined'&&DKM[key])||[]).map(o=>o[0]),o=pk(opts.length?opts:['']);if(o)S.dk[t.id]=o;else delete S.dk[t.id];
       const D=(typeof DEF_P!=='undefined'&&DEF_P[t.id])||{};P.tone=Math.max(0,Math.min(1,(D.tone??.5)+(R()-.5)*.25));P.decay=Math.max(.05,Math.min(1,(D.decay??.5)+(R()-.5)*.25));P.tune=0}
     try{applyTrack(i)}catch(e){globalThis.__el&&globalThis.__el(e)}});
-  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
+  if(!(S.lock&&S.lock.ohat)&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.ohat||'').startsWith('dk:')&&!(S.dk.hat||'').startsWith('smp:')){if(S.dk.hat)S.dk.ohat=S.dk.hat;else delete S.dk.ohat}
   try{renderSnd();renderDial()}catch(e){globalThis.__el&&globalThis.__el(e)}}
 /* the chord module (Stämmor) follows along: a new sound that suits the style, on the Starter's chords */
 const proMix=g=>{try{if(window.__mix)__mix.mixFor(g)}catch(e){globalThis.__el&&globalThis.__el(e)}};
@@ -14905,7 +14905,9 @@ function findLoop(L,R,sr,a0,b0,root,opt){
       knobs.push(__dknob(s.querySelector('.dk-kn'),{label:'Fat',min:0,max:1,def:.3,cls:'sm',get:()=>+st().fat||0,set:v=>{touch();st().fat=v},end:()=>{settle();audition(0)},fmt:v=>pc(v*100)}));const fk=knobs[knobs.length-1];try{mlReg(fk,{key:'d.fat',label:'dunk fat',min:0,max:1,paint:()=>fk.refresh()})}catch(e){globalThis.__el&&globalThis.__el(e)}}
     body.querySelectorAll('.dk-arw').forEach(b=>b.onclick=()=>{const d=st();let i=KITS.findIndex(k=>k.name===d.kit);i=(i+(+b.dataset.k)+KITS.length)%KITS.length;try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}loadKit(KITS[i]);done();audition(0)});
     body.querySelector('.dk-on').onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}setOn(!isOn());done()};
-    body.querySelectorAll('.dk-pad').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;const d=st();const same=d.sel===c;d.sel=c;if(!same)build();paint();audition(c)});
+    body.querySelectorAll('.dk-pad').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;const d=st();const same=d.sel===c;d.sel=c;if(!same)build();paint();
+      /* (v293) on the drums: the pad is that track's pad, so with ● and ▶ it is recorded into the pattern */
+      const i=tIdx(MAP[c]);if(i>=0&&String(S.dk[MAP[c]]||'')==='dk:'+c&&typeof hitPad==='function'){try{hitPad(i)}catch(e){globalThis.__el&&globalThis.__el(e);audition(c)}}else audition(c)});
     body.querySelector('.dk-name').onchange=e=>{touch();st().p[st().sel].name=String(e.target.value||'').slice(0,24)||'sound';settle();paint()};
     body.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}writeRows(S.pat,fromGroove(GROOVES[+b.dataset.g][1]));if(!isOn())setOn(true);done();msg('Groove "'+GROOVES[+b.dataset.g][0]+'" in pattern '+'ABCDEFGH'[S.pat])});
     const fi=body.querySelector('.dk-file');body.querySelector('.dk-imp').onclick=()=>fi.click();

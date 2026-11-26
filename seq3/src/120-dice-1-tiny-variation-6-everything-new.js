@@ -111,9 +111,9 @@ function feelM(pat,pi){const H=pat[TI('hat')],Sn=pat[TI('snare')];
   (S.roll[pi].bass||[]).forEach(b=>b.v=b.s%4===0?1:.72);syncCells(pi,TI('bass'))}
 function soundsFor(sty){const st=STY[sty];
   TRACKS.forEach(t=>{if(S.lock[t.id]||(t.x&&!t.mel))return;if(t.mel){S.inst[t.id]=pickA(st.eng[t.id]||st.eng[t.x?['keys','lead','bass','pad'][TRACKS.indexOf(t)%4]:'keys']);return}
-    const cur=S.dk[t.id]||'';if(cur.startsWith('smp:'))return;const key=t.id==='ohat'?'hat':t.id;
+    const cur=S.dk[t.id]||'';if(cur.startsWith('smp:')||cur.startsWith('dk:'))return;/* (v293) a DUNK sound stays */const key=t.id==='ohat'?'hat':t.id;
     const opts=st.kit[key]||(DKM[key]||[]).map(o=>o[0]);const o=pickA(opts);if(o)S.dk[t.id]=o;else delete S.dk[t.id]});
-  if(!S.lock.ohat&&!(S.dk.ohat||'').startsWith('smp:')){if(S.dk.hat&&!S.dk.hat.startsWith('smp:'))S.dk.ohat=S.dk.hat;else delete S.dk.ohat}}
+  if(!S.lock.ohat&&!(S.dk.ohat||'').startsWith('smp:')&&!(S.dk.ohat||'').startsWith('dk:')){if(S.dk.hat&&!S.dk.hat.startsWith('smp:'))S.dk.ohat=S.dk.hat;else delete S.dk.ohat}}
 let rolling=false;
 function rollDice(){if(rolling)return;initAudio();const n=1+Math.floor(rnd()*6),d=$('#dieFace'),btn=$('#actDice');dieN=n;
   if(!d||RM){pushHist();drawDie(n);applyDice(n);return}

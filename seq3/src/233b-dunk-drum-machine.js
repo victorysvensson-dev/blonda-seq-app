@@ -250,7 +250,9 @@
       knobs.push(__dknob(s.querySelector('.dk-kn'),{label:'Fat',min:0,max:1,def:.3,cls:'sm',get:()=>+st().fat||0,set:v=>{touch();st().fat=v},end:()=>{settle();audition(0)},fmt:v=>pc(v*100)}));const fk=knobs[knobs.length-1];try{mlReg(fk,{key:'d.fat',label:'dunk fat',min:0,max:1,paint:()=>fk.refresh()})}catch(e){globalThis.__el&&globalThis.__el(e)}}
     body.querySelectorAll('.dk-arw').forEach(b=>b.onclick=()=>{const d=st();let i=KITS.findIndex(k=>k.name===d.kit);i=(i+(+b.dataset.k)+KITS.length)%KITS.length;try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}loadKit(KITS[i]);done();audition(0)});
     body.querySelector('.dk-on').onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}setOn(!isOn());done()};
-    body.querySelectorAll('.dk-pad').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;const d=st();const same=d.sel===c;d.sel=c;if(!same)build();paint();audition(c)});
+    body.querySelectorAll('.dk-pad').forEach(b=>b.onclick=()=>{const c=+b.dataset.c;const d=st();const same=d.sel===c;d.sel=c;if(!same)build();paint();
+      /* (v293) on the drums: the pad is that track's pad, so with ● and ▶ it is recorded into the pattern */
+      const i=tIdx(MAP[c]);if(i>=0&&String(S.dk[MAP[c]]||'')==='dk:'+c&&typeof hitPad==='function'){try{hitPad(i)}catch(e){globalThis.__el&&globalThis.__el(e);audition(c)}}else audition(c)});
     body.querySelector('.dk-name').onchange=e=>{touch();st().p[st().sel].name=String(e.target.value||'').slice(0,24)||'sound';settle();paint()};
     body.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{try{pushHist()}catch(e){globalThis.__el&&globalThis.__el(e)}writeRows(S.pat,fromGroove(GROOVES[+b.dataset.g][1]));if(!isOn())setOn(true);done();msg('Groove "'+GROOVES[+b.dataset.g][0]+'" in pattern '+'ABCDEFGH'[S.pat])});
     const fi=body.querySelector('.dk-file');body.querySelector('.dk-imp').onclick=()=>fi.click();
