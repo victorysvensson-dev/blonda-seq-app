@@ -38,6 +38,7 @@
     static mach_timebase_info_data_t tb; if (!tb.denom) mach_timebase_info(&tb);
     const double sr = _host->sampleRate;
     _source = [[AVAudioSourceNode alloc] initWithFormat:fmt renderBlock:^OSStatus(BOOL *isSilence, const AudioTimeStamp *ts, AVAudioFrameCount frames, AudioBufferList *out) {
+        if (frames == 0 || out->mNumberBuffers == 0) return noErr;   // iOS can ask for nothing: no division by zero below
         const uint64_t t0 = mach_absolute_time();
         float *L = (float *)out->mBuffers[0].mData;
         float *R = out->mNumberBuffers > 1 ? (float *)out->mBuffers[1].mData : L;
@@ -45,7 +46,8 @@
         float pk = 0; for (AVAudioFrameCount i = 0; i < frames; ++i) { pk = std::max(pk, std::max(std::fabs(L[i]), std::fabs(R[i]))); }
         peak->store(std::max((double)pk, peak->load(std::memory_order_relaxed) * .97), std::memory_order_relaxed);   // held, falls slowly; read by the UI
         const double used = (double)(mach_absolute_time() - t0) * tb.numer / tb.denom / 1e9, avail = frames / sr;
-        const double prev = load->load(std::memory_order_relaxed); load->store(prev + (used / avail - prev) * .02, std::memory_order_relaxed);
+        double prev = load->load(std::memory_order_relaxed); if (!std::isfinite(prev)) prev = 0;
+        const double r = used / avail; if (std::isfinite(r)) load->store(prev + (r - prev) * .02, std::memory_order_relaxed);
         return noErr;
     }];
     [_engine attachNode:_source];

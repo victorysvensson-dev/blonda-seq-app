@@ -288,14 +288,18 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         let na = NativeAudio.shared()
         switch b["op"] as? String ?? "" {
         case "on":
+            call("__blonda.nativeState", ["stage": "the app got the switch"])
             do {
-                try na.start()
-                if let j = b["json"] as? String { try na.setProjectJSON(j) }
+                do { try na.start() } catch { throw NSError(domain: "BLONDA", code: 2, userInfo: [NSLocalizedDescriptionKey: "audio engine did not start: " + error.localizedDescription]) }
+                call("__blonda.nativeState", ["stage": "engine started (\(Int(na.sampleRate)) Hz), loading the project"])
+                guard let j = b["json"] as? String else { throw NSError(domain: "BLONDA", code: 3, userInfo: [NSLocalizedDescriptionKey: "no project came with the switch"]) }
+                do { try na.setProjectJSON(j) } catch { throw NSError(domain: "BLONDA", code: 4, userInfo: [NSLocalizedDescriptionKey: "project not loaded: " + error.localizedDescription]) }
+                call("__blonda.nativeState", ["stage": "project loaded"])
                 if nativeTimer == nil {
                     let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in self?.nativeState() }
                     RunLoop.main.add(t, forMode: .common); nativeTimer = t
                 }
-            } catch { call("__blonda.nativeState", ["on": false, "err": error.localizedDescription]); return }
+            } catch { let m = error.localizedDescription; call("__blonda.nativeState", ["on": false, "err": m.isEmpty ? "unknown error" : m]); return }
             nativeState()
         case "off":
             na.stop(); nativeTimer?.invalidate(); nativeTimer = nil; nativeState()
@@ -313,7 +317,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     }
     private func nativeState() {
         let na = NativeAudio.shared()
-        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": na.load, "peak": na.peak, "sr": na.sampleRate])
+        let f = { (x: Double) -> Double in x.isFinite ? x : -1 }   // NaN / infinity can't be sent as JSON
+        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": f(na.load), "peak": f(na.peak), "sr": f(na.sampleRate)])
     }
 
     /// Calls a function in the page with JSON arguments.
@@ -322,7 +327,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         // so check first: containers must be valid JSON, and single values go through as JSON fragments.
         let valid = (arg is [Any] || arg is [String: Any]) ? JSONSerialization.isValidJSONObject(arg)
             : (arg is String || arg is NSNumber || arg is NSNull)
-        guard valid, let data = try? JSONSerialization.data(withJSONObject: arg, options: .fragmentsAllowed), let json = String(data: data, encoding: .utf8) else { return }
+        if !valid { NSLog("SEQ3: could not send to the page %@: %@", fn, String(describing: arg)); web.evaluateJavaScript("window.__blonda&&__blonda.errs&&__blonda.errs.push('app could not send \(fn)')", completionHandler: nil); return }
+        guard let data = try? JSONSerialization.data(withJSONObject: arg, options: .fragmentsAllowed), let json = String(data: data, encoding: .utf8) else { return }
         web.evaluateJavaScript("window.__blonda&&\(fn)(\(json))", completionHandler: nil)
     }
 

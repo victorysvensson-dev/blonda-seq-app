@@ -23,7 +23,8 @@
   {const _s=stop;stop=function(){const was=playing,r=_s.apply(this,arguments);if(K.on&&was)NA.play(false);return r}}
   setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true)}},200);
   function stat(){const s=K.st;if(!K.on)return 'off · the page plays (web audio)';if(s.err)return 'error: '+String(s.err).replace(/[<>&]/g,'');
-    if(s.on===false)return 'starting the C++ engine…';
+    if(s.on!==true)return 'starting the C++ engine… · '+String(s.stage||'waiting for the app').replace(/[<>&]/g,'');
+    if(s.load<0||s.peak<0)return 'on · C++ engine · the engine reports broken numbers (load '+s.load+', out '+s.peak+')';
     const pk=s.peak>0?Math.round(20*Math.log10(s.peak)):null;
     return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${s.playing?' · playing':''}`}
   function paint(){const el=document.getElementById('naSt');if(el)el.innerHTML=stat();const b=document.getElementById('naBtn');if(b){b.textContent=K.on?'ON':'OFF';b.classList.toggle('on',K.on)}}
