@@ -317,8 +317,9 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
     }
     private func nativeState() {
         let na = NativeAudio.shared()
+        na.resumeIfNeeded()   // stopped by iOS while on: build it again
         let f = { (x: Double) -> Double in x.isFinite ? x : -1 }   // NaN / infinity can't be sent as JSON
-        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": f(na.load), "peak": f(na.peak), "sr": f(na.sampleRate)])
+        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": f(na.load), "peak": f(na.peak), "sr": f(na.sampleRate), "restarts": na.restarts])
     }
 
     /// Calls a function in the page with JSON arguments.

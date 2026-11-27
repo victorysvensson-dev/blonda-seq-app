@@ -1,5 +1,6 @@
 #import "NativeAudio.h"
 #import <AVFoundation/AVFoundation.h>
+#import <QuartzCore/QuartzCore.h>
 #include <mach/mach_time.h>
 #include <atomic>
 #include <memory>
@@ -12,6 +13,8 @@
     AVAudioEngine *_engine;
     AVAudioSourceNode *_source;
     BOOL _loaded, _wanted;
+    NSInteger _restarts;
+    double _lastFix;
     std::shared_ptr<std::atomic<double>> _load, _peak;
 }
 
@@ -56,11 +59,22 @@
     return [_engine startAndReturnError:error];
 }
 
-- (void)resumeIfNeeded {
+/// When iOS changes the audio (another app, a route or session change, the page's own audio starting) the engine
+/// stops and its connections may no longer fit the new hardware format. Restarting it as it was is not enough:
+/// build it again from scratch (the C++ engine and its project stay as they are).
+- (void)rebuild {
     if (!_wanted) return;
-    if (_engine && !_engine.isRunning) { [_engine prepare]; if ([_engine startAndReturnError:nil]) return; }
-    if (!_engine.isRunning) { _engine = nil; _source = nil; [self start:nil]; }
+    [_engine stop]; _engine = nil; _source = nil;
+    _restarts++;
+    [self start:nil];
 }
+- (void)resumeIfNeeded {
+    if (!_wanted || _engine.isRunning) return;
+    const double now = CACurrentMediaTime(); if (now - _lastFix < 1.0) return;   // at most once a second
+    _lastFix = now;
+    [self rebuild];
+}
+- (NSInteger)restarts { return _restarts; }
 
 - (void)stop {
     _wanted = NO;

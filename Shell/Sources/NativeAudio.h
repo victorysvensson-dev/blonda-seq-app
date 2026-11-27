@@ -8,8 +8,11 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) BOOL running;
 - (BOOL)start:(NSError **)error;
 - (void)stop;
-/// after the background or an interruption: start again if it was on
+/// after the background, an interruption or an audio change: if it is on but stopped, build the engine again
+/// (at most once a second; called also from the status timer)
 - (void)resumeIfNeeded;
+/// how many times the engine has been built again since the start
+@property (nonatomic, readonly) NSInteger restarts;
 /// the page's project (the web S object as JSON); the first one loads, later ones update the running engine
 - (BOOL)setProjectJSON:(NSString *)json error:(NSError **)error;
 - (void)setPlaying:(BOOL)on;

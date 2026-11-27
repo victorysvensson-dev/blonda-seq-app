@@ -33,10 +33,10 @@
    setInterval(()=>{const now=performance.now(),dt=now-(W.t||now);W.busy=dt>0?Math.min(1,W.lag/dt):0;W.lag=0;
      const run=!!(ctx&&ctx.state==='running');if(run){const ct=ctx.currentTime*1000;if(W.run&&W.t&&dt>200&&dt<3000&&(dt-(ct-W.ct))>40)W.drops++;W.ct=ct}W.run=run&&!document.hidden;W.t=now;if(!K.on)paint()},1000)}
   function stat(){const s=K.st;if(!K.on)return `off · web audio · page busy <b>${Math.round(W.busy*100)} %</b> · dropouts <b>${W.drops}</b>`;if(s.err)return 'error: '+String(s.err).replace(/[<>&]/g,'');
-    if(s.on!==true)return 'starting the C++ engine… · '+String(s.stage||'waiting for the app').replace(/[<>&]/g,'');
+    if(s.on!==true)return (s.restarts?'the audio engine stopped · building it again ('+s.restarts+')':'starting the C++ engine… · '+String(s.stage||'waiting for the app').replace(/[<>&]/g,''));
     if(s.load<0||s.peak<0)return 'on · C++ engine · the engine reports broken numbers (load '+s.load+', out '+s.peak+')';
     const pk=s.peak>0?Math.round(20*Math.log10(s.peak)):null;
-    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${s.playing?' · playing':''}`}
+    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${s.playing?' · playing':''}${s.restarts?' · rebuilt '+s.restarts+'×':''}`}
   function paint(){const el=document.getElementById('naSt');if(el)el.innerHTML=stat();const b=document.getElementById('naBtn');if(b){b.textContent=K.on?'ON':'OFF';b.classList.toggle('on',K.on)}}
   NA.sub(s=>{K.st=s;paint()});
   window.NATIVE={
