@@ -14,8 +14,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)setProjectJSON:(NSString *)json error:(NSError **)error;
 - (void)setPlaying:(BOOL)on;
 /// a note played live (pads, keyboard): track 0..23, note, velocity 0..1
-- (void)noteOn:(NSInteger)track note:(NSInteger)note velocity:(float)vel;
-- (void)noteOff:(NSInteger)track note:(NSInteger)note;
+- (void)noteOn:(NSInteger)track note:(NSInteger)note velocity:(float)vel NS_SWIFT_NAME(noteOn(track:note:velocity:));
+- (void)noteOff:(NSInteger)track note:(NSInteger)note NS_SWIFT_NAME(noteOff(track:note:));
 /// loudest sample the engine sent to the speakers lately (0..1+), and the rate it runs at
 @property (nonatomic, readonly) double peak;
 @property (nonatomic, readonly) double sampleRate;

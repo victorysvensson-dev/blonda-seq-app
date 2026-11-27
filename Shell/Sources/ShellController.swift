@@ -306,7 +306,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             na.setPlaying((b["on"] as? Bool) ?? false)
         case "note":
             let t = (b["tr"] as? NSNumber)?.intValue ?? -1, n = (b["n"] as? NSNumber)?.intValue ?? 60
-            if (b["on"] as? Bool) ?? false { na.noteOn(t, note: n, velocity: (b["v"] as? NSNumber)?.floatValue ?? 0.8) } else { na.noteOff(t, note: n) }
+            if (b["on"] as? Bool) ?? false { na.noteOn(track: t, note: n, velocity: (b["v"] as? NSNumber)?.floatValue ?? 0.8) } else { na.noteOff(track: t, note: n) }
         default:
             break
         }
