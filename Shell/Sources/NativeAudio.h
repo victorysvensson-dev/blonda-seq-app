@@ -17,7 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (BOOL)setProjectJSON:(NSString *)json error:(NSError **)error;
 - (void)setPlaying:(BOOL)on;
 /// start with the first step at this engine time (seconds of the engine's clock, see engineTime)
-- (void)playAtEngineTime:(double)t;
+- (void)playAtEngineTime:(double)t NS_SWIFT_NAME(playAtEngineTime(_:));
 /// the engine's own clock: seconds of sound it has made (the page's clock follows it)
 @property (nonatomic, readonly) double engineTime;
 /// start `delay` seconds from now with its first step `preroll` seconds after that, so the sound starts on the page's step
