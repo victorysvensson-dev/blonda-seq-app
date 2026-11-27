@@ -2916,7 +2916,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v299</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v300</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -11185,7 +11185,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v299</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v300</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -15160,7 +15160,12 @@ function findLoop(L,R,sr,a0,b0,root,opt){
     if(on){K.last=json();NA.on(K.last);mute(true);K.sent=null;pushPlay()}else{NA.off();mute(false)}paint()}
   /* play / stop: the buttons hold the page's own play() from before this piece, so wrapping it is not enough –
      the engine follows the page's 'playing' itself (checked every frame, and at once from the wrappers) */
-  function pushPlay(){if(!K.on||playing===K.sent)return;K.sent=playing;if(playing){sync(false);mute(true)}NA.play(playing)}
+  function pushPlay(){if(!K.on||playing===K.sent)return;K.sent=playing;if(!playing){NA.play(false);return}sync(false);mute(true);const s=startIn();NA.play(true,s.d,s.pre)}
+  /* in step with the screen: both engines play their first step .06 s after 'play', so the engine is told how long to wait.
+     The page's first step is at startT; switched on in the middle, the engine starts at the page's next bar. */
+  function startIn(){if(!ctx)return {d:0,pre:.06};const now=ctx.currentTime,bar=16*stepDur();let t=startT;
+    if(now>t-.005)t=startT+Math.ceil((now+.1-startT)/bar)*bar;   /* already past the first step: the next bar */
+    const r=t-now;return r>=.06?{d:r-.06,pre:.06}:{d:0,pre:r}}   /* sooner than .06 s away: a shorter run-up */
   {const tick=()=>{try{pushPlay()}catch(e){globalThis.__el&&globalThis.__el(e)}requestAnimationFrame(tick)};requestAnimationFrame(tick)}
   {const _t0=trigger0;trigger0=function(i,t,vel,note,ls){if(!K.on)return _t0.apply(this,arguments);if(!ctx)return;
     const len=60/S.bpm/4*(ls||1);if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);if(!isMuted(i))hitT.set(i,{t,v:vel});
@@ -15168,9 +15173,13 @@ function findLoop(L,R,sr,a0,b0,root,opt){
   /* played live (pads, auditions, the keyboard): straight to the C++ engine; a synth note is let go after its length */
   function live(i,note,vel,len,t){if(!K.on)return;const tr=TRACKS[i];if(!tr)return;const n=note==null?60:Math.round(note),d=Math.max(0,(t||0)-(ctx?ctx.currentTime:0));
     const go=()=>{NA.note(i,n,vel==null?.8:vel,true);if(tr.mel)setTimeout(()=>NA.note(i,n,0,false),Math.max(30,len*1000))};if(d>.01)setTimeout(go,d*1000);else go()}
-  {const _p=play;play=function(){const r=_p.apply(this,arguments);pushPlay();return r}}
+  {const _p=play;play=function(){const r=_p.apply(this,arguments);pushPlay();return r};
+    /* buttons made before this piece hold the original: give them this one, so the engine hears play at once */
+    document.querySelectorAll('*').forEach(el=>{if(el.onclick===_p)el.onclick=play})}
   {const _s=stop;stop=function(){const r=_s.apply(this,arguments);pushPlay();return r}}
-  setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true)}},200);
+  setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true);
+    /* the page's clock is its audio: keep it running beside the engine (the screen and MIDI out follow it) */
+    if(ctx&&ctx.state!=='running'&&!document.hidden)ctx.resume().catch(()=>{})}},200);
   /* web mode meter: Safari gives no audio CPU figure, so two things that show strain: how busy the page is
      (how late a 50 ms timer fires, as a share of the time) and sound dropouts (the audio clock falling behind real time) */
   const W={busy:0,drops:0,t:0,ct:0,lag:0,n0:0};
@@ -15181,7 +15190,7 @@ function findLoop(L,R,sr,a0,b0,root,opt){
     if(s.on!==true)return (s.restarts?'the audio engine stopped · building it again ('+s.restarts+')':'starting the C++ engine… · '+String(s.stage||'waiting for the app').replace(/[<>&]/g,''));
     if(s.load<0||s.peak<0)return 'on · C++ engine · the engine reports broken numbers (load '+s.load+', out '+s.peak+')';
     const pk=s.peak>0?Math.round(20*Math.log10(s.peak)):null;
-    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${s.playing?' · playing':''}${s.restarts?' · rebuilt '+s.restarts+'×':''}`}
+    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${ctx&&ctx.state!=='running'?' · <b>page clock '+ctx.state+'</b>':''}${s.playing?' · playing':''}${s.restarts?' · rebuilt '+s.restarts+'×':''}`}
   function paint(){const el=document.getElementById('naSt');if(el)el.innerHTML=stat();const b=document.getElementById('naBtn');if(b){b.textContent=K.on?'ON':'OFF';b.classList.toggle('on',K.on)}}
   NA.sub(s=>{K.st=s;paint()});
   window.NATIVE={

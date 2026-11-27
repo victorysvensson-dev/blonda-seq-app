@@ -105,6 +105,11 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: \
  /usr/include/c++/13/pstl/glue_algorithm_defs.h \
  /usr/include/c++/13/pstl/execution_defs.h /usr/include/c++/13/array \
  /usr/include/c++/13/compare /usr/include/c++/13/bits/range_access.h \
+ /home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp \
+ /home/claude/blonda-seq-app/Core/include/blonda/dunk.hpp \
+ /usr/include/c++/13/cstring /usr/include/string.h /usr/include/strings.h \
+ /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
+ /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
  /home/claude/blonda-seq-app/Core/include/blonda/convolver.hpp \
  /usr/include/c++/13/vector /usr/include/c++/13/bits/allocator.h \
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h \
@@ -196,15 +201,14 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: \
  /usr/include/c++/13/bits/basic_ios.tcc /usr/include/c++/13/ostream \
  /usr/include/c++/13/bits/ostream.tcc \
  /usr/include/c++/13/bits/istream.tcc \
- /usr/include/c++/13/bits/sstream.tcc /usr/include/c++/13/cstring \
- /usr/include/string.h /usr/include/strings.h \
- /usr/include/x86_64-linux-gnu/bits/strings_fortified.h \
- /usr/include/x86_64-linux-gnu/bits/string_fortified.h \
+ /usr/include/c++/13/bits/sstream.tcc \
  /home/claude/blonda-seq-app/Core/include/blonda/drums.hpp \
- /home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp \
  /home/claude/blonda-seq-app/Core/include/blonda/dynamics.hpp \
  /home/claude/blonda-seq-app/Core/include/blonda/engines.hpp \
  /home/claude/blonda-seq-app/Core/include/blonda/wg.hpp \
+ /home/claude/blonda-seq-app/Core/include/blonda/glitch.hpp \
+ /usr/include/c++/13/atomic /usr/include/c++/13/bits/atomic_base.h \
+ /usr/include/c++/13/bits/atomic_lockfree_defines.h \
  /home/claude/blonda-seq-app/Core/include/blonda/json.hpp \
  /usr/include/c++/13/map /usr/include/c++/13/bits/stl_tree.h \
  /usr/include/c++/13/ext/aligned_buffer.h \
@@ -219,7 +223,20 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: \
  /usr/include/c++/13/bits/allocated_ptr.h \
  /usr/include/c++/13/ext/concurrence.h \
  /usr/include/c++/13/bits/shared_ptr_atomic.h \
- /usr/include/c++/13/bits/atomic_base.h \
- /usr/include/c++/13/bits/atomic_lockfree_defines.h \
  /usr/include/c++/13/backward/auto_ptr.h \
- /usr/include/c++/13/pstl/glue_memory_defs.h
+ /usr/include/c++/13/pstl/glue_memory_defs.h \
+ /home/claude/blonda-seq-app/Core/include/blonda/sampler.hpp \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer/bris/bris.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/include/blonda/motor.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer/bris/bris_gen.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/include/blonda/gen_runtime.h \
+ /home/claude/blonda-seq-app/Core/../External/blonda-motor/motorer/bris/bris_ljud.h \
+ /usr/include/c++/13/climits \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h \
+ /usr/include/limits.h /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/local_lim.h \
+ /usr/include/linux/limits.h \
+ /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/uio_lim.h

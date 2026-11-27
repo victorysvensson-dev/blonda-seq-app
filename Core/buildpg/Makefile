@@ -220,6 +220,97 @@ songrender/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/songrender.dir/build.make CMakeFiles/songrender.dir/build
 .PHONY : songrender/fast
 
+#=============================================================================
+# Target rules for targets named hosttest
+
+# Build rule for target.
+hosttest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 hosttest
+.PHONY : hosttest
+
+# fast build rule for target.
+hosttest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/build
+.PHONY : hosttest/fast
+
+#=============================================================================
+# Target rules for targets named livetest
+
+# Build rule for target.
+livetest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 livetest
+.PHONY : livetest
+
+# fast build rule for target.
+livetest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/build
+.PHONY : livetest/fast
+
+#=============================================================================
+# Target rules for targets named savetest
+
+# Build rule for target.
+savetest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 savetest
+.PHONY : savetest
+
+# fast build rule for target.
+savetest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/build
+.PHONY : savetest/fast
+
+#=============================================================================
+# Target rules for targets named edittest
+
+# Build rule for target.
+edittest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 edittest
+.PHONY : edittest
+
+# fast build rule for target.
+edittest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/build
+.PHONY : edittest/fast
+
+#=============================================================================
+# Target rules for targets named samptest
+
+# Build rule for target.
+samptest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 samptest
+.PHONY : samptest
+
+# fast build rule for target.
+samptest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/build
+.PHONY : samptest/fast
+
+#=============================================================================
+# Target rules for targets named dunkab
+
+# Build rule for target.
+dunkab: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 dunkab
+.PHONY : dunkab
+
+# fast build rule for target.
+dunkab/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/build
+.PHONY : dunkab/fast
+
+#=============================================================================
+# Target rules for targets named motortest
+
+# Build rule for target.
+motortest: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 motortest
+.PHONY : motortest
+
+# fast build rule for target.
+motortest/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/build
+.PHONY : motortest/fast
+
 src/bris.o: src/bris.cpp.o
 .PHONY : src/bris.o
 
@@ -412,6 +503,54 @@ tools/drumprobe.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/drumprobe.dir/build.make CMakeFiles/drumprobe.dir/tools/drumprobe.cpp.s
 .PHONY : tools/drumprobe.cpp.s
 
+tools/dunkab.o: tools/dunkab.cpp.o
+.PHONY : tools/dunkab.o
+
+# target to build an object file
+tools/dunkab.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/tools/dunkab.cpp.o
+.PHONY : tools/dunkab.cpp.o
+
+tools/dunkab.i: tools/dunkab.cpp.i
+.PHONY : tools/dunkab.i
+
+# target to preprocess a source file
+tools/dunkab.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/tools/dunkab.cpp.i
+.PHONY : tools/dunkab.cpp.i
+
+tools/dunkab.s: tools/dunkab.cpp.s
+.PHONY : tools/dunkab.s
+
+# target to generate assembly for a file
+tools/dunkab.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/tools/dunkab.cpp.s
+.PHONY : tools/dunkab.cpp.s
+
+tools/edittest.o: tools/edittest.cpp.o
+.PHONY : tools/edittest.o
+
+# target to build an object file
+tools/edittest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/tools/edittest.cpp.o
+.PHONY : tools/edittest.cpp.o
+
+tools/edittest.i: tools/edittest.cpp.i
+.PHONY : tools/edittest.i
+
+# target to preprocess a source file
+tools/edittest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/tools/edittest.cpp.i
+.PHONY : tools/edittest.cpp.i
+
+tools/edittest.s: tools/edittest.cpp.s
+.PHONY : tools/edittest.s
+
+# target to generate assembly for a file
+tools/edittest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/tools/edittest.cpp.s
+.PHONY : tools/edittest.cpp.s
+
 tools/engprobe.o: tools/engprobe.cpp.o
 .PHONY : tools/engprobe.o
 
@@ -435,6 +574,78 @@ tools/engprobe.s: tools/engprobe.cpp.s
 tools/engprobe.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/engprobe.dir/build.make CMakeFiles/engprobe.dir/tools/engprobe.cpp.s
 .PHONY : tools/engprobe.cpp.s
+
+tools/hosttest.o: tools/hosttest.cpp.o
+.PHONY : tools/hosttest.o
+
+# target to build an object file
+tools/hosttest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/tools/hosttest.cpp.o
+.PHONY : tools/hosttest.cpp.o
+
+tools/hosttest.i: tools/hosttest.cpp.i
+.PHONY : tools/hosttest.i
+
+# target to preprocess a source file
+tools/hosttest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/tools/hosttest.cpp.i
+.PHONY : tools/hosttest.cpp.i
+
+tools/hosttest.s: tools/hosttest.cpp.s
+.PHONY : tools/hosttest.s
+
+# target to generate assembly for a file
+tools/hosttest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/tools/hosttest.cpp.s
+.PHONY : tools/hosttest.cpp.s
+
+tools/livetest.o: tools/livetest.cpp.o
+.PHONY : tools/livetest.o
+
+# target to build an object file
+tools/livetest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/tools/livetest.cpp.o
+.PHONY : tools/livetest.cpp.o
+
+tools/livetest.i: tools/livetest.cpp.i
+.PHONY : tools/livetest.i
+
+# target to preprocess a source file
+tools/livetest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/tools/livetest.cpp.i
+.PHONY : tools/livetest.cpp.i
+
+tools/livetest.s: tools/livetest.cpp.s
+.PHONY : tools/livetest.s
+
+# target to generate assembly for a file
+tools/livetest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/tools/livetest.cpp.s
+.PHONY : tools/livetest.cpp.s
+
+tools/motortest.o: tools/motortest.cpp.o
+.PHONY : tools/motortest.o
+
+# target to build an object file
+tools/motortest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/tools/motortest.cpp.o
+.PHONY : tools/motortest.cpp.o
+
+tools/motortest.i: tools/motortest.cpp.i
+.PHONY : tools/motortest.i
+
+# target to preprocess a source file
+tools/motortest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/tools/motortest.cpp.i
+.PHONY : tools/motortest.cpp.i
+
+tools/motortest.s: tools/motortest.cpp.s
+.PHONY : tools/motortest.s
+
+# target to generate assembly for a file
+tools/motortest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/tools/motortest.cpp.s
+.PHONY : tools/motortest.cpp.s
 
 tools/probe.o: tools/probe.cpp.o
 .PHONY : tools/probe.o
@@ -484,6 +695,54 @@ tools/render.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/render.dir/build.make CMakeFiles/render.dir/tools/render.cpp.s
 .PHONY : tools/render.cpp.s
 
+tools/samptest.o: tools/samptest.cpp.o
+.PHONY : tools/samptest.o
+
+# target to build an object file
+tools/samptest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/tools/samptest.cpp.o
+.PHONY : tools/samptest.cpp.o
+
+tools/samptest.i: tools/samptest.cpp.i
+.PHONY : tools/samptest.i
+
+# target to preprocess a source file
+tools/samptest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/tools/samptest.cpp.i
+.PHONY : tools/samptest.cpp.i
+
+tools/samptest.s: tools/samptest.cpp.s
+.PHONY : tools/samptest.s
+
+# target to generate assembly for a file
+tools/samptest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/tools/samptest.cpp.s
+.PHONY : tools/samptest.cpp.s
+
+tools/savetest.o: tools/savetest.cpp.o
+.PHONY : tools/savetest.o
+
+# target to build an object file
+tools/savetest.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/tools/savetest.cpp.o
+.PHONY : tools/savetest.cpp.o
+
+tools/savetest.i: tools/savetest.cpp.i
+.PHONY : tools/savetest.i
+
+# target to preprocess a source file
+tools/savetest.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/tools/savetest.cpp.i
+.PHONY : tools/savetest.cpp.i
+
+tools/savetest.s: tools/savetest.cpp.s
+.PHONY : tools/savetest.s
+
+# target to generate assembly for a file
+tools/savetest.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/tools/savetest.cpp.s
+.PHONY : tools/savetest.cpp.s
+
 tools/songrender.o: tools/songrender.cpp.o
 .PHONY : tools/songrender.o
 
@@ -520,9 +779,16 @@ help:
 	@echo "... comptest"
 	@echo "... convtest"
 	@echo "... drumprobe"
+	@echo "... dunkab"
+	@echo "... edittest"
 	@echo "... engprobe"
+	@echo "... hosttest"
+	@echo "... livetest"
+	@echo "... motortest"
 	@echo "... probe"
 	@echo "... render"
+	@echo "... samptest"
+	@echo "... savetest"
 	@echo "... songrender"
 	@echo "... src/bris.o"
 	@echo "... src/bris.i"
@@ -548,15 +814,36 @@ help:
 	@echo "... tools/drumprobe.o"
 	@echo "... tools/drumprobe.i"
 	@echo "... tools/drumprobe.s"
+	@echo "... tools/dunkab.o"
+	@echo "... tools/dunkab.i"
+	@echo "... tools/dunkab.s"
+	@echo "... tools/edittest.o"
+	@echo "... tools/edittest.i"
+	@echo "... tools/edittest.s"
 	@echo "... tools/engprobe.o"
 	@echo "... tools/engprobe.i"
 	@echo "... tools/engprobe.s"
+	@echo "... tools/hosttest.o"
+	@echo "... tools/hosttest.i"
+	@echo "... tools/hosttest.s"
+	@echo "... tools/livetest.o"
+	@echo "... tools/livetest.i"
+	@echo "... tools/livetest.s"
+	@echo "... tools/motortest.o"
+	@echo "... tools/motortest.i"
+	@echo "... tools/motortest.s"
 	@echo "... tools/probe.o"
 	@echo "... tools/probe.i"
 	@echo "... tools/probe.s"
 	@echo "... tools/render.o"
 	@echo "... tools/render.i"
 	@echo "... tools/render.s"
+	@echo "... tools/samptest.o"
+	@echo "... tools/samptest.i"
+	@echo "... tools/samptest.s"
+	@echo "... tools/savetest.o"
+	@echo "... tools/savetest.i"
+	@echo "... tools/savetest.s"
 	@echo "... tools/songrender.o"
 	@echo "... tools/songrender.i"
 	@echo "... tools/songrender.s"

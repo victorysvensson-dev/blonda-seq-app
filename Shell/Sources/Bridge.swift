@@ -70,7 +70,7 @@ N.midiBatch=arr=>{for(const [id,b,ms] of arr){const p=ins.get(id);if(p)p._fire(b
  N.nativeState=s=>{st=Object.assign({},st,s);subs.forEach(f=>{try{f(st)}catch(e){}})};
  N.native={get state(){return st},sub(f){subs.add(f);f(st);return()=>subs.delete(f)},
    on(json){post({t:'native',op:'on',json})},off(){post({t:'native',op:'off'})},
-   project(json){post({t:'native',op:'project',json})},play(on){post({t:'native',op:'play',on:!!on})},
+   project(json){post({t:'native',op:'project',json})},play(on,delay,pre){post({t:'native',op:'play',on:!!on,delay:+delay||0,pre:pre==null?.06:+pre})},
    note(t,n,v,on){post({t:'native',op:'note',tr:t|0,n:n|0,v:+v||0,on:!!on})}}}
 Object.defineProperty(navigator,'requestMIDIAccess',{configurable:true,value:function(){return new Promise(res=>{if(access){res(access);return}waiting.push(res);post({t:'midi-open'})})}});
 /* the page asks whether MIDI is already allowed before connecting by itself – in the app it always is */

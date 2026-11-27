@@ -274,3 +274,43 @@ events:
       
       
 ...
+
+---
+events:
+  -
+    kind: "try_compile-v1"
+    backtrace:
+      - "/usr/share/cmake-3.28/Modules/Internal/CheckSourceCompiles.cmake:101 (try_compile)"
+      - "/usr/share/cmake-3.28/Modules/CheckCXXSourceCompiles.cmake:52 (cmake_check_source_compiles)"
+      - "/usr/share/cmake-3.28/Modules/FindThreads.cmake:99 (CHECK_CXX_SOURCE_COMPILES)"
+      - "/usr/share/cmake-3.28/Modules/FindThreads.cmake:163 (_threads_check_libc)"
+      - "CMakeLists.txt:26 (find_package)"
+    checks:
+      - "Performing Test CMAKE_HAVE_LIBC_PTHREAD"
+    directories:
+      source: "/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs"
+      binary: "/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs"
+    cmakeVariables:
+      CMAKE_CXX_FLAGS: "-pg -O2 -fno-inline-functions"
+      CMAKE_CXX_FLAGS_DEBUG: "-g"
+      CMAKE_EXE_LINKER_FLAGS: ""
+    buildResult:
+      variable: "CMAKE_HAVE_LIBC_PTHREAD"
+      cached: true
+      stdout: |
+        Change Dir: '/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs'
+        
+        Run Build Command(s): /usr/bin/cmake -E env VERBOSE=1 /usr/bin/gmake -f Makefile cmTC_6f912/fast
+        gmake[1]: Entering directory '/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs'
+        /usr/bin/gmake  -f CMakeFiles/cmTC_6f912.dir/build.make CMakeFiles/cmTC_6f912.dir/build
+        gmake[2]: Entering directory '/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs'
+        Building CXX object CMakeFiles/cmTC_6f912.dir/src.cxx.o
+        /usr/bin/c++ -DCMAKE_HAVE_LIBC_PTHREAD  -pg -O2 -fno-inline-functions  -std=gnu++17 -o CMakeFiles/cmTC_6f912.dir/src.cxx.o -c /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs/src.cxx
+        Linking CXX executable cmTC_6f912
+        /usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_6f912.dir/link.txt --verbose=1
+        /usr/bin/c++ -pg -O2 -fno-inline-functions  CMakeFiles/cmTC_6f912.dir/src.cxx.o -o cmTC_6f912 
+        gmake[2]: Leaving directory '/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs'
+        gmake[1]: Leaving directory '/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles/CMakeScratch/TryCompile-ENZiJs'
+        
+      exitCode: 0
+...

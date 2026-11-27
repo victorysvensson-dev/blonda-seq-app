@@ -71,6 +71,13 @@ all: CMakeFiles/engprobe.dir/all
 all: CMakeFiles/comptest.dir/all
 all: CMakeFiles/convtest.dir/all
 all: CMakeFiles/songrender.dir/all
+all: CMakeFiles/hosttest.dir/all
+all: CMakeFiles/livetest.dir/all
+all: CMakeFiles/savetest.dir/all
+all: CMakeFiles/edittest.dir/all
+all: CMakeFiles/samptest.dir/all
+all: CMakeFiles/dunkab.dir/all
+all: CMakeFiles/motortest.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -86,6 +93,13 @@ clean: CMakeFiles/engprobe.dir/clean
 clean: CMakeFiles/comptest.dir/clean
 clean: CMakeFiles/convtest.dir/clean
 clean: CMakeFiles/songrender.dir/clean
+clean: CMakeFiles/hosttest.dir/clean
+clean: CMakeFiles/livetest.dir/clean
+clean: CMakeFiles/savetest.dir/clean
+clean: CMakeFiles/edittest.dir/clean
+clean: CMakeFiles/samptest.dir/clean
+clean: CMakeFiles/dunkab.dir/clean
+clean: CMakeFiles/motortest.dir/clean
 .PHONY : clean
 
 #=============================================================================
@@ -121,7 +135,7 @@ CMakeFiles/blonda_core.dir/clean:
 CMakeFiles/render.dir/all: CMakeFiles/blonda_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/render.dir/build.make CMakeFiles/render.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/render.dir/build.make CMakeFiles/render.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=17,18 "Built target render"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=27,28 "Built target render"
 .PHONY : CMakeFiles/render.dir/all
 
 # Build rule for subdir invocation for target.
@@ -147,7 +161,7 @@ CMakeFiles/render.dir/clean:
 CMakeFiles/probe.dir/all: CMakeFiles/blonda_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/probe.dir/build.make CMakeFiles/probe.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/probe.dir/build.make CMakeFiles/probe.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=15,16 "Built target probe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=25,26 "Built target probe"
 .PHONY : CMakeFiles/probe.dir/all
 
 # Build rule for subdir invocation for target.
@@ -199,7 +213,7 @@ CMakeFiles/drumprobe.dir/clean:
 CMakeFiles/engprobe.dir/all: CMakeFiles/blonda_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/engprobe.dir/build.make CMakeFiles/engprobe.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/engprobe.dir/build.make CMakeFiles/engprobe.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=13,14 "Built target engprobe"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=17,18 "Built target engprobe"
 .PHONY : CMakeFiles/engprobe.dir/all
 
 # Build rule for subdir invocation for target.
@@ -277,7 +291,7 @@ CMakeFiles/convtest.dir/clean:
 CMakeFiles/songrender.dir/all: CMakeFiles/blonda_core.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/songrender.dir/build.make CMakeFiles/songrender.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/songrender.dir/build.make CMakeFiles/songrender.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=19,20 "Built target songrender"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=33,34 "Built target songrender"
 .PHONY : CMakeFiles/songrender.dir/all
 
 # Build rule for subdir invocation for target.
@@ -295,6 +309,188 @@ songrender: CMakeFiles/songrender.dir/rule
 CMakeFiles/songrender.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/songrender.dir/build.make CMakeFiles/songrender.dir/clean
 .PHONY : CMakeFiles/songrender.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/hosttest.dir
+
+# All Build rule for target.
+CMakeFiles/hosttest.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=19,20 "Built target hosttest"
+.PHONY : CMakeFiles/hosttest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/hosttest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/hosttest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/hosttest.dir/rule
+
+# Convenience name for target.
+hosttest: CMakeFiles/hosttest.dir/rule
+.PHONY : hosttest
+
+# clean rule for target.
+CMakeFiles/hosttest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/hosttest.dir/build.make CMakeFiles/hosttest.dir/clean
+.PHONY : CMakeFiles/hosttest.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/livetest.dir
+
+# All Build rule for target.
+CMakeFiles/livetest.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=21,22 "Built target livetest"
+.PHONY : CMakeFiles/livetest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/livetest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/livetest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/livetest.dir/rule
+
+# Convenience name for target.
+livetest: CMakeFiles/livetest.dir/rule
+.PHONY : livetest
+
+# clean rule for target.
+CMakeFiles/livetest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/livetest.dir/build.make CMakeFiles/livetest.dir/clean
+.PHONY : CMakeFiles/livetest.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/savetest.dir
+
+# All Build rule for target.
+CMakeFiles/savetest.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=31,32 "Built target savetest"
+.PHONY : CMakeFiles/savetest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/savetest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/savetest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/savetest.dir/rule
+
+# Convenience name for target.
+savetest: CMakeFiles/savetest.dir/rule
+.PHONY : savetest
+
+# clean rule for target.
+CMakeFiles/savetest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/savetest.dir/build.make CMakeFiles/savetest.dir/clean
+.PHONY : CMakeFiles/savetest.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/edittest.dir
+
+# All Build rule for target.
+CMakeFiles/edittest.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=15,16 "Built target edittest"
+.PHONY : CMakeFiles/edittest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/edittest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/edittest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/edittest.dir/rule
+
+# Convenience name for target.
+edittest: CMakeFiles/edittest.dir/rule
+.PHONY : edittest
+
+# clean rule for target.
+CMakeFiles/edittest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/edittest.dir/build.make CMakeFiles/edittest.dir/clean
+.PHONY : CMakeFiles/edittest.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/samptest.dir
+
+# All Build rule for target.
+CMakeFiles/samptest.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=29,30 "Built target samptest"
+.PHONY : CMakeFiles/samptest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/samptest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/samptest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/samptest.dir/rule
+
+# Convenience name for target.
+samptest: CMakeFiles/samptest.dir/rule
+.PHONY : samptest
+
+# clean rule for target.
+CMakeFiles/samptest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/samptest.dir/build.make CMakeFiles/samptest.dir/clean
+.PHONY : CMakeFiles/samptest.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/dunkab.dir
+
+# All Build rule for target.
+CMakeFiles/dunkab.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=13,14 "Built target dunkab"
+.PHONY : CMakeFiles/dunkab.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/dunkab.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/dunkab.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/dunkab.dir/rule
+
+# Convenience name for target.
+dunkab: CMakeFiles/dunkab.dir/rule
+.PHONY : dunkab
+
+# clean rule for target.
+CMakeFiles/dunkab.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/dunkab.dir/build.make CMakeFiles/dunkab.dir/clean
+.PHONY : CMakeFiles/dunkab.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/motortest.dir
+
+# All Build rule for target.
+CMakeFiles/motortest.dir/all: CMakeFiles/blonda_core.dir/all
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/claude/blonda-seq-app/Core/buildpg/CMakeFiles --progress-num=23,24 "Built target motortest"
+.PHONY : CMakeFiles/motortest.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/motortest.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 8
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/motortest.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/claude/blonda-seq-app/Core/buildpg/CMakeFiles 0
+.PHONY : CMakeFiles/motortest.dir/rule
+
+# Convenience name for target.
+motortest: CMakeFiles/motortest.dir/rule
+.PHONY : motortest
+
+# clean rule for target.
+CMakeFiles/motortest.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/motortest.dir/build.make CMakeFiles/motortest.dir/clean
+.PHONY : CMakeFiles/motortest.dir/clean
 
 #=============================================================================
 # Special targets to cleanup operation of make.

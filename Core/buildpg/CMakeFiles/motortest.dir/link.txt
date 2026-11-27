@@ -1,0 +1,1 @@
+/usr/bin/c++ -pg -O2 -fno-inline-functions -O3 -DNDEBUG CMakeFiles/motortest.dir/tools/motortest.cpp.o -o motortest  libblonda_core.a 

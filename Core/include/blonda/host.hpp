@@ -49,6 +49,9 @@ public:
     }
     // play / stop as the page says (on: start, off: stop) – not a toggle, so the two can never disagree
     void setPlaying(bool on) { Cmd c; c.type = PlayAt; c.a = on ? 1 : 0; send(c); }
+    /// start in `delaySec` seconds from now (the page starts its first step a little ahead; the sound starts with it)
+    /// `preroll`: time from that start to the first step (default .06 s like the page; less when the page's first step is sooner)
+    void setPlayingIn(bool on, double delaySec, double preroll = .06) { Cmd c; c.type = PlayAt; c.a = on ? 1 : 0; c.f = (float)std::max(0.0, std::min(4.0, delaySec)); c.g = (float)preroll; send(c); }
     void setBPM(float bpm) { ui.bpm = std::max(40.f, std::min(240.f, bpm)); Cmd c; c.type = BPM; c.f = ui.bpm; send(c); }
     void selectPattern(int p) { if (p < 0 || p >= kPatterns) return; ui.pat = p; Cmd c; c.type = Pattern; c.a = p; send(c); }
     void setMute(int t, bool m) { if (t < 0 || t >= kTracks) return; ui.mute[t] = m; Cmd c; c.type = Mute; c.a = t; c.b = m; send(c); }
@@ -482,7 +485,11 @@ public:
             switch (c.type) {
                 case Swap: { Cmd r; r.type = Swap; r.engine = engine_; engine_ = c.engine; if (r.engine) retire_.push(r); break; }
                 case Play: if (e) e->play(); break;
-                case PlayAt: if (e) { if (c.a && !e->playing()) e->play(); else if (!c.a && e->playing()) e->stop(); } break;
+                case PlayAt:
+                    if (c.a) preroll_ = c.g > 0 && c.g < .06f ? c.g : .06f;
+                    if (c.a && c.f > 0) { startIn_ = (int64_t)std::llround((double)c.f * sampleRate); break; }   // start later, inside a block
+                    startIn_ = -1;
+                    if (e) { if (c.a && !e->playing()) { e->setPreroll(preroll_); e->play(); } else if (!c.a && e->playing()) e->stop(); } break;
                 case Update: { if (e) e->adopt(*c.proj); Cmd r; r.type = Update; r.proj = c.proj; retire_.push(r); break; }
                 case BPM: if (e) e->setBPM(c.f); break;
                 case SetCell: if (e) e->setCell(c.a, c.b, c.c, c.cell); break;
@@ -525,7 +532,15 @@ public:
         }
         if (!engine_) { std::memset(L, 0, sizeof(float) * frames); std::memset(R, 0, sizeof(float) * frames); step_.store(-1); playing_.store(false); return; }
         blockFrame_.store(engine_->frame(), std::memory_order_relaxed);
-        engine_->render(L, R, frames);
+        if (startIn_ >= 0 && startIn_ < frames) {   // the start falls in this block: the part before, play, the rest
+            const int k = (int)startIn_; startIn_ = -1;
+            if (k > 0) engine_->render(L, R, k);
+            if (!engine_->playing()) { engine_->setPreroll(preroll_); engine_->play(); }
+            engine_->render(L + k, R + k, frames - k);
+        } else {
+            if (startIn_ >= 0) startIn_ -= frames;
+            engine_->render(L, R, frames);
+        }
         gr_.store(engine_->masterGR(), std::memory_order_relaxed); for (int b = 0; b < 3; ++b) busPk_[b].store(engine_->busPeak(b), std::memory_order_relaxed);
         for (int k = 0; k < engine_->midiOutCount(); ++k) midiOut_.push(engine_->midiOut()[k]); engine_->clearMidiOut();   // a full queue just drops (nobody reads it without MIDI out)
         step_.store(engine_->currentStep(), std::memory_order_relaxed); playing_.store(engine_->playing(), std::memory_order_relaxed);
@@ -609,6 +624,7 @@ private:
     std::unordered_map<std::string, SampleData*> bank_;
     void dropPtr(SampleData* d) { Cmd c; c.type = Drop; c.smp = d; send(c); }
     SPSC<Cmd, 4096> toAudio_, retire_; SPSC<Cmd, 256> midi_; SPSC<MidiOutEv, 2048> midiOut_; std::atomic<long long> blockFrame_{0}; std::atomic<float> gr_{0}, busPk_[3]{};
+    int64_t startIn_ = -1; float preroll_ = .06f;   // audio thread: frames until a delayed start
     std::atomic<int> step_{-1}; std::atomic<bool> playing_{false}; std::atomic<int> audioPat_{0}, chainIdx_{-1}; std::atomic<float> motMeter_[4] = {}; std::atomic<int> glitchShown_{0}, glitchMask_{0};
 };
 

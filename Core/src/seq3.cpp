@@ -549,7 +549,7 @@ void Seq3::renderMotor(int k, long long b0, int n, float* L, float* R) {
     motEnv_[k] = m.envelope();
 }
 
-void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + .06; nextF_ = (long long)std::llround(nextT_ * sr_); outPush({nextF_, 2}); }
+void Seq3::play() { if (playing_) { stop(); return; } for (auto& m : marks_) m = {-1, -1}; playing_ = true; step_ = 0; gstep_ = 0; bar_ = 0; songStart_ = true; nextT_ = (double)frame_ / sr_ + preroll_; preroll_ = .06; nextF_ = (long long)std::llround(nextT_ * sr_); outPush({nextF_, 2}); }
 void Seq3::stop() { if (playing_) outPush({frame_, 3}); killLoops(-1); playing_ = false; curStep_ = -1; audible_ = -1; for (auto& m : marks_) m = {-1, -1}; if (queued_ >= 0) { P_.pat = queued_; queued_ = -1; } }
 
 // ---------------------------------------------------------------- pump (duckAt)

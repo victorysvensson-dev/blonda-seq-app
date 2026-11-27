@@ -30,10 +30,9 @@
 - (BOOL)start:(NSError **)error {
     _wanted = YES;
     if (_engine.isRunning) return YES;
-    AVAudioSession *s = AVAudioSession.sharedInstance;   // the shell already set Playback; the page's own audio is muted in this mode
-    [s setPreferredSampleRate:48000 error:nil];
-    [s setPreferredIOBufferDuration:256.0 / 48000.0 error:nil];
-    [s setActive:YES error:nil];
+    // The audio session is left exactly as the shell set it: changing its rate or buffer here interrupted the page's
+    // own audio, which stopped the page's clock (playhead, pads) – and the page waking up again then stopped this engine.
+    AVAudioSession *s = AVAudioSession.sharedInstance;
     _host->sampleRate = s.sampleRate > 0 ? (float)s.sampleRate : 48000.f;
     _engine = [AVAudioEngine new];
     AVAudioFormat *fmt = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:_host->sampleRate channels:2];
@@ -91,6 +90,7 @@
 }
 
 - (void)setPlaying:(BOOL)on { _host->setPlaying(on); }
+- (void)setPlaying:(BOOL)on in:(double)delay preroll:(double)pre { _host->setPlayingIn(on, delay, pre); }
 - (void)noteOn:(NSInteger)track note:(NSInteger)note velocity:(float)vel { _host->noteOn((int)track, (int)note, vel); }
 - (void)noteOff:(NSInteger)track note:(NSInteger)note { _host->noteOff((int)track, (int)note); }
 - (double)peak { return _peak->load(std::memory_order_relaxed); }

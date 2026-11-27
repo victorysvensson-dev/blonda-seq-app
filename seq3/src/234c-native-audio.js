@@ -15,7 +15,12 @@
     if(on){K.last=json();NA.on(K.last);mute(true);K.sent=null;pushPlay()}else{NA.off();mute(false)}paint()}
   /* play / stop: the buttons hold the page's own play() from before this piece, so wrapping it is not enough –
      the engine follows the page's 'playing' itself (checked every frame, and at once from the wrappers) */
-  function pushPlay(){if(!K.on||playing===K.sent)return;K.sent=playing;if(playing){sync(false);mute(true)}NA.play(playing)}
+  function pushPlay(){if(!K.on||playing===K.sent)return;K.sent=playing;if(!playing){NA.play(false);return}sync(false);mute(true);const s=startIn();NA.play(true,s.d,s.pre)}
+  /* in step with the screen: both engines play their first step .06 s after 'play', so the engine is told how long to wait.
+     The page's first step is at startT; switched on in the middle, the engine starts at the page's next bar. */
+  function startIn(){if(!ctx)return {d:0,pre:.06};const now=ctx.currentTime,bar=16*stepDur();let t=startT;
+    if(now>t-.005)t=startT+Math.ceil((now+.1-startT)/bar)*bar;   /* already past the first step: the next bar */
+    const r=t-now;return r>=.06?{d:r-.06,pre:.06}:{d:0,pre:r}}   /* sooner than .06 s away: a shorter run-up */
   {const tick=()=>{try{pushPlay()}catch(e){globalThis.__el&&globalThis.__el(e)}requestAnimationFrame(tick)};requestAnimationFrame(tick)}
   {const _t0=trigger0;trigger0=function(i,t,vel,note,ls){if(!K.on)return _t0.apply(this,arguments);if(!ctx)return;
     const len=60/S.bpm/4*(ls||1);if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);if(!isMuted(i))hitT.set(i,{t,v:vel});
@@ -23,9 +28,13 @@
   /* played live (pads, auditions, the keyboard): straight to the C++ engine; a synth note is let go after its length */
   function live(i,note,vel,len,t){if(!K.on)return;const tr=TRACKS[i];if(!tr)return;const n=note==null?60:Math.round(note),d=Math.max(0,(t||0)-(ctx?ctx.currentTime:0));
     const go=()=>{NA.note(i,n,vel==null?.8:vel,true);if(tr.mel)setTimeout(()=>NA.note(i,n,0,false),Math.max(30,len*1000))};if(d>.01)setTimeout(go,d*1000);else go()}
-  {const _p=play;play=function(){const r=_p.apply(this,arguments);pushPlay();return r}}
+  {const _p=play;play=function(){const r=_p.apply(this,arguments);pushPlay();return r};
+    /* buttons made before this piece hold the original: give them this one, so the engine hears play at once */
+    document.querySelectorAll('*').forEach(el=>{if(el.onclick===_p)el.onclick=play})}
   {const _s=stop;stop=function(){const r=_s.apply(this,arguments);pushPlay();return r}}
-  setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true)}},200);
+  setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true);
+    /* the page's clock is its audio: keep it running beside the engine (the screen and MIDI out follow it) */
+    if(ctx&&ctx.state!=='running'&&!document.hidden)ctx.resume().catch(()=>{})}},200);
   /* web mode meter: Safari gives no audio CPU figure, so two things that show strain: how busy the page is
      (how late a 50 ms timer fires, as a share of the time) and sound dropouts (the audio clock falling behind real time) */
   const W={busy:0,drops:0,t:0,ct:0,lag:0,n0:0};
@@ -36,7 +45,7 @@
     if(s.on!==true)return (s.restarts?'the audio engine stopped · building it again ('+s.restarts+')':'starting the C++ engine… · '+String(s.stage||'waiting for the app').replace(/[<>&]/g,''));
     if(s.load<0||s.peak<0)return 'on · C++ engine · the engine reports broken numbers (load '+s.load+', out '+s.peak+')';
     const pk=s.peak>0?Math.round(20*Math.log10(s.peak)):null;
-    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${s.playing?' · playing':''}${s.restarts?' · rebuilt '+s.restarts+'×':''}`}
+    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${ctx&&ctx.state!=='running'?' · <b>page clock '+ctx.state+'</b>':''}${s.playing?' · playing':''}${s.restarts?' · rebuilt '+s.restarts+'×':''}`}
   function paint(){const el=document.getElementById('naSt');if(el)el.innerHTML=stat();const b=document.getElementById('naBtn');if(b){b.textContent=K.on?'ON':'OFF';b.classList.toggle('on',K.on)}}
   NA.sub(s=>{K.st=s;paint()});
   window.NATIVE={

@@ -180,6 +180,8 @@ public:
     Project& project() { return P_; }
     void applyParams();              // after editing project() parameters
     void play(); void stop(); bool playing() const { return playing_; }
+    /// time from play() to the first step for the next play() only (default .06 s, as the web page)
+    void setPreroll(double s) { preroll_ = std::max(0.0, std::min(.06, s)); }
     void queuePattern(int p) { queued_ = p; }
     // real-time safe edits (call from the audio thread, e.g. when draining a command queue)
     void setCell(int pat, int track, int step, const Cell& c) { if (pat >= 0 && pat < kPatterns && track >= 0 && track < kTracks && step >= 0 && step < kSteps) P_.cells[pat][track][step] = c; }
@@ -284,7 +286,7 @@ private:
     double stepDur() const { return 60.0 / P_.bpm / 4.0; }
 
     struct StepMark { long long f; int step; }; std::array<StepMark, 32> marks_{}; int markW_ = 0; int audible_ = -1;
-    Project P_; Noise prob_; float sr_ = 48000; long long frame_ = 0; bool playing_ = false;
+    Project P_; Noise prob_; float sr_ = 48000; long long frame_ = 0; bool playing_ = false; double preroll_ = .06;
     // sequencer
     long long nextF_ = 0; double nextT_ = 0; int step_ = 0, gstep_ = 0, bar_ = 0, curStep_ = -1, queued_ = -1, chainIdx_ = -1; bool songStart_ = true;
     std::vector<Ev> evq_; std::vector<Glide> glides_; int glideN_ = 0;
