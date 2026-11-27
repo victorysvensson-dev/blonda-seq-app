@@ -25,7 +25,7 @@ template <class T, int N> struct SPSC {   // single producer / single consumer r
 class Host {
 public:
     enum Type : int { Update, PlayAt, Play, BPM, SetCell, SetRoll, Pattern, Mute, NoteOn, NoteOff, Swap, Param, Solo, Len, Inst, EngParam, EngOpt, Song, Chain, Perform, Repeat, Fx, Reverb, Loop, LoopOn, LoopVol, DrumSmp, Preview, Drop, GlideT, Chord, MotPreset, MotParam, Kit, GlitchHold, GlitchAmt, GlitchMask, GlitchSet, Region, BusFlag, BusPump };
-    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; SampleRegion reg; Project* proj = nullptr; };
+    struct Cmd { Type type = Play; int a = 0, b = 0, c = 0; float f = 0, g = 0; double d = 0; Cell cell; std::vector<RollNote>* roll = nullptr; Seq3* engine = nullptr; Convolver* rev = nullptr; SampleData* smp = nullptr; SampleRegion reg; Project* proj = nullptr; };
 
     ~Host() { shutdown(); }
 
@@ -51,6 +51,9 @@ public:
     void setPlaying(bool on) { Cmd c; c.type = PlayAt; c.a = on ? 1 : 0; send(c); }
     /// start in `delaySec` seconds from now (the page starts its first step a little ahead; the sound starts with it)
     /// `preroll`: time from that start to the first step (default .06 s like the page; less when the page's first step is sooner)
+    /// start so that the first step falls on engine frame `firstStep` (the engine's own clock, see blockFrame()):
+    /// exact whatever the message's delay; a time already past starts at once with the shortest run-up
+    void setPlayingAtFrame(long long firstStep) { Cmd c; c.type = PlayAt; c.a = 1; c.b = 2; c.d = (double)firstStep; send(c); }
     void setPlayingIn(bool on, double delaySec, double preroll = .06) { Cmd c; c.type = PlayAt; c.a = on ? 1 : 0; c.f = (float)std::max(0.0, std::min(4.0, delaySec)); c.g = (float)preroll; send(c); }
     void setBPM(float bpm) { ui.bpm = std::max(40.f, std::min(240.f, bpm)); Cmd c; c.type = BPM; c.f = ui.bpm; send(c); }
     void selectPattern(int p) { if (p < 0 || p >= kPatterns) return; ui.pat = p; Cmd c; c.type = Pattern; c.a = p; send(c); }
@@ -486,6 +489,14 @@ public:
                 case Swap: { Cmd r; r.type = Swap; r.engine = engine_; engine_ = c.engine; if (r.engine) retire_.push(r); break; }
                 case Play: if (e) e->play(); break;
                 case PlayAt:
+                    if (c.a && c.b == 2) {   // first step on an engine frame: run-up .06 s if there is time, else shorter
+                        const long long now = e ? e->frame() : 0, first = (long long)c.d, pre = (long long)std::llround(.06 * sampleRate);
+                        const long long at = first - pre;
+                        if (at > now) { preroll_ = .06f; startIn_ = at - now; break; }
+                        preroll_ = (float)std::max(0.0, (double)(first - now) / sampleRate); startIn_ = -1;
+                        if (e && !e->playing()) { e->setPreroll(preroll_); e->play(); }
+                        break;
+                    }
                     if (c.a) preroll_ = c.g > 0 && c.g < .06f ? c.g : .06f;
                     if (c.a && c.f > 0) { startIn_ = (int64_t)std::llround((double)c.f * sampleRate); break; }   // start later, inside a block
                     startIn_ = -1;

@@ -295,7 +295,6 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
                 guard let j = b["json"] as? String else { throw NSError(domain: "BLONDA", code: 3, userInfo: [NSLocalizedDescriptionKey: "no project came with the switch"]) }
                 do { try na.setProjectJSON(j) } catch { throw NSError(domain: "BLONDA", code: 4, userInfo: [NSLocalizedDescriptionKey: "project not loaded: " + error.localizedDescription]) }
                 call("__blonda.nativeState", ["stage": "project loaded"])
-                call("__blonda.wake", true)   // the page's clock (its audio) must keep running beside the engine
                 if nativeTimer == nil {
                     let t = Timer(timeInterval: 0.25, repeats: true) { [weak self] _ in self?.nativeState() }
                     RunLoop.main.add(t, forMode: .common); nativeTimer = t
@@ -308,7 +307,8 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             guard let j = b["json"] as? String else { return }
             do { try na.setProjectJSON(j) } catch { call("__blonda.nativeState", ["on": na.running, "err": error.localizedDescription]) }
         case "play":
-            na.setPlaying((b["on"] as? Bool) ?? false, in: (b["delay"] as? NSNumber)?.doubleValue ?? 0, preroll: (b["pre"] as? NSNumber)?.doubleValue ?? 0.06)
+            if let at = (b["at"] as? NSNumber)?.doubleValue, (b["on"] as? Bool) ?? false { na.playAtEngineTime(at) }
+            else { na.setPlaying((b["on"] as? Bool) ?? false, in: (b["delay"] as? NSNumber)?.doubleValue ?? 0, preroll: (b["pre"] as? NSNumber)?.doubleValue ?? 0.06) }
         case "note":
             let t = (b["tr"] as? NSNumber)?.intValue ?? -1, n = (b["n"] as? NSNumber)?.intValue ?? 60
             if (b["on"] as? Bool) ?? false { na.noteOn(track: t, note: n, velocity: (b["v"] as? NSNumber)?.floatValue ?? 0.8) } else { na.noteOff(track: t, note: n) }
@@ -320,7 +320,7 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
         let na = NativeAudio.shared()
         na.resumeIfNeeded()   // stopped by iOS while on: build it again
         let f = { (x: Double) -> Double in x.isFinite ? x : -1 }   // NaN / infinity can't be sent as JSON
-        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": f(na.load), "peak": f(na.peak), "sr": f(na.sampleRate), "restarts": na.restarts])
+        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": f(na.load), "peak": f(na.peak), "sr": f(na.sampleRate), "restarts": na.restarts, "et": na.engineTime])
     }
 
     /// Calls a function in the page with JSON arguments.

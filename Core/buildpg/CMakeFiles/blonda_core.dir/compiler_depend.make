@@ -4,6 +4,7 @@
 CMakeFiles/blonda_core.dir/src/bris.cpp.o: /home/claude/blonda-seq-app/Core/src/bris.cpp \
   /home/claude/blonda-seq-app/Core/include/blonda/bris.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp \
+  /home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp \
   /usr/include/alloca.h \
   /usr/include/c++/13/algorithm \
   /usr/include/c++/13/array \
@@ -398,13 +399,21 @@ CMakeFiles/blonda_core.dir/src/engines.cpp.o: /home/claude/blonda-seq-app/Core/s
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
 
 CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/seq3.cpp \
+  /home/claude/blonda-seq-app/External/blonda-motor/include/blonda/gen_runtime.h \
+  /home/claude/blonda-seq-app/External/blonda-motor/include/blonda/motor.h \
+  /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris.h \
+  /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_gen.h \
+  /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_ljud.h \
   /home/claude/blonda-seq-app/Core/include/blonda/bris.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/convolver.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/drums.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp \
+  /home/claude/blonda-seq-app/Core/include/blonda/dunk.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/dynamics.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/engines.hpp \
+  /home/claude/blonda-seq-app/Core/include/blonda/glitch.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/json.hpp \
+  /home/claude/blonda-seq-app/Core/include/blonda/sampler.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/seq3.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp \
   /home/claude/blonda-seq-app/Core/include/blonda/wg.hpp \
@@ -413,6 +422,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/asm-generic/errno.h \
   /usr/include/c++/13/algorithm \
   /usr/include/c++/13/array \
+  /usr/include/c++/13/atomic \
   /usr/include/c++/13/backward/auto_ptr.h \
   /usr/include/c++/13/backward/binders.h \
   /usr/include/c++/13/bit \
@@ -497,6 +507,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/c++/13/bits/vector.tcc \
   /usr/include/c++/13/cctype \
   /usr/include/c++/13/cerrno \
+  /usr/include/c++/13/climits \
   /usr/include/c++/13/clocale \
   /usr/include/c++/13/cmath \
   /usr/include/c++/13/compare \
@@ -558,7 +569,9 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/errno.h \
   /usr/include/features-time64.h \
   /usr/include/features.h \
+  /usr/include/limits.h \
   /usr/include/linux/errno.h \
+  /usr/include/linux/limits.h \
   /usr/include/locale.h \
   /usr/include/math.h \
   /usr/include/pthread.h \
@@ -587,12 +600,15 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/x86_64-linux-gnu/bits/iscanonical.h \
   /usr/include/x86_64-linux-gnu/bits/libc-header-start.h \
   /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h \
+  /usr/include/x86_64-linux-gnu/bits/local_lim.h \
   /usr/include/x86_64-linux-gnu/bits/locale.h \
   /usr/include/x86_64-linux-gnu/bits/long-double.h \
   /usr/include/x86_64-linux-gnu/bits/math-vector.h \
   /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h \
   /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h \
   /usr/include/x86_64-linux-gnu/bits/mathcalls.h \
+  /usr/include/x86_64-linux-gnu/bits/posix1_lim.h \
+  /usr/include/x86_64-linux-gnu/bits/posix2_lim.h \
   /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h \
   /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h \
   /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h \
@@ -647,6 +663,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/x86_64-linux-gnu/bits/types/wint_t.h \
   /usr/include/x86_64-linux-gnu/bits/typesizes.h \
   /usr/include/x86_64-linux-gnu/bits/uintn-identity.h \
+  /usr/include/x86_64-linux-gnu/bits/uio_lim.h \
   /usr/include/x86_64-linux-gnu/bits/waitflags.h \
   /usr/include/x86_64-linux-gnu/bits/waitstatus.h \
   /usr/include/x86_64-linux-gnu/bits/wchar.h \
@@ -654,6 +671,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/x86_64-linux-gnu/bits/wchar2.h \
   /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h \
   /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+  /usr/include/x86_64-linux-gnu/bits/xopen_lim.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/atomic_word.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h \
   /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h \
@@ -671,9 +689,11 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o: /home/claude/blonda-seq-app/Core/src/
   /usr/include/x86_64-linux-gnu/sys/select.h \
   /usr/include/x86_64-linux-gnu/sys/single_threaded.h \
   /usr/include/x86_64-linux-gnu/sys/types.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h \
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h \
-  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h \
+  /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h
 
 CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg.cpp \
   /home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp \
@@ -851,8 +871,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
   /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
 
 
-/usr/include/c++/13/ratio:
-
 /usr/include/c++/13/mutex:
 
 /usr/include/c++/13/ctime:
@@ -875,7 +893,11 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h:
 
+/usr/include/x86_64-linux-gnu/bits/xopen_lim.h:
+
 /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h:
+
+/usr/include/x86_64-linux-gnu/bits/uio_lim.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/struct_itimerspec.h:
 
@@ -883,13 +905,35 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/x86_64-linux-gnu/bits/types/__mbstate_t.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/FILE.h:
+
+/usr/include/x86_64-linux-gnu/bits/timex.h:
+
+/usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
+
+/usr/include/x86_64-linux-gnu/bits/sched.h:
+
+/usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h:
+
+/usr/include/x86_64-linux-gnu/bits/posix2_lim.h:
+
 /usr/include/x86_64-linux-gnu/gnu/stubs.h:
 
 /usr/include/x86_64-linux-gnu/bits/endian.h:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/cpu_defines.h:
 
+/home/claude/blonda-seq-app/Core/include/blonda/glitch.hpp:
+
 /usr/include/x86_64-linux-gnu/bits/wchar.h:
+
+/usr/include/x86_64-linux-gnu/bits/local_lim.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h:
 
 /usr/include/c++/13/tr1/modified_bessel_func.tcc:
 
@@ -902,6 +946,8 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/x86_64-linux-gnu/asm/errno.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/locale_t.h:
+
+/usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h:
 
 /usr/include/x86_64-linux-gnu/bits/types/clock_t.h:
 
@@ -934,6 +980,10 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/x86_64-linux-gnu/bits/types.h:
 
 /usr/include/c++/13/bits/cpp_type_traits.h:
+
+/usr/include/x86_64-linux-gnu/bits/time.h:
+
+/usr/include/x86_64-linux-gnu/bits/select.h:
 
 /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h:
 
@@ -981,8 +1031,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/x86_64-linux-gnu/bits/endianness.h:
 
-/usr/include/c++/13/tr1/poly_laguerre.tcc:
-
 /usr/include/c++/13/bits/basic_string.h:
 
 /usr/include/c++/13/bits/algorithmfwd.h:
@@ -1000,6 +1048,16 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/string.h:
 
 /usr/include/x86_64-linux-gnu/bits/fp-fast.h:
+
+/home/claude/blonda-seq-app/External/blonda-motor/include/blonda/motor.h:
+
+/usr/include/c++/13/ratio:
+
+/usr/include/linux/limits.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
+
+/usr/include/math.h:
 
 /usr/include/x86_64-linux-gnu/bits/waitstatus.h:
 
@@ -1041,6 +1099,18 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/x86_64-linux-gnu/bits/libc-header-start.h:
 
+/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:
+
+/usr/include/c++/13/bits/ptr_traits.h:
+
+/usr/include/x86_64-linux-gnu/c++/13/bits/atomic_word.h:
+
+/usr/include/x86_64-linux-gnu/bits/wordsize.h:
+
+/usr/include/c++/13/pstl/pstl_config.h:
+
+/home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp:
+
 /usr/include/c++/13/pstl/execution_defs.h:
 
 /usr/include/c++/13/bits/basic_ios.tcc:
@@ -1065,14 +1135,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /home/claude/blonda-seq-app/Core/src/bris.cpp:
 
-/usr/include/x86_64-linux-gnu/c++/13/bits/atomic_word.h:
-
-/usr/include/x86_64-linux-gnu/bits/wordsize.h:
-
-/usr/include/c++/13/pstl/pstl_config.h:
-
-/home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp:
-
 /usr/include/c++/13/bits/predefined_ops.h:
 
 /usr/include/c++/13/iosfwd:
@@ -1086,6 +1148,12 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/c++/13/bits/stl_function.h:
 
 /usr/include/c++/13/array:
+
+/home/claude/blonda-seq-app/External/blonda-motor/include/blonda/gen_runtime.h:
+
+/usr/include/c++/13/type_traits:
+
+/usr/include/c++/13/bits/basic_string.tcc:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/gthr-default.h:
 
@@ -1102,6 +1170,8 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/stdc-predef.h:
 
 /usr/include/c++/13/tr1/special_function_util.h:
+
+/home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_gen.h:
 
 /usr/include/c++/13/bits/streambuf.tcc:
 
@@ -1141,6 +1211,10 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /home/claude/blonda-seq-app/Core/include/blonda/wg.hpp:
 
+/usr/include/x86_64-linux-gnu/bits/stdio.h:
+
+/home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp:
+
 /usr/include/x86_64-linux-gnu/bits/select2.h:
 
 /usr/include/c++/13/cmath:
@@ -1167,15 +1241,13 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/c++/13/ext/concurrence.h:
 
-/usr/include/c++/13/compare:
-
-/usr/include/c++/13/system_error:
+/usr/include/c++/13/tr1/hypergeometric.tcc:
 
 /usr/include/c++/13/bits/range_access.h:
 
-/usr/include/c++/13/tr1/hypergeometric.tcc:
+/usr/include/c++/13/compare:
 
-/usr/include/c++/13/type_traits:
+/usr/include/c++/13/system_error:
 
 /usr/include/x86_64-linux-gnu/bits/types/wint_t.h:
 
@@ -1190,6 +1262,8 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/c++/13/tr1/exp_integral.tcc:
 
 /usr/include/c++/13/initializer_list:
+
+/usr/include/limits.h:
 
 /usr/include/c++/13/tr1/bessel_function.tcc:
 
@@ -1211,8 +1285,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/c++/13/ostream:
 
-/usr/include/c++/13/bits/basic_string.tcc:
-
 /usr/include/x86_64-linux-gnu/sys/types.h:
 
 /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h:
@@ -1221,9 +1293,7 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /home/claude/blonda-seq-app/Core/include/blonda/drums.hpp:
 
-/usr/include/x86_64-linux-gnu/bits/stdio.h:
-
-/home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp:
+/usr/include/x86_64-linux-gnu/bits/posix1_lim.h:
 
 /home/claude/blonda-seq-app/Core/src/engines.cpp:
 
@@ -1237,9 +1307,23 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/asm-generic/errno-base.h:
 
+/home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris.h:
+
+/usr/include/c++/13/bits/ostream.tcc:
+
+/usr/include/x86_64-linux-gnu/bits/stdio2.h:
+
+/home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_ljud.h:
+
 /usr/include/stdlib.h:
 
 /home/claude/blonda-seq-app/Core/include/blonda/convolver.hpp:
+
+/usr/include/c++/13/tr1/poly_laguerre.tcc:
+
+/home/claude/blonda-seq-app/Core/include/blonda/dunk.hpp:
+
+/usr/include/c++/13/bits/ostream_insert.h:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/os_defines.h:
 
@@ -1251,11 +1335,15 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/x86_64-linux-gnu/bits/cpu-set.h:
 
+/home/claude/blonda-seq-app/Core/include/blonda/sampler.hpp:
+
 /home/claude/blonda-seq-app/Core/include/blonda/seq3.hpp:
 
 /usr/include/c++/13/bits/uniform_int_dist.h:
 
 /usr/include/c++/13/bits/locale_classes.tcc:
+
+/usr/include/c++/13/atomic:
 
 /usr/include/c++/13/backward/auto_ptr.h:
 
@@ -1311,6 +1399,10 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/c++/13/bits/memoryfwd.h:
 
+/usr/include/x86_64-linux-gnu/bits/setjmp.h:
+
+/usr/include/time.h:
+
 /usr/include/c++/13/tuple:
 
 /usr/include/c++/13/bits/nested_exception.h:
@@ -1319,10 +1411,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/c++/13/bits/node_handle.h:
 
-/usr/include/c++/13/bits/ostream.tcc:
-
-/usr/include/c++/13/bits/ostream_insert.h:
-
 /usr/include/c++/13/bits/refwrap.h:
 
 /usr/include/x86_64-linux-gnu/bits/iscanonical.h:
@@ -1330,8 +1418,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/c++/13/string_view:
 
 /usr/include/c++/13/map:
-
-/usr/include/x86_64-linux-gnu/bits/types/__fpos_t.h:
 
 /usr/include/c++/13/bits/stl_map.h:
 
@@ -1350,6 +1436,8 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /home/claude/blonda-seq-app/Core/include/blonda/engines.hpp:
 
 /usr/include/c++/13/bits/vector.tcc:
+
+/usr/include/c++/13/climits:
 
 /usr/include/x86_64-linux-gnu/sys/select.h:
 
@@ -1385,8 +1473,6 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 
 /usr/include/linux/errno.h:
 
-/usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h:
-
 /usr/include/pthread.h:
 
 /usr/include/wctype.h:
@@ -1398,31 +1484,3 @@ CMakeFiles/blonda_core.dir/src/wg.cpp.o: /home/claude/blonda-seq-app/Core/src/wg
 /usr/include/stdio.h:
 
 /usr/include/x86_64-linux-gnu/bits/locale.h:
-
-/usr/include/x86_64-linux-gnu/bits/sched.h:
-
-/usr/include/time.h:
-
-/usr/include/x86_64-linux-gnu/bits/setjmp.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__fpos64_t.h:
-
-/usr/include/c++/13/bits/ptr_traits.h:
-
-/usr/include/x86_64-linux-gnu/bits/stdio2-decl.h:
-
-/usr/include/x86_64-linux-gnu/bits/stdio2.h:
-
-/usr/include/x86_64-linux-gnu/bits/timex.h:
-
-/usr/include/x86_64-linux-gnu/bits/stdio_lim.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/FILE.h:
-
-/usr/include/x86_64-linux-gnu/bits/select.h:
-
-/usr/include/x86_64-linux-gnu/bits/time.h:
-
-/usr/include/math.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:

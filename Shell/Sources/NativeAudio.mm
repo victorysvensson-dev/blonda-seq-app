@@ -91,6 +91,8 @@
 
 - (void)setPlaying:(BOOL)on { _host->setPlaying(on); }
 - (void)setPlaying:(BOOL)on in:(double)delay preroll:(double)pre { _host->setPlayingIn(on, delay, pre); }
+- (void)playAtEngineTime:(double)t { _host->setPlayingAtFrame((long long)llround(t * _host->sampleRate)); }
+- (double)engineTime { return (double)_host->blockFrame() / _host->sampleRate; }
 - (void)noteOn:(NSInteger)track note:(NSInteger)note velocity:(float)vel { _host->noteOn((int)track, (int)note, vel); }
 - (void)noteOff:(NSInteger)track note:(NSInteger)note { _host->noteOff((int)track, (int)note); }
 - (double)peak { return _peak->load(std::memory_order_relaxed); }

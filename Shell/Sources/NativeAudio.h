@@ -16,6 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 /// the page's project (the web S object as JSON); the first one loads, later ones update the running engine
 - (BOOL)setProjectJSON:(NSString *)json error:(NSError **)error;
 - (void)setPlaying:(BOOL)on;
+/// start with the first step at this engine time (seconds of the engine's clock, see engineTime)
+- (void)playAtEngineTime:(double)t;
+/// the engine's own clock: seconds of sound it has made (the page's clock follows it)
+@property (nonatomic, readonly) double engineTime;
 /// start `delay` seconds from now with its first step `preroll` seconds after that, so the sound starts on the page's step
 - (void)setPlaying:(BOOL)on in:(double)delay preroll:(double)pre NS_SWIFT_NAME(setPlaying(_:in:preroll:));
 /// a note played live (pads, keyboard): track 0..23, note, velocity 0..1

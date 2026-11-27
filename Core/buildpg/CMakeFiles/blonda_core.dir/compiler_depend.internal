@@ -5,6 +5,7 @@ CMakeFiles/blonda_core.dir/src/bris.cpp.o
  /home/claude/blonda-seq-app/Core/src/bris.cpp
  /home/claude/blonda-seq-app/Core/include/blonda/bris.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp
+ /home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp
  /usr/include/alloca.h
  /usr/include/c++/13/algorithm
  /usr/include/c++/13/array
@@ -402,13 +403,21 @@ CMakeFiles/blonda_core.dir/src/engines.cpp.o
 
 CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /home/claude/blonda-seq-app/Core/src/seq3.cpp
+ /home/claude/blonda-seq-app/External/blonda-motor/include/blonda/gen_runtime.h
+ /home/claude/blonda-seq-app/External/blonda-motor/include/blonda/motor.h
+ /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris.h
+ /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_gen.h
+ /home/claude/blonda-seq-app/External/blonda-motor/motorer/bris/bris_ljud.h
  /home/claude/blonda-seq-app/Core/include/blonda/bris.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/convolver.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/drums.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/dsp.hpp
+ /home/claude/blonda-seq-app/Core/include/blonda/dunk.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/dynamics.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/engines.hpp
+ /home/claude/blonda-seq-app/Core/include/blonda/glitch.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/json.hpp
+ /home/claude/blonda-seq-app/Core/include/blonda/sampler.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/seq3.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/webparam.hpp
  /home/claude/blonda-seq-app/Core/include/blonda/wg.hpp
@@ -417,6 +426,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/asm-generic/errno.h
  /usr/include/c++/13/algorithm
  /usr/include/c++/13/array
+ /usr/include/c++/13/atomic
  /usr/include/c++/13/backward/auto_ptr.h
  /usr/include/c++/13/backward/binders.h
  /usr/include/c++/13/bit
@@ -501,6 +511,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/c++/13/bits/vector.tcc
  /usr/include/c++/13/cctype
  /usr/include/c++/13/cerrno
+ /usr/include/c++/13/climits
  /usr/include/c++/13/clocale
  /usr/include/c++/13/cmath
  /usr/include/c++/13/compare
@@ -562,7 +573,9 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/errno.h
  /usr/include/features-time64.h
  /usr/include/features.h
+ /usr/include/limits.h
  /usr/include/linux/errno.h
+ /usr/include/linux/limits.h
  /usr/include/locale.h
  /usr/include/math.h
  /usr/include/pthread.h
@@ -591,12 +604,15 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/x86_64-linux-gnu/bits/iscanonical.h
  /usr/include/x86_64-linux-gnu/bits/libc-header-start.h
  /usr/include/x86_64-linux-gnu/bits/libm-simd-decl-stubs.h
+ /usr/include/x86_64-linux-gnu/bits/local_lim.h
  /usr/include/x86_64-linux-gnu/bits/locale.h
  /usr/include/x86_64-linux-gnu/bits/long-double.h
  /usr/include/x86_64-linux-gnu/bits/math-vector.h
  /usr/include/x86_64-linux-gnu/bits/mathcalls-helper-functions.h
  /usr/include/x86_64-linux-gnu/bits/mathcalls-narrow.h
  /usr/include/x86_64-linux-gnu/bits/mathcalls.h
+ /usr/include/x86_64-linux-gnu/bits/posix1_lim.h
+ /usr/include/x86_64-linux-gnu/bits/posix2_lim.h
  /usr/include/x86_64-linux-gnu/bits/pthread_stack_min-dynamic.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes-arch.h
  /usr/include/x86_64-linux-gnu/bits/pthreadtypes.h
@@ -651,6 +667,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/x86_64-linux-gnu/bits/types/wint_t.h
  /usr/include/x86_64-linux-gnu/bits/typesizes.h
  /usr/include/x86_64-linux-gnu/bits/uintn-identity.h
+ /usr/include/x86_64-linux-gnu/bits/uio_lim.h
  /usr/include/x86_64-linux-gnu/bits/waitflags.h
  /usr/include/x86_64-linux-gnu/bits/waitstatus.h
  /usr/include/x86_64-linux-gnu/bits/wchar.h
@@ -658,6 +675,7 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/x86_64-linux-gnu/bits/wchar2.h
  /usr/include/x86_64-linux-gnu/bits/wctype-wchar.h
  /usr/include/x86_64-linux-gnu/bits/wordsize.h
+ /usr/include/x86_64-linux-gnu/bits/xopen_lim.h
  /usr/include/x86_64-linux-gnu/c++/13/bits/atomic_word.h
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++allocator.h
  /usr/include/x86_64-linux-gnu/c++/13/bits/c++config.h
@@ -675,9 +693,11 @@ CMakeFiles/blonda_core.dir/src/seq3.cpp.o
  /usr/include/x86_64-linux-gnu/sys/select.h
  /usr/include/x86_64-linux-gnu/sys/single_threaded.h
  /usr/include/x86_64-linux-gnu/sys/types.h
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/limits.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdarg.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stddef.h
  /usr/lib/gcc/x86_64-linux-gnu/13/include/stdint.h
+ /usr/lib/gcc/x86_64-linux-gnu/13/include/syslimits.h
 
 CMakeFiles/blonda_core.dir/src/wg.cpp.o
  /home/claude/blonda-seq-app/Core/src/wg.cpp
