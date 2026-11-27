@@ -315,7 +315,11 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
 
     /// Calls a function in the page with JSON arguments.
     private func call(_ fn: String, _ arg: Any) {
-        guard let data = try? JSONSerialization.data(withJSONObject: arg), let json = String(data: data, encoding: .utf8) else { return }
+        // JSONSerialization throws an Objective-C exception (a crash, not an error) for anything it can't write,
+        // so check first: containers must be valid JSON, and single values go through as JSON fragments.
+        let valid = (arg is [Any] || arg is [String: Any]) ? JSONSerialization.isValidJSONObject(arg)
+            : (arg is String || arg is NSNumber || arg is NSNull)
+        guard valid, let data = try? JSONSerialization.data(withJSONObject: arg, options: .fragmentsAllowed), let json = String(data: data, encoding: .utf8) else { return }
         web.evaluateJavaScript("window.__blonda&&\(fn)(\(json))", completionHandler: nil)
     }
 
