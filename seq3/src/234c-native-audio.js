@@ -6,23 +6,33 @@
    Switched in the MIDI panel (beta: always off at the start). Not yet in the C++ engine: samples and loops (silent), the Starter,
    Grime, live glitch from the page. ================= */
 (()=>{const N=window.BLONDA_NATIVE;if(!N||!N.native)return;const NA=N.native,LS='blonda.native';
-  const K={on:false,last:'',st:{},muted:false};
+  const K={on:false,last:'',st:{},muted:false,sent:null};
   const json=()=>{const o={};PKEYS.forEach(k=>{if(S[k]!==undefined)o[k]=S[k]});return JSON.stringify(o)};
   function sync(force){if(!K.on)return;let j='';try{j=json()}catch(e){globalThis.__el&&globalThis.__el(e);return}if(!force&&j===K.last)return;K.last=j;NA.project(j)}
   /* the page's own output: off while the C++ engine plays (the analyser before the speakers is its last node) */
   function mute(on){if(on===K.muted)return;if(!ctx||!A.an)return;try{if(on)A.an.disconnect(ctx.destination);else A.an.connect(ctx.destination);K.muted=on}catch(e){globalThis.__el&&globalThis.__el(e)}}
   function setOn(on){if(on===K.on)return;K.on=on;try{localStorage.setItem(LS,on?'1':'0')}catch(e){globalThis.__el&&globalThis.__el(e)}
-    if(on){K.last=json();NA.on(K.last);mute(true);if(playing)NA.play(true)}else{NA.off();mute(false)}paint()}
+    if(on){K.last=json();NA.on(K.last);mute(true);K.sent=null;pushPlay()}else{NA.off();mute(false)}paint()}
+  /* play / stop: the buttons hold the page's own play() from before this piece, so wrapping it is not enough –
+     the engine follows the page's 'playing' itself (checked every frame, and at once from the wrappers) */
+  function pushPlay(){if(!K.on||playing===K.sent)return;K.sent=playing;if(playing){sync(false);mute(true)}NA.play(playing)}
+  {const tick=()=>{try{pushPlay()}catch(e){globalThis.__el&&globalThis.__el(e)}requestAnimationFrame(tick)};requestAnimationFrame(tick)}
   {const _t0=trigger0;trigger0=function(i,t,vel,note,ls){if(!K.on)return _t0.apply(this,arguments);if(!ctx)return;
     const len=60/S.bpm/4*(ls||1);if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);if(!isMuted(i))hitT.set(i,{t,v:vel});
     if(!SCHED)live(i,note,vel,len,t)}}
   /* played live (pads, auditions, the keyboard): straight to the C++ engine; a synth note is let go after its length */
   function live(i,note,vel,len,t){if(!K.on)return;const tr=TRACKS[i];if(!tr)return;const n=note==null?60:Math.round(note),d=Math.max(0,(t||0)-(ctx?ctx.currentTime:0));
     const go=()=>{NA.note(i,n,vel==null?.8:vel,true);if(tr.mel)setTimeout(()=>NA.note(i,n,0,false),Math.max(30,len*1000))};if(d>.01)setTimeout(go,d*1000);else go()}
-  {const _p=play;play=function(){const was=playing,r=_p.apply(this,arguments);if(K.on&&playing!==was){if(playing){sync(false);mute(true)}NA.play(playing)}return r}}
-  {const _s=stop;stop=function(){const was=playing,r=_s.apply(this,arguments);if(K.on&&was)NA.play(false);return r}}
+  {const _p=play;play=function(){const r=_p.apply(this,arguments);pushPlay();return r}}
+  {const _s=stop;stop=function(){const r=_s.apply(this,arguments);pushPlay();return r}}
   setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true)}},200);
-  function stat(){const s=K.st;if(!K.on)return 'off · the page plays (web audio)';if(s.err)return 'error: '+String(s.err).replace(/[<>&]/g,'');
+  /* web mode meter: Safari gives no audio CPU figure, so two things that show strain: how busy the page is
+     (how late a 50 ms timer fires, as a share of the time) and sound dropouts (the audio clock falling behind real time) */
+  const W={busy:0,drops:0,t:0,ct:0,lag:0,n0:0};
+  {let due=performance.now()+50;const tk=()=>{const now=performance.now();W.lag+=Math.max(0,now-due);due=now+50;setTimeout(tk,50)};setTimeout(tk,50);
+   setInterval(()=>{const now=performance.now(),dt=now-(W.t||now);W.busy=dt>0?Math.min(1,W.lag/dt):0;W.lag=0;
+     const run=!!(ctx&&ctx.state==='running');if(run){const ct=ctx.currentTime*1000;if(W.run&&W.t&&dt>200&&dt<3000&&(dt-(ct-W.ct))>40)W.drops++;W.ct=ct}W.run=run&&!document.hidden;W.t=now;if(!K.on)paint()},1000)}
+  function stat(){const s=K.st;if(!K.on)return `off · web audio · page busy <b>${Math.round(W.busy*100)} %</b> · dropouts <b>${W.drops}</b>`;if(s.err)return 'error: '+String(s.err).replace(/[<>&]/g,'');
     if(s.on!==true)return 'starting the C++ engine… · '+String(s.stage||'waiting for the app').replace(/[<>&]/g,'');
     if(s.load<0||s.peak<0)return 'on · C++ engine · the engine reports broken numbers (load '+s.load+', out '+s.peak+')';
     const pk=s.peak>0?Math.round(20*Math.log10(s.peak)):null;
