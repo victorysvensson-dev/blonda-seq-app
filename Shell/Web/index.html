@@ -2916,7 +2916,7 @@ body.daw-on .bar,body.daw-on .dock{z-index:59}
 <div class="app" id="app">
   <header class="top">
     <button class="brand" id="projBtn" aria-label="Projekt – spara och öppna">
-      <div><b>BLONDA<i class="ver">v295</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
+      <div><b>BLONDA<i class="ver">v296</i></b><span>SEQ.3 · <em id="projName">projekt</em></span></div>
     </button>
     <div class="dock-slot" id="dockSlot"><div class="dock" id="dock">
     <div class="pats" id="pats" role="group" aria-label="Mönster">
@@ -5856,15 +5856,17 @@ function buildClone(card,eng,layout,opt){const E=()=>engE(eng),body=card.querySe
     ns=ns.map(n=>n+12*C.oct);while(ns[0]<24)ns=ns.map(n=>n+12);while(ns[ns.length-1]>96)ns=ns.map(n=>n-12);return ns.filter(n=>n>=24&&n<=96)}
   /* ---------------- sound ---------------- */
   const vc=new Map();/* note -> {ng,t,i,c} with ref count c */
-  function voiceStart(n,v,t,len){const i=kTrack(),tr=TRACKS[i],ng=ctx.createGain();ng.connect(A.ch[i].inp||A.ch[i].g);VOIC1=K().ch.on||single;
+  function voiceStart(n,v,t,len){const i=kTrack(),tr=TRACKS[i],ng=ctx.createGain();
+    if(window.NATIVE&&NATIVE.on()){NATIVE.note(i,n,v,true);if(!isMuted(i))hitT.set(i,{t,v});return {ng,t,i,nat:n}}   /* the app's C++ engine plays it */
+    ng.connect(A.ch[i].inp||A.ch[i].g);VOIC1=K().ch.on||single;
     try{VOICE[tr.id](t,v,S.params[tr.id],ng,null,n,len)}catch(e){console.warn(e)}finally{VOIC1=false}if(!isMuted(i))hitT.set(i,{t,v});return {ng,t,i}}
   let single=false;
   function on(n,v,dt){initAudio();ctx.resume();if(n<24||n>96)return;const ex=vc.get(n);if(ex){ex.c++;return}const t=ctx.currentTime+.004+(dt||0);
     const o=voiceStart(n,v,t,(S.inst[TRACKS[kTrack()].id]==='msx')?60:60/S.bpm/4*24);o.c=1;vc.set(n,o);mark(n,true);recOn(o.i,n,v,t)}
   function relTime(i){if(window.KEYSX){const r=KEYSX.rel(i);if(r!=null)return r}const e=S.inst[TRACKS[i].id]||'analog';if(e==='bris')return Math.min(3,brT(engE('bris').aR,10));return e==='super'?.35:e==='pluck'||e==='chip'?.05:.12}
-  function off(n,force){const o=vc.get(n);if(!o)return;if(!force&&--o.c>0)return;vc.delete(n);mark(n,false);const now=ctx.currentTime,rel=relTime(o.i),at=Math.max(now,o.t);
+  function off(n,force){const o=vc.get(n);if(!o)return;if(!force&&--o.c>0)return;vc.delete(n);mark(n,false);if(o.nat!=null)NATIVE.note(o.i,o.nat,0,false);const now=ctx.currentTime,rel=relTime(o.i),at=Math.max(now,o.t);
     o.ng.gain.cancelAndHoldAtTime(at);o.ng.gain.setValueAtTime(o.ng.gain.value||1,at);o.ng.gain.setTargetAtTime(0,at,rel/3);setTimeout(()=>{try{o.ng.disconnect()}catch(x){globalThis.__el&&globalThis.__el(x)}},(rel*4+.4+(at-now))*1000);recOff(n)}
-  function blip(n,v,t,lenS){const o=voiceStart(n,v,t,lenS);const end=t+lenS,rel=relTime(o.i);o.ng.gain.setValueAtTime(1,end);o.ng.gain.setTargetAtTime(0,end,rel/3);
+  function blip(n,v,t,lenS){const o=voiceStart(n,v,t,lenS);if(o.nat!=null)setTimeout(()=>NATIVE.note(o.i,o.nat,0,false),Math.max(30,(t+lenS-ctx.currentTime)*1000));const end=t+lenS,rel=relTime(o.i);o.ng.gain.setValueAtTime(1,end);o.ng.gain.setTargetAtTime(0,end,rel/3);
     setTimeout(()=>{try{o.ng.disconnect()}catch(x){globalThis.__el&&globalThis.__el(x)}},(end-ctx.currentTime+rel*4+.4)*1000);if(recording&&playing)recNote(o.i,n,v,t,1);
     const d=keyEls.get(n);if(d){setTimeout(()=>d.classList.add('dn'),Math.max(0,(t-ctx.currentTime)*1000));setTimeout(()=>d.classList.remove('dn'),Math.max(0,(end-ctx.currentTime)*1000))}}
   /* ---------------- recording ---------------- */
@@ -11183,7 +11185,7 @@ function outDraw(){const box=el.querySelector('.d-out');if(!box||!box.offsetPare
   if(now-OUT.t>140){OUT.t=now;const db=OUT.pk>0?20*Math.log10(OUT.pk):-Infinity;box.querySelector('.d-db').textContent=isFinite(db)&&db>-60?db.toFixed(1):'--'}
   box.querySelectorAll('.d-om i').forEach((m,j)=>{const v=OUT.lv[j],db=v>0?20*Math.log10(v):-99,f=Math.max(0,Math.min(1,(db+48)/48));m.style.setProperty('--v',(Math.round(f*40)/40*100).toFixed(1)+'%');m.classList.toggle('hot',db>-3)})}
 const el=document.createElement('div');el.className='duo';el.hidden=true;el.setAttribute('role','dialog');el.setAttribute('aria-label','Idéläge');
-el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v295</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
+el.innerHTML=`<div class="d-top"><div class="d-brand"><b>BLONDA <span>idé</span></b><small>seq.3 · v296</small></div><div class="d-pre"><button data-pp="-1" aria-label="Förra stilen">‹</button><button class="nm" data-pl title="Stil · idéerna görs i den här stilen"></button><button data-pp="1" aria-label="Nästa stil">›</button></div><button class="d-tb" data-trk title="Visa eller göm trackern (T)">tracker</button><button class="d-x" title="Stäng idéläget" aria-label="Stäng">×</button></div>
   <div class="d-trk"><div class="d-th"><b>tracker</b><span class="d-bars"><button data-bar="0" title="Takt 1">1</button><button data-bar="1" title="Takt 2">2</button><button data-bar="2" title="Takt 3">3</button><button data-bar="3" title="Takt 4">4</button></span><button class="d-fol" data-fol title="Följ med när det spelar">följ</button></div><div class="d-tc"></div><div class="d-tr"></div><div class="d-tf">trummor: klick = av/på · shift/högerklick = betoning · startern: klick = välj ackord / ton · scrollhjul = flytta tonen · alt-klick = ta bort / återställ</div></div>
   <div class="d-ring"><canvas></canvas><button class="d-fx l" data-fx="half" aria-label="Halvtempo, håll"><b>halv</b><small>håll</small></button><button class="d-fx r" data-fx="stut" aria-label="Stutter, håll"><b>stutter</b><small>håll</small></button><div class="d-tempo"><button data-bpm="1" aria-label="Snabbare">+</button><b class="t"></b><small>bpm</small><button data-bpm="-1" aria-label="Långsammare">−</button><button class="d-lk" title="Lås tempot – ny idé ändrar det inte" aria-label="Lås tempot"></button><button class="d-key2" title="Key of new ideas (K) – free, or locked, e.g. G minor" aria-label="Key"><b></b><small>key</small></button></div></div>
   <div class="d-panel" aria-hidden="true"></div><div class="d-out"><div class="d-oh"><span>out · <b>level</b></span><em><b class="d-db">--</b><small>dB</small></em></div><canvas class="d-oc"></canvas><div class="d-om"><i data-ch="L"></i><i data-ch="R"></i></div></div><div class="d-lb" data-l="dr">trummor</div><div class="d-chips" data-g="dr"></div><div class="d-lb" data-l="st">startern</div><div class="d-chips" data-g="st"></div>
@@ -15157,18 +15159,32 @@ function findLoop(L,R,sr,a0,b0,root,opt){
   function setOn(on){if(on===K.on)return;K.on=on;try{localStorage.setItem(LS,on?'1':'0')}catch(e){globalThis.__el&&globalThis.__el(e)}
     if(on){K.last=json();NA.on(K.last);mute(true);if(playing)NA.play(true)}else{NA.off();mute(false)}paint()}
   {const _t0=trigger0;trigger0=function(i,t,vel,note,ls){if(!K.on)return _t0.apply(this,arguments);if(!ctx)return;
-    const len=60/S.bpm/4*(ls||1);if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);if(!isMuted(i))hitT.set(i,{t,v:vel})}}
+    const len=60/S.bpm/4*(ls||1);if(SCHED&&window.MIDIX&&MIDIX.notesOut)MIDIX.note(i,t,vel,note,len);if(!isMuted(i))hitT.set(i,{t,v:vel});
+    if(!SCHED)live(i,note,vel,len,t)}}
+  /* played live (pads, auditions, the keyboard): straight to the C++ engine; a synth note is let go after its length */
+  function live(i,note,vel,len,t){if(!K.on)return;const tr=TRACKS[i];if(!tr)return;const n=note==null?60:Math.round(note),d=Math.max(0,(t||0)-(ctx?ctx.currentTime:0));
+    const go=()=>{NA.note(i,n,vel==null?.8:vel,true);if(tr.mel)setTimeout(()=>NA.note(i,n,0,false),Math.max(30,len*1000))};if(d>.01)setTimeout(go,d*1000);else go()}
   {const _p=play;play=function(){const was=playing,r=_p.apply(this,arguments);if(K.on&&playing!==was){if(playing){sync(false);mute(true)}NA.play(playing)}return r}}
   {const _s=stop;stop=function(){const was=playing,r=_s.apply(this,arguments);if(K.on&&was)NA.play(false);return r}}
   setInterval(()=>{if(K.on){sync(false);if(!K.muted)mute(true)}},200);
   function stat(){const s=K.st;if(!K.on)return 'off · the page plays (web audio)';if(s.err)return 'error: '+String(s.err).replace(/[<>&]/g,'');
-    return `on · C++ engine · load <b>${Math.round((s.load||0)*100)} %</b>${s.playing?' · playing':''}`}
+    if(s.on===false)return 'starting the C++ engine…';
+    const pk=s.peak>0?Math.round(20*Math.log10(s.peak)):null;
+    return `on · C++ engine${s.sr?' · '+Math.round(s.sr/100)/10+' kHz':''} · load <b>${Math.round((s.load||0)*100)} %</b> · out <b>${pk==null||pk<-90?'silent':pk+' dB'}</b>${s.playing?' · playing':''}`}
   function paint(){const el=document.getElementById('naSt');if(el)el.innerHTML=stat();const b=document.getElementById('naBtn');if(b){b.textContent=K.on?'ON':'OFF';b.classList.toggle('on',K.on)}}
   NA.sub(s=>{K.st=s;paint()});
   window.NATIVE={
     panelHTML(){return `<div class="lk-row"><span><b>Native audio · beta</b><small>the C++ engine plays (steadier, lighter) · samples, loops and the Starter not yet</small></span><button class="lk-btn na-btn" id="naBtn">${K.on?'ON':'OFF'}</button></div><div class="clk-st" id="naSt">${stat()}</div>`},
     bindPanel(el){const b=el.querySelector('#naBtn');if(b)b.onclick=()=>{try{initAudio();ctx.resume()}catch(e){globalThis.__el&&globalThis.__el(e)}setOn(!K.on)}},
-    on:()=>K.on,_st:()=>({on:K.on,muted:K.muted,st:K.st,len:K.last.length})};
+    on:()=>K.on,
+    /* the keyboard holds notes: on at key down, off at key up */
+    note(i,n,v,on){if(K.on)NA.note(i,Math.round(n),on?(v==null?.8:v):0,!!on)},
+    /* used by the app's self-test: switch on, a pad, the sequencer, read the engine's output, back as it was */
+    async test(){const was=K.on,pl=playing,w=ms=>new Promise(r=>setTimeout(r,ms)),r={};try{setOn(true);await w(1200);r.st=Object.assign({},K.st);
+      const pk0=K.st.peak||0;live(0,60,.9,.2,0);await w(700);r.pad=K.st.peak||0;r.padRose=r.pad>pk0+.005||r.pad>.01;
+      if(!playing)play();await w(1800);r.play=K.st.peak||0;r.playing=!!K.st.playing;if(!pl&&playing)play();await w(300)}catch(e){r.err=String(e)}
+      if(!was)setOn(false);return r},
+    _st:()=>({on:K.on,muted:K.muted,st:K.st,len:K.last.length})};
   const css=document.createElement('style');css.textContent='.na-btn.on{background:#F2C318!important;color:#141517!important;box-shadow:none!important}';document.head.appendChild(css);
   /* the choice is kept: on again after the start (once the page's audio exists) */
   try{if(localStorage.getItem(LS)==='1'){const iv=setInterval(()=>{if(ctx&&A.an){clearInterval(iv);setOn(true)}},500)}}catch(e){globalThis.__el&&globalThis.__el(e)}

@@ -304,13 +304,16 @@ final class ShellController: UIViewController, WKNavigationDelegate, WKUIDelegat
             do { try na.setProjectJSON(j) } catch { call("__blonda.nativeState", ["on": na.running, "err": error.localizedDescription]) }
         case "play":
             na.setPlaying((b["on"] as? Bool) ?? false)
+        case "note":
+            let t = (b["tr"] as? NSNumber)?.intValue ?? -1, n = (b["n"] as? NSNumber)?.intValue ?? 60
+            if (b["on"] as? Bool) ?? false { na.noteOn(t, note: n, velocity: (b["v"] as? NSNumber)?.floatValue ?? 0.8) } else { na.noteOff(t, note: n) }
         default:
             break
         }
     }
     private func nativeState() {
         let na = NativeAudio.shared()
-        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": na.load])
+        call("__blonda.nativeState", ["on": na.running, "playing": na.playing, "step": na.currentStep, "load": na.load, "peak": na.peak, "sr": na.sampleRate])
     }
 
     /// Calls a function in the page with JSON arguments.

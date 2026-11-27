@@ -3,6 +3,8 @@
 #include <mach/mach_time.h>
 #include <atomic>
 #include <memory>
+#include <algorithm>
+#include <cmath>
 #include "blonda/host.hpp"
 
 @implementation NativeAudio {
@@ -10,13 +12,13 @@
     AVAudioEngine *_engine;
     AVAudioSourceNode *_source;
     BOOL _loaded, _wanted;
-    std::shared_ptr<std::atomic<double>> _load;
+    std::shared_ptr<std::atomic<double>> _load, _peak;
 }
 
 + (instancetype)shared { static NativeAudio *a; static dispatch_once_t once; dispatch_once(&once, ^{ a = [NativeAudio new]; }); return a; }
 
 - (instancetype)init {
-    if ((self = [super init])) { _host = std::make_shared<blonda::Host>(); _load = std::make_shared<std::atomic<double>>(0.0); }
+    if ((self = [super init])) { _host = std::make_shared<blonda::Host>(); _load = std::make_shared<std::atomic<double>>(0.0); _peak = std::make_shared<std::atomic<double>>(0.0); }
     return self;
 }
 
@@ -32,7 +34,7 @@
     _host->sampleRate = s.sampleRate > 0 ? (float)s.sampleRate : 48000.f;
     _engine = [AVAudioEngine new];
     AVAudioFormat *fmt = [[AVAudioFormat alloc] initStandardFormatWithSampleRate:_host->sampleRate channels:2];
-    std::shared_ptr<blonda::Host> host = _host; std::shared_ptr<std::atomic<double>> load = _load;
+    std::shared_ptr<blonda::Host> host = _host; std::shared_ptr<std::atomic<double>> load = _load, peak = _peak;
     static mach_timebase_info_data_t tb; if (!tb.denom) mach_timebase_info(&tb);
     const double sr = _host->sampleRate;
     _source = [[AVAudioSourceNode alloc] initWithFormat:fmt renderBlock:^OSStatus(BOOL *isSilence, const AudioTimeStamp *ts, AVAudioFrameCount frames, AudioBufferList *out) {
@@ -40,6 +42,8 @@
         float *L = (float *)out->mBuffers[0].mData;
         float *R = out->mNumberBuffers > 1 ? (float *)out->mBuffers[1].mData : L;
         host->render(L, R, (int)frames);
+        float pk = 0; for (AVAudioFrameCount i = 0; i < frames; ++i) { pk = std::max(pk, std::max(std::fabs(L[i]), std::fabs(R[i]))); }
+        peak->store(std::max((double)pk, peak->load(std::memory_order_relaxed) * .97), std::memory_order_relaxed);   // held, falls slowly; read by the UI
         const double used = (double)(mach_absolute_time() - t0) * tb.numer / tb.denom / 1e9, avail = frames / sr;
         const double prev = load->load(std::memory_order_relaxed); load->store(prev + (used / avail - prev) * .02, std::memory_order_relaxed);
         return noErr;
@@ -71,6 +75,10 @@
 }
 
 - (void)setPlaying:(BOOL)on { _host->setPlaying(on); }
+- (void)noteOn:(NSInteger)track note:(NSInteger)note velocity:(float)vel { _host->noteOn((int)track, (int)note, vel); }
+- (void)noteOff:(NSInteger)track note:(NSInteger)note { _host->noteOff((int)track, (int)note); }
+- (double)peak { return _peak->load(std::memory_order_relaxed); }
+- (double)sampleRate { return _engine.isRunning ? _host->sampleRate : 0; }
 - (BOOL)playing { return _host->isPlaying(); }
 - (NSInteger)currentStep { return _host->currentStep(); }
 - (double)load { return _load->load(std::memory_order_relaxed); }

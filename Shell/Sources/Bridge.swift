@@ -70,7 +70,8 @@ N.midiBatch=arr=>{for(const [id,b,ms] of arr){const p=ins.get(id);if(p)p._fire(b
  N.nativeState=s=>{st=Object.assign({},st,s);subs.forEach(f=>{try{f(st)}catch(e){}})};
  N.native={get state(){return st},sub(f){subs.add(f);f(st);return()=>subs.delete(f)},
    on(json){post({t:'native',op:'on',json})},off(){post({t:'native',op:'off'})},
-   project(json){post({t:'native',op:'project',json})},play(on){post({t:'native',op:'play',on:!!on})}}}
+   project(json){post({t:'native',op:'project',json})},play(on){post({t:'native',op:'play',on:!!on})},
+   note(t,n,v,on){post({t:'native',op:'note',tr:t|0,n:n|0,v:+v||0,on:!!on})}}}
 Object.defineProperty(navigator,'requestMIDIAccess',{configurable:true,value:function(){return new Promise(res=>{if(access){res(access);return}waiting.push(res);post({t:'midi-open'})})}});
 /* the page asks whether MIDI is already allowed before connecting by itself – in the app it always is */
 try{const P=navigator.permissions;if(P&&P.query){const q=P.query.bind(P);P.query=d=>d&&d.name==='midi'?Promise.resolve({name:'midi',state:'granted',onchange:null}):q(d)}
@@ -192,6 +193,9 @@ addEventListener('load',()=>setTimeout(async()=>{const N=window.__blonda,post=m=
   if(N.platform!=='mac')try{let fr=0,sr=0;const st=await N.audioIn.rec.start((L,R,s)=>{fr+=L.length;sr=s});await new Promise(s=>setTimeout(s,1200));N.audioIn.rec.stop();N.audioIn.close();await new Promise(s=>setTimeout(s,800));/* like the sampler: back to the playing session */
     r.recLive={ok:!!st.ok,err:st.err||'',sr:st.sr||sr,frames:fr}}catch(e){r.recLive=String(e)}
   try{const A=window.__seq&&__seq.Aref&&__seq.Aref(),c=A&&A.out&&A.out.context;r.pageAudioAfterRec=c?c.state:null}catch(e){}
+  post({t:'step',s:'native'});
+  /* the C++ engine: on, a pad and the sequencer, its output level measured in the app (then off again) */
+  try{r.nativeAudio=window.NATIVE?await tmo(NATIVE.test(),8000):'no NATIVE'}catch(e){r.nativeAudio=String(e)}
   post({t:'step',s:'report'});
   r.errors=N.errs;
  }catch(e){r.fatal=String(e)}

@@ -13,6 +13,12 @@ NS_ASSUME_NONNULL_BEGIN
 /// the page's project (the web S object as JSON); the first one loads, later ones update the running engine
 - (BOOL)setProjectJSON:(NSString *)json error:(NSError **)error;
 - (void)setPlaying:(BOOL)on;
+/// a note played live (pads, keyboard): track 0..23, note, velocity 0..1
+- (void)noteOn:(NSInteger)track note:(NSInteger)note velocity:(float)vel;
+- (void)noteOff:(NSInteger)track note:(NSInteger)note;
+/// loudest sample the engine sent to the speakers lately (0..1+), and the rate it runs at
+@property (nonatomic, readonly) double peak;
+@property (nonatomic, readonly) double sampleRate;
 @property (nonatomic, readonly) BOOL playing;
 @property (nonatomic, readonly) NSInteger currentStep;
 /// share of the audio time the engine used in the last second (0..1)

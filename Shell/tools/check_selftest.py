@@ -41,6 +41,14 @@ def check(dev, run, r):
     pa = r.get('pageAudio') or {}
     need(r.get('started') is True, f"intro tapped, app shown ({r.get('startErr') or ''})")
     need(pa.get('state') == 'running', f"the page's own sound is running ({pa})")
+    na = r.get('nativeAudio')
+    if dev == 'mac':
+        lines.append(f"  info: native audio (C++ engine): {na}")
+    else:
+        ok = isinstance(na, dict) and not na.get('err') and not (na.get('st') or {}).get('err')
+        need(ok and (na.get('st') or {}).get('on') is True, f"native audio: the C++ engine starts ({na})")
+        need(ok and na.get('padRose') is True, f"native audio: a pad is heard from the C++ engine (peak {na.get('pad') if isinstance(na, dict) else None})")
+        need(ok and (na.get('play') or 0) > .01 and na.get('playing') is True, f"native audio: the sequencer plays in the C++ engine (peak {na.get('play') if isinstance(na, dict) else None})")
     need(not r.get('errors'), f"no page errors {r.get('errors') or ''}")
     lines.append(f"  time: IndexedDB {r.get('idbMs')} ms, MIDI access {r.get('midiMs')} ms")
     lines.append(f"  CoreMIDI: {r.get('midiNative')}")

@@ -39,15 +39,17 @@
     ns=ns.map(n=>n+12*C.oct);while(ns[0]<24)ns=ns.map(n=>n+12);while(ns[ns.length-1]>96)ns=ns.map(n=>n-12);return ns.filter(n=>n>=24&&n<=96)}
   /* ---------------- sound ---------------- */
   const vc=new Map();/* note -> {ng,t,i,c} with ref count c */
-  function voiceStart(n,v,t,len){const i=kTrack(),tr=TRACKS[i],ng=ctx.createGain();ng.connect(A.ch[i].inp||A.ch[i].g);VOIC1=K().ch.on||single;
+  function voiceStart(n,v,t,len){const i=kTrack(),tr=TRACKS[i],ng=ctx.createGain();
+    if(window.NATIVE&&NATIVE.on()){NATIVE.note(i,n,v,true);if(!isMuted(i))hitT.set(i,{t,v});return {ng,t,i,nat:n}}   /* the app's C++ engine plays it */
+    ng.connect(A.ch[i].inp||A.ch[i].g);VOIC1=K().ch.on||single;
     try{VOICE[tr.id](t,v,S.params[tr.id],ng,null,n,len)}catch(e){console.warn(e)}finally{VOIC1=false}if(!isMuted(i))hitT.set(i,{t,v});return {ng,t,i}}
   let single=false;
   function on(n,v,dt){initAudio();ctx.resume();if(n<24||n>96)return;const ex=vc.get(n);if(ex){ex.c++;return}const t=ctx.currentTime+.004+(dt||0);
     const o=voiceStart(n,v,t,(S.inst[TRACKS[kTrack()].id]==='msx')?60:60/S.bpm/4*24);o.c=1;vc.set(n,o);mark(n,true);recOn(o.i,n,v,t)}
   function relTime(i){if(window.KEYSX){const r=KEYSX.rel(i);if(r!=null)return r}const e=S.inst[TRACKS[i].id]||'analog';if(e==='bris')return Math.min(3,brT(engE('bris').aR,10));return e==='super'?.35:e==='pluck'||e==='chip'?.05:.12}
-  function off(n,force){const o=vc.get(n);if(!o)return;if(!force&&--o.c>0)return;vc.delete(n);mark(n,false);const now=ctx.currentTime,rel=relTime(o.i),at=Math.max(now,o.t);
+  function off(n,force){const o=vc.get(n);if(!o)return;if(!force&&--o.c>0)return;vc.delete(n);mark(n,false);if(o.nat!=null)NATIVE.note(o.i,o.nat,0,false);const now=ctx.currentTime,rel=relTime(o.i),at=Math.max(now,o.t);
     o.ng.gain.cancelAndHoldAtTime(at);o.ng.gain.setValueAtTime(o.ng.gain.value||1,at);o.ng.gain.setTargetAtTime(0,at,rel/3);setTimeout(()=>{try{o.ng.disconnect()}catch(x){globalThis.__el&&globalThis.__el(x)}},(rel*4+.4+(at-now))*1000);recOff(n)}
-  function blip(n,v,t,lenS){const o=voiceStart(n,v,t,lenS);const end=t+lenS,rel=relTime(o.i);o.ng.gain.setValueAtTime(1,end);o.ng.gain.setTargetAtTime(0,end,rel/3);
+  function blip(n,v,t,lenS){const o=voiceStart(n,v,t,lenS);if(o.nat!=null)setTimeout(()=>NATIVE.note(o.i,o.nat,0,false),Math.max(30,(t+lenS-ctx.currentTime)*1000));const end=t+lenS,rel=relTime(o.i);o.ng.gain.setValueAtTime(1,end);o.ng.gain.setTargetAtTime(0,end,rel/3);
     setTimeout(()=>{try{o.ng.disconnect()}catch(x){globalThis.__el&&globalThis.__el(x)}},(end-ctx.currentTime+rel*4+.4)*1000);if(recording&&playing)recNote(o.i,n,v,t,1);
     const d=keyEls.get(n);if(d){setTimeout(()=>d.classList.add('dn'),Math.max(0,(t-ctx.currentTime)*1000));setTimeout(()=>d.classList.remove('dn'),Math.max(0,(end-ctx.currentTime)*1000))}}
   /* ---------------- recording ---------------- */
