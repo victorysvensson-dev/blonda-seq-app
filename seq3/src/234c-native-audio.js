@@ -35,7 +35,7 @@
     /* the keyboard holds notes: on at key down, off at key up */
     note(i,n,v,on){if(K.on)NA.note(i,Math.round(n),on?(v==null?.8:v):0,!!on)},
     /* used by the app's self-test: switch on, a pad, the sequencer, read the engine's output, back as it was */
-    async test(){const was=K.on,pl=playing,w=ms=>new Promise(r=>setTimeout(r,ms)),r={};try{setOn(true);await w(1200);r.st=Object.assign({},K.st);
+    async test(){const was=K.on,pl=playing,w=ms=>new Promise(r=>setTimeout(r,ms)),r={};try{setOn(true);for(let k=0;k<25&&K.st.on!==true;k++)await w(200);await w(400);r.st=Object.assign({},K.st);
       const pk0=K.st.peak||0;live(0,60,.9,.2,0);await w(700);r.pad=K.st.peak||0;r.padRose=r.pad>pk0+.005||r.pad>.01;
       if(!playing)play();await w(1800);r.play=K.st.peak||0;r.playing=!!K.st.playing;if(!pl&&playing)play();await w(300)}catch(e){r.err=String(e)}
       if(!was)setOn(false);return r},
