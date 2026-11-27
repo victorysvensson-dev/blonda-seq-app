@@ -15148,7 +15148,7 @@ function findLoop(L,R,sr,a0,b0,root,opt){
    version, ported) plays the project; the page stays the editor. The page sends its project whenever it changes
    (checked five times a second), and play / stop. Its own sound is cut off (nothing is built in Web Audio for the
    sequencer), but it keeps its clock for the screen (the playhead, the pads lighting up) and for MIDI out.
-   Switched in the MIDI panel; the choice is kept. Not yet in the C++ engine: samples and loops (silent), the Starter,
+   Switched in the MIDI panel (beta: always off at the start). Not yet in the C++ engine: samples and loops (silent), the Starter,
    Grime, live glitch from the page. ================= */
 (()=>{const N=window.BLONDA_NATIVE;if(!N||!N.native)return;const NA=N.native,LS='blonda.native';
   const K={on:false,last:'',st:{},muted:false};
@@ -15187,8 +15187,8 @@ function findLoop(L,R,sr,a0,b0,root,opt){
       if(!was)setOn(false);return r},
     _st:()=>({on:K.on,muted:K.muted,st:K.st,len:K.last.length})};
   const css=document.createElement('style');css.textContent='.na-btn.on{background:#F2C318!important;color:#141517!important;box-shadow:none!important}';document.head.appendChild(css);
-  /* the choice is kept: on again after the start (once the page's audio exists) */
-  try{if(localStorage.getItem(LS)==='1'){const iv=setInterval(()=>{if(ctx&&A.an){clearInterval(iv);setOn(true)}},500)}}catch(e){globalThis.__el&&globalThis.__el(e)}
+  /* beta: never switched on by itself at the start (a crash in the engine must not lock you out of the app) */
+  try{localStorage.removeItem(LS)}catch(e){globalThis.__el&&globalThis.__el(e)}
 })();
 /* ================= the keyboard's sound strip (v245) =================
    Under the keyboard's top row: the sound the keyboard plays (engine + preset, ‹ › steps presets, tap for the picker),
