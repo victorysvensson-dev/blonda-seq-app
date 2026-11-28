@@ -1,0 +1,104 @@
+2026-11-28 10:16:47.773 SEQ3[4541:17612] SEQ3 MIDI: client ok after 632 ms (try 1)
+SEQ3-SELFTEST-BEGIN
+{
+  "audio" : {
+    "sr" : 48000,
+    "state" : "suspended",
+    "worklet" : true,
+    "workletOk" : true
+  },
+  "audioInApi" : true,
+  "body" : "look-studio topbar",
+  "errors" : [
+
+  ],
+  "height" : 653,
+  "idb" : true,
+  "idbMs" : 12,
+  "importPipe" : [
+    "b-kick-context.wav:92104",
+    "b-kick-cross.wav:37576"
+  ],
+  "lang" : "en",
+  "lastStep" : "report",
+  "ls" : true,
+  "lsPrev" : null,
+  "midiApi" : true,
+  "midiIn" : [
+    144,
+    60,
+    100
+  ],
+  "midiIns" : [
+    "BLONDA SEQ3 (virtual)",
+    "BLONDA TEST"
+  ],
+  "midiMs" : 0,
+  "midiNative" : [
+    "client ok after 632 ms (try 1)"
+  ],
+  "midiOutReceived" : [
+    [
+      144,
+      64,
+      90
+    ],
+    [
+      128,
+      64,
+      0
+    ]
+  ],
+  "midiOuts" : [
+    "BLONDA SEQ3 (virtual)",
+    "BLONDA TEST"
+  ],
+  "midiOutSent" : true,
+  "nativeAudio" : {
+    "pad" : 0.051302355047086502,
+    "padRose" : true,
+    "play" : 0.28363818565257637,
+    "playing" : true,
+    "st" : {
+      "et" : 0.32000000000000001,
+      "load" : 0.079520237433769653,
+      "on" : true,
+      "peak" : 0,
+      "playing" : false,
+      "restarts" : 0,
+      "sr" : 48000,
+      "stage" : "project loaded",
+      "step" : -1
+    }
+  },
+  "noZoom" : true,
+  "origin" : "blonda:\/\/seq3",
+  "packDecoded" : true,
+  "packItems" : 233,
+  "pageAudio" : {
+    "base" : 3,
+    "out" : 0,
+    "sr" : 48000,
+    "state" : "running"
+  },
+  "pageAudioAfterRec" : "running",
+  "platform" : "mac",
+  "project" : true,
+  "recBlock" : [
+    1,
+    -0.5
+  ],
+  "save" : true,
+  "saveBytes" : 17,
+  "secure" : true,
+  "started" : true,
+  "syncPill" : "local",
+  "system" : "iPadOS 18.8",
+  "title" : "BLONDA SEQ.3 Glass",
+  "ver" : "v302",
+  "webCrashes" : [
+
+  ],
+  "width" : 1024
+}
+SEQ3-SELFTEST-END
