@@ -1,0 +1,107 @@
+{
+  "audio" : {
+    "sr" : 48000,
+    "state" : "suspended",
+    "worklet" : true,
+    "workletOk" : true
+  },
+  "audioInApi" : true,
+  "body" : "mob look-studio mhdr",
+  "errors" : [
+
+  ],
+  "height" : 874,
+  "idb" : true,
+  "idbMs" : 6,
+  "importPipe" : [
+    "b-kick-context.wav:92104",
+    "b-kick-cross.wav:37576"
+  ],
+  "lang" : "en",
+  "lastStep" : "report",
+  "ls" : true,
+  "lsPrev" : null,
+  "midiApi" : true,
+  "midiIn" : [
+    144,
+    60,
+    100
+  ],
+  "midiIns" : [
+    "BLONDA SEQ3 (virtual)",
+    "BLONDA TEST"
+  ],
+  "midiMs" : 0,
+  "midiNative" : [
+    "client ok after 1763 ms (try 1)"
+  ],
+  "midiOutReceived" : [
+    [
+      144,
+      64,
+      90
+    ],
+    [
+      128,
+      64,
+      0
+    ]
+  ],
+  "midiOuts" : [
+    "BLONDA SEQ3 (virtual)",
+    "BLONDA TEST"
+  ],
+  "midiOutSent" : true,
+  "nativeAudio" : {
+    "pad" : 0.15358714532531847,
+    "padRose" : true,
+    "play" : 0.41538578061427001,
+    "playing" : true,
+    "st" : {
+      "et" : 0.23466666666666666,
+      "load" : 0.062106336055301928,
+      "on" : true,
+      "peak" : 0,
+      "playing" : false,
+      "restarts" : 0,
+      "sr" : 48000,
+      "stage" : "project loaded",
+      "step" : -1
+    }
+  },
+  "noZoom" : true,
+  "origin" : "blonda:\/\/seq3",
+  "packDecoded" : true,
+  "packItems" : 233,
+  "pageAudio" : {
+    "base" : 3,
+    "out" : 0,
+    "sr" : 48000,
+    "state" : "running"
+  },
+  "pageAudioAfterRec" : "running",
+  "platform" : "iphone",
+  "project" : true,
+  "recBlock" : [
+    1,
+    -0.5
+  ],
+  "recLive" : {
+    "err" : "",
+    "frames" : 52800,
+    "ok" : true,
+    "sr" : 48000
+  },
+  "save" : true,
+  "saveBytes" : 17,
+  "secure" : true,
+  "started" : true,
+  "syncPill" : "local",
+  "system" : "iOS 18.5",
+  "title" : "BLONDA SEQ.3 Glass",
+  "ver" : "v302",
+  "webCrashes" : [
+
+  ],
+  "width" : 402
+}

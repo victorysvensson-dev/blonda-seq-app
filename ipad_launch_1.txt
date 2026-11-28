@@ -1,0 +1,3 @@
+se.blonda.seq3: 5997
+launch exit 0
+app process: not running

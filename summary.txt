@@ -1,0 +1,124 @@
+ipad run 1:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v302
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (233 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': '', 'frames': 57600, 'ok': True, 'sr': 48000}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   native audio: the C++ engine starts ({'pad': 0.22135740617648503, 'padRose': True, 'play': 0.4897220927608018, 'playing': True, 'st': {'et': 0.49066666666666664, 'load': 0.07918820651860979, 'on': True, 'peak': 0, 'playing': False, 'restarts': 0, 'sr': 48000, 'stage': 'project loaded', 'step': -1}})
+  ok   native audio: a pad is heard from the C++ engine (peak 0.22135740617648503)
+  ok   native audio: the sequencer plays in the C++ engine (peak 0.4897220927608018)
+  ok   no page errors 
+  time: IndexedDB 1332 ms, MIDI access 1 ms
+  CoreMIDI: ['client ok after 1480 ms (try 1)']
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+ipad run 2:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v302
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (233 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': '', 'frames': 57600, 'ok': True, 'sr': 48000}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   native audio: the C++ engine starts ({'pad': 0.1583372632219778, 'padRose': True, 'play': 0.4827196303009987, 'playing': True, 'st': {'et': 0.24533333333333332, 'load': 0.07072142748982083, 'on': True, 'peak': 0, 'playing': False, 'restarts': 0, 'sr': 48000, 'stage': 'project loaded', 'step': -1}})
+  ok   native audio: a pad is heard from the C++ engine (peak 0.1583372632219778)
+  ok   native audio: the sequencer plays in the C++ engine (peak 0.4827196303009987)
+  ok   no page errors 
+  time: IndexedDB 197 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 966 ms (try 1)']
+  ok   saved data survived a restart
+  info: ipad iPadOS 18.5 1032x1376 body='look-studio topbar' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+iphone run 1:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v302
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (233 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': '', 'frames': 52800, 'ok': True, 'sr': 48000}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   native audio: the C++ engine starts ({'pad': 0.15358714532531847, 'padRose': True, 'play': 0.41538578061427, 'playing': True, 'st': {'et': 0.23466666666666666, 'load': 0.06210633605530193, 'on': True, 'peak': 0, 'playing': False, 'restarts': 0, 'sr': 48000, 'stage': 'project loaded', 'step': -1}})
+  ok   native audio: a pad is heard from the C++ engine (peak 0.15358714532531847)
+  ok   native audio: the sequencer plays in the C++ engine (peak 0.41538578061427)
+  ok   no page errors 
+  time: IndexedDB 6 ms, MIDI access 0 ms
+  CoreMIDI: ['client ok after 1763 ms (try 1)']
+  info: iphone iOS 18.5 402x874 body='mob look-studio mhdr' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+iphone run 2:
+  ok   no fatal error (None)
+  info: last self-test step report, page process ended at []
+  ok   secure context (blonda://seq3)
+  ok   page loaded, version v302
+  ok   English (en)
+  ok   localStorage works
+  ok   IndexedDB works (True)
+  ok   Web Audio + AudioWorklet (sr 48000, state suspended)
+  ok   BLONDA sound pack built in (233 sounds, decoded True)
+  ok   the app cannot be pinch-zoomed (viewport user-scalable=no)
+  ok   sampling: the app's recorder and input list are present
+  ok   sampling: a recorded block reaches the page as left/right ([1, -0.5])
+  info: the app's recorder for a second: {'err': '', 'frames': 52800, 'ok': True, 'sr': 48000}, the page's sound afterwards: running
+  ok   importing several sounds at once reaches the page (['b-kick-context.wav:92104', 'b-kick-cross.wav:37576'])
+  ok   Web MIDI API present
+  ok   MIDI in: test note reached the page ([144, 60, 100])
+  ok   MIDI out: page note reached the device ([[144, 64, 90], [128, 64, 0]])
+  ok   MIDI out: timed note-off arrived
+  ok   saving a file (True, 17 bytes)
+  ok   library says local (local)
+  ok   intro tapped, app shown ()
+  ok   the page's own sound is running ({'base': 3, 'out': 0, 'sr': 48000, 'state': 'running'})
+  ok   native audio: the C++ engine starts ({'pad': 0.21471668399119048, 'padRose': True, 'play': 0.5001259667176724, 'playing': True, 'st': {'et': 0.49066666666666664, 'load': 0.13540792470527618, 'on': True, 'peak': 0, 'playing': False, 'restarts': 0, 'sr': 48000, 'stage': 'project loaded', 'step': -1}})
+  ok   native audio: a pad is heard from the C++ engine (peak 0.21471668399119048)
+  ok   native audio: the sequencer plays in the C++ engine (peak 0.5001259667176724)
+  ok   no page errors 
+  time: IndexedDB 69 ms, MIDI access 1 ms
+  CoreMIDI: ['client ok after 1571 ms (try 1)']
+  ok   saved data survived a restart
+  info: iphone iOS 18.5 402x874 body='look-studio mob mhdr' ins=['BLONDA SEQ3 (virtual)', 'BLONDA TEST'] outs=['BLONDA SEQ3 (virtual)', 'BLONDA TEST']
+
+ALL OK
