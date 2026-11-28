@@ -1,0 +1,40 @@
+2026-11-28 10:21:26.385 Df BLONDA SEQ[13567:9f92] (Foundation) BLONDA-DIAG step=12 playing=1
+2026-11-28 10:21:26.877 Df BLONDA SEQ[13567:9f92] (Foundation) BLONDA-DIAG step=0 playing=1
+2026-11-28 10:21:27.377 Df BLONDA SEQ[13567:9f92] (Foundation) BLONDA-DIAG step=4 playing=1
+2026-11-28 10:21:27.667 Df BLONDA SEQ[13567:9f92] (Foundation) BLONDA-DIAG step=6 playing=1
+2026-11-28 10:21:28.309 Df BLONDA SEQ[13567:9f92] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-11-28 10:21:28.813 Df BLONDA SEQ[13567:9f92] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-11-28 10:21:31.595 Df BLONDA SEQ[14028:a3f3] [com.apple.launchservices:default] LaunchServices: _LSOpenExtractBackgroundLaunchReasonFromAppleEvent() => false - <private>, err=Error Domain=NSOSStatusErrorDomain Code=-1701 UserInfo={_LSLine=1372, _LSFunction=<private>}
+2026-11-28 10:21:32.877 Df BLONDA SEQ[14028:a3f3] [com.apple.AppKit:StateRestoration] -[NSApplication(NSPersistentUIRestorationSupport) _restoreWindowWithRestoration:completionHandler:]_block_invoke restoration=<NSPersistentUIWindowRestoration: 0x600000003d90> window=0x115749b40 savedIdentifier=SceneWindow error=(null)
+2026-11-28 10:21:32.879 Df BLONDA SEQ[14028:a3f3] [com.apple.launchservices:default] LaunchServices: _LSOpenExtractBackgroundLaunchReasonFromAppleEvent() => false - <private>, err=Error Domain=NSOSStatusErrorDomain Code=-1701 UserInfo={_LSLine=1372, _LSFunction=<private>}
+2026-11-28 10:21:33.060 Df BLONDA SEQ[14028:a3f3] [com.apple.BaseBoard:BSAction] Reply (error: response-not-possible) <UIDestroySceneAction: 0x01db0014>
+2026-11-28 10:21:33.197 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-11-28 10:21:33.849 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=13 playing=1
+2026-11-28 10:21:34.214 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=0 playing=1
+2026-11-28 10:21:34.823 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=4 playing=1
+2026-11-28 10:21:35.349 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-11-28 10:21:35.841 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=12 playing=1
+2026-11-28 10:21:36.331 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=0 playing=1
+2026-11-28 10:21:36.633 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=3 playing=1
+2026-11-28 10:21:37.266 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-11-28 10:21:37.763 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-11-28 10:21:38.264 Df BLONDA SEQ[14028:a3f3] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-11-28 10:21:40.969 Df BLONDA SEQ[14778:ab10] [com.apple.launchservices:default] LaunchServices: _LSOpenExtractBackgroundLaunchReasonFromAppleEvent() => false - <private>, err=Error Domain=NSOSStatusErrorDomain Code=-1701 UserInfo={_LSLine=1372, _LSFunction=<private>}
+2026-11-28 10:21:42.019 Df BLONDA SEQ[14778:ab10] [com.apple.AppKit:StateRestoration] -[NSApplication(NSPersistentUIRestorationSupport) _restoreWindowWithRestoration:completionHandler:]_block_invoke restoration=<NSPersistentUIWindowRestoration: 0x60000112a710> window=0x12b831830 savedIdentifier=SceneWindow error=(null)
+2026-11-28 10:21:42.021 Df BLONDA SEQ[14778:ab10] [com.apple.launchservices:default] LaunchServices: _LSOpenExtractBackgroundLaunchReasonFromAppleEvent() => false - <private>, err=Error Domain=NSOSStatusErrorDomain Code=-1701 UserInfo={_LSLine=1372, _LSFunction=<private>}
+2026-11-28 10:21:42.166 Df BLONDA SEQ[14778:ab10] [com.apple.BaseBoard:BSAction] Reply (error: response-not-possible) <UIDestroySceneAction: 0x01db0015>
+2026-11-28 10:21:42.203 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=5 playing=1
+2026-11-28 10:21:42.665 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-11-28 10:21:43.182 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=12 playing=1
+2026-11-28 10:21:43.691 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=0 playing=1
+2026-11-28 10:21:44.105 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=4 playing=1
+2026-11-28 10:21:44.699 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-11-28 10:21:44.999 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-11-28 10:21:45.710 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=0 playing=1
+2026-11-28 10:21:46.150 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=4 playing=1
+2026-11-28 10:21:46.649 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=8 playing=1
+2026-11-28 10:21:47.032 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=11 playing=1
+2026-11-28 10:21:47.647 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=15 playing=1
+2026-11-28 10:21:48.148 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=3 playing=1
+2026-11-28 10:21:48.647 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=7 playing=1
+2026-11-28 10:21:49.149 Df BLONDA SEQ[14778:ab10] (Foundation) BLONDA-DIAG step=11 playing=1
