@@ -36,7 +36,8 @@ static void designEQ(int type, float f, float q, float gainDb, float sr, float* 
     c[0] = b0 / a0; c[1] = b1 / a0; c[2] = b2 / a0; c[3] = a1 / a0; c[4] = a2 / a0;
 }
 static inline float runBQ(const float* c, float* z, float x) { const float y = c[0] * x + z[0]; z[0] = c[1] * x - c[3] * y + z[1]; z[1] = c[2] * x - c[4] * y; return y; }
-static inline float driveCurve(float x, float k, float kn) { x = clampf(x, -1.f, 1.f); return std::tanh(k * x) * kn; }
+// web driveCurve(amt) = tanh(k·x·DRV_H) / tanh(k) / DRV_H on x in [-1, 1] (DRV_H = 4, the page's headroom); kn = 1/tanh(k)
+static inline float driveCurve(float x, float k, float kn) { x = clampf(x, -1.f, 1.f); return std::tanh(k * x * kDriveH) * kn * (1.f / kDriveH); }
 static float crushCurve(float x, int bits) {   // 2048-point staircase, linearly interpolated like a WaveShaper
     const float st = (float)(1 << std::min(24, std::max(0, bits))) / 2.f; x = clampf(x, -1.f, 1.f);
     const float pos = (x + 1.f) * .5f * 2047.f; const int i0 = (int)pos; const float fr = pos - i0;
@@ -353,7 +354,8 @@ void Seq3::applyParams() {
     const MasterParams& m = P_.master; const FxParams& X = P_.fx;
     lpF_.setTau(.03f, sr_); lpF_.target = m.filter < 0 ? 200.f * std::pow(100.f, 1 + m.filter) : 20000.f;
     hpF_.setTau(.03f, sr_); hpF_.target = m.filter > 0 ? 20.f * std::pow(100.f, m.filter * 1.15f) : 20.f;
-    const float dr = X.tapeOn ? m.drive : 0.f; pre_.setTau(.03f, sr_); pre_.target = 1 + dr * .8f; post_.setTau(.03f, sr_); post_.target = 1 / (1 + dr * .75f);
+    // as the page: 6 dB less into the tape stage and the curve's headroom taken out, both given back after it
+    const float dr = X.tapeOn ? m.drive : 0.f; pre_.setTau(.03f, sr_); pre_.target = (1 + dr * .8f) * .5f / kDriveH; post_.setTau(.03f, sr_); post_.target = kDriveH / (1 + dr * .75f) / .5f;
     tapeF_.setTau(.05f, sr_); tapeF_.target = X.tapeOn ? 3500.f * std::pow(5.5f, X.tapeColor) : 20000.f;
     crushWet_.setTau(.03f, sr_); crushWet_.target = X.crushOn ? X.crushMix : 0.f; crushDry_.setTau(.03f, sr_); crushDry_.target = X.crushOn ? 1 - X.crushMix * .6f : 1.f;
     fb_.setTau(.05f, sr_); fb_.target = X.echoFb; dRet_.setTau(.03f, sr_); dRet_.target = X.echoOn ? m.echo : 0.f; rRet_.setTau(.03f, sr_); rRet_.target = X.spaceOn ? m.space * .7f : 0.f;
@@ -362,7 +364,8 @@ void Seq3::applyParams() {
     for (int b = 0; b < 3; ++b) { BusRt& B = bus_[b]; const BusParams& o = P_.bus[b]; const float on = busOn(b) ? 1.f : 0.f, f = o.filter, dr = o.drive, g = o.glue;
         B.lv.setTau(.012f, sr_); B.lv.target = on * o.lv; B.gate.setTau(.012f, sr_); B.gate.target = on;
         B.lpf.setTau(.03f, sr_); B.lpf.target = f < 0 ? 200.f * std::pow(100.f, 1 + f) : 20000.f; B.hpf.setTau(.03f, sr_); B.hpf.target = f > 0 ? 20.f * std::pow(100.f, f * 1.15f) : 10.f;
-        B.driveOn = dr > .005f; B.driveK = 1 + dr * 6; B.dpre.setTau(.03f, sr_); B.dpre.target = 1 + dr * .8f; B.dpost.setTau(.03f, sr_); B.dpost.target = 1 / (1 + dr * .75f);
+        B.driveOn = dr > .005f; B.driveK = 1 + dr * 6; { const float h = B.driveOn ? kDriveH : 1.f;   // as the page: the curve's headroom taken out before, given back after
+          B.dpre.setTau(.03f, sr_); B.dpre.target = (1 + dr * .8f) / h; B.dpost.setTau(.03f, sr_); B.dpost.target = h / (1 + dr * .75f); }
         B.comp.threshold = -30 * g; B.comp.ratio = 1 + 3 * g; B.mk.setTau(.03f, sr_); B.mk.target = 1 + g * .5f; }
     // mastering (web applyMastering): glue .5 = the old fixed comp (-12 dB, 1.8:1)
     if (!dynBypass_) { comp_.threshold = -24 * m.glue; comp_.ratio = 1 + 1.6f * m.glue; }

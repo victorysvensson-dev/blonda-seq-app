@@ -219,10 +219,12 @@ private:
 };
 
 // tanh soft-clip normalised so that +/-1 maps to +/-1 (same curve as the web version's WaveShaper).
+/// the page's drive curves have headroom: tanh(k·x·H)/tanh(k)/H with H = 4 (web DRV_H)
+constexpr float kDriveH = 4.0f;
 struct Drive {
     float k = 1.0f, norm = 1.0f;
     void set(float amt) { k = 1.0f + amt * 6.0f; norm = 1.0f / std::tanh(k); }
-    inline float process(float x) const { x = clampf(x, -1.0f, 1.0f); return std::tanh(k * x) * norm; }
+    inline float process(float x) const { x = clampf(x, -1.0f, 1.0f); return std::tanh(k * x * kDriveH) * norm * (1.0f / kDriveH); }
 };
 
 // Equal-power pan law matching Web Audio StereoPannerNode for a mono source.

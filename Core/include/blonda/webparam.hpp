@@ -27,7 +27,13 @@ public:
     // cancelScheduledValues: drop every event at or after t (the timeline then holds the last remaining value)
     void cancelScheduledValues(double t) { int k = 0; while (k < n_ && ev_[k].t < t) ++k; n_ = k; hint_ = -1; }
     // cancelAndHoldAtTime: freeze the current value at t, drop later events (no jump, unlike cancelScheduledValues).
-    void cancelAndHold(double t) { float v = valueAt(t); int k = 0; while (k < n_ && ev_[k].t <= t) ++k; n_ = k; add({Set, t, v, 0.f}); }
+    // As Web Audio: a ramp running at t is cut at t (a ramp of the same kind to the value at t), so the timeline before
+    // t stays exactly as it was - dropping the ramp's end would hold its start value all the way to t.
+    void cancelAndHold(double t) {
+        const float v = valueAt(t); int k = 0; while (k < n_ && ev_[k].t <= t) ++k;
+        const bool ramp = k < n_ && (ev_[k].type == Lin || ev_[k].type == Exp); const Type ty = ramp ? ev_[k].type : Set;
+        n_ = k; add({ty, t, v, 0.f});
+    }
 
     float valueAt(double t) const {
         if (n_ == 0) return def_;

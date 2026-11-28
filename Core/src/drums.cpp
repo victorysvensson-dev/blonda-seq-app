@@ -33,7 +33,7 @@ void DrumTrack::chokeAt(long long frame) {
     if (lastOpen_ < 0) return; Voice& v = voices_[lastOpen_];
     if (v.active && v.age == lastOpenAge_) {
         const double tl = (double)(frame - v.start) / sr_;
-        for (int c = 0; c < std::min(v.nch, v.chokeChains); ++c) { v.ch[c].gain.cancelScheduledValues(tl); v.ch[c].gain.setTargetAtTime(0.0001f, tl, 0.008f); }
+        for (int c = 0; c < std::min(v.nch, v.chokeChains); ++c) { v.ch[c].gain.cancelAndHold(tl); v.ch[c].gain.setTargetAtTime(0.0001f, tl, 0.008f); }   // web: cancelAndHoldAtTime (the fade before the choke stays)
         v.end = std::min(v.end, std::max(0.0, tl) + 0.12);
     }
     lastOpen_ = -1;

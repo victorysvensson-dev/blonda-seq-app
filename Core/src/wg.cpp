@@ -65,7 +65,7 @@ int Graph::biquad(BqType type, float freq, float q, float gainDb) {
 int Graph::shaper(CurveType c, float amount, int oversample) {
     if (n_ >= kNodes) { return kNodes - 1; } Node& nd = nodes_[n_]; initNode(nd, N_SHAPER); nd.sub = c; nd.amt = amount; nd.os = oversample;
     if (c == C_DIST) { const int k = (int)std::lround(amount * 20.f); const float g = 1.f + k / 20.f * 38.f, gn = g * .75f; nd.k1 = g; nd.k1n = 1.f / std::tanh(g); nd.k2 = gn; nd.k2n = 1.f / std::tanh(gn); }
-    else if (c == C_DRIVE) { const float k = 1.f + std::round(amount * 20.f) / 20.f * 6.f; nd.k1 = k; nd.k1n = 1.f / std::tanh(k); }
+    else if (c == C_DRIVE) { const float k = 1.f + std::round(amount * 20.f) / 20.f * 6.f; nd.k1 = k; nd.k1n = 1.f / (std::tanh(k) * kDriveH); }
     else { nd.k1 = std::pow(2.f, amount) / 2.f; }   // crush: amount = bits
     if (oversample > 1) {
         // Chrome: 2x adds 128 frames, 4x adds 192. Our half-band chain adds 16 (2x) / 24 (4x); pad the rest.
@@ -194,7 +194,7 @@ void Graph::processNode(Node& nd, double t) {
         auto curve = [&](float u) {
             u = clampf(u, -1.f, 1.f);
             if (nd.sub == C_DIST) return u >= 0 ? std::tanh(nd.k1 * u) * nd.k1n : std::tanh(nd.k2 * u) * nd.k2n;
-            if (nd.sub == C_DRIVE) return std::tanh(nd.k1 * u) * nd.k1n;
+            if (nd.sub == C_DRIVE) return std::tanh(nd.k1 * kDriveH * clampf(u, -1.f, 1.f)) * nd.k1n;   // web driveCurve: headroom DRV_H
             // crushCurve: 2048-point staircase, linearly interpolated by the WaveShaper
             const float pos = (u + 1.f) * 0.5f * 2047.f; const int i0 = (int)pos; const float fr = pos - i0;
             auto cv = [&](int i) { const float x = i / 2047.f * 2.f - 1.f; return std::round(x * nd.k1) / nd.k1; };

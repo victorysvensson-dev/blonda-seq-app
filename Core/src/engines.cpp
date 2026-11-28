@@ -220,8 +220,8 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
 
     // ------------------------------------------------------------------ Super Pad (superVoice)
     case Eng::Super: {
-        const SuperP& E = EP.super_; const float att = .01f + E.attack * 1.5f, rel = .1f + E.release * 3;
-        const double te = t + std::max(att + .05f, len * (1 + p.decay * 10)), end = te + rel + .3;
+        const SuperP& E = EP.super_; const float att = .01f + E.attack * 1.5f, rel = (.1f + E.release * 3) * (.45f + p.decay * .7f);   // as the page today
+        const double te = t + std::max(att + .05f, len * (.92f + p.decay * .12f)), end = te + rel + .3;
         const int lp = G.biquad(BQ_LP, (400 + E.bright * 7000) * (.6f + p.tone * .8f), .6f), hs = G.biquad(BQ_HS, 6000, 1, E.air * 12), g = G.gain(1);
         const float lvl = v * .62f / std::sqrt((float)nvc);
         Param& pg = G.param(g, P0); pg.setValueAtTime(.0001f, t); pg.linearRampToValueAtTime(lvl, t + att); pg.setTargetAtTime(lvl * .8f, t + att, .3f); pg.setTargetAtTime(.0001f, te, rel / 4);
@@ -255,6 +255,7 @@ void MelodicTrack::build(float v, int note, float len, const int* vc, int nvc, d
         const int q = G.shaper(C_CRUSH, (float)std::lround(8 - E.crush * 5), 1), g = G.gain(1);
         const float lvl = v * .42f; Param& pg = G.param(g, P0); pg.setValueAtTime(lvl, t);
         for (int i = 1; i <= 8; ++i) pg.setValueAtTime(lvl * std::max(.25f, 1 - i / 8.f * (1 - std::exp(-gate / dec))), t + gate * i / 8.0);
+        // TODO: the page now steps every ~30 ms (8..64 steps) along exp(-x/dec); a node param holds 12 events, so this keeps the older 8 steps (about 1 dB louder)
         pg.setValueAtTime(lvl * .25f, t + gate); pg.linearRampToValueAtTime(0, t + gate + .03);
         G.connect(o, q); G.connect(q, g); G.toOut(g); G.finalize(end + .02);
         break; }
